@@ -89,4 +89,5 @@ flutter:
 
 
   assets:
-    - assets/images/
+    - lib/assets/best.tflite
+    - lib/assets/images/
