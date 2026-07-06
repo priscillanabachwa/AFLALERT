@@ -3,7 +3,7 @@ import 'package:firebase_core/firebase_core.dart';
 import 'firebase_options.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:aflalert/screens/login_screen.dart';
-
+import 'package:aflalert/screens/splash.dart';
 import 'package:aflalert/screens/welcomepage.dart';
 
 void main() async{
@@ -65,7 +65,7 @@ class AflAlertApp extends StatelessWidget {
               const EdgeInsets.symmetric(horizontal: 16, vertical: 18),
         ),
       ),
-      home: const LoginPage(),
+      home: const SplashScreen(),
     );
   }
 }
