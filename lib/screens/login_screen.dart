@@ -56,7 +56,7 @@ class LoginScreen extends StatelessWidget {
                 textAlign: TextAlign.center,
                 style: TextStyle(
                   fontSize: 16,
-                  color: const Color(0xFF6B7280),
+                  color: Color(0xFF6B7280),
                 ),
               ),
 
@@ -150,6 +150,9 @@ class LoginScreen extends StatelessWidget {
 
                     ElevatedButton(
                       onPressed: () {},
+                      style: ElevatedButton.styleFrom(
+                        minimumSize: const Size(double.infinity, 56),
+                      ),
                       child: const Row(
                         mainAxisAlignment: MainAxisAlignment.center,
                         children: [
