@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:firebase_core/firebase_core.dart';
 import 'firebase_options.dart';
+import 'package:google_fonts/google_fonts.dart';
 import 'screens/login_screen.dart'; // Links main.dart to your login screen file
 
 void main() async{
