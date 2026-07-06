@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
 
-import 'package:aflalert/screens/login_page.dart';
+import 'package:aflalert/screens/welcomepage.dart';
 
 
 void main() {
