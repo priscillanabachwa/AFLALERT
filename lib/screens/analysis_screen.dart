@@ -5,7 +5,6 @@ import '../constants/app_colors.dart';
 import '../widgets/custom_app_bar.dart';
 import '../widgets/ai_animation.dart';
 import '../widgets/progress_section.dart';
-import '../widgets/neural_engine_card.dart';
 import '../widgets/custom_bottom_nav.dart';
 
 class AnalysisScreen extends StatelessWidget {
@@ -76,7 +75,6 @@ class AnalysisScreen extends StatelessWidget {
 
                 SizedBox(height:40),
 
-                NeuralEngineCard(),
 
               ],
 
