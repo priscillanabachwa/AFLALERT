@@ -88,4 +88,4 @@ flutter:
 
 
   assets:
-    - assets/best.tflite 
+    - .dart_tool/assets/best.tflite 
