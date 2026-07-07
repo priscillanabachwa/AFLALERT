@@ -103,7 +103,7 @@ class AflAlert extends StatelessWidget {
 
       routes: {
         '/': (context) => const SplashScreen(),
-        '/welcome': (context) => const WelcomePage(),
+        '/welcome': (context) => const OnboardingScreen(),
         '/login': (context) => const LoginScreen(),
         '/analysis': (context) => const AnalysisScreen(),
       },

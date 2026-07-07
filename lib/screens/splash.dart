@@ -30,12 +30,12 @@ class _SplashScreenState extends State<SplashScreen>
       CurvedAnimation(parent: _controller, curve: Curves.easeInOut),
     );
 
-    // Navigate after 3 seconds
-    Timer(const Duration(seconds: 3), () {
+    // Navigate after 5 seconds
+    Timer(const Duration(seconds: 5), () {
       if (mounted) {
         Navigator.pushReplacement(
           context,
-          MaterialPageRoute(builder: (context) => const WelcomePage()),
+          MaterialPageRoute(builder: (context) => const OnboardingScreen()),
         );
       }
     });
