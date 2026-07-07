@@ -101,7 +101,7 @@ class _LoginScreenState extends State<LoginScreen> {
               const SizedBox(height: 32),
 
               Text(
-                'AFLALERT',
+                'AflAlert',
                 style: GoogleFonts.inter(
                   fontSize: 32,
                   fontWeight: FontWeight.bold,
@@ -238,6 +238,11 @@ class _LoginScreenState extends State<LoginScreen> {
                           ],
                         ),
                         TextButton(
+                          style: TextButton.styleFrom(
+                            padding: EdgeInsets.zero,
+                            minimumSize: Size.zero,
+                            tapTargetSize: MaterialTapTargetSize.shrinkWrap,
+                          ),
                           onPressed: () {
                             Navigator.push(
                               context,
@@ -252,6 +257,7 @@ class _LoginScreenState extends State<LoginScreen> {
                             style: TextStyle(
                               color: AppColors.primaryContainer,
                               fontWeight: FontWeight.bold,
+                              fontSize: 13,
                             ),
                           ),
                         ),

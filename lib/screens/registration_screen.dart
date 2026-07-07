@@ -134,7 +134,15 @@ class _RegistrationScreenState extends State<RegistrationScreen> {
               const SizedBox(height: 32),
 
               Text(
-                'Join AflAlert',
+                'Join',
+                style: GoogleFonts.inter(
+                  fontSize: 20,
+                  fontWeight: FontWeight.normal,
+                  color: AppColors.primaryContainer,
+                ),
+              ),
+              Text(
+                'AflAlert',
                 style: GoogleFonts.inter(
                   fontSize: 32,
                   fontWeight: FontWeight.bold,
