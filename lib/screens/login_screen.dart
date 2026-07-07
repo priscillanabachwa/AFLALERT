@@ -87,7 +87,7 @@ class _LoginScreenState extends State<LoginScreen> {
                 ),
                 padding: const EdgeInsets.all(16),
                 child: Image.asset(
-                  "assets/images/aflalert_logo.png",
+                  "lib/assets/images/aflalert_logo.png",
                   fit: BoxFit.contain,
                   errorBuilder: (context, error, stackTrace) {
                     return const Icon(Icons.image_not_supported_outlined, color: Colors.amber,size:40);
