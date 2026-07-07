@@ -19,20 +19,8 @@ Future<void> main() async {
   runApp(const AflAlert());
 }
 
-<<<<<<< HEAD
-class AflAlertApp extends StatelessWidget {
-  final bool debugShowCheckedModeBanner;
-  final Widget home;
-
-  const AflAlertApp({
-    super.key,
-    this.debugShowCheckedModeBanner = false,
-    this.home = const LoginScreen(),
-  });
-=======
 class AflAlert extends StatelessWidget {
   const AflAlert({super.key});
->>>>>>> 2e517459d3be714620c36b41cdf85d6d2aea065c
 
   @override
   Widget build(BuildContext context) {
