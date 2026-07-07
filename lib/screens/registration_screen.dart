@@ -206,7 +206,7 @@ class _RegistrationScreenState extends State<RegistrationScreen> {
                         controller: _emailController,
                         keyboardType: TextInputType.emailAddress,
                         decoration: const InputDecoration(
-                          hintText: 'name@farm-hq.com',
+                          hintText: 'example@gmail.com',
                           prefixIcon: Icon(Icons.email_outlined),
                         ),
                         validator: (value) {
@@ -487,39 +487,6 @@ class _RegistrationScreenState extends State<RegistrationScreen> {
                         ],
                       ),
 
-                      const SizedBox(height: 12),
-
-                      // Lab Testing Disclaimer
-                      Row(
-                        children: [
-                          SizedBox(
-                            height: 24,
-                            width: 24,
-                            child: Checkbox(
-                              value: _agreedToTerms,
-                              onChanged: (value) {
-                                setState(() {
-                                  _agreedToTerms = value ?? false;
-                                });
-                              },
-                              shape: RoundedRectangleBorder(
-                                borderRadius: BorderRadius.circular(4),
-                              ),
-                            ),
-                          ),
-                          const SizedBox(width: 8),
-                          Expanded(
-                            child: Text(
-                              'AI-detected results must be confirmed by certified lab testing',
-                              style: GoogleFonts.inter(
-                                color: AppColors.primaryContainer,
-                                fontSize: 14,
-                              ),
-                            ),
-                          ),
-                        ],
-                      ),
-
                       const SizedBox(height: 28),
 
                       // Register Button
@@ -578,7 +545,7 @@ class _RegistrationScreenState extends State<RegistrationScreen> {
                   ),
                   GestureDetector(
                     onTap: () {
-                      Navigator.pop(context);
+                      Navigator.pushReplacementNamed(context, '/login');
                     },
                     child: const Text(
                       'Login here',

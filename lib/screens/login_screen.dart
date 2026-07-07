@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'forgot_password_screen.dart';
+import '../constants/app_colors.dart';
 
 class LoginScreen extends StatefulWidget {
   const LoginScreen({super.key});
@@ -104,7 +105,7 @@ class _LoginScreenState extends State<LoginScreen> {
                 style: GoogleFonts.inter(
                   fontSize: 32,
                   fontWeight: FontWeight.bold,
-                  color: const Color(0xFF1F2937),
+                  color: AppColors.primaryContainer,
                 ),
               ),
 
@@ -115,7 +116,7 @@ class _LoginScreenState extends State<LoginScreen> {
                 textAlign: TextAlign.center,
                 style: TextStyle(
                   fontSize: 16,
-                  color: Color(0xFF6B7280),
+                  color: AppColors.primaryContainer,
                 ),
               ),
 
@@ -136,7 +137,7 @@ class _LoginScreenState extends State<LoginScreen> {
                       'Email Address',
                       style: TextStyle(
                         fontWeight: FontWeight.w600,
-                        color: Color(0xFF374151),
+                        color: AppColors.primaryContainer,
                       ),
                     ),
                     const SizedBox(height: 8),
@@ -144,7 +145,8 @@ class _LoginScreenState extends State<LoginScreen> {
                       controller: _emailController,
                       keyboardType: TextInputType.emailAddress,
                       decoration: InputDecoration(
-                        hintText: 'name@farm-hq.com',
+                        hintText: 'example@gmail.com',
+                        hintStyle: TextStyle(color: Colors.grey.shade500),
                         prefixIcon: Icon(Icons.email_outlined),
                         filled: true,
                         fillColor:Color(0xFFF3F4F6),
@@ -172,7 +174,7 @@ class _LoginScreenState extends State<LoginScreen> {
                       'Password',
                       style: TextStyle(
                         fontWeight: FontWeight.w600,
-                        color: Color(0xFF374151),
+                        color: AppColors.primaryContainer,
                       ),
                     ),
                     const SizedBox(height: 8),
@@ -181,6 +183,7 @@ class _LoginScreenState extends State<LoginScreen> {
                       obscureText: _obscurePassword,
                       decoration:  InputDecoration(
                         hintText: '••••••••',
+                        hintStyle: TextStyle(color: Colors.grey.shade500),
                         prefixIcon: Icon(Icons.lock_outline),
                         filled: true,
                         fillColor:Color(0xFFF3F4F6),
@@ -230,7 +233,7 @@ class _LoginScreenState extends State<LoginScreen> {
                             const SizedBox(width: 8),
                             const Text(
                               'Remember me',
-                              style: TextStyle(color: Color(0xFF4B5563)),
+                              style: TextStyle(color: AppColors.primaryContainer),
                             ),
                           ],
                         ),
@@ -247,7 +250,7 @@ class _LoginScreenState extends State<LoginScreen> {
                           child: const Text(
                             'Forgot Password?',
                             style: TextStyle(
-                              color: Color(0xFF1E3A24),
+                              color: AppColors.primaryContainer,
                               fontWeight: FontWeight.bold,
                             ),
                           ),
@@ -318,7 +321,7 @@ class _LoginScreenState extends State<LoginScreen> {
                             style: GoogleFonts.inter(
                               fontSize: 18,
                               fontWeight: FontWeight.bold,
-                              color: const Color(0xFF1F2937),
+                              color: AppColors.primaryContainer,
                             ),
                           ),
                         ],
@@ -335,7 +338,7 @@ class _LoginScreenState extends State<LoginScreen> {
                 children: [
                   const Text(
                     'New to AflAlert? ',
-                    style: TextStyle(color: Color(0xFF6B7280)),
+                    style: TextStyle(color: AppColors.primaryContainer),
                   ),
                   GestureDetector(
                     onTap: () {
@@ -344,7 +347,7 @@ class _LoginScreenState extends State<LoginScreen> {
                     child: Text(
                       'Register here',
                       style: TextStyle(
-                        color: Color(0xFF1E3A24),
+                        color: AppColors.primaryContainer,
                         fontWeight: FontWeight.bold,
                       ),
                     ),
