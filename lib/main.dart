@@ -5,10 +5,12 @@ import 'package:aflalert/screens/homescreen.dart';
 
 import 'firebase_options.dart';
 
-import 'package:aflalert/screens/splash.dart';
+import 'package:aflalert/screens/splash_screen.dart';
 import 'package:aflalert/screens/welcomepage.dart';
 import 'package:aflalert/screens/login_screen.dart';
 import 'package:aflalert/screens/analysis_screen.dart';
+import 'package:aflalert/screens/registration_screen.dart';
+import 'package:aflalert/screens/camerascreen.dart';
 
 Future<void> main() async {
   WidgetsFlutterBinding.ensureInitialized();
@@ -16,11 +18,12 @@ Future<void> main() async {
   await Firebase.initializeApp(
     options: DefaultFirebaseOptions.currentPlatform,
   );
-  runApp(const AflAlertApp());
+
+  runApp(const AflAlert());
 }
 
-class AflAlertApp extends StatelessWidget {
-  const AflAlertApp({super.key});
+class AflAlert extends StatelessWidget {
+  const AflAlert({super.key});
 
   @override
   Widget build(BuildContext context) {
@@ -67,69 +70,28 @@ class AflAlertApp extends StatelessWidget {
           ),
           border: OutlineInputBorder(
             borderRadius: BorderRadius.circular(12),
-            borderSide: const BorderSide(
-              color: Color(0xFFD1D5DB),
-            ),
+            borderSide: const BorderSide(color: Color(0xFFD1D5DB)),
           ),
           enabledBorder: OutlineInputBorder(
             borderRadius: BorderRadius.circular(12),
-            borderSide: const BorderSide(
-              color: Color(0xFFD1D5DB),
-            ),
+            borderSide: const BorderSide(color: Color(0xFFD1D5DB)),
           ),
           focusedBorder: OutlineInputBorder(
             borderRadius: BorderRadius.circular(12),
-            borderSide: const BorderSide(color: Color(0xFF355E3B), width: 2),
+            borderSide: const BorderSide(color: Color(0xFF00462D), width: 2),
           ),
         ),
       ),
-      home: const HomeScreen(),
-    );
-  }
-}
-
-class MyHomePage extends StatefulWidget {
-  const MyHomePage({super.key, required this.title});
-
-  final String title;
-
-  @override
-  State<MyHomePage> createState() => _MyHomePageState();
-}
-
-class _MyHomePageState extends State<MyHomePage> {
-  int _counter = 0;
-
-  void _incrementCounter() {
-    setState(() {
-      _counter++;
-    });
-  }
-
-  @override
-  Widget build(BuildContext context) {
-    return Scaffold(
-      appBar: AppBar(
-        backgroundColor: Theme.of(context).colorScheme.inversePrimary,
-        title: Text(widget.title),
-      ),
-      body: Center(
-        child: Column(
-          mainAxisAlignment: MainAxisAlignment.center,
-          children: [
-            const Text('You have pushed the button this many times:'),
-            Text(
-              '$_counter',
-              style: Theme.of(context).textTheme.headlineMedium,
-            ),
-          ],
-        ),
-      ),
-      floatingActionButton: FloatingActionButton(
-        onPressed: _incrementCounter,
-        tooltip: 'Increment',
-        child: const Icon(Icons.add),
-      ),
+      initialRoute: '/camera',
+      routes: {
+        '/': (context) => const SplashScreen(),
+        '/welcome': (context) => const OnboardingScreen(),
+        '/login': (context) => const LoginScreen(),
+        '/analysis': (context) => const AnalysisScreen(),
+        '/register': (context) => const RegistrationScreen(),
+        '/camera': (context) => const CameraCaptureScreen(),
+        '/home': (context) => const HomeScreen(),
+      },
     );
   }
 }

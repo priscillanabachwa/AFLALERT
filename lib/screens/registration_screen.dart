@@ -1,6 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
 
+import '../constants/app_colors.dart';
+
 class RegistrationScreen extends StatefulWidget {
   const RegistrationScreen({super.key});
 
@@ -136,7 +138,7 @@ class _RegistrationScreenState extends State<RegistrationScreen> {
                 style: GoogleFonts.inter(
                   fontSize: 32,
                   fontWeight: FontWeight.bold,
-                  color: const Color(0xFF1F2937),
+                  color: AppColors.primaryContainer,
                 ),
               ),
 
@@ -147,7 +149,7 @@ class _RegistrationScreenState extends State<RegistrationScreen> {
                 textAlign: TextAlign.center,
                 style: TextStyle(
                   fontSize: 16,
-                  color: Color(0xFF6B7280),
+                  color: AppColors.primaryContainer,
                 ),
               ),
 
@@ -171,7 +173,7 @@ class _RegistrationScreenState extends State<RegistrationScreen> {
                         'Full Name',
                         style: TextStyle(
                           fontWeight: FontWeight.w600,
-                          color: Color(0xFF374151),
+                          color: AppColors.primaryContainer,
                         ),
                       ),
                       const SizedBox(height: 8),
@@ -196,7 +198,7 @@ class _RegistrationScreenState extends State<RegistrationScreen> {
                         'Email Address',
                         style: TextStyle(
                           fontWeight: FontWeight.w600,
-                          color: Color(0xFF374151),
+                          color: AppColors.primaryContainer,
                         ),
                       ),
                       const SizedBox(height: 8),
@@ -226,7 +228,7 @@ class _RegistrationScreenState extends State<RegistrationScreen> {
                         'Phone Number',
                         style: TextStyle(
                           fontWeight: FontWeight.w600,
-                          color: Color(0xFF374151),
+                          color: AppColors.primaryContainer,
                         ),
                       ),
                       const SizedBox(height: 8),
@@ -255,7 +257,7 @@ class _RegistrationScreenState extends State<RegistrationScreen> {
                         'User Type',
                         style: TextStyle(
                           fontWeight: FontWeight.w600,
-                          color: Color(0xFF374151),
+                          color: AppColors.primaryContainer,
                         ),
                       ),
                       const SizedBox(height: 8),
@@ -277,7 +279,7 @@ class _RegistrationScreenState extends State<RegistrationScreen> {
                           focusedBorder: OutlineInputBorder(
                             borderRadius: BorderRadius.all(Radius.circular(12)),
                             borderSide:
-                                BorderSide(color: Color(0xFF059669), width: 2),
+                                BorderSide(color: AppColors.primaryContainer, width: 2),
                           ),
                           filled: true,
                           fillColor: Colors.white,
@@ -308,7 +310,7 @@ class _RegistrationScreenState extends State<RegistrationScreen> {
                         'District',
                         style: TextStyle(
                           fontWeight: FontWeight.w600,
-                          color: Color(0xFF374151),
+                          color: AppColors.primaryContainer,
                         ),
                       ),
                       const SizedBox(height: 8),
@@ -330,7 +332,7 @@ class _RegistrationScreenState extends State<RegistrationScreen> {
                           focusedBorder: OutlineInputBorder(
                             borderRadius: BorderRadius.all(Radius.circular(12)),
                             borderSide:
-                                BorderSide(color: Color(0xFF059669), width: 2),
+                                BorderSide(color: AppColors.primaryContainer, width: 2),
                           ),
                           filled: true,
                           fillColor: Colors.white,
@@ -361,7 +363,7 @@ class _RegistrationScreenState extends State<RegistrationScreen> {
                         'Password',
                         style: TextStyle(
                           fontWeight: FontWeight.w600,
-                          color: Color(0xFF374151),
+                          color: AppColors.primaryContainer,
                         ),
                       ),
                       const SizedBox(height: 8),
@@ -402,7 +404,7 @@ class _RegistrationScreenState extends State<RegistrationScreen> {
                         'Confirm Password',
                         style: TextStyle(
                           fontWeight: FontWeight.w600,
-                          color: Color(0xFF374151),
+                          color: AppColors.primaryContainer,
                         ),
                       ),
                       const SizedBox(height: 8),
@@ -466,14 +468,14 @@ class _RegistrationScreenState extends State<RegistrationScreen> {
                                     text:
                                         'I agree to the Terms of Service and ',
                                     style: TextStyle(
-                                      color: Color(0xFF4B5563),
+                                      color: AppColors.primaryContainer,
                                       fontSize: 14,
                                     ),
                                   ),
                                   TextSpan(
                                     text: 'Privacy Policy',
                                     style: GoogleFonts.inter(
-                                      color: const Color(0xFF059669),
+                                      color: AppColors.primaryContainer,
                                       fontWeight: FontWeight.bold,
                                       fontSize: 14,
                                     ),
@@ -510,7 +512,7 @@ class _RegistrationScreenState extends State<RegistrationScreen> {
                             child: Text(
                               'AI-detected results must be confirmed by certified lab testing',
                               style: GoogleFonts.inter(
-                                color: const Color(0xFF4B5563),
+                                color: AppColors.primaryContainer,
                                 fontSize: 14,
                               ),
                             ),
@@ -525,9 +527,9 @@ class _RegistrationScreenState extends State<RegistrationScreen> {
                         onPressed: _isLoading ? null : _registerUser,
                         style: ElevatedButton.styleFrom(
                           minimumSize: const Size(double.infinity, 56),
-                          backgroundColor: const Color(0xFF1E3A24),
+                          backgroundColor: AppColors.primaryContainer,
                           disabledBackgroundColor:
-                              const Color(0xFF1E3A24).withValues(alpha: 0.6),
+                              AppColors.primaryContainer.withValues(alpha: 0.6),
                           shape: RoundedRectangleBorder(
                             borderRadius: BorderRadius.circular(28),
                           ),
@@ -572,7 +574,7 @@ class _RegistrationScreenState extends State<RegistrationScreen> {
                 children: [
                   const Text(
                     'Already have an account? ',
-                    style: TextStyle(color: Color(0xFF6B7280)),
+                    style: TextStyle(color: AppColors.primaryContainer),
                   ),
                   GestureDetector(
                     onTap: () {
@@ -581,7 +583,7 @@ class _RegistrationScreenState extends State<RegistrationScreen> {
                     child: const Text(
                       'Login here',
                       style: TextStyle(
-                        color: Color(0xFF1E3A24),
+                        color: AppColors.primaryContainer,
                         fontWeight: FontWeight.bold,
                       ),
                     ),
