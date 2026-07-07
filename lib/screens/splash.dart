@@ -100,8 +100,8 @@ class _SplashScreenState extends State<SplashScreen>
                     child: child,
                   );
                 },
-                child: Image.network(
-                  "https://lh3.googleusercontent.com/aida-public/AB6AXuCwpJfnqKQEJrl7uAA7tw7kPh_lo2hO41ryT0Y2kqTRg9p9NWshCPcl4FdsX-RvXxm5cOD9T18PQg4quqahT5Il17YMtTUROMn7UwrNCrhYUdxyM1k6YTY1ZDVJW1xHo779aWnZ95qrTciCzLgGkAyuUGLecbNXyAiIaLIkuQdugAYIa9EVFX9QcCWP-qY1rPy8gDxEowBcs-2T4RlTO-Q98iz9GQ9nLKgySC62UENBUghpXDsJuciIXw",
+                child: Image.asset(
+                  'lib/assets/images/aflalert_logo.png',
                   width: 180,
                   height: 180,
                 ),
