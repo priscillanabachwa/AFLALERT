@@ -1,6 +1,9 @@
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
 
+import 'history_screen.dart.dart';
+import 'register_screen.dart';
+
 class LoginScreen extends StatelessWidget {
   const LoginScreen({super.key});
 
@@ -25,7 +28,7 @@ class LoginScreen extends StatelessWidget {
                   borderRadius: BorderRadius.circular(12),
                   boxShadow: [
                     BoxShadow(
-                      color: Colors.black.withValues(alpha: 0.05),
+                      color: Colors.black.withOpacity(0.05),
                       blurRadius: 10,
                       offset: const Offset(0, 4),
                     ),
@@ -35,6 +38,13 @@ class LoginScreen extends StatelessWidget {
                 child: Image.asset(
                   'assets/images/aflalert_logo.png',
                   fit: BoxFit.contain,
+                  errorBuilder: (context, error, stackTrace) {
+                    return const Icon(
+                      Icons.eco,
+                      size: 56,
+                      color: Color(0xFF355E3B),
+                    );
+                  },
                 ),
               ),
 
@@ -54,10 +64,7 @@ class LoginScreen extends StatelessWidget {
               const Text(
                 'Precision diagnostics for a safer harvest.',
                 textAlign: TextAlign.center,
-                style: TextStyle(
-                  fontSize: 16,
-                  color: Color(0xFF6B7280),
-                ),
+                style: TextStyle(fontSize: 16, color: Color(0xFF6B7280)),
               ),
 
               const SizedBox(height: 48),
@@ -134,7 +141,15 @@ class LoginScreen extends StatelessWidget {
                           ],
                         ),
                         TextButton(
-                          onPressed: () {},
+                          onPressed: () {
+                            ScaffoldMessenger.of(context).showSnackBar(
+                              const SnackBar(
+                                content: Text(
+                                  'Password reset link sent to your email',
+                                ),
+                              ),
+                            );
+                          },
                           child: const Text(
                             'Forgot Password?',
                             style: TextStyle(
@@ -149,7 +164,13 @@ class LoginScreen extends StatelessWidget {
                     const SizedBox(height: 24),
 
                     ElevatedButton(
-                      onPressed: () {},
+                      onPressed: () {
+                        Navigator.of(context).pushReplacement(
+                          MaterialPageRoute(
+                            builder: (_) => const HistoryScreen(),
+                          ),
+                        );
+                      },
                       child: const Row(
                         mainAxisAlignment: MainAxisAlignment.center,
                         children: [
@@ -184,7 +205,13 @@ class LoginScreen extends StatelessWidget {
                     const SizedBox(height: 24),
 
                     OutlinedButton(
-                      onPressed: () {},
+                      onPressed: () {
+                        ScaffoldMessenger.of(context).showSnackBar(
+                          const SnackBar(
+                            content: Text('Google sign-in coming soon'),
+                          ),
+                        );
+                      },
                       style: OutlinedButton.styleFrom(
                         minimumSize: const Size(double.infinity, 56),
                         side: const BorderSide(color: Color(0xFFE5E7EB)),
@@ -195,7 +222,11 @@ class LoginScreen extends StatelessWidget {
                       child: Row(
                         mainAxisAlignment: MainAxisAlignment.center,
                         children: [
-                          const Icon(Icons.g_mobiledata, size: 32, color: Colors.red),
+                          const Icon(
+                            Icons.g_mobiledata,
+                            size: 32,
+                            color: Colors.red,
+                          ),
                           const SizedBox(width: 8),
                           Text(
                             'Google',
@@ -222,7 +253,13 @@ class LoginScreen extends StatelessWidget {
                     style: TextStyle(color: Color(0xFF6B7280)),
                   ),
                   GestureDetector(
-                    onTap: () {},
+                    onTap: () {
+                      Navigator.of(context).push(
+                        MaterialPageRoute(
+                          builder: (_) => const RegisterScreen(),
+                        ),
+                      );
+                    },
                     child: const Text(
                       'Register here',
                       style: TextStyle(

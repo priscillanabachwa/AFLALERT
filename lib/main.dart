@@ -1,25 +1,32 @@
 import 'package:flutter/material.dart';
 import 'package:firebase_core/firebase_core.dart';
-import 'firebase_options.dart';
 import 'package:google_fonts/google_fonts.dart';
-import 'screens/login_screen.dart'; // Links main.dart to your login screen file
+import 'firebase_options.dart';
+import 'screens/login_screen.dart';
 
-void main() async{
+void main() async {
   WidgetsFlutterBinding.ensureInitialized();
-  await Firebase.initializeApp(
-    options: DefaultFirebaseOptions.currentPlatform,
+  await Firebase.initializeApp(options: DefaultFirebaseOptions.currentPlatform);
+  runApp(
+    const AflAlertApp(debugShowCheckedModeBanner: false, home: LoginScreen()),
   );
-  runApp(const AflAlertApp());
 }
 
 class AflAlertApp extends StatelessWidget {
-  const AflAlertApp({super.key});
+  final bool debugShowCheckedModeBanner;
+  final Widget home;
+
+  const AflAlertApp({
+    super.key,
+    this.debugShowCheckedModeBanner = false,
+    this.home = const LoginScreen(),
+  });
 
   @override
   Widget build(BuildContext context) {
     return MaterialApp(
       title: 'AflAlert',
-      debugShowCheckedModeBanner: false,
+      debugShowCheckedModeBanner: debugShowCheckedModeBanner,
       theme: ThemeData(
         useMaterial3: true,
         colorScheme: ColorScheme.fromSeed(
@@ -59,10 +66,13 @@ class AflAlertApp extends StatelessWidget {
             borderRadius: BorderRadius.circular(12),
             borderSide: const BorderSide(color: Color(0xFF355E3B), width: 2),
           ),
-          contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 18),
+          contentPadding: const EdgeInsets.symmetric(
+            horizontal: 16,
+            vertical: 18,
+          ),
         ),
       ),
-      home: const LoginScreen(), // Opens the separate visual LoginScreen class
+      home: home,
     );
   }
 }
