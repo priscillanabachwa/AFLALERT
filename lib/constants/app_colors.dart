@@ -15,4 +15,10 @@ class AppColors {
   static const outline = Color(0xFFBFC9C1);
 
   static const grey = Color(0xFF707973);
+
+  // Matches the cream background baked into the AflAlert logo artwork.
+  static const logoCream = Color(0xFFF6F4E2);
+
+  // T95 tone — replaces the plain white theme surface on auth screens.
+  static const t95 = Color(0xFFFFEFD0);
 }

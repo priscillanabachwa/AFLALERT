@@ -100,7 +100,7 @@ class _RegistrationScreenState extends State<RegistrationScreen> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: const Color(0xFFF8F9FA),
+      backgroundColor: AppColors.t95,
       body: SafeArea(
         child: SingleChildScrollView(
           padding: const EdgeInsets.symmetric(horizontal: 24.0),
@@ -111,10 +111,10 @@ class _RegistrationScreenState extends State<RegistrationScreen> {
 
               // Logo Container
               Container(
-                width: 100,
-                height: 100,
+                width: 120,
+                height: 120,
                 decoration: BoxDecoration(
-                  color: Colors.white,
+                  color: AppColors.logoCream,
                   borderRadius: BorderRadius.circular(12),
                   boxShadow: [
                     BoxShadow(
@@ -124,17 +124,25 @@ class _RegistrationScreenState extends State<RegistrationScreen> {
                     ),
                   ],
                 ),
-                padding: const EdgeInsets.all(16),
+                clipBehavior: Clip.antiAlias,
                 child: Image.asset(
-                  'assets/images/logo.jpeg',
-                  fit: BoxFit.contain,
+                  'lib/assets/images/aflalert_logo.png',
+                  fit: BoxFit.cover,
                 ),
               ),
 
               const SizedBox(height: 32),
 
               Text(
-                'Join AflAlert',
+                'Join',
+                style: GoogleFonts.inter(
+                  fontSize: 20,
+                  fontWeight: FontWeight.normal,
+                  color: AppColors.primaryContainer,
+                ),
+              ),
+              Text(
+                'AflAlert',
                 style: GoogleFonts.inter(
                   fontSize: 32,
                   fontWeight: FontWeight.bold,
@@ -159,7 +167,7 @@ class _RegistrationScreenState extends State<RegistrationScreen> {
               Container(
                 padding: const EdgeInsets.all(24),
                 decoration: BoxDecoration(
-                  color: Colors.white,
+                  color: AppColors.t95,
                   borderRadius: BorderRadius.circular(24),
                   border: Border.all(color: const Color(0xFFE5E7EB)),
                 ),
@@ -206,7 +214,7 @@ class _RegistrationScreenState extends State<RegistrationScreen> {
                         controller: _emailController,
                         keyboardType: TextInputType.emailAddress,
                         decoration: const InputDecoration(
-                          hintText: 'name@farm-hq.com',
+                          hintText: 'example@gmail.com',
                           prefixIcon: Icon(Icons.email_outlined),
                         ),
                         validator: (value) {
@@ -487,39 +495,6 @@ class _RegistrationScreenState extends State<RegistrationScreen> {
                         ],
                       ),
 
-                      const SizedBox(height: 12),
-
-                      // Lab Testing Disclaimer
-                      Row(
-                        children: [
-                          SizedBox(
-                            height: 24,
-                            width: 24,
-                            child: Checkbox(
-                              value: _agreedToTerms,
-                              onChanged: (value) {
-                                setState(() {
-                                  _agreedToTerms = value ?? false;
-                                });
-                              },
-                              shape: RoundedRectangleBorder(
-                                borderRadius: BorderRadius.circular(4),
-                              ),
-                            ),
-                          ),
-                          const SizedBox(width: 8),
-                          Expanded(
-                            child: Text(
-                              'AI-detected results must be confirmed by certified lab testing',
-                              style: GoogleFonts.inter(
-                                color: AppColors.primaryContainer,
-                                fontSize: 14,
-                              ),
-                            ),
-                          ),
-                        ],
-                      ),
-
                       const SizedBox(height: 28),
 
                       // Register Button
@@ -578,7 +553,7 @@ class _RegistrationScreenState extends State<RegistrationScreen> {
                   ),
                   GestureDetector(
                     onTap: () {
-                      Navigator.pop(context);
+                      Navigator.pushReplacementNamed(context, '/login');
                     },
                     child: const Text(
                       'Login here',

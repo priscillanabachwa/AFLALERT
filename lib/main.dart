@@ -64,6 +64,7 @@ class AflAlert extends StatelessWidget {
         inputDecorationTheme: InputDecorationTheme(
           filled: true,
           fillColor: Colors.white,
+          hintStyle: TextStyle(color: Colors.grey.shade500),
           contentPadding: const EdgeInsets.symmetric(
             horizontal: 16,
             vertical: 18,
@@ -82,14 +83,17 @@ class AflAlert extends StatelessWidget {
           ),
         ),
       ),
-      initialRoute: '/camera',
+
+      // First screen shown when the app starts
+      initialRoute: '/',
+
       routes: {
-        '/': (context) => const SplashScreen(),
-        '/welcome': (context) => const OnboardingScreen(),
+        '/': (context) { debugPrint('ROUTE_TRACE: building /'); return const SplashScreen(); },
+        '/welcome': (context) { debugPrint('ROUTE_TRACE: building /welcome'); return const OnboardingScreen(); },
         '/login': (context) => const LoginScreen(),
         '/analysis': (context) => const AnalysisScreen(),
         '/register': (context) => const RegistrationScreen(),
-        '/camera': (context) => const CameraCaptureScreen(),
+        '/camera': (context) { debugPrint('ROUTE_TRACE: building /camera'); return const CameraCaptureScreen(); },
         '/home': (context) => const HomeScreen(),
       },
     );
