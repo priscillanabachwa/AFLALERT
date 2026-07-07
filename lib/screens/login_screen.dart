@@ -32,16 +32,19 @@ class LoginScreen extends StatelessWidget {
                   ],
                 ),
                 padding: const EdgeInsets.all(16),
-                child: Image.asset(
-                  'assets/images/aflalert_logo.png',
-                  fit: BoxFit.contain,
+                child: const Center(
+                  child: Icon(
+                    Icons.eco_outlined,
+                    size: 54,
+                    color: Color(0xFF1E3A24),
+                  ),
                 ),
               ),
 
               const SizedBox(height: 32),
 
               Text(
-                'Welcome Back',
+                'AFLALERT',
                 style: GoogleFonts.inter(
                   fontSize: 32,
                   fontWeight: FontWeight.bold,
@@ -146,7 +149,7 @@ class LoginScreen extends StatelessWidget {
                       ],
                     ),
 
-                    const SizedBox(height: 24),
+                    SizedBox(height: 24),
 
                     ElevatedButton(
                       onPressed: () {},
@@ -212,7 +215,7 @@ class LoginScreen extends StatelessWidget {
                 ),
               ),
 
-              const SizedBox(height: 32),
+              SizedBox(height: 32),
 
               Row(
                 mainAxisAlignment: MainAxisAlignment.center,
@@ -223,7 +226,7 @@ class LoginScreen extends StatelessWidget {
                   ),
                   GestureDetector(
                     onTap: () {},
-                    child: const Text(
+                    child: Text(
                       'Register here',
                       style: TextStyle(
                         color: Color(0xFF1E3A24),
@@ -234,7 +237,7 @@ class LoginScreen extends StatelessWidget {
                 ],
               ),
 
-              const SizedBox(height: 40),
+              SizedBox(height: 40),
             ],
           ),
         ),

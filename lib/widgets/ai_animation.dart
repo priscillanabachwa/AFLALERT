@@ -55,7 +55,7 @@ class _AIAnimationState extends State<AIAnimation>
 
           AnimatedBuilder(
             animation: _pulseController,
-            builder: (_, __) {
+            builder: (_, _) {
               return _PulseRing(
                 progress: _pulseController.value,
                 size: 170,
@@ -65,7 +65,7 @@ class _AIAnimationState extends State<AIAnimation>
 
           AnimatedBuilder(
             animation: _pulseController,
-            builder: (_, __) {
+            builder: (_, _) {
               return _PulseRing(
                 progress: (_pulseController.value + .4) % 1,
                 size: 230,
@@ -75,7 +75,7 @@ class _AIAnimationState extends State<AIAnimation>
 
           AnimatedBuilder(
             animation: _orbitController,
-            builder: (_, __) {
+            builder: (_, _) {
 
               double angle = _orbitController.value * 2 * pi;
 
@@ -123,7 +123,7 @@ class _AIAnimationState extends State<AIAnimation>
                 color: Colors.white,
                 boxShadow: [
                   BoxShadow(
-                    color: AppColors.primary.withOpacity(.18),
+                    color: AppColors.primary.withValues(alpha: .18),
                     blurRadius: 25,
                     spreadRadius: 4,
                   ),
@@ -152,7 +152,7 @@ class _AIAnimationState extends State<AIAnimation>
         color: color,
         boxShadow: [
           BoxShadow(
-            color: color.withOpacity(.7),
+            color: color.withValues(alpha: .7),
             blurRadius: 10,
           ),
         ],
@@ -184,7 +184,7 @@ class _PulseRing extends StatelessWidget {
           decoration: BoxDecoration(
             shape: BoxShape.circle,
             border: Border.all(
-              color: AppColors.primary.withOpacity(.5),
+              color: AppColors.primary.withValues(alpha: .5),
               width: 2,
             ),
           ),

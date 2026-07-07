@@ -116,11 +116,11 @@ class _ProgressSectionState extends State<ProgressSection> {
             color: Colors.white,
             borderRadius: BorderRadius.circular(18),
             border: Border.all(
-              color: AppColors.outline.withOpacity(.4),
+              color: AppColors.outline.withValues(alpha: .4),
             ),
             boxShadow: [
               BoxShadow(
-                color: Colors.black.withOpacity(.04),
+                color: Colors.black.withValues(alpha: .04),
                 blurRadius: 8,
                 offset: const Offset(0, 3),
               ),
@@ -132,7 +132,7 @@ class _ProgressSectionState extends State<ProgressSection> {
               Container(
                 padding: const EdgeInsets.all(10),
                 decoration: BoxDecoration(
-                  color: AppColors.primary.withOpacity(.08),
+                  color: AppColors.primary.withValues(alpha: .08),
                   borderRadius: BorderRadius.circular(12),
                 ),
                 child: const Icon(
