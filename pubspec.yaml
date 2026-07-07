@@ -101,7 +101,7 @@ flutter:
 
 
     - assets/images/best.tflite 
-    - assets/image
-    - lib/assets/best.tflite
+    - assets/images/
+    - lib/assets/images/best.tflite
     - lib/assets/images/
 

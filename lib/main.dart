@@ -15,7 +15,6 @@ Future<void> main() async {
 
   await Firebase.initializeApp(
     options: DefaultFirebaseOptions.currentPlatform,
-      
   );
   runApp(const AflAlertApp());
 }
@@ -28,28 +27,22 @@ class AflAlertApp extends StatelessWidget {
     return MaterialApp(
       debugShowCheckedModeBanner: false,
       title: 'AflAlert',
-
       theme: ThemeData(
         useMaterial3: true,
-
         colorScheme: ColorScheme.fromSeed(
           seedColor: const Color(0xFF00462D),
           primary: const Color(0xFF00462D),
           secondary: const Color(0xFFFECE4B),
           surface: const Color(0xFFF8F9FA),
         ),
-
         scaffoldBackgroundColor: const Color(0xFFF8F9FA),
-
         textTheme: GoogleFonts.poppinsTextTheme(),
-
         appBarTheme: const AppBarTheme(
           backgroundColor: Colors.white,
           foregroundColor: Color(0xFF00462D),
           elevation: 0,
           centerTitle: true,
         ),
-
         elevatedButtonTheme: ElevatedButtonThemeData(
           style: ElevatedButton.styleFrom(
             backgroundColor: const Color(0xFF00462D),
@@ -65,36 +58,29 @@ class AflAlertApp extends StatelessWidget {
             ),
           ),
         ),
-
         inputDecorationTheme: InputDecorationTheme(
           filled: true,
           fillColor: Colors.white,
-
           contentPadding: const EdgeInsets.symmetric(
             horizontal: 16,
             vertical: 18,
           ),
-
           border: OutlineInputBorder(
             borderRadius: BorderRadius.circular(12),
             borderSide: const BorderSide(
               color: Color(0xFFD1D5DB),
             ),
           ),
-
           enabledBorder: OutlineInputBorder(
             borderRadius: BorderRadius.circular(12),
             borderSide: const BorderSide(
               color: Color(0xFFD1D5DB),
             ),
           ),
-
           focusedBorder: OutlineInputBorder(
             borderRadius: BorderRadius.circular(12),
             borderSide: const BorderSide(color: Color(0xFF355E3B), width: 2),
           ),
-          contentPadding:
-              const EdgeInsets.symmetric(horizontal: 16, vertical: 18),
         ),
       ),
       home: const HomeScreen(),
