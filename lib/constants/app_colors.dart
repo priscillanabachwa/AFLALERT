@@ -15,4 +15,7 @@ class AppColors {
   static const outline = Color(0xFFBFC9C1);
 
   static const grey = Color(0xFF707973);
+
+  // Matches the cream background baked into the AflAlert logo artwork.
+  static const logoCream = Color(0xFFF6F4E2);
 }

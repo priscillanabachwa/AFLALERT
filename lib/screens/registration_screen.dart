@@ -114,7 +114,7 @@ class _RegistrationScreenState extends State<RegistrationScreen> {
                 width: 100,
                 height: 100,
                 decoration: BoxDecoration(
-                  color: Colors.white,
+                  color: AppColors.logoCream,
                   borderRadius: BorderRadius.circular(12),
                   boxShadow: [
                     BoxShadow(
@@ -124,10 +124,10 @@ class _RegistrationScreenState extends State<RegistrationScreen> {
                     ),
                   ],
                 ),
-                padding: const EdgeInsets.all(16),
+                clipBehavior: Clip.antiAlias,
                 child: Image.asset(
                   'lib/assets/images/aflalert_logo.png',
-                  fit: BoxFit.contain,
+                  fit: BoxFit.cover,
                 ),
               ),
 

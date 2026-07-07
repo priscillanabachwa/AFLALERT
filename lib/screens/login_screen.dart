@@ -76,7 +76,7 @@ class _LoginScreenState extends State<LoginScreen> {
                 width: 100,
                 height: 100,
                 decoration: BoxDecoration(
-                  color: Colors.white,
+                  color: AppColors.logoCream,
                   borderRadius: BorderRadius.circular(12),
                   boxShadow: [
                     BoxShadow(
@@ -86,14 +86,14 @@ class _LoginScreenState extends State<LoginScreen> {
                     ),
                   ],
                 ),
-                padding: const EdgeInsets.all(16),
+                clipBehavior: Clip.antiAlias,
                 child: Image.asset(
                   "lib/assets/images/aflalert_logo.png",
-                  fit: BoxFit.contain,
+                  fit: BoxFit.cover,
                   errorBuilder: (context, error, stackTrace) {
                     return const Icon(Icons.image_not_supported_outlined, color: Colors.amber,size:40);
                   },
-                  
+
                 ),
               ),
               
