@@ -126,7 +126,7 @@ class _RegistrationScreenState extends State<RegistrationScreen> {
                 ),
                 padding: const EdgeInsets.all(16),
                 child: Image.asset(
-                  'assets/images/logo.jpeg',
+                  'lib/assets/images/aflalert_logo.png',
                   fit: BoxFit.contain,
                 ),
               ),

@@ -87,7 +87,7 @@ class _LoginScreenState extends State<LoginScreen> {
                 ),
                 padding: const EdgeInsets.all(16),
                 child: Image.asset(
-                  "assets/images/aflalert_logo.png",
+                  "lib/assets/images/aflalert_logo.png",
                   fit: BoxFit.contain,
                   errorBuilder: (context, error, stackTrace) {
                     return const Icon(Icons.image_not_supported_outlined, color: Colors.amber,size:40);
@@ -311,7 +311,7 @@ class _LoginScreenState extends State<LoginScreen> {
                       child: Row(
                         mainAxisAlignment: MainAxisAlignment.center,
                         children: [
-                          Image.asset('assets/google_logo.png', height: 20, width: 20),
+                          Image.asset('lib/assets/images/google_logo.png', height: 20, width: 20),
                           const SizedBox(width: 8),
                           Text(
                             'Google',
@@ -338,7 +338,9 @@ class _LoginScreenState extends State<LoginScreen> {
                     style: TextStyle(color: Color(0xFF6B7280)),
                   ),
                   GestureDetector(
-                    onTap: () {},
+                    onTap: () {
+                      Navigator.pushNamed(context, '/register');
+                    },
                     child: Text(
                       'Register here',
                       style: TextStyle(
