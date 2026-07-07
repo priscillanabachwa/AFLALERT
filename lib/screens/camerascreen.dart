@@ -391,7 +391,7 @@ class _CameraCaptureScreenState extends State<CameraCaptureScreen> {
         ? 'Move to a brighter, well-lit area'
         : (_focus == _FocusQuality.blurry
             ? 'Hold the phone steady before capturing'
-            : 'Spread a handful of kernels flat in the frame');
+            : 'Spread the kernel(s) flat in the frame');
     final String subGuidance = allGood
         ? 'Hold phone about 20cm above the sample'
         : 'Adjust and the frame will turn white when ready';

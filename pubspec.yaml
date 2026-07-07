@@ -36,12 +36,9 @@ dependencies:
   image_picker: ^1.2.3
   firebase_core: ^4.11.0
   google_fonts: ^8.1.0
-<<<<<<< HEAD
   camera: ^0.12.0+1
-=======
   get: ^4.7.3
   firebase_auth: ^6.5.4
->>>>>>> 220b94442f9c9040eb07125b0c6cbff900836fa5
 
 
 dev_dependencies:
