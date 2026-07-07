@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
 
-import 'history_screen.dart.dart';
+import 'history_screen.dart';
 import 'login_screen.dart';
 
 class RegisterScreen extends StatefulWidget {

@@ -2,7 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 
 import 'package:aflalert/main.dart';
-import 'package:aflalert/screens/history_screen.dart.dart';
+import 'package:aflalert/screens/history_screen.dart';
 import 'package:aflalert/screens/login_screen.dart';
 
 void main() {
