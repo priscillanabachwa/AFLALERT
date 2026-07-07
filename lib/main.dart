@@ -1,8 +1,20 @@
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
-import 'screens/login_screen.dart'; // Links main.dart to your login screen file
+import 'package:firebase_core/firebase_core.dart';
+import 'firebase_options.dart';
 
-void main() {
+import 'package:aflalert/screens/splash_screen.dart';
+import 'package:aflalert/screens/welcomepage.dart';
+import 'package:aflalert/screens/login_screen.dart';
+import 'package:aflalert/screens/analysis_screen.dart';
+import 'package:aflalert/screens/registration_screen.dart';
+import 'package:aflalert/screens/camerascreen.dart';
+
+Future<void> main() async {
+  WidgetsFlutterBinding.ensureInitialized();
+
+  await Firebase.initializeApp(options: DefaultFirebaseOptions.currentPlatform);
+
   runApp(const AflAlert());
 }
 
@@ -16,10 +28,11 @@ class AflAlert extends StatelessWidget {
       debugShowCheckedModeBanner: false,
       theme: ThemeData(
         useMaterial3: true,
+
         colorScheme: ColorScheme.fromSeed(
-          seedColor: const Color(0xFF355E3B),
-          primary: const Color(0xFF355E3B),
-          secondary: const Color(0xFFD9A520),
+          seedColor: const Color(0xFF00462D),
+          primary: const Color(0xFF00462D),
+          secondary: const Color(0xFFFECE4B),
           surface: const Color(0xFFF8F9FA),
         ),
         textTheme: GoogleFonts.interTextTheme(Theme.of(context).textTheme),
@@ -51,12 +64,22 @@ class AflAlert extends StatelessWidget {
           ),
           focusedBorder: OutlineInputBorder(
             borderRadius: BorderRadius.circular(12),
-            borderSide: const BorderSide(color: Color(0xFF355E3B), width: 2),
+            borderSide: const BorderSide(color: Color(0xFF00462D), width: 2),
           ),
-          contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 18),
         ),
       ),
-      home: const LoginScreen(), // Opens the separate visual LoginScreen class
+
+      // First screen shown when the app starts
+      initialRoute: '/camera',
+
+      routes: {
+        '/': (context) => const SplashScreen(),
+        '/welcome': (context) => const OnboardingScreen(),
+        '/login': (context) => const LoginScreen(),
+        '/analysis': (context) => const AnalysisScreen(),
+        '/register': (context) => const RegistrationScreen(),
+        '/camera': (context) => const CameraCaptureScreen(),
+      },
     );
   }
 }
