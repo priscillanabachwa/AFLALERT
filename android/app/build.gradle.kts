@@ -36,15 +36,12 @@ android {
     }
 }
 
-<<<<<<< HEAD
-=======
 kotlin {
     jvmToolchain(17)
     compilerOptions {
         jvmTarget = org.jetbrains.kotlin.gradle.dsl.JvmTarget.JVM_17
     }
 }
->>>>>>> 220b94442f9c9040eb07125b0c6cbff900836fa5
 
 tasks.withType<org.jetbrains.kotlin.gradle.tasks.KotlinCompile>().configureEach {
     compilerOptions.jvmTarget.set(org.jetbrains.kotlin.gradle.dsl.JvmTarget.JVM_17)
