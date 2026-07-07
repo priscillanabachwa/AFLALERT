@@ -1,5 +1,6 @@
 import 'dart:async';
 import 'package:flutter/material.dart';
+import 'package:aflalert/screens/welcomepage.dart';
 
 class SplashScreen extends StatefulWidget {
   const SplashScreen({super.key});
@@ -31,8 +32,14 @@ class _SplashScreenState extends State<SplashScreen>
 
     // Navigate after 3 seconds
     Timer(const Duration(seconds: 3), () {
-      // Navigator.pushReplacement(...)
+      if (mounted) {
+        Navigator.pushReplacement(
+          context,
+          MaterialPageRoute(builder: (context) => const WelcomePage()),
+        );
+      }
     });
+      // Navigator.pushReplacement(...)
   }
 
   @override
