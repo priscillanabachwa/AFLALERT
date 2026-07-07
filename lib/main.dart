@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:firebase_core/firebase_core.dart';
 import 'package:google_fonts/google_fonts.dart';
+import 'package:aflalert/screens/homescreen.dart';
 
 import 'firebase_options.dart';
 
@@ -29,28 +30,22 @@ class AflAlert extends StatelessWidget {
     return MaterialApp(
       debugShowCheckedModeBanner: false,
       title: 'AflAlert',
-
       theme: ThemeData(
         useMaterial3: true,
-
         colorScheme: ColorScheme.fromSeed(
           seedColor: const Color(0xFF00462D),
           primary: const Color(0xFF00462D),
           secondary: const Color(0xFFFECE4B),
           surface: const Color(0xFFF8F9FA),
         ),
-
         scaffoldBackgroundColor: const Color(0xFFF8F9FA),
-
         textTheme: GoogleFonts.poppinsTextTheme(),
-
         appBarTheme: const AppBarTheme(
           backgroundColor: Colors.white,
           foregroundColor: Color(0xFF00462D),
           elevation: 0,
           centerTitle: true,
         ),
-
         elevatedButtonTheme: ElevatedButtonThemeData(
           style: ElevatedButton.styleFrom(
             backgroundColor: const Color(0xFF00462D),
@@ -66,38 +61,25 @@ class AflAlert extends StatelessWidget {
             ),
           ),
         ),
-
         inputDecorationTheme: InputDecorationTheme(
           filled: true,
           fillColor: Colors.white,
-
           hintStyle: TextStyle(color: Colors.grey.shade500),
-
           contentPadding: const EdgeInsets.symmetric(
             horizontal: 16,
             vertical: 18,
           ),
-
           border: OutlineInputBorder(
             borderRadius: BorderRadius.circular(12),
-            borderSide: const BorderSide(
-              color: Color(0xFFD1D5DB),
-            ),
+            borderSide: const BorderSide(color: Color(0xFFD1D5DB)),
           ),
-
           enabledBorder: OutlineInputBorder(
             borderRadius: BorderRadius.circular(12),
-            borderSide: const BorderSide(
-              color: Color(0xFFD1D5DB),
-            ),
+            borderSide: const BorderSide(color: Color(0xFFD1D5DB)),
           ),
-
           focusedBorder: OutlineInputBorder(
             borderRadius: BorderRadius.circular(12),
-            borderSide: const BorderSide(
-              color: Color(0xFF00462D),
-              width: 2,
-            ),
+            borderSide: const BorderSide(color: Color(0xFF00462D), width: 2),
           ),
         ),
       ),
@@ -112,6 +94,7 @@ class AflAlert extends StatelessWidget {
         '/analysis': (context) => const AnalysisScreen(),
         '/register': (context) => const RegistrationScreen(),
         '/camera': (context) { debugPrint('ROUTE_TRACE: building /camera'); return const CameraCaptureScreen(); },
+        '/home': (context) => const HomeScreen(),
       },
     );
   }
