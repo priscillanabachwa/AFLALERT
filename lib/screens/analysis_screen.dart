@@ -50,7 +50,7 @@ class AnalysisScreen extends StatelessWidget {
               height: 320,
               decoration: BoxDecoration(
                 shape: BoxShape.circle,
-                color: AppColors.primary.withOpacity(.05),
+                color: AppColors.primary.withValues(alpha: .05),
               ),
             ),
           ),
@@ -63,7 +63,7 @@ class AnalysisScreen extends StatelessWidget {
               height: 280,
               decoration: BoxDecoration(
                 shape: BoxShape.circle,
-                color: const Color(0xFFFECE4B).withOpacity(.05),
+                color: const Color(0xFFFECE4B).withValues(alpha: .05),
               ),
             ),
           ),
