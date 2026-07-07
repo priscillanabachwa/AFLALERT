@@ -13,19 +13,19 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
 
   final List<OnboardingData> pages = [
     OnboardingData(
-      image: 'assets/images/farmer1.png',
+      image: 'lib/assets/images/farmer1.png',
       title: 'Protect Your Harvest',
       description:
           'Detect aflatoxin risks in maize using AI-powered image analysis.',
     ),
     OnboardingData(
-      image: 'assets/images/farmer2.png',
+      image: 'lib/assets/images/farmer2.png',
       title: 'Instant Results',
       description:
           'Scan maize samples and receive fast, reliable assessments.',
     ),
     OnboardingData(
-      image: 'assets/images/farmer3.png',
+      image: 'lib/assets/images/farmer3.png',
       title: 'Stay Safe & Informed',
       description:
           'Get recommendations and improve food safety for your harvest.',

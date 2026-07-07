@@ -311,7 +311,7 @@ class _LoginScreenState extends State<LoginScreen> {
                       child: Row(
                         mainAxisAlignment: MainAxisAlignment.center,
                         children: [
-                          Image.asset('assets/images/google_logo.png', height: 20, width: 20),
+                          Image.asset('assets/google_logo.png', height: 20, width: 20),
                           const SizedBox(width: 8),
                           Text(
                             'Google',

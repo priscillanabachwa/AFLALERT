@@ -4,7 +4,7 @@ import 'package:google_fonts/google_fonts.dart';
 
 import 'firebase_options.dart';
 
-import 'package:aflalert/screens/splash.dart';
+import 'package:aflalert/screens/splash_screen.dart';
 import 'package:aflalert/screens/welcomepage.dart';
 import 'package:aflalert/screens/login_screen.dart';
 import 'package:aflalert/screens/analysis_screen.dart';
