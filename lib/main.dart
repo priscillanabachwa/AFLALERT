@@ -10,8 +10,10 @@ void main() async{
   WidgetsFlutterBinding.ensureInitialized();
   await Firebase.initializeApp(
     options: DefaultFirebaseOptions.currentPlatform,
+      
   );
-  runApp(const AflAlertApp());
+  runApp(
+    const AflAlertApp());
 }
 
 class AflAlertApp extends StatelessWidget {
@@ -65,7 +67,7 @@ class AflAlertApp extends StatelessWidget {
               const EdgeInsets.symmetric(horizontal: 16, vertical: 18),
         ),
       ),
-      home: const LoginPage(),
+      home: const LoginScreen(),
     );
   }
 }

@@ -94,6 +94,6 @@ flutter:
 
   assets:
 
-    - assets/best.tflite 
+    - assets/images/best.tflite 
     - assets/images/
-    - .dart_tool/assets/best.tflite
+  
