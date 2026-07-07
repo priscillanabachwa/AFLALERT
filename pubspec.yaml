@@ -32,8 +32,8 @@ dependencies:
     sdk: flutter
   cupertino_icons: ^1.0.8
   tflite_flutter: ^0.12.1
-  image_picker: ^1.2.3
   image: ^4.9.1
+  image_picker: ^1.2.3
   firebase_core: ^4.11.0
   google_fonts: ^8.1.0
   get: ^4.7.3
@@ -91,4 +91,5 @@ flutter:
 
 
   assets:
-    - .dart_tool/assets/best.tflite 
+    - lib/assets/best.tflite
+    - lib/assets/images/

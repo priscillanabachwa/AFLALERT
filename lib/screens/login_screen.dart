@@ -138,10 +138,17 @@ class _LoginScreenState extends State<LoginScreen> {
                     TextFormField(
                       controller: _emailController,
                       keyboardType: TextInputType.emailAddress,
-                      decoration: const InputDecoration(
+                      decoration: InputDecoration(
                         hintText: 'name@farm-hq.com',
                         prefixIcon: Icon(Icons.email_outlined),
-                      ),
+                        filled: true,
+                        fillColor:Color(0xFFF3F4F6),
+                        border: OutlineInputBorder(
+                          borderRadius: BorderRadius.circular(10),
+                          borderSide: BorderSide.none,
+                          ),
+                        ),
+                      
                        validator: (value) {
 
 
@@ -170,6 +177,12 @@ class _LoginScreenState extends State<LoginScreen> {
                       decoration:  InputDecoration(
                         hintText: '••••••••',
                         prefixIcon: Icon(Icons.lock_outline),
+                        filled: true,
+                        fillColor:Color(0xFFF3F4F6),
+                        border: OutlineInputBorder(
+                          borderRadius: BorderRadius.circular(10),
+                          borderSide: BorderSide.none,
+                        ),
                         suffixIcon: IconButton(
                           icon: Icon(
 
