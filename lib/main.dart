@@ -104,12 +104,12 @@ class AflAlert extends StatelessWidget {
       initialRoute: '/camera',
 
       routes: {
-        '/': (context) => const SplashScreen(),
-        '/welcome': (context) => const OnboardingScreen(),
+        '/': (context) { debugPrint('ROUTE_TRACE: building /'); return const SplashScreen(); },
+        '/welcome': (context) { debugPrint('ROUTE_TRACE: building /welcome'); return const OnboardingScreen(); },
         '/login': (context) => const LoginScreen(),
         '/analysis': (context) => const AnalysisScreen(),
         '/register': (context) => const RegistrationScreen(),
-        '/camera': (context) => const CameraCaptureScreen(),
+        '/camera': (context) { debugPrint('ROUTE_TRACE: building /camera'); return const CameraCaptureScreen(); },
       },
     );
   }
