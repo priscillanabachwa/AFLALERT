@@ -16,11 +16,11 @@ Future<void> main() async {
     options: DefaultFirebaseOptions.currentPlatform,
   );
 
-  runApp(const AflAlertApp());
+  runApp(const AflAlert());
 }
 
-class AflAlertApp extends StatelessWidget {
-  const AflAlertApp({super.key});
+class AflAlert extends StatelessWidget {
+  const AflAlert({super.key});
 
   @override
   Widget build(BuildContext context) {
@@ -103,7 +103,7 @@ class AflAlertApp extends StatelessWidget {
 
       routes: {
         '/': (context) => const SplashScreen(),
-        '/welcome': (context) => const WelcomePage(),
+        '/welcome': (context) => const OnboardingScreen(),
         '/login': (context) => const LoginScreen(),
         '/analysis': (context) => const AnalysisScreen(),
       },
