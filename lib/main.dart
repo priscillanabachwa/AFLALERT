@@ -4,19 +4,22 @@ import 'package:google_fonts/google_fonts.dart';
 
 import 'firebase_options.dart';
 
-import 'package:aflalert/screens/splash.dart';
+import 'package:aflalert/screens/splash_screen.dart';
 import 'package:aflalert/screens/welcomepage.dart';
 import 'package:aflalert/screens/login_screen.dart';
 import 'package:aflalert/screens/analysis_screen.dart';
+import 'package:aflalert/screens/registration_screen.dart';
+import 'package:aflalert/screens/camerascreen.dart';
 
 Future<void> main() async {
   WidgetsFlutterBinding.ensureInitialized();
 
   await Firebase.initializeApp(options: DefaultFirebaseOptions.currentPlatform);
 
-  runApp(const AflAlertApp());
+  runApp(const AflAlert());
 }
 
+<<<<<<< HEAD
 class AflAlertApp extends StatelessWidget {
   final bool debugShowCheckedModeBanner;
   final Widget home;
@@ -26,6 +29,10 @@ class AflAlertApp extends StatelessWidget {
     this.debugShowCheckedModeBanner = false,
     this.home = const LoginScreen(),
   });
+=======
+class AflAlert extends StatelessWidget {
+  const AflAlert({super.key});
+>>>>>>> 2e517459d3be714620c36b41cdf85d6d2aea065c
 
   @override
   Widget build(BuildContext context) {
@@ -96,13 +103,15 @@ class AflAlertApp extends StatelessWidget {
       ),
 
       // First screen shown when the app starts
-      initialRoute: '/',
+      initialRoute: '/camera',
 
       routes: {
         '/': (context) => const SplashScreen(),
-        '/welcome': (context) => const WelcomePage(),
+        '/welcome': (context) => const OnboardingScreen(),
         '/login': (context) => const LoginScreen(),
         '/analysis': (context) => const AnalysisScreen(),
+        '/register': (context) => const RegistrationScreen(),
+        '/camera': (context) => const CameraCaptureScreen(),
       },
     );
   }

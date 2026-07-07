@@ -73,6 +73,9 @@ class _ForgotPasswordScreenState extends State<ForgotPasswordScreen> {
       backgroundColor: Colors.white,
       appBar: AppBar(
         backgroundColor: Colors.transparent,
+      backgroundColor: const Color(0xFFF8F9FA),
+      appBar: AppBar(
+        backgroundColor: const Color(0xFFF8F9FA),
         elevation: 0,
         leading: IconButton(
           icon: const Icon(Icons.arrow_back_ios_new, color: Colors.black87),
@@ -92,6 +95,7 @@ class _ForgotPasswordScreenState extends State<ForgotPasswordScreen> {
                   Icons.shield_outlined,
                   size: 80,
                   color: Colors.green,
+                  color:   Color(0xFF1E3A24),
                 ),
                 const SizedBox(height: 16),
                 Text(
@@ -120,10 +124,14 @@ class _ForgotPasswordScreenState extends State<ForgotPasswordScreen> {
                     labelText: 'Email Address',
                     filled: true,
                     fillColor: const Color(0xFFF3F4F6),
+<<<<<<<< HEAD:lib/screens/forgotpassword_screen.dart
                     prefixIcon: const Icon(
                       Icons.email_outlined,
                       color: Colors.green,
                     ),
+========
+                    prefixIcon: const Icon(Icons.email_outlined, color: Color(0xFF1E3A24)),
+>>>>>>>> 2e517459d3be714620c36b41cdf85d6d2aea065c:lib/screens/forgot_password_screen.dart
                     border: OutlineInputBorder(
                       borderRadius: BorderRadius.circular(10),
                       borderSide: BorderSide.none,
@@ -134,10 +142,14 @@ class _ForgotPasswordScreenState extends State<ForgotPasswordScreen> {
                     ),
                     focusedBorder: OutlineInputBorder(
                       borderRadius: BorderRadius.circular(10),
+<<<<<<<< HEAD:lib/screens/forgotpassword_screen.dart
                       borderSide: const BorderSide(
                         color: Colors.green,
                         width: 2,
                       ),
+========
+                      borderSide: const BorderSide(color: Color(0xFF1E3A24), width: 2),
+>>>>>>>> 2e517459d3be714620c36b41cdf85d6d2aea065c:lib/screens/forgot_password_screen.dart
                     ),
                     errorBorder: OutlineInputBorder(
                       borderRadius: BorderRadius.circular(10),
@@ -170,7 +182,7 @@ class _ForgotPasswordScreenState extends State<ForgotPasswordScreen> {
                   child: ElevatedButton(
                     onPressed: _isLoading ? null : _resetPassword,
                     style: ElevatedButton.styleFrom(
-                      backgroundColor: Colors.green,
+                      backgroundColor: Color(0xFF1E3A24),
                       shape: RoundedRectangleBorder(
                         borderRadius: BorderRadius.circular(4),
                       ),

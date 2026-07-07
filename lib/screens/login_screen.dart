@@ -1,7 +1,11 @@
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:firebase_auth/firebase_auth.dart';
+<<<<<<< HEAD
 import 'forgotpassword_screen.dart';
+=======
+import 'forgot_password_screen.dart';
+>>>>>>> 2e517459d3be714620c36b41cdf85d6d2aea065c
 
 class LoginScreen extends StatefulWidget {
   const LoginScreen({super.key});
@@ -93,8 +97,24 @@ class _LoginScreenState extends State<LoginScreen> {
                       size: 54,
                       color: Color(0xFF1E3A24),
                     ),
+<<<<<<< HEAD
                   ),
                 ),
+=======
+                  ],
+                ),
+                padding: const EdgeInsets.all(16),
+                child: Image.asset(
+                  "assets/images/aflalert_logo.png",
+                  fit: BoxFit.contain,
+                  errorBuilder: (context, error, stackTrace) {
+                    return const Icon(Icons.image_not_supported_outlined, color: Colors.amber,size:40);
+                  },
+                  
+                ),
+              ),
+              
+>>>>>>> 2e517459d3be714620c36b41cdf85d6d2aea065c
 
                 const SizedBox(height: 32),
 
@@ -347,6 +367,38 @@ class _LoginScreenState extends State<LoginScreen> {
                           color: Color(0xFF1E3A24),
                           fontWeight: FontWeight.bold,
                         ),
+<<<<<<< HEAD
+=======
+                        Expanded(child: Divider(color: Colors.grey.shade300)),
+                      ],
+                    ),
+
+                    const SizedBox(height: 24),
+
+                    OutlinedButton(
+                      onPressed: () {},
+                      style: OutlinedButton.styleFrom(
+                        minimumSize: const Size(double.infinity, 56),
+                        side: const BorderSide(color: Color(0xFFE5E7EB)),
+                        shape: RoundedRectangleBorder(
+                          borderRadius: BorderRadius.circular(28),
+                        ),
+                      ),
+                      child: Row(
+                        mainAxisAlignment: MainAxisAlignment.center,
+                        children: [
+                          Image.asset('assets/google_logo.png', height: 20, width: 20),
+                          const SizedBox(width: 8),
+                          Text(
+                            'Google',
+                            style: GoogleFonts.inter(
+                              fontSize: 18,
+                              fontWeight: FontWeight.bold,
+                              color: const Color(0xFF1F2937),
+                            ),
+                          ),
+                        ],
+>>>>>>> 2e517459d3be714620c36b41cdf85d6d2aea065c
                       ),
                     ),
                   ],

@@ -132,7 +132,7 @@ class _AIAnimationState extends State<AIAnimation>
               child: Padding(
                 padding: const EdgeInsets.all(20),
                 child: Image.asset(
-                  "assets/images/aflat_logo.png",
+                  "lib/assets/images/aflalert_logo.png",
                   fit: BoxFit.contain,
                 ),
               ),
