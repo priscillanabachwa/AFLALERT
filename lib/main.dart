@@ -14,9 +14,7 @@ import 'package:aflalert/screens/camerascreen.dart';
 Future<void> main() async {
   WidgetsFlutterBinding.ensureInitialized();
 
-  await Firebase.initializeApp(
-    options: DefaultFirebaseOptions.currentPlatform,
-  );
+  await Firebase.initializeApp(options: DefaultFirebaseOptions.currentPlatform);
 
   runApp(const AflAlert());
 }
@@ -29,7 +27,6 @@ class AflAlert extends StatelessWidget {
     return MaterialApp(
       debugShowCheckedModeBanner: false,
       title: 'AflAlert',
-
       theme: ThemeData(
         useMaterial3: true,
 
@@ -78,24 +75,17 @@ class AflAlert extends StatelessWidget {
 
           border: OutlineInputBorder(
             borderRadius: BorderRadius.circular(12),
-            borderSide: const BorderSide(
-              color: Color(0xFFD1D5DB),
-            ),
+            borderSide: const BorderSide(color: Color(0xFFD1D5DB)),
           ),
 
           enabledBorder: OutlineInputBorder(
             borderRadius: BorderRadius.circular(12),
-            borderSide: const BorderSide(
-              color: Color(0xFFD1D5DB),
-            ),
+            borderSide: const BorderSide(color: Color(0xFFD1D5DB)),
           ),
 
           focusedBorder: OutlineInputBorder(
             borderRadius: BorderRadius.circular(12),
-            borderSide: const BorderSide(
-              color: Color(0xFF00462D),
-              width: 2,
-            ),
+            borderSide: const BorderSide(color: Color(0xFF00462D), width: 2),
           ),
         ),
       ),

@@ -28,7 +28,6 @@ class _ForgotPasswordScreenState extends State<ForgotPasswordScreen> {
     });
 
     try {
-      // Connects to Firebase to send the actual reset email link
       await FirebaseAuth.instance.sendPasswordResetEmail(
         email: _emailController.text.trim(),
       );
@@ -43,7 +42,7 @@ class _ForgotPasswordScreenState extends State<ForgotPasswordScreen> {
             backgroundColor: Colors.green,
           ),
         );
-        Navigator.pop(context); // Automatically returns back to login screen
+        Navigator.pop(context);
       }
     } on FirebaseAuthException catch (e) {
       if (mounted) {
@@ -73,9 +72,6 @@ class _ForgotPasswordScreenState extends State<ForgotPasswordScreen> {
     return Scaffold(
       backgroundColor: Colors.white,
       appBar: AppBar(
-        backgroundColor: Colors.transparent,
-      backgroundColor: const Color(0xFFF8F9FA),
-      appBar: AppBar(
         backgroundColor: const Color(0xFFF8F9FA),
         elevation: 0,
         leading: IconButton(
@@ -92,12 +88,10 @@ class _ForgotPasswordScreenState extends State<ForgotPasswordScreen> {
               crossAxisAlignment: CrossAxisAlignment.center,
               children: [
                 const SizedBox(height: 20),
-                // Lined up perfectly with your Login Screen shield brand logo
                 const Icon(
                   Icons.shield_outlined,
                   size: 80,
                   color: Colors.green,
-                  color:   Color(0xFF1E3A24),
                 ),
                 const SizedBox(height: 16),
                 Text(
@@ -119,8 +113,6 @@ class _ForgotPasswordScreenState extends State<ForgotPasswordScreen> {
                   ),
                 ),
                 const SizedBox(height: 40),
-
-                // Email Input field, now with grey fill to match login screen
                 TextFormField(
                   controller: _emailController,
                   keyboardType: TextInputType.emailAddress,
@@ -128,7 +120,10 @@ class _ForgotPasswordScreenState extends State<ForgotPasswordScreen> {
                     labelText: 'Email Address',
                     filled: true,
                     fillColor: const Color(0xFFF3F4F6),
-                    prefixIcon: const Icon(Icons.email_outlined, color: Color(0xFF1E3A24)),
+                    prefixIcon: const Icon(
+                      Icons.email_outlined,
+                      color: Colors.green,
+                    ),
                     border: OutlineInputBorder(
                       borderRadius: BorderRadius.circular(10),
                       borderSide: BorderSide.none,
@@ -139,7 +134,10 @@ class _ForgotPasswordScreenState extends State<ForgotPasswordScreen> {
                     ),
                     focusedBorder: OutlineInputBorder(
                       borderRadius: BorderRadius.circular(10),
-                      borderSide: const BorderSide(color: Color(0xFF1E3A24), width: 2),
+                      borderSide: const BorderSide(
+                        color: Colors.green,
+                        width: 2,
+                      ),
                     ),
                     errorBorder: OutlineInputBorder(
                       borderRadius: BorderRadius.circular(10),
@@ -147,22 +145,25 @@ class _ForgotPasswordScreenState extends State<ForgotPasswordScreen> {
                     ),
                     focusedErrorBorder: OutlineInputBorder(
                       borderRadius: BorderRadius.circular(10),
-                      borderSide: const BorderSide(color: Colors.redAccent, width: 2),
+                      borderSide: const BorderSide(
+                        color: Colors.redAccent,
+                        width: 2,
+                      ),
                     ),
                   ),
                   validator: (value) {
                     if (value == null || value.trim().isEmpty) {
                       return 'Please enter your email';
                     }
-                    if (!RegExp(r'^[\w-\.]+@([\w-]+\.)+[\w-]{2,4}$').hasMatch(value.trim())) {
+                    if (!RegExp(
+                      r'^[\w-\.]+@([\w-]+\.)+[\w-]{2,4}\$',
+                    ).hasMatch(value.trim())) {
                       return 'Please enter a valid email address';
                     }
                     return null;
                   },
                 ),
                 const SizedBox(height: 30),
-
-                // Boxed rectangle button, matching login screen style
                 SizedBox(
                   width: double.infinity,
                   height: 55,

@@ -90,7 +90,7 @@ flutter:
   #       - asset: fonts/TrajanPro.ttf
   #       - asset: fonts/TrajanPro_Bold.ttf
 
-
   assets:
     - lib/assets/best.tflite
     - lib/assets/images/
+
