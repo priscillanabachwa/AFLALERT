@@ -87,10 +87,10 @@ class _LoginScreenState extends State<LoginScreen> {
                 ),
                 padding: const EdgeInsets.all(16),
                 child: Image.asset(
-                  "lib/assets/images/aflalert_logo.png",
+                  "assets/images/aflalert_logo.png",
                   fit: BoxFit.contain,
                   errorBuilder: (context, error, stackTrace) {
-                    return const Icon(Icons.image_not_supported_outlined, color: Colors.amber,size:40);
+                    return Text(error.toString());
                   },
                   
                 ),
@@ -311,7 +311,7 @@ class _LoginScreenState extends State<LoginScreen> {
                       child: Row(
                         mainAxisAlignment: MainAxisAlignment.center,
                         children: [
-                          Image.asset('lib/assets/images/google_logo.png', height: 20, width: 20),
+                          Image.asset('assets/images/google_logo.png', height: 20, width: 20),
                           const SizedBox(width: 8),
                           Text(
                             'Google',
