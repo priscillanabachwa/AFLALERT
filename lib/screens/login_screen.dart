@@ -86,14 +86,16 @@ class _LoginScreenState extends State<LoginScreen> {
                   ],
                 ),
                 padding: const EdgeInsets.all(16),
-                child: const Center(
-                  child: Icon(
-                    Icons.eco_outlined,
-                    size: 54,
-                    color: Color(0xFF1E3A24),
-                  ),
+                child: Image.asset(
+                  "assets/images/aflalert_logo.png",
+                  fit: BoxFit.contain,
+                  errorBuilder: (context, error, stackTrace) {
+                    return const Icon(Icons.image_not_supported_outlined, color: Colors.amber,size:40);
+                  },
+                  
                 ),
               ),
+              
 
               const SizedBox(height: 32),
 
