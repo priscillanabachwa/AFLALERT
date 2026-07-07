@@ -1,21 +1,8 @@
 import 'package:flutter/material.dart';
-import 'package:firebase_core/firebase_core.dart';
 import 'package:google_fonts/google_fonts.dart';
+import 'screens/login_screen.dart'; // Links main.dart to your login screen file
 
-import 'firebase_options.dart';
-
-import 'package:aflalert/screens/splash.dart';
-import 'package:aflalert/screens/welcomepage.dart';
-import 'package:aflalert/screens/login_screen.dart';
-import 'package:aflalert/screens/analysis_screen.dart';
-
-Future<void> main() async {
-  WidgetsFlutterBinding.ensureInitialized();
-
-  await Firebase.initializeApp(
-    options: DefaultFirebaseOptions.currentPlatform,
-  );
-
+void main() {
   runApp(const AflAlert());
 }
 
@@ -25,88 +12,51 @@ class AflAlert extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return MaterialApp(
-      debugShowCheckedModeBanner: false,
       title: 'AflAlert',
-
+      debugShowCheckedModeBanner: false,
       theme: ThemeData(
         useMaterial3: true,
-
         colorScheme: ColorScheme.fromSeed(
-          seedColor: const Color(0xFF00462D),
-          primary: const Color(0xFF00462D),
-          secondary: const Color(0xFFFECE4B),
+          seedColor: const Color(0xFF355E3B),
+          primary: const Color(0xFF355E3B),
+          secondary: const Color(0xFFD9A520),
           surface: const Color(0xFFF8F9FA),
         ),
-
-        scaffoldBackgroundColor: const Color(0xFFF8F9FA),
-
-        textTheme: GoogleFonts.poppinsTextTheme(),
-
-        appBarTheme: const AppBarTheme(
-          backgroundColor: Colors.white,
-          foregroundColor: Color(0xFF00462D),
-          elevation: 0,
-          centerTitle: true,
-        ),
-
+        textTheme: GoogleFonts.interTextTheme(Theme.of(context).textTheme),
         elevatedButtonTheme: ElevatedButtonThemeData(
           style: ElevatedButton.styleFrom(
-            backgroundColor: const Color(0xFF00462D),
+            backgroundColor: const Color(0xFF1E3A24),
             foregroundColor: Colors.white,
             minimumSize: const Size(double.infinity, 56),
-            elevation: 0,
             shape: RoundedRectangleBorder(
               borderRadius: BorderRadius.circular(28),
             ),
+            elevation: 0,
             textStyle: const TextStyle(
               fontSize: 18,
               fontWeight: FontWeight.bold,
             ),
           ),
         ),
-
         inputDecorationTheme: InputDecorationTheme(
           filled: true,
           fillColor: Colors.white,
-
-          contentPadding: const EdgeInsets.symmetric(
-            horizontal: 16,
-            vertical: 18,
-          ),
-
           border: OutlineInputBorder(
             borderRadius: BorderRadius.circular(12),
-            borderSide: const BorderSide(
-              color: Color(0xFFD1D5DB),
-            ),
+            borderSide: const BorderSide(color: Color(0xFFD1D5DB)),
           ),
-
           enabledBorder: OutlineInputBorder(
             borderRadius: BorderRadius.circular(12),
-            borderSide: const BorderSide(
-              color: Color(0xFFD1D5DB),
-            ),
+            borderSide: const BorderSide(color: Color(0xFFD1D5DB)),
           ),
-
           focusedBorder: OutlineInputBorder(
             borderRadius: BorderRadius.circular(12),
-            borderSide: const BorderSide(
-              color: Color(0xFF00462D),
-              width: 2,
-            ),
+            borderSide: const BorderSide(color: Color(0xFF355E3B), width: 2),
           ),
+          contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 18),
         ),
       ),
-
-      // First screen shown when the app starts
-      initialRoute: '/',
-
-      routes: {
-        '/': (context) => const SplashScreen(),
-        '/welcome': (context) => const OnboardingScreen(),
-        '/login': (context) => const LoginScreen(),
-        '/analysis': (context) => const AnalysisScreen(),
-      },
+      home: const LoginScreen(), // Opens the separate visual LoginScreen class
     );
   }
 }
