@@ -100,7 +100,7 @@ class _RegistrationScreenState extends State<RegistrationScreen> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: const Color(0xFFF8F9FA),
+      backgroundColor: AppColors.t95,
       body: SafeArea(
         child: SingleChildScrollView(
           padding: const EdgeInsets.symmetric(horizontal: 24.0),
@@ -111,8 +111,8 @@ class _RegistrationScreenState extends State<RegistrationScreen> {
 
               // Logo Container
               Container(
-                width: 100,
-                height: 100,
+                width: 120,
+                height: 120,
                 decoration: BoxDecoration(
                   color: AppColors.logoCream,
                   borderRadius: BorderRadius.circular(12),
@@ -167,7 +167,7 @@ class _RegistrationScreenState extends State<RegistrationScreen> {
               Container(
                 padding: const EdgeInsets.all(24),
                 decoration: BoxDecoration(
-                  color: Colors.white,
+                  color: AppColors.t95,
                   borderRadius: BorderRadius.circular(24),
                   border: Border.all(color: const Color(0xFFE5E7EB)),
                 ),
