@@ -71,6 +71,9 @@ class _ForgotPasswordScreenState extends State<ForgotPasswordScreen> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
+      backgroundColor: Colors.white,
+      appBar: AppBar(
+        backgroundColor: Colors.transparent,
       backgroundColor: const Color(0xFFF8F9FA),
       appBar: AppBar(
         backgroundColor: const Color(0xFFF8F9FA),
@@ -93,6 +96,7 @@ class _ForgotPasswordScreenState extends State<ForgotPasswordScreen> {
                 const Icon(
                   Icons.shield_outlined,
                   size: 80,
+                  color: Colors.green,
                   color:   Color(0xFF1E3A24),
                 ),
                 const SizedBox(height: 16),
