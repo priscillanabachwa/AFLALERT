@@ -34,10 +34,15 @@ dependencies:
   tflite_flutter: ^0.12.1
 
 
+
   image: ^4.9.1
 
   image_picker: ^1.2.3
   
+
+  
+
+
   firebase_core: ^4.11.0
   google_fonts: ^8.1.0
 
@@ -94,6 +99,9 @@ flutter:
 
   assets:
 
+
     - assets/images/best.tflite 
-    - assets/images/
-  
+    - assets/image
+    - lib/assets/best.tflite
+    - lib/assets/images/
+
