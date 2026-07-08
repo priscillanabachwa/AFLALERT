@@ -1,6 +1,8 @@
 import 'package:camera/camera.dart';
+import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:flutter/material.dart';
 
+import '../services/firestore_service.dart';
 import '../services/location_service.dart';
 import 'analysis_screen.dart';
 
@@ -25,7 +27,16 @@ class HomeScreen extends StatelessWidget {
               const SizedBox(height: 12),
               _buildHeader(),
               const SizedBox(height: 24),
-              _buildGreeting(),
+              StreamBuilder<DocumentSnapshot<Map<String, dynamic>>>(
+                stream: FirestoreService().getUserProfile(),
+                builder: (context, snapshot) {
+                  final String? fullName = snapshot.data?.data()?['fullName'] as String?;
+                  final String firstName = (fullName != null && fullName.trim().isNotEmpty)
+                      ? fullName.trim().split(' ').first
+                      : 'there';
+                  return _buildGreeting(firstName);
+                },
+              ),
               const SizedBox(height: 20),
               _buildInfoCards(),
               const SizedBox(height: 32),
@@ -111,28 +122,35 @@ class HomeScreen extends StatelessWidget {
     );
   }
 
-  Widget _buildGreeting() {
+  static String _greetingForHour(int hour) {
+    if (hour >= 5 && hour < 12) return 'Good Morning';
+    if (hour >= 12 && hour < 17) return 'Good Afternoon';
+    if (hour >= 17 && hour < 21) return 'Good Evening';
+    return 'Good Night';
+  }
+
+  Widget _buildGreeting(String name) {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
-      children: const [
+      children: [
         Text(
-          'Good Morning,',
-          style: TextStyle(
+          '${_greetingForHour(DateTime.now().hour)},',
+          style: const TextStyle(
             fontSize: 28,
             fontWeight: FontWeight.w400,
             color: darkGreen,
           ),
         ),
         Text(
-          'John',
-          style: TextStyle(
+          name,
+          style: const TextStyle(
             fontSize: 32,
             fontWeight: FontWeight.bold,
             color: darkGreen,
           ),
         ),
-        SizedBox(height: 6),
-        Text(
+        const SizedBox(height: 6),
+        const Text(
           'Ready to secure your harvest today?',
           style: TextStyle(
             fontSize: 14,
