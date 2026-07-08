@@ -28,7 +28,6 @@ class AflAlert extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return MaterialApp(
-      title: 'AflAlert',
       debugShowCheckedModeBanner: false,
 
       theme: ThemeData(
@@ -51,13 +50,11 @@ class AflAlert extends StatelessWidget {
 
         elevatedButtonTheme: ElevatedButtonThemeData(
           style: ElevatedButton.styleFrom(
-            backgroundColor: const Color(0xFF1E3A24),
             foregroundColor: Colors.white,
             minimumSize: const Size(double.infinity, 56),
             shape: RoundedRectangleBorder(
               borderRadius: BorderRadius.circular(28),
             ),
-            elevation: 0,
             textStyle: const TextStyle(
               fontSize: 18,
               fontWeight: FontWeight.bold,

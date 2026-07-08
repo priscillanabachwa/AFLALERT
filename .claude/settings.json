@@ -11,7 +11,9 @@
       "Bash(/c/Users/User/AppData/Local/Android/sdk/platform-tools/adb.exe shell *)",
       "Read(//c/Users/hp/AppData/Local/Temp/claude/c--Users-hp-Desktop-AFLALERT/074727b8-f532-4695-9eb0-ec7de4c484c9/tasks/**)",
       "Bash(adb -s 3226327000011424 exec-out screencap -p)",
-      "Bash(\"/c/Users/hp/AppData/Local/Android/Sdk/platform-tools/adb.exe\" -s 3226327000011424 exec-out screencap -p)"
+      "Bash(\"/c/Users/hp/AppData/Local/Android/Sdk/platform-tools/adb.exe\" -s 3226327000011424 exec-out screencap -p)",
+      "Bash(jobs)",
+      "PowerShell(try { $stream = [System.IO.File]::Open\\(\"c:\\\\Users\\\\hp\\\\Desktop\\\\AFLALERT\\\\lib\\\\main.dart\", 'Open', 'ReadWrite', 'None'\\); $stream.Close\\(\\); Write-Output \"File is not locked\" } catch { Write-Output \"File is LOCKED: $\\($_.Exception.Message\\)\" })"
     ]
   }
 }
