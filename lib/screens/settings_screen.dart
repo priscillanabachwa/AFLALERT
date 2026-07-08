@@ -2,6 +2,8 @@ import 'package:flutter/material.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
+import 'legal_screen.dart';
+
 class SettingsScreen extends StatefulWidget {
   const SettingsScreen({super.key});
 
@@ -270,18 +272,22 @@ class _SettingsScreenState extends State<SettingsScreen> {
                     // TODO: hook up local_auth for real biometric enforcement.
                   },
                 ),
+              ],
+            ),
+            const SizedBox(height: 24),
+
+            // ---------------- Legal ----------------
+            _SectionHeader(title: 'Legal'),
+            _SettingsCard(
+              children: [
                 _SettingsTile(
-                  icon: Icons.privacy_tip_outlined,
-                  label: 'Privacy policy',
+                  icon: Icons.gavel_outlined,
+                  label: 'Legal',
                   onTap: () {
-                    // TODO: open a WebView or url_launcher link to your policy
-                  },
-                ),
-                _SettingsTile(
-                  icon: Icons.description_outlined,
-                  label: 'Terms of service',
-                  onTap: () {
-                    // TODO: open a WebView or url_launcher link to your terms
+                    Navigator.push(
+                      context,
+                      MaterialPageRoute(builder: (_) => const LegalScreen()),
+                    );
                   },
                 ),
               ],
