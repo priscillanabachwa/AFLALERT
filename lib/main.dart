@@ -85,7 +85,7 @@ class AflAlert extends StatelessWidget {
       ),
 
       // First screen shown when the app starts
-      initialRoute: '/',
+      initialRoute: '/home',
 
       routes: {
         '/': (context) { debugPrint('ROUTE_TRACE: building /'); return const SplashScreen(); },

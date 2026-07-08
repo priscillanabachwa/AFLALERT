@@ -1,31 +1,62 @@
 import 'dart:io';
 import 'package:firebase_storage/firebase_storage.dart';
+import 'package:flutter/foundation.dart';
 
 class StorageService {
-  // Create a reference to the firebase storage instance
+  // Create a single, reusable reference to the Firebase Storage instance
   final FirebaseStorage _storage = FirebaseStorage.instance;
 
-  /// Uploads a maize image to Firebase Storage and returns its secure download URL.
+  /// Uploads a raw maize image file to Firebase Storage.
+  /// 
+  /// Returns the secure, permanent [String] download URL if successful.
+  /// Returns [null] if the upload fails or is canceled.
   Future<String?> uploadMaizeImage(File file) async {
+    // 1. Edge case check: Ensure the file actually exists on the device before proceeding
+    if (!await file.exists()) {
+      debugPrint('StorageService Error: The local file does not exist.');
+      return null;
+    }
+
     try {
-      // 1. Create a unique filename using the current timestamp
-      String fileName = 'maize_${DateTime.now().millisecondsSinceEpoch}.jpg';
+      // 2. Generate a completely unique file name using a timestamp.
+      // This prevents User B from overwriting User A's file if they happen to name it the same thing.
+      String uniqueFileName = 'maize_${DateTime.now().millisecondsSinceEpoch}.jpg';
       
-      // 2. Point to the destination path in your Storage bucket (e.g., a folder named 'maize_images')
-      Reference ref = _storage.ref().child('maize_images/$fileName');
+      // 3. Define the storage location pathway bucket.
+      // This creates a virtual folder named 'maize_images' at the root of your Firebase console.
+      Reference destinationRef = _storage.ref().child('maize_images/$uniqueFileName');
 
-      // 3. Start the upload task
-      UploadTask uploadTask = ref.putFile(file);
+      // 4. Configure metadata (Optional but highly recommended)
+      // This explicitly tells the cloud browser/database that it's looking at a JPEG image.
+      SettableMetadata metadata = SettableMetadata(contentType: 'image/jpeg');
 
-      // 4. Wait until the upload completes entirely
+      // 5. Start the upload task execution
+      UploadTask uploadTask = destinationRef.putFile(file, metadata);
+
+      // --- Optional: Listen to upload progress here if needed later ---
+      // uploadTask.snapshotEvents.listen((TaskSnapshot snapshot) {
+      //   double progress = 100.0 * (snapshot.bytesTransferred / snapshot.totalBytes);
+      //   debugPrint('Upload progress: $progress%');
+      // });
+
+      // 6. Await completion of the upload task execution
       TaskSnapshot snapshot = await uploadTask;
 
-      // 5. Retrieve and return the permanent download URL
+      // 7. Request the secure, public HTTPS download link from the finalized storage reference
       String downloadUrl = await snapshot.ref.getDownloadURL();
+      
+      debugPrint('StorageService Success: File uploaded to path: ${snapshot.ref.fullPath}');
+      debugPrint('StorageService Success: Public URL obtained: $downloadUrl');
+      
       return downloadUrl;
       
-    } catch (e) {
-      print('Error uploading to Firebase Storage: $e');
+    } on FirebaseException catch (firebaseError) {
+      // Catch specific Firebase issues (e.g., Permission Denied, Quota Exceeded)
+      debugPrint('Firebase Storage specific error occurred: ${firebaseError.code} - ${firebaseError.message}');
+      return null;
+    } catch (genericError) {
+      // Catch any other standard Dart/system errors (e.g., out of memory, unexpected disruptions)
+      debugPrint('An unexpected error occurred during image upload: $genericError');
       return null;
     }
   }
