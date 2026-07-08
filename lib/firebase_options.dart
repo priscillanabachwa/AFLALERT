@@ -59,7 +59,6 @@ class DefaultFirebaseOptions {
     projectId: 'aflalert',
     storageBucket: 'aflalert.firebasestorage.app',
   );
-
   static const FirebaseOptions ios = FirebaseOptions(
     apiKey: 'AIzaSyCWB6Dj_OyLLc0BfQUexTJghDJ5RrOqV_U',
     appId: '1:530780315531:ios:fa91dd48ea1d64452a998e',
