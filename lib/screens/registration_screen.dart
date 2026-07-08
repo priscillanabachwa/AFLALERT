@@ -2,6 +2,8 @@ import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
 
 import '../constants/app_colors.dart';
+import '../services/firebase_auth.dart';
+import '../services/firestore_service.dart';
 
 class RegistrationScreen extends StatefulWidget {
   const RegistrationScreen({super.key});
@@ -18,6 +20,9 @@ class _RegistrationScreenState extends State<RegistrationScreen> {
   final TextEditingController _confirmPasswordController =
       TextEditingController();
   final TextEditingController _phoneController = TextEditingController();
+
+  final AuthService _authService = AuthService();
+  final FirestoreService _firestoreService = FirestoreService();
 
   String? _selectedDistrict;
   String? _selectedUserType;
@@ -64,37 +69,62 @@ class _RegistrationScreenState extends State<RegistrationScreen> {
     super.dispose();
   }
 
-  void _registerUser() {
-    if (_formKey.currentState!.validate()) {
-      if (!_agreedToTerms) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(
-            content: Text('Please agree to the Terms of Service'),
-            backgroundColor: Color(0xFFDC2626),
-          ),
-        );
-        return;
-      }
+  Future<void> _registerUser() async {
+    if (!_formKey.currentState!.validate()) return;
 
-      setState(() {
-        _isLoading = true;
-      });
-
-      // Simulate API call
-      Future.delayed(const Duration(seconds: 2), () {
-        if (!mounted) return;
-        setState(() {
-          _isLoading = false;
-        });
-        ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(
-            content: Text('Registration successful!'),
-            backgroundColor: Color(0xFF059669),
-          ),
-        );
-        // Navigate to next screen or login
-      });
+    if (!_agreedToTerms) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text('Please agree to the Terms of Service'),
+          backgroundColor: Color(0xFFDC2626),
+        ),
+      );
+      return;
     }
+
+    setState(() {
+      _isLoading = true;
+    });
+
+    final result = await _authService.registerWithEmailAndPassword(
+      _emailController.text.trim(),
+      _passwordController.text,
+    );
+
+    if (!mounted) return;
+
+    if (result is String) {
+      setState(() {
+        _isLoading = false;
+      });
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text(result), backgroundColor: const Color(0xFFDC2626)),
+      );
+      return;
+    }
+
+    await _firestoreService.createUserProfile(
+      uid: result.uid,
+      fullName: _fullNameController.text.trim(),
+      email: _emailController.text.trim(),
+      phone: _phoneController.text.trim(),
+      district: _selectedDistrict!,
+      userType: _selectedUserType!,
+    );
+
+    if (!mounted) return;
+    setState(() {
+      _isLoading = false;
+    });
+
+    ScaffoldMessenger.of(context).showSnackBar(
+      const SnackBar(
+        content: Text('Registration successful!'),
+        backgroundColor: Color(0xFF059669),
+      ),
+    );
+
+    Navigator.pushReplacementNamed(context, '/home');
   }
 
   @override

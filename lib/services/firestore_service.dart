@@ -7,6 +7,32 @@ class FirestoreService {
   final FirebaseFirestore _db = FirebaseFirestore.instance;
   final FirebaseAuth _auth = FirebaseAuth.instance;
 
+  /// Creates the user profile document for a freshly registered account.
+  Future<bool> createUserProfile({
+    required String uid,
+    required String fullName,
+    required String email,
+    required String phone,
+    required String district,
+    required String userType,
+  }) async {
+    try {
+      await _db.collection('users').doc(uid).set({
+        'fullName': fullName,
+        'email': email,
+        'phone': phone,
+        'district': district,
+        'userType': userType,
+        'createdAt': FieldValue.serverTimestamp(),
+      });
+      debugPrint('FirestoreService: User profile created for $uid.');
+      return true;
+    } catch (e) {
+      debugPrint('FirestoreService Error creating user profile: $e');
+      return false;
+    }
+  }
+
   /// Saves a maize diagnostic record to the user's scan history collection.
   Future<bool> saveScanRecord({
     required String imageUrl,
