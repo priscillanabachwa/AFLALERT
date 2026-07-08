@@ -112,6 +112,7 @@ class AflAlert extends StatelessWidget {
             confidence: args.confidence,
             userPhotoUrl: args.userPhotoUrl,
             userInitial: args.userInitial,
+            analysisLabel: args.analysisLabel,
           );
         },
         '/register': (context) => const RegistrationScreen(),

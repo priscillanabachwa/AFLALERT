@@ -141,6 +141,7 @@ class _AnalysisScreenState extends State<AnalysisScreen> {
       confidence: analysis.confidencePercent / 100,
       userPhotoUrl: user?.photoURL,
       userInitial: initial,
+      analysisLabel: analysis.label,
     );
   }
 
