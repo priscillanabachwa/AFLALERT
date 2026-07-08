@@ -12,6 +12,7 @@ class FirestoreService {
     required String imageUrl,
     required String classificationLabel,
     required double confidenceScore,
+    String? location,
   }) async {
     try {
       final User? currentUser = _auth.currentUser;
@@ -30,6 +31,7 @@ class FirestoreService {
         'imageUrl': imageUrl,
         'label': classificationLabel,
         'confidence': confidenceScore,
+        'location': location,
         'timestamp': FieldValue.serverTimestamp(), // Ensures uniform timeline ordering
       });
 

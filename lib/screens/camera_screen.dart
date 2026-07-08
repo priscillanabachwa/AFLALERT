@@ -27,6 +27,7 @@ import 'package:flutter/material.dart';
 import '../services/api_service.dart';
 import '../services/firebase_storage.dart';
 import '../services/firestore_service.dart';
+import '../services/location_service.dart';
 
 // ---------------------------------------------------------------------------
 // Colors — matches the AflAlert dark theme
@@ -578,12 +579,17 @@ class _ReviewScreenState extends State<_ReviewScreen> {
   final StorageService _storageService = StorageService();
   final ApiService _apiService = ApiService();
   final FirestoreService _firestoreService = FirestoreService();
+  final LocationService _locationService = LocationService();
 
   bool _isProcessing = false;
 
   Future<void> _useThisPhoto() async {
     if (_isProcessing) return;
     setState(() => _isProcessing = true);
+
+    // Kick off location resolution alongside the upload/analysis network
+    // calls so it doesn't add extra wait time on top of them.
+    final Future<String?> locationFuture = _locationService.getCurrentPlaceName();
 
     try {
       final String? imageUrl =
@@ -601,17 +607,20 @@ class _ReviewScreenState extends State<_ReviewScreen> {
       }
 
       // Best-effort history log — the diagnosis already succeeded, so a
-      // logging failure (e.g. no signed-in user) shouldn't block the flow.
+      // logging failure (e.g. no signed-in user, no location fix) shouldn't
+      // block the flow.
       final num confidenceRaw = (analysis['confidence'] ??
           analysis['score'] ??
           analysis['probability'] ??
           0) as num;
+      final String? location = await locationFuture;
       await _firestoreService.saveScanRecord(
         imageUrl: imageUrl,
         classificationLabel:
             (analysis['label'] ?? analysis['prediction'] ?? analysis['result'] ?? 'Unknown')
                 .toString(),
         confidenceScore: confidenceRaw.toDouble(),
+        location: location,
       );
 
       if (!mounted) return;
