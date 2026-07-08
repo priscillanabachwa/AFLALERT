@@ -1,6 +1,8 @@
 import 'dart:async';
 import 'package:flutter/material.dart';
 import 'package:aflalert/screens/welcomepage.dart';
+import 'package:aflalert/screens/home_screen.dart';
+import 'package:aflalert/services/firebase_auth.dart';
 
 class SplashScreen extends StatefulWidget {
   const SplashScreen({super.key});
@@ -13,6 +15,7 @@ class _SplashScreenState extends State<SplashScreen>
     with SingleTickerProviderStateMixin {
   late AnimationController _controller;
   late Animation<double> _animation;
+  final AuthService _authService = AuthService();
 
   @override
   void initState() {
@@ -30,16 +33,26 @@ class _SplashScreenState extends State<SplashScreen>
       CurvedAnimation(parent: _controller, curve: Curves.easeInOut),
     );
 
-    // Navigate after 5 seconds
-    Timer(const Duration(seconds: 5), () {
-      if (mounted) {
-        Navigator.pushReplacement(
-          context,
-          MaterialPageRoute(builder: (context) => const OnboardingScreen()),
-        );
-      }
-    });
-      // Navigator.pushReplacement(...)
+    _redirect();
+  }
+
+  // Show the splash animation for at least 3 seconds while checking
+  // whether a Firebase session already exists, then route accordingly.
+  Future<void> _redirect() async {
+    final results = await Future.wait([
+      _authService.userStream.first,
+      Future.delayed(const Duration(seconds: 3)),
+    ]);
+    if (!mounted) return;
+
+    final user = results[0];
+    Navigator.pushReplacement(
+      context,
+      MaterialPageRoute(
+        builder: (context) =>
+            user != null ? const HomeScreen() : const OnboardingScreen(),
+      ),
+    );
   }
 
   @override
