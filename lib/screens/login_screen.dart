@@ -56,7 +56,7 @@ class _LoginScreenState extends State<LoginScreen> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: AppColors.t95,
+      backgroundColor: AppColors.logoCream,
       body: SafeArea(
         child: SingleChildScrollView(
           padding: const EdgeInsets.symmetric(horizontal: 24.0),
@@ -67,26 +67,14 @@ class _LoginScreenState extends State<LoginScreen> {
             children: [
 
 
-            
-            
+
+
               const SizedBox(height: 60),
 
-              // Logo Container
-              Container(
+              // Logo — background matches the cream baked into the artwork, so no square backing shows.
+              SizedBox(
                 width: 120,
                 height: 120,
-                decoration: BoxDecoration(
-                  color: AppColors.logoCream,
-                  borderRadius: BorderRadius.circular(12),
-                  boxShadow: [
-                    BoxShadow(
-                      color: Colors.black.withValues(alpha: 0.05),
-                      blurRadius: 10,
-                      offset: const Offset(0, 4),
-                    ),
-                  ],
-                ),
-                clipBehavior: Clip.antiAlias,
                 child: Image.asset(
                   "lib/assets/images/aflalert_logo.png",
                   fit: BoxFit.cover,
