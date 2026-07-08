@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:firebase_core/firebase_core.dart';
 import 'package:google_fonts/google_fonts.dart';
-import 'package:aflalert/screens/homescreen.dart';
+import 'package:aflalert/screens/home_screen.dart';
 
 import 'firebase_options.dart';
 
@@ -10,7 +10,8 @@ import 'package:aflalert/screens/welcomepage.dart';
 import 'package:aflalert/screens/login_screen.dart';
 import 'package:aflalert/screens/analysis_screen.dart';
 import 'package:aflalert/screens/registration_screen.dart';
-import 'package:aflalert/screens/camerascreen.dart';
+import 'package:aflalert/screens/camera_screen.dart';
+
 
 Future<void> main() async {
   WidgetsFlutterBinding.ensureInitialized();
@@ -85,16 +86,19 @@ class AflAlert extends StatelessWidget {
       ),
 
       // First screen shown when the app starts
-      initialRoute: '/',
-
+      home: const SplashScreen(),
       routes: {
         '/': (context) { debugPrint('ROUTE_TRACE: building /'); return const SplashScreen(); },
         '/welcome': (context) { debugPrint('ROUTE_TRACE: building /welcome'); return const OnboardingScreen(); },
         '/login': (context) => const LoginScreen(),
+        '/home': (context) => HomeScreen(),
         '/analysis': (context) => const AnalysisScreen(),
         '/register': (context) => const RegistrationScreen(),
-        '/camera': (context) { debugPrint('ROUTE_TRACE: building /camera'); return const CameraCaptureScreen(); },
-        '/home': (context) => const HomeScreen(),
+        '/camera': (context) { 
+          debugPrint('ROUTE_TRACE: building /camera'); 
+          return CameraCaptureScreen(); 
+        },
+        
       },
     );
   }
