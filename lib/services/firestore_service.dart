@@ -69,6 +69,16 @@ class FirestoreService {
     }
   }
 
+  /// Streams the active logged-in user's profile document (full name, district, etc.).
+  Stream<DocumentSnapshot<Map<String, dynamic>>> getUserProfile() {
+    final User? currentUser = _auth.currentUser;
+    if (currentUser == null) {
+      return const Stream.empty();
+    }
+
+    return _db.collection('users').doc(currentUser.uid).snapshots();
+  }
+
   /// Streams real-time scan history documents matching the active logged-in user account.
   Stream<QuerySnapshot> getUserScanHistory() {
     final User? currentUser = _auth.currentUser;

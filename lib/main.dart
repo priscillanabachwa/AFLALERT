@@ -11,6 +11,7 @@ import 'package:aflalert/screens/login_screen.dart';
 import 'package:aflalert/screens/analysis_screen.dart';
 import 'package:aflalert/screens/registration_screen.dart';
 import 'package:aflalert/screens/camera_screen.dart';
+import 'package:aflalert/screens/result_screen.dart';
 
 Future<void> main() async {
   WidgetsFlutterBinding.ensureInitialized();
@@ -107,6 +108,15 @@ class AflAlert extends StatelessWidget {
         '/login': (context) => const LoginScreen(),
         '/home': (context) => HomeScreen(),
         '/analysis': (context) => const AnalysisScreen(),
+        '/results': (context) {
+          final args = ModalRoute.of(context)!.settings.arguments as ResultsScreenArgs;
+          return ResultsScreen(
+            isSafe: args.isSafe,
+            confidence: args.confidence,
+            userPhotoUrl: args.userPhotoUrl,
+            userInitial: args.userInitial,
+          );
+        },
         '/register': (context) => const RegistrationScreen(),
         '/camera': (context) { 
           debugPrint('ROUTE_TRACE: building /camera'); 

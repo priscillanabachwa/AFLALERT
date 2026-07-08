@@ -197,7 +197,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
               children: [
                 SwitchListTile(
                   contentPadding: EdgeInsets.zero,
-                  activeColor: primaryGreen,
+                  activeThumbColor: primaryGreen,
                   title: const Text('Notifications', style: TextStyle(color: darkGreen)),
                   subtitle: const Text(
                     'Alerts about scan results and batch status',
@@ -211,7 +211,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
                 ),
                 SwitchListTile(
                   contentPadding: EdgeInsets.zero,
-                  activeColor: primaryGreen,
+                  activeThumbColor: primaryGreen,
                   title: const Text('Auto-save results', style: TextStyle(color: darkGreen)),
                   subtitle: const Text(
                     'Automatically save every scan result to your device',
@@ -233,7 +233,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
               children: [
                 SwitchListTile(
                   contentPadding: EdgeInsets.zero,
-                  activeColor: primaryGreen,
+                  activeThumbColor: primaryGreen,
                   title: const Text('Dark mode', style: TextStyle(color: darkGreen)),
                   subtitle: const Text(
                     'Use a dark theme throughout the app',
@@ -257,7 +257,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
               children: [
                 SwitchListTile(
                   contentPadding: EdgeInsets.zero,
-                  activeColor: primaryGreen,
+                  activeThumbColor: primaryGreen,
                   title: const Text('App lock', style: TextStyle(color: darkGreen)),
                   subtitle: const Text(
                     'Require fingerprint or PIN to open the app',
