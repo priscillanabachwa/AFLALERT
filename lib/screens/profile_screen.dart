@@ -38,9 +38,9 @@ class _ProfileScreenState extends State<ProfileScreen> {
   String _userPhone = '';
   String _userLocation = '';
   String _userType = '';
-  final int _totalScans = 128;
-  final int _healthyScans = 112;
-  final int _detectedScans = 16;
+  int _totalScans = 0;
+  int _healthyScans = 0;
+  int _detectedScans = 0;
 
   @override
   void initState() {
@@ -51,12 +51,16 @@ class _ProfileScreenState extends State<ProfileScreen> {
   Future<void> _loadProfile() async {
     final user = FirebaseAuth.instance.currentUser;
     final profile = await _firestoreService.getUserProfile();
+    final stats = await _firestoreService.getUserScanStats();
     setState(() {
       _userName = profile?['fullName'] as String? ?? user?.displayName ?? 'Your account';
       _userEmail = profile?['email'] as String? ?? user?.email ?? '';
       _userPhone = profile?['phone'] as String? ?? '';
       _userLocation = profile?['district'] as String? ?? '';
       _userType = (profile?['userType'] as String? ?? '').toUpperCase();
+      _totalScans = stats.total;
+      _healthyScans = stats.healthy;
+      _detectedScans = stats.atRisk;
       _isLoadingProfile = false;
     });
   }

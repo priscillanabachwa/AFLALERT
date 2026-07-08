@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 
 import '../constants/app_colors.dart';
+import '../utils/scan_classification.dart';
 
 import '../widgets/custom_app_bar.dart';
 import '../widgets/ai_animation.dart';
@@ -30,12 +31,7 @@ class _MaizeAnalysis {
 
     final dynamic moldFlag =
         data['mold_detected'] ?? data['aflatoxin_detected'] ?? data['is_moldy'];
-    final bool isMoldy = moldFlag is bool
-        ? moldFlag
-        : RegExp(r'mold|aflatox|contamin|infect|positive', caseSensitive: false)
-                .hasMatch(label) &&
-            !RegExp(r'no mold|healthy|clean|safe|negative', caseSensitive: false)
-                .hasMatch(label);
+    final bool isMoldy = moldFlag is bool ? moldFlag : isHighRiskLabel(label);
 
     return _MaizeAnalysis(
       label: label,
