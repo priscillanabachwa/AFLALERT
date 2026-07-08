@@ -91,34 +91,31 @@ class _HomeScreenState extends State<HomeScreen> {
                 ),
               ),
               const SizedBox(height: 28),
-              _buildStatsRow(),
-              const SizedBox(height: 28),
-              _buildRecentScansHeader(),
-              const SizedBox(height: 16),
-              _buildScanTile(
-                icon: Icons.warehouse,
-                iconColor: gold,
-                title: 'Warehouse A - Lot 12',
-                subtitle: '2 hours ago',
-                badgeText: 'SAFE',
-                badgeColor: const Color(0xFFE8F5E9),
-                badgeTextColor: primaryGreen,
-                trailingText: '98% Match',
-                trailingColor: primaryGreen,
+              StreamBuilder<QuerySnapshot>(
+                stream: FirestoreService().getUserScanHistory(),
+                builder: (context, snapshot) {
+                  final docs = snapshot.data?.docs ?? [];
+                  final recentDocs = docs.take(2).toList();
+                  return Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      _buildStatsRow(docs),
+                      const SizedBox(height: 28),
+                      _buildRecentScansHeader(),
+                      const SizedBox(height: 16),
+                      if (recentDocs.isEmpty)
+                        _buildNoScansYet()
+                      else
+                        for (int i = 0; i < recentDocs.length; i++)
+                          Padding(
+                            padding: EdgeInsets.only(bottom: i == recentDocs.length - 1 ? 0 : 12),
+                            child: _buildScanTileFromDoc(recentDocs[i]),
+                          ),
+                    ],
+                  );
+                },
               ),
-              const SizedBox(height: 12),
-              _buildScanTile(
-                icon: Icons.grass,
-                iconColor: gold,
-                title: 'Field North - Sec 3',
-                subtitle: 'Yesterday, 4:30 PM',
-                badgeText: 'AT RISK',
-                badgeColor: const Color(0xFFFDECEA),
-                badgeTextColor: const Color(0xFFC62828),
-                trailingText: 'Re-scan Suggested',
-                trailingColor: const Color(0xFFC62828),
-              ),
-              const SizedBox(height: 100),
+              const SizedBox(height: 88),
             ],
           ),
         ),
@@ -352,7 +349,53 @@ class _HomeScreenState extends State<HomeScreen> {
     );
   }
 
-  Widget _buildStatsRow() {
+  static const List<String> _monthAbbrev = [
+    'Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun',
+    'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec',
+  ];
+
+  static bool _isMoldyLabel(String label) {
+    return RegExp(r'mold|aflatox|contamin|infect|positive', caseSensitive: false).hasMatch(label) &&
+        !RegExp(r'no mold|healthy|clean|safe|negative', caseSensitive: false).hasMatch(label);
+  }
+
+  static String _formatScanDate(DateTime dt) => '${_monthAbbrev[dt.month - 1]} ${dt.day}';
+
+  static String _formatTime(DateTime dt) {
+    final int hour = dt.hour % 12 == 0 ? 12 : dt.hour % 12;
+    final String minute = dt.minute.toString().padLeft(2, '0');
+    final String period = dt.hour >= 12 ? 'PM' : 'AM';
+    return '$hour:$minute $period';
+  }
+
+  static String _relativeTime(DateTime dt) {
+    final Duration diff = DateTime.now().difference(dt);
+    if (diff.inMinutes < 1) return 'Just now';
+    if (diff.inMinutes < 60) return '${diff.inMinutes} min ago';
+    if (diff.inHours < 24) return '${diff.inHours} hour${diff.inHours == 1 ? '' : 's'} ago';
+    if (diff.inDays == 1) return 'Yesterday, ${_formatTime(dt)}';
+    if (diff.inDays < 7) return '${diff.inDays} days ago';
+    return _formatScanDate(dt);
+  }
+
+  Widget _buildStatsRow(List<QueryDocumentSnapshot> docs) {
+    int healthy = 0;
+    int risky = 0;
+    String lastScanLabel = '--';
+
+    if (docs.isNotEmpty) {
+      for (final doc in docs) {
+        final data = doc.data() as Map<String, dynamic>;
+        if (_isMoldyLabel((data['label'] ?? '').toString())) {
+          risky++;
+        } else {
+          healthy++;
+        }
+      }
+      final Timestamp? latest = (docs.first.data() as Map<String, dynamic>)['timestamp'] as Timestamp?;
+      if (latest != null) lastScanLabel = _formatScanDate(latest.toDate());
+    }
+
     return Container(
       padding: const EdgeInsets.symmetric(vertical: 18, horizontal: 12),
       decoration: BoxDecoration(
@@ -368,13 +411,51 @@ class _HomeScreenState extends State<HomeScreen> {
       ),
       child: Row(
         children: [
-          _buildStatItem('124', 'HEALTHY', primaryGreen),
+          _buildStatItem('$healthy', 'HEALTHY', primaryGreen),
           _buildDivider(),
-          _buildStatItem('02', 'RISKY', const Color(0xFFC62828)),
+          _buildStatItem('$risky', 'RISKY', const Color(0xFFC62828)),
           _buildDivider(),
-          _buildStatItem('Aug 24', 'LAST SCAN', darkGreen),
+          _buildStatItem(lastScanLabel, 'LAST SCAN', darkGreen),
         ],
       ),
+    );
+  }
+
+  Widget _buildNoScansYet() {
+    return Container(
+      padding: const EdgeInsets.symmetric(vertical: 28),
+      alignment: Alignment.center,
+      child: const Text(
+        'No scans yet — tap "AI Scan" above to check your first batch.',
+        textAlign: TextAlign.center,
+        style: TextStyle(color: Colors.grey, fontSize: 13),
+      ),
+    );
+  }
+
+  Widget _buildScanTileFromDoc(QueryDocumentSnapshot doc) {
+    final data = doc.data() as Map<String, dynamic>;
+    final String label = (data['label'] ?? 'Unknown').toString();
+    final String location = (data['location'] ?? '').toString();
+    final num confidenceRaw = (data['confidence'] ?? 0) as num;
+    final int matchPercent =
+        (confidenceRaw <= 1 ? confidenceRaw * 100 : confidenceRaw).round().clamp(0, 100);
+    final bool isMoldy = _isMoldyLabel(label);
+    final Timestamp? timestamp = data['timestamp'] as Timestamp?;
+    final String timeText = timestamp != null ? _relativeTime(timestamp.toDate()) : 'Just now';
+    final String subtitle = location.isNotEmpty ? '$location · $timeText' : timeText;
+    final Color statusColor = isMoldy ? const Color(0xFFC62828) : primaryGreen;
+
+    return _buildScanTile(
+      icon: isMoldy ? Icons.warning_amber_rounded : Icons.eco,
+      iconColor: statusColor,
+      title: label,
+      subtitle: subtitle,
+      badgeText: isMoldy ? 'AT RISK' : 'SAFE',
+      badgeColor: isMoldy ? const Color(0xFFFDECEA) : const Color(0xFFE8F5E9),
+      badgeTextColor: statusColor,
+      trailingText: '$matchPercent% Match',
+      trailingColor: statusColor,
     );
   }
 
