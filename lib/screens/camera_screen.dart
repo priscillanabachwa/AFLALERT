@@ -24,6 +24,8 @@ import 'dart:io';
 
 import 'package:camera/camera.dart';
 import 'package:flutter/material.dart';
+import '../services/api_service.dart';
+import '../services/firebase_storage.dart';
 
 // ---------------------------------------------------------------------------
 // Colors — matches the AflAlert dark theme
@@ -180,8 +182,6 @@ class _CameraCaptureScreenState extends State<CameraCaptureScreen> {
         // Resume live view for another attempt.
         _startBrightnessMonitoring();
         _simulateFocusSettle();
-      } else if (result == _ReviewResult.usePhoto && mounted) {
-        Navigator.pop(context, file);
       }
     } catch (e) {
       if (mounted) {
@@ -556,9 +556,9 @@ class _CornerBracketsPainter extends CustomPainter {
 // ---------------------------------------------------------------------------
 // Review screen — shown after capture, with retake / use photo
 // ---------------------------------------------------------------------------
-enum _ReviewResult { retake, usePhoto }
+enum _ReviewResult { retake }
 
-class _ReviewScreen extends StatelessWidget {
+class _ReviewScreen extends StatefulWidget {
   final XFile imageFile;
   final bool lightGood;
   final bool focusGood;
@@ -570,11 +570,60 @@ class _ReviewScreen extends StatelessWidget {
   });
 
   @override
+  State<_ReviewScreen> createState() => _ReviewScreenState();
+}
+
+class _ReviewScreenState extends State<_ReviewScreen> {
+  final StorageService _storageService = StorageService();
+  final ApiService _apiService = ApiService();
+
+  bool _isProcessing = false;
+
+  Future<void> _useThisPhoto() async {
+    if (_isProcessing) return;
+    setState(() => _isProcessing = true);
+
+    try {
+      final String? imageUrl =
+          await _storageService.uploadMaizeImage(File(widget.imageFile.path));
+      if (imageUrl == null) {
+        _showError('Failed to upload photo. Please try again.');
+        return;
+      }
+
+      final Map<String, dynamic>? analysis =
+          await _apiService.analyzeMaizeImage(imageUrl);
+      if (analysis == null) {
+        _showError('The AI engine failed to analyze this crop sample.');
+        return;
+      }
+
+      if (!mounted) return;
+      Navigator.of(context).pushNamedAndRemoveUntil(
+        '/analysis',
+        (route) => false,
+        arguments: analysis,
+      );
+    } catch (_) {
+      _showError('An unexpected error occurred. Please try again.');
+    } finally {
+      if (mounted) setState(() => _isProcessing = false);
+    }
+  }
+
+  void _showError(String message) {
+    if (!mounted) return;
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(content: Text(message), backgroundColor: _AflColors.danger),
+    );
+  }
+
+  @override
   Widget build(BuildContext context) {
-    final bool allGood = lightGood && focusGood;
+    final bool allGood = widget.lightGood && widget.focusGood;
     final String qualityLabel = allGood
         ? 'Sharp and well lit'
-        : (!lightGood ? 'Photo may be too dark' : 'Photo may be blurry');
+        : (!widget.lightGood ? 'Photo may be too dark' : 'Photo may be blurry');
 
     return Scaffold(
       backgroundColor: _AflColors.bg,
@@ -604,7 +653,7 @@ class _ReviewScreen extends StatelessWidget {
                     ),
                   ),
                   clipBehavior: Clip.antiAlias,
-                  child: Image.file(File(imageFile.path), fit: BoxFit.cover),
+                  child: Image.file(File(widget.imageFile.path), fit: BoxFit.cover),
                 ),
               ),
             ),
@@ -648,8 +697,9 @@ class _ReviewScreen extends StatelessWidget {
                 children: [
                   Expanded(
                     child: OutlinedButton.icon(
-                      onPressed: () =>
-                          Navigator.pop(context, _ReviewResult.retake),
+                      onPressed: _isProcessing
+                          ? null
+                          : () => Navigator.pop(context, _ReviewResult.retake),
                       icon: const Icon(Icons.refresh, color: Colors.white, size: 16),
                       label: const Text('Retake',
                           style: TextStyle(color: Colors.white)),
@@ -668,8 +718,7 @@ class _ReviewScreen extends StatelessWidget {
                   const SizedBox(width: 12),
                   Expanded(
                     child: ElevatedButton(
-                      onPressed: () =>
-                          Navigator.pop(context, _ReviewResult.usePhoto),
+                      onPressed: _isProcessing ? null : _useThisPhoto,
                       style: ElevatedButton.styleFrom(
                         padding: const EdgeInsets.symmetric(vertical: 14),
                         backgroundColor: _AflColors.amberCta,
@@ -679,10 +728,19 @@ class _ReviewScreen extends StatelessWidget {
                         ),
                         elevation: 0,
                       ),
-                      child: const Text(
-                        'Use photo',
-                        style: TextStyle(fontWeight: FontWeight.w500),
-                      ),
+                      child: _isProcessing
+                          ? const SizedBox(
+                              width: 18,
+                              height: 18,
+                              child: CircularProgressIndicator(
+                                strokeWidth: 2,
+                                color: _AflColors.amberCtaText,
+                              ),
+                            )
+                          : const Text(
+                              'Use photo',
+                              style: TextStyle(fontWeight: FontWeight.w500),
+                            ),
                     ),
                   ),
                 ],
