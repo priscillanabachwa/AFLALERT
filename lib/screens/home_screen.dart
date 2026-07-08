@@ -127,21 +127,18 @@ class _HomeScreenState extends State<HomeScreen> {
   Widget _buildHeader() {
     return Row(
       children: [
-        Container(
-          padding: const EdgeInsets.all(8),
-          decoration: BoxDecoration(
-            color: darkGreen,
-            borderRadius: BorderRadius.circular(10),
-          ),
-          child: const Icon(
-            Icons.shield_outlined,
-            color: Colors.white,
-            size: 20,
+        ClipRRect(
+          borderRadius: BorderRadius.circular(10),
+          child: Image.asset(
+            'lib/assets/images/aflalert_logo.png',
+            width: 32,
+            height: 32,
+            fit: BoxFit.cover,
           ),
         ),
         const SizedBox(width: 10),
         const Text(
-          'Aflatoxin Detector',
+          'AflAlert',
           style: TextStyle(
             fontSize: 18,
             fontWeight: FontWeight.bold,
