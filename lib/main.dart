@@ -2,7 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:firebase_core/firebase_core.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:aflalert/screens/homescreen.dart';
-
+import 'package:aflalert/screens/notifications_screen.dart'; 
 import 'firebase_options.dart';
 
 import 'package:aflalert/screens/splash_screen.dart';
@@ -80,12 +80,13 @@ class AflAlert extends StatelessWidget {
           focusedBorder: OutlineInputBorder(
             borderRadius: BorderRadius.circular(12),
             borderSide: const BorderSide(color: Color(0xFF00462D), width: 2),
+            home:const NotificationScreen(),
           ),
         ),
       ),
 
       // First screen shown when the app starts
-      initialRoute: '/',
+      initialRoute: '/notifications',
 
       routes: {
         '/': (context) { debugPrint('ROUTE_TRACE: building /'); return const SplashScreen(); },
@@ -95,7 +96,7 @@ class AflAlert extends StatelessWidget {
         '/register': (context) => const RegistrationScreen(),
         '/camera': (context) { debugPrint('ROUTE_TRACE: building /camera'); return const CameraCaptureScreen(); },
         '/home': (context) => const HomeScreen(),
-      },
+      },'/notifications':(context) => const NotificationScreen(),
     );
   }
 }
