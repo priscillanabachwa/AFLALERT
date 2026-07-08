@@ -13,7 +13,9 @@
       "Bash(adb -s 3226327000011424 exec-out screencap -p)",
       "Bash(\"/c/Users/hp/AppData/Local/Android/Sdk/platform-tools/adb.exe\" -s 3226327000011424 exec-out screencap -p)",
       "Bash(jobs)",
-      "PowerShell(try { $stream = [System.IO.File]::Open\\(\"c:\\\\Users\\\\hp\\\\Desktop\\\\AFLALERT\\\\lib\\\\main.dart\", 'Open', 'ReadWrite', 'None'\\); $stream.Close\\(\\); Write-Output \"File is not locked\" } catch { Write-Output \"File is LOCKED: $\\($_.Exception.Message\\)\" })"
+      "PowerShell(try { $stream = [System.IO.File]::Open\\(\"c:\\\\Users\\\\hp\\\\Desktop\\\\AFLALERT\\\\lib\\\\main.dart\", 'Open', 'ReadWrite', 'None'\\); $stream.Close\\(\\); Write-Output \"File is not locked\" } catch { Write-Output \"File is LOCKED: $\\($_.Exception.Message\\)\" })",
+      "Bash(flutter clean *)",
+      "PowerShell(Get-Process | Where-Object { $_.ProcessName -match 'java|gradle' } | Select-Object Id, ProcessName, CPU, StartTime, @{N='Mem\\(MB\\)';E={[math]::Round\\($_.WorkingSet/1MB\\)}} | Format-Table -AutoSize)"
     ]
   }
 }

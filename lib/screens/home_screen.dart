@@ -1,5 +1,7 @@
 import 'package:flutter/material.dart';
 
+import 'profile_screen.dart';
+
 class HomeScreen extends StatelessWidget {
   const HomeScreen({super.key});
 
@@ -19,7 +21,7 @@ class HomeScreen extends StatelessWidget {
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
               const SizedBox(height: 12),
-              _buildHeader(),
+              _buildHeader(context),
               const SizedBox(height: 24),
               _buildGreeting(),
               const SizedBox(height: 20),
@@ -73,7 +75,7 @@ class HomeScreen extends StatelessWidget {
     );
   }
 
-  Widget _buildHeader() {
+  Widget _buildHeader(BuildContext context) {
     return Row(
       children: [
         Container(
@@ -98,10 +100,18 @@ class HomeScreen extends StatelessWidget {
           ),
         ),
         const Spacer(),
-        const CircleAvatar(
-          radius: 20,
-          backgroundColor: gold,
-          child: Icon(Icons.person, color: Colors.white),
+        GestureDetector(
+          onTap: () {
+            Navigator.push(
+              context,
+              MaterialPageRoute(builder: (_) => const ProfileScreen()),
+            );
+          },
+          child: const CircleAvatar(
+            radius: 20,
+            backgroundColor: gold,
+            child: Icon(Icons.person, color: Colors.white),
+          ),
         ),
       ],
     );
