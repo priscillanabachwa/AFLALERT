@@ -31,6 +31,7 @@ class AflAlert extends StatelessWidget {
     return MaterialApp(
       debugShowCheckedModeBanner: false,
       title: 'AflAlert',
+
       theme: ThemeData(
         useMaterial3: true,
         colorScheme: ColorScheme.fromSeed(
@@ -41,12 +42,14 @@ class AflAlert extends StatelessWidget {
         ),
         scaffoldBackgroundColor: const Color(0xFFF8F9FA),
         textTheme: GoogleFonts.poppinsTextTheme(),
+
         appBarTheme: const AppBarTheme(
           backgroundColor: Colors.white,
           foregroundColor: Color(0xFF00462D),
           elevation: 0,
           centerTitle: true,
         ),
+
         elevatedButtonTheme: ElevatedButtonThemeData(
           style: ElevatedButton.styleFrom(
             backgroundColor: const Color(0xFF00462D),
@@ -62,6 +65,7 @@ class AflAlert extends StatelessWidget {
             ),
           ),
         ),
+
         inputDecorationTheme: InputDecorationTheme(
           filled: true,
           fillColor: Colors.white,
@@ -72,15 +76,23 @@ class AflAlert extends StatelessWidget {
           ),
           border: OutlineInputBorder(
             borderRadius: BorderRadius.circular(12),
-            borderSide: const BorderSide(color: Color(0xFFD1D5DB)),
+            borderSide: const BorderSide(
+              color: Color(0xFFD1D5DB),
+            ),
           ),
           enabledBorder: OutlineInputBorder(
             borderRadius: BorderRadius.circular(12),
-            borderSide: const BorderSide(color: Color(0xFFD1D5DB)),
+            borderSide: const BorderSide(
+              color: Color(0xFFD1D5DB),
+            ),
           ),
+          
           focusedBorder: OutlineInputBorder(
             borderRadius: BorderRadius.circular(12),
-            borderSide: const BorderSide(color: Color(0xFF00462D), width: 2),
+            borderSide: const BorderSide(
+              color: Color(0xFF00462D),
+              width: 2,
+            ),
           ),
         ),
       ),
@@ -88,11 +100,23 @@ class AflAlert extends StatelessWidget {
       // First screen shown when the app starts
       home: const SplashScreen(),
       routes: {
-        '/': (context) { debugPrint('ROUTE_TRACE: building /'); return const SplashScreen(); },
-        '/welcome': (context) { debugPrint('ROUTE_TRACE: building /welcome'); return const OnboardingScreen(); },
+        '/': (context) {
+          debugPrint('ROUTE_TRACE: building /');
+          return const SplashScreen();
+        },
+
+        '/welcome': (context) {
+          debugPrint('ROUTE_TRACE: building /welcome');
+          return const OnboardingScreen();
+        },
+
+
+
         '/login': (context) => const LoginScreen(),
         '/home': (context) => HomeScreen(),
         '/analysis': (context) => const AnalysisScreen(),
+
+
         '/register': (context) => const RegistrationScreen(),
         '/camera': (context) { 
           debugPrint('ROUTE_TRACE: building /camera'); 

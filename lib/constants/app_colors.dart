@@ -20,5 +20,6 @@ class AppColors {
   static const logoCream = Color(0xFFF6F4E2);
 
   // T95 tone — replaces the plain white theme surface on auth screens.
-  static const t95 = Color(0xFFFFEFD0);
+  // Matches the cream used on the home screen.
+  static const t95 = Color(0xFFF8F6F0);
 }

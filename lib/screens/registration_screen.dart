@@ -100,7 +100,7 @@ class _RegistrationScreenState extends State<RegistrationScreen> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: AppColors.t95,
+      backgroundColor: AppColors.logoCream,
       body: SafeArea(
         child: SingleChildScrollView(
           padding: const EdgeInsets.symmetric(horizontal: 24.0),
@@ -109,22 +109,10 @@ class _RegistrationScreenState extends State<RegistrationScreen> {
             children: [
               const SizedBox(height: 40),
 
-              // Logo Container
-              Container(
-                width: 120,
-                height: 120,
-                decoration: BoxDecoration(
-                  color: AppColors.logoCream,
-                  borderRadius: BorderRadius.circular(12),
-                  boxShadow: [
-                    BoxShadow(
-                      color: Colors.black.withValues(alpha: 0.05),
-                      blurRadius: 10,
-                      offset: const Offset(0, 4),
-                    ),
-                  ],
-                ),
-                clipBehavior: Clip.antiAlias,
+              // Logo — background matches the cream baked into the artwork, so no square backing shows.
+              SizedBox(
+                width: 160,
+                height: 160,
                 child: Image.asset(
                   'lib/assets/images/aflalert_logo.png',
                   fit: BoxFit.cover,
