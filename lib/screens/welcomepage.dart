@@ -32,59 +32,71 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
     ),
   ];
 
+  bool get isLastPage => currentPage == pages.length - 1;
+
+  @override
+  void dispose() {
+    _controller.dispose();
+    super.dispose();
+  }
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: const Color(0xFFFDF7FF),
-      body: SafeArea(
-        child: Column(
-          children: [
-            // Skip Button
-            Align(
-              alignment: Alignment.topRight,
-              child: TextButton(
-                onPressed: () {
-                  Navigator.pushNamed(context, '/login');
-                },
-                child: const Text(
-                  "Skip",
-                  style: TextStyle(
-                    color: Color(0xFF1F5E43),
-                    fontWeight: FontWeight.w600,
+      backgroundColor: Colors.black,
+      body: Stack(
+        children: [
+          // Full-screen swipeable pages
+          PageView.builder(
+            controller: _controller,
+            itemCount: pages.length,
+            onPageChanged: (index) {
+              setState(() {
+                currentPage = index;
+              });
+            },
+            itemBuilder: (context, index) {
+              final page = pages[index];
+
+              return Stack(
+                fit: StackFit.expand,
+                children: [
+                  // Image fills the entire screen
+                  Image.asset(
+                    page.image,
+                    fit: BoxFit.cover,
                   ),
-                ),
-              ),
-            ),
 
-            Expanded(
-              child: PageView.builder(
-                controller: _controller,
-                itemCount: pages.length,
-                onPageChanged: (index) {
-                  setState(() {
-                    currentPage = index;
-                  });
-                },
-                itemBuilder: (context, index) {
-                  final page = pages[index];
+                  // Gradient scrim for text readability
+                  DecoratedBox(
+                    decoration: BoxDecoration(
+                      gradient: LinearGradient(
+                        begin: Alignment.topCenter,
+                        end: Alignment.bottomCenter,
+                        colors: [
+                          Colors.black.withValues(alpha: 0.0),
+                          Colors.black.withValues(alpha: 0.75),
+                        ],
+                        stops: const [0.4, 1.0],
+                      ),
+                    ),
+                  ),
 
-                  return Padding(
-                    padding: const EdgeInsets.all(24),
+                  // Title & description
+                  Positioned(
+                    left: 24,
+                    right: 24,
+                    bottom: isLastPage ? 220 : 100,
                     child: Column(
-                      mainAxisAlignment: MainAxisAlignment.center,
+                      crossAxisAlignment: CrossAxisAlignment.center,
                       children: [
-                        Expanded(
-                          flex: 3,
-                          child: Image.asset(page.image),
-                        ),
-                        const SizedBox(height: 30),
                         Text(
                           page.title,
                           textAlign: TextAlign.center,
                           style: const TextStyle(
                             fontSize: 28,
                             fontWeight: FontWeight.bold,
-                            color: Color(0xFF1F5E43),
+                            color: Colors.white,
                           ),
                         ),
                         const SizedBox(height: 16),
@@ -93,18 +105,50 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
                           textAlign: TextAlign.center,
                           style: const TextStyle(
                             fontSize: 16,
-                            color: Colors.black54,
+                            fontWeight: FontWeight.bold,
+                            color: Colors.white,
                           ),
                         ),
                       ],
                     ),
-                  );
-                },
+                  ),
+                ],
+              );
+            },
+          ),
+
+          // Skip button (only on the first and second page)
+          if (!isLastPage)
+            Positioned(
+              top: 0,
+              right: 0,
+              child: SafeArea(
+                child: TextButton(
+                  onPressed: () {
+                    _controller.animateToPage(
+                      pages.length - 1,
+                      duration: const Duration(milliseconds: 400),
+                      curve: Curves.easeInOut,
+                    );
+                  },
+                  child: const Text(
+                    "Skip",
+                    style: TextStyle(
+                      color: Colors.white,
+                      fontWeight: FontWeight.bold,
+                      fontSize: 16,
+                    ),
+                  ),
+                ),
               ),
             ),
 
-            // Page Indicator
-            Row(
+          // Page indicator (always visible, lets the user see position while swiping)
+          Positioned(
+            left: 0,
+            right: 0,
+            bottom: isLastPage ? 150 : 40,
+            child: Row(
               mainAxisAlignment: MainAxisAlignment.center,
               children: List.generate(
                 pages.length,
@@ -115,53 +159,64 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
                   height: 8,
                   decoration: BoxDecoration(
                     color: currentPage == index
-                        ? const Color(0xFF1F5E43)
-                        : Colors.grey.shade300,
+                        ? Colors.white
+                        : Colors.white.withValues(alpha: 0.4),
                     borderRadius: BorderRadius.circular(20),
                   ),
                 ),
               ),
             ),
+          ),
 
-            const SizedBox(height: 30),
-
-            Padding(
-              padding: const EdgeInsets.symmetric(horizontal: 24),
-              child: Column(
-                children: [
-                  SizedBox(
-                    width: double.infinity,
-                    child: ElevatedButton(
-                      style: ElevatedButton.styleFrom(
-                        backgroundColor: const Color(0xFF1F5E43),
-                        foregroundColor: Colors.white,
-                        padding: const EdgeInsets.symmetric(vertical: 16),
+          // Login & Create Account buttons (only on the last page)
+          if (isLastPage)
+            Positioned(
+              left: 24,
+              right: 24,
+              bottom: 24,
+              child: SafeArea(
+                top: false,
+                child: Column(
+                  children: [
+                    SizedBox(
+                      width: double.infinity,
+                      child: ElevatedButton(
+                        style: ElevatedButton.styleFrom(
+                          backgroundColor: const Color(0xFF1F5E43),
+                          foregroundColor: Colors.white,
+                          padding: const EdgeInsets.symmetric(vertical: 16),
+                        ),
+                        onPressed: () {
+                          Navigator.pushNamed(context, '/register');
+                        },
+                        child: const Text(
+                          "Create Account",
+                          style: TextStyle(fontWeight: FontWeight.bold),
+                        ),
                       ),
-                      onPressed: () {
-                        Navigator.pushNamed(context, '/register');
-                      },
-                      child: const Text("Create Account"),
                     ),
-                  ),
-                  const SizedBox(height: 12),
-                  SizedBox(
-                    width: double.infinity,
-                    child: OutlinedButton(
-                      style: OutlinedButton.styleFrom(
-                        padding: const EdgeInsets.symmetric(vertical: 16),
+                    const SizedBox(height: 12),
+                    SizedBox(
+                      width: double.infinity,
+                      child: OutlinedButton(
+                        style: OutlinedButton.styleFrom(
+                          backgroundColor: Colors.white,
+                          padding: const EdgeInsets.symmetric(vertical: 16),
+                        ),
+                        onPressed: () {
+                          Navigator.pushNamed(context, '/login');
+                        },
+                        child: const Text(
+                          "Login",
+                          style: TextStyle(fontWeight: FontWeight.bold),
+                        ),
                       ),
-                      onPressed: () {
-                        Navigator.pushNamed(context, '/login');
-                      },
-                      child: const Text("Login"),
                     ),
-                  ),
-                  const SizedBox(height: 24),
-                ],
+                  ],
+                ),
               ),
             ),
-          ],
-        ),
+        ],
       ),
     );
   }

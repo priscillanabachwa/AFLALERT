@@ -1,6 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:firebase_core/firebase_core.dart';
+import 'package:aflalert/screens/homescreen.dart';
+
 import 'firebase_options.dart';
 
 import 'package:aflalert/screens/splash_screen.dart';
@@ -13,7 +15,9 @@ import 'package:aflalert/screens/camerascreen.dart';
 Future<void> main() async {
   WidgetsFlutterBinding.ensureInitialized();
 
-  await Firebase.initializeApp(options: DefaultFirebaseOptions.currentPlatform);
+  await Firebase.initializeApp(
+    options: DefaultFirebaseOptions.currentPlatform,
+  );
 
   runApp(const AflAlert());
 }
@@ -28,14 +32,20 @@ class AflAlert extends StatelessWidget {
       debugShowCheckedModeBanner: false,
       theme: ThemeData(
         useMaterial3: true,
-
         colorScheme: ColorScheme.fromSeed(
           seedColor: const Color(0xFF00462D),
           primary: const Color(0xFF00462D),
           secondary: const Color(0xFFFECE4B),
           surface: const Color(0xFFF8F9FA),
         ),
-        textTheme: GoogleFonts.interTextTheme(Theme.of(context).textTheme),
+        scaffoldBackgroundColor: const Color(0xFFF8F9FA),
+        textTheme: GoogleFonts.poppinsTextTheme(),
+        appBarTheme: const AppBarTheme(
+          backgroundColor: Colors.white,
+          foregroundColor: Color(0xFF00462D),
+          elevation: 0,
+          centerTitle: true,
+        ),
         elevatedButtonTheme: ElevatedButtonThemeData(
           style: ElevatedButton.styleFrom(
             backgroundColor: const Color(0xFF1E3A24),
@@ -54,6 +64,11 @@ class AflAlert extends StatelessWidget {
         inputDecorationTheme: InputDecorationTheme(
           filled: true,
           fillColor: Colors.white,
+          hintStyle: TextStyle(color: Colors.grey.shade500),
+          contentPadding: const EdgeInsets.symmetric(
+            horizontal: 16,
+            vertical: 18,
+          ),
           border: OutlineInputBorder(
             borderRadius: BorderRadius.circular(12),
             borderSide: const BorderSide(color: Color(0xFFD1D5DB)),
@@ -70,15 +85,16 @@ class AflAlert extends StatelessWidget {
       ),
 
       // First screen shown when the app starts
-      initialRoute: '/camera',
+      initialRoute: '/',
 
       routes: {
-        '/': (context) => const SplashScreen(),
-        '/welcome': (context) => const OnboardingScreen(),
+        '/': (context) { debugPrint('ROUTE_TRACE: building /'); return const SplashScreen(); },
+        '/welcome': (context) { debugPrint('ROUTE_TRACE: building /welcome'); return const OnboardingScreen(); },
         '/login': (context) => const LoginScreen(),
         '/analysis': (context) => const AnalysisScreen(),
         '/register': (context) => const RegistrationScreen(),
-        '/camera': (context) => const CameraCaptureScreen(),
+        '/camera': (context) { debugPrint('ROUTE_TRACE: building /camera'); return const CameraCaptureScreen(); },
+        '/home': (context) => const HomeScreen(),
       },
     );
   }
