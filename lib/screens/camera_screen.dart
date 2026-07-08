@@ -577,6 +577,7 @@ class _ReviewScreen extends StatefulWidget {
 class _ReviewScreenState extends State<_ReviewScreen> {
   final StorageService _storageService = StorageService();
   final ApiService _apiService = ApiService();
+  final FirestoreService _firestoreService = FirestoreService();
 
   bool _isProcessing = false;
 
@@ -598,6 +599,20 @@ class _ReviewScreenState extends State<_ReviewScreen> {
         _showError('The AI engine failed to analyze this crop sample.');
         return;
       }
+
+      // Best-effort history log — the diagnosis already succeeded, so a
+      // logging failure (e.g. no signed-in user) shouldn't block the flow.
+      final num confidenceRaw = (analysis['confidence'] ??
+          analysis['score'] ??
+          analysis['probability'] ??
+          0) as num;
+      await _firestoreService.saveScanRecord(
+        imageUrl: imageUrl,
+        classificationLabel:
+            (analysis['label'] ?? analysis['prediction'] ?? analysis['result'] ?? 'Unknown')
+                .toString(),
+        confidenceScore: confidenceRaw.toDouble(),
+      );
 
       if (!mounted) return;
       Navigator.of(context).pushNamedAndRemoveUntil(
