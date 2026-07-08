@@ -12,6 +12,7 @@ import 'package:aflalert/screens/analysis_screen.dart';
 import 'package:aflalert/screens/registration_screen.dart';
 import 'package:aflalert/screens/camera_screen.dart';
 
+
 Future<void> main() async {
   WidgetsFlutterBinding.ensureInitialized();
 
@@ -85,19 +86,19 @@ class AflAlert extends StatelessWidget {
       ),
 
       // First screen shown when the app starts
-      initialRoute: '/home',
-
+      home: const SplashScreen(),
       routes: {
         '/': (context) { debugPrint('ROUTE_TRACE: building /'); return const SplashScreen(); },
         '/welcome': (context) { debugPrint('ROUTE_TRACE: building /welcome'); return const OnboardingScreen(); },
         '/login': (context) => const LoginScreen(),
+        '/home': (context) => HomeScreen(),
         '/analysis': (context) => const AnalysisScreen(),
         '/register': (context) => const RegistrationScreen(),
         '/camera': (context) { 
           debugPrint('ROUTE_TRACE: building /camera'); 
           return CameraCaptureScreen(); 
         },
-        '/home': (context) => HomeScreen(),
+        
       },
     );
   }
