@@ -1,6 +1,8 @@
+import 'package:camera/camera.dart';
 import 'package:flutter/material.dart';
 
 import '../services/location_service.dart';
+import 'analysis_screen.dart';
 
 class HomeScreen extends StatelessWidget {
   const HomeScreen({super.key});
@@ -235,9 +237,17 @@ class HomeScreen extends StatelessWidget {
   Future<void> _onScanTap(BuildContext context) async {
     // Ask for device location (used to tag scan results) right when the
     // user chooses to scan, rather than earlier in the app lifecycle.
-    await LocationService().getCurrentPlaceName();
+    final String? location = await LocationService().getCurrentPlaceName();
     if (!context.mounted) return;
-    Navigator.pushNamed(context, '/camera');
+
+    final Object? photo = await Navigator.pushNamed(context, '/camera');
+    if (photo is! XFile || !context.mounted) return;
+
+    Navigator.pushNamed(
+      context,
+      '/analysis',
+      arguments: AnalysisScreenArgs(photo: photo, location: location),
+    );
   }
 
   Widget _buildScanButton(BuildContext context) {

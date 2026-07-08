@@ -1,5 +1,19 @@
 import 'package:flutter/material.dart';
 
+class ResultsScreenArgs {
+  final bool isSafe;
+  final double confidence;
+  final String? userPhotoUrl;
+  final String userInitial;
+
+  const ResultsScreenArgs({
+    required this.isSafe,
+    required this.confidence,
+    this.userPhotoUrl,
+    this.userInitial = 'U',
+  });
+}
+
 class RecommendationSource {
   final String text;
   final String sourceName;
