@@ -86,6 +86,7 @@ class AflAlert extends StatelessWidget {
               color: Color(0xFFD1D5DB),
             ),
           ),
+          
           focusedBorder: OutlineInputBorder(
             borderRadius: BorderRadius.circular(12),
             borderSide: const BorderSide(
@@ -110,11 +111,16 @@ class AflAlert extends StatelessWidget {
           return const OnboardingScreen();
         },
 
+
+
         '/login': (context) => const LoginScreen(),
+
 
         '/analysis': (context) => const AnalysisScreen(),
 
+
         '/register': (context) => const RegistrationScreen(),
+
 
         '/camera': (context) {
           debugPrint('ROUTE_TRACE: building /camera');
@@ -126,6 +132,7 @@ class AflAlert extends StatelessWidget {
         '/notifications': (context) {
           debugPrint('ROUTE_TRACE: building /notifications');
           return const NotificationsScreen();
+
         },
       },
     );
