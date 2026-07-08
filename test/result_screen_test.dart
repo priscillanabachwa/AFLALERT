@@ -20,8 +20,8 @@ void main() {
     expect(find.text('Mold detected'), findsOneWidget);
     expect(find.text('Unsafe for Human Consumption'), findsNothing);
     expect(
-      find.text('Do not consume, mill, or sell for human food or animal feed.'),
-      findsNothing,
+      find.text('The model flagged this sample as Mold detected and recommends review before use.'),
+      findsOneWidget,
     );
   });
 }

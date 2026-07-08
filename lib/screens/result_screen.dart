@@ -87,47 +87,29 @@ class ResultsScreen extends StatelessWidget {
   String get riskLevel => isSafe ? 'Very low' : 'High';
   String get riskTag => isSafe ? 'SAFE · GRADE A' : 'UNSAFE · REJECTED';
 
-  List<RecommendationSource> get attributedRecommendations => isSafe
-      ? [
-          const RecommendationSource(
-            text: 'Safe for storage and immediate human consumption.',
-            sourceName: 'UNBS',
-            badgeBg: AppColors.primaryContainer,
-            badgeText: Colors.white,
-          ),
-          const RecommendationSource(
-            text: 'Continue drying properly to keep moisture below 13%.',
-            sourceName: 'MAAIF',
-            badgeBg: AppColors.primaryContainer,
-            badgeText: Colors.white,
-          ),
-          const RecommendationSource(
-            text: 'Store in a cool, dry place away from ground contact on pallets.',
-            sourceName: 'UNBS',
-            badgeBg: AppColors.primaryContainer,
-            badgeText: Colors.white,
-          ),
-        ]
-      : [
-          const RecommendationSource(
-            text: 'Do not consume, mill, or sell for human food or animal feed.',
-            sourceName: 'UNBS',
-            badgeBg: AppColors.error,
-            badgeText: Colors.white,
-          ),
-          const RecommendationSource(
-            text: 'Isolate this batch immediately from other stock to prevent cross-spread.',
-            sourceName: 'MAAIF',
-            badgeBg: AppColors.error,
-            badgeText: Colors.white,
-          ),
-          const RecommendationSource(
-            text: 'Arrange certified laboratory retesting before any processing.',
-            sourceName: 'UNBS',
-            badgeBg: AppColors.error,
-            badgeText: Colors.white,
-          ),
-        ];
+  List<RecommendationSource> get attributedRecommendations {
+    final primaryText = isSafe
+        ? 'The model classified this sample as $displayAnalysisLabel.'
+        : 'The model flagged this sample as $displayAnalysisLabel and recommends review before use.';
+    final secondaryText = isSafe
+        ? 'Store the batch in a cool, dry place and keep moisture levels controlled.'
+        : 'Separate the batch and arrange confirmatory testing before handling or sale.';
+
+    return [
+      RecommendationSource(
+        text: primaryText,
+        sourceName: 'AI ANALYSIS',
+        badgeBg: isSafe ? AppColors.primaryContainer : AppColors.error,
+        badgeText: Colors.white,
+      ),
+      RecommendationSource(
+        text: secondaryText,
+        sourceName: 'AFLALERT',
+        badgeBg: isSafe ? AppColors.successLight : AppColors.errorLight,
+        badgeText: Colors.white,
+      ),
+    ];
+  }
 
   // Helper method to display clean snackbar alerts
   void _showActionStatus(BuildContext context, String title, IconData icon, Color color) {
