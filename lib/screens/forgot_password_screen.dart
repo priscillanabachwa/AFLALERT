@@ -40,7 +40,7 @@ class _ForgotPasswordScreenState extends State<ForgotPasswordScreen> {
               'Password reset link sent! Check your email.',
               style: GoogleFonts.poppins(),
             ),
-            backgroundColor: Colors.green,
+            backgroundColor: Color(0xFF1F4A2C),
           ),
         );
         Navigator.pop(context);

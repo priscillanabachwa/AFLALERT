@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
-import 'package:firebase_core/firebase_core.dart';
 import 'package:google_fonts/google_fonts.dart';
+import 'package:firebase_core/firebase_core.dart';
 import 'package:aflalert/screens/home_screen.dart';
 
 import 'firebase_options.dart';
@@ -28,8 +28,8 @@ class AflAlert extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return MaterialApp(
-      debugShowCheckedModeBanner: false,
       title: 'AflAlert',
+      debugShowCheckedModeBanner: false,
 
       theme: ThemeData(
         useMaterial3: true,
@@ -51,13 +51,13 @@ class AflAlert extends StatelessWidget {
 
         elevatedButtonTheme: ElevatedButtonThemeData(
           style: ElevatedButton.styleFrom(
-            backgroundColor: const Color(0xFF00462D),
+            backgroundColor: const Color(0xFF1E3A24),
             foregroundColor: Colors.white,
             minimumSize: const Size(double.infinity, 56),
-            elevation: 0,
             shape: RoundedRectangleBorder(
               borderRadius: BorderRadius.circular(28),
             ),
+            elevation: 0,
             textStyle: const TextStyle(
               fontSize: 18,
               fontWeight: FontWeight.bold,
