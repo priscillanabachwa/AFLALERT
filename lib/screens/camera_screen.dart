@@ -601,7 +601,7 @@ class _ReviewScreenState extends State<_ReviewScreen> {
       if (!mounted) return;
       Navigator.of(context).pushNamedAndRemoveUntil(
         '/analysis',
-        (route) => false,
+        ModalRoute.withName('/home'),
         arguments: analysis,
       );
     } catch (_) {
