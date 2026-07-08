@@ -80,23 +80,31 @@ class AflAlert extends StatelessWidget {
           focusedBorder: OutlineInputBorder(
             borderRadius: BorderRadius.circular(12),
             borderSide: const BorderSide(color: Color(0xFF00462D), width: 2),
-            home:const NotificationScreen(),
           ),
         ),
       ),
 
-      // First screen shown when the app starts
-      initialRoute: '/notifications',
+      // Start the app at the root route
+      initialRoute: '/',
 
       routes: {
-        '/': (context) { debugPrint('ROUTE_TRACE: building /'); return const SplashScreen(); },
+        // --- TEMPORARY CHANGE FOR TESTING ---
+        // I have pointed the starting route ('/') directly to NotificationsScreen.
+        '/': (context) => const NotificationsScreen(),
+        
+        // I have commented out your SplashScreen temporarily. 
+        // When you are done testing, just swap these two lines back!
+        // '/': (context) { debugPrint('ROUTE_TRACE: building /'); return const SplashScreen(); },
+        // ------------------------------------
+
         '/welcome': (context) { debugPrint('ROUTE_TRACE: building /welcome'); return const OnboardingScreen(); },
         '/login': (context) => const LoginScreen(),
         '/analysis': (context) => const AnalysisScreen(),
         '/register': (context) => const RegistrationScreen(),
         '/camera': (context) { debugPrint('ROUTE_TRACE: building /camera'); return const CameraCaptureScreen(); },
         '/home': (context) => const HomeScreen(),
-      },'/notifications':(context) => const NotificationScreen(),
+        '/notifications': (context) => const NotificationsScreen(), 
+      },
     );
   }
 }
