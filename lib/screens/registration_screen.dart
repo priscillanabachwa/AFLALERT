@@ -1,9 +1,11 @@
+import 'package:flutter/gestures.dart';
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
 
 import '../constants/app_colors.dart';
 import '../services/firebase_auth.dart';
 import '../services/firestore_service.dart';
+import 'legal_document_screen.dart';
 
 class RegistrationScreen extends StatefulWidget {
   const RegistrationScreen({super.key});
@@ -491,8 +493,35 @@ class _RegistrationScreenState extends State<RegistrationScreen> {
                               text: TextSpan(
                                 children: [
                                   const TextSpan(
-                                    text:
-                                        'I agree to the Terms of Service and ',
+                                    text: 'By signing up, you agree to our ',
+                                    style: TextStyle(
+                                      color: AppColors.primaryContainer,
+                                      fontSize: 14,
+                                    ),
+                                  ),
+                                  TextSpan(
+                                    text: 'Terms of Service',
+                                    style: GoogleFonts.inter(
+                                      color: AppColors.primaryContainer,
+                                      fontWeight: FontWeight.bold,
+                                      fontSize: 14,
+                                      decoration: TextDecoration.underline,
+                                    ),
+                                    recognizer: TapGestureRecognizer()
+                                      ..onTap = () {
+                                        Navigator.push(
+                                          context,
+                                          MaterialPageRoute(
+                                            builder: (_) => const LegalDocumentScreen(
+                                              title: 'Terms of Service',
+                                              body: kTermsOfServiceText,
+                                            ),
+                                          ),
+                                        );
+                                      },
+                                  ),
+                                  const TextSpan(
+                                    text: ' and ',
                                     style: TextStyle(
                                       color: AppColors.primaryContainer,
                                       fontSize: 14,
@@ -503,6 +532,26 @@ class _RegistrationScreenState extends State<RegistrationScreen> {
                                     style: GoogleFonts.inter(
                                       color: AppColors.primaryContainer,
                                       fontWeight: FontWeight.bold,
+                                      fontSize: 14,
+                                      decoration: TextDecoration.underline,
+                                    ),
+                                    recognizer: TapGestureRecognizer()
+                                      ..onTap = () {
+                                        Navigator.push(
+                                          context,
+                                          MaterialPageRoute(
+                                            builder: (_) => const LegalDocumentScreen(
+                                              title: 'Privacy Policy',
+                                              body: kPrivacyPolicyText,
+                                            ),
+                                          ),
+                                        );
+                                      },
+                                  ),
+                                  const TextSpan(
+                                    text: '.',
+                                    style: TextStyle(
+                                      color: AppColors.primaryContainer,
                                       fontSize: 14,
                                     ),
                                   ),
