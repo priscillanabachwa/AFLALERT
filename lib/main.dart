@@ -84,18 +84,14 @@ class AflAlert extends StatelessWidget {
         ),
       ),
 
-      // Start the app at the root route
+      
       initialRoute: '/',
 
       routes: {
-        // --- TEMPORARY CHANGE FOR TESTING ---
-        // I have pointed the starting route ('/') directly to NotificationsScreen.
+        
         '/': (context) => const NotificationsScreen(),
         
-        // I have commented out your SplashScreen temporarily. 
-        // When you are done testing, just swap these two lines back!
-        // '/': (context) { debugPrint('ROUTE_TRACE: building /'); return const SplashScreen(); },
-        // ------------------------------------
+       
 
         '/welcome': (context) { debugPrint('ROUTE_TRACE: building /welcome'); return const OnboardingScreen(); },
         '/login': (context) => const LoginScreen(),
