@@ -7,12 +7,14 @@ class ResultsScreenArgs {
   final double confidence;
   final String? userPhotoUrl;
   final String userInitial;
+  final String? analysisLabel;
 
   const ResultsScreenArgs({
     required this.isSafe,
     required this.confidence,
     this.userPhotoUrl,
     this.userInitial = 'U',
+    this.analysisLabel,
   });
 }
 
@@ -35,6 +37,7 @@ class ResultsScreen extends StatelessWidget {
   final double confidence; // 0.0 - 1.0
   final String? userPhotoUrl;
   final String userInitial;
+  final String? analysisLabel;
 
   const ResultsScreen({
     super.key,
@@ -42,6 +45,7 @@ class ResultsScreen extends StatelessWidget {
     required this.confidence,
     this.userPhotoUrl,
     this.userInitial = 'U',
+    this.analysisLabel,
   });
 
   // ---- Palette matched to the shared AppColors theme (registration screen) ----
@@ -68,53 +72,44 @@ class ResultsScreen extends StatelessWidget {
   Color get boxTextColor => textPrimary;
   Color get headingColor => isSafe ? safeHeading : unsafeHeading;
 
-  String get title => isSafe ? 'Healthy Maize' : 'Unsafe for Human Consumption';
-  String get subtitle =>
-      isSafe ? 'Diagnosis completed successfully' : 'Contamination detected in this batch';
+  String get displayAnalysisLabel {
+    final label = analysisLabel?.trim();
+    if (label != null && label.isNotEmpty) {
+      return label;
+    }
+    return isSafe ? 'Healthy Maize' : 'Unsafe for Human Consumption';
+  }
+
+  String get title => displayAnalysisLabel;
+  String get subtitle => isSafe
+      ? 'Diagnosis completed successfully'
+      : 'Analysis flagged this sample for review';
   String get riskLevel => isSafe ? 'Very low' : 'High';
   String get riskTag => isSafe ? 'SAFE · GRADE A' : 'UNSAFE · REJECTED';
 
-  List<RecommendationSource> get attributedRecommendations => isSafe
-      ? [
-          const RecommendationSource(
-            text: 'Safe for storage and immediate human consumption.',
-            sourceName: 'UNBS',
-            badgeBg: AppColors.primaryContainer,
-            badgeText: Colors.white,
-          ),
-          const RecommendationSource(
-            text: 'Continue drying properly to keep moisture below 13%.',
-            sourceName: 'MAAIF',
-            badgeBg: AppColors.primaryContainer,
-            badgeText: Colors.white,
-          ),
-          const RecommendationSource(
-            text: 'Store in a cool, dry place away from ground contact on pallets.',
-            sourceName: 'UNBS',
-            badgeBg: AppColors.primaryContainer,
-            badgeText: Colors.white,
-          ),
-        ]
-      : [
-          const RecommendationSource(
-            text: 'Do not consume, mill, or sell for human food or animal feed.',
-            sourceName: 'UNBS',
-            badgeBg: AppColors.error,
-            badgeText: Colors.white,
-          ),
-          const RecommendationSource(
-            text: 'Isolate this batch immediately from other stock to prevent cross-spread.',
-            sourceName: 'MAAIF',
-            badgeBg: AppColors.error,
-            badgeText: Colors.white,
-          ),
-          const RecommendationSource(
-            text: 'Arrange certified laboratory retesting before any processing.',
-            sourceName: 'UNBS',
-            badgeBg: AppColors.error,
-            badgeText: Colors.white,
-          ),
-        ];
+  List<RecommendationSource> get attributedRecommendations {
+    final primaryText = isSafe
+        ? 'The model classified this sample as $displayAnalysisLabel.'
+        : 'The model flagged this sample as $displayAnalysisLabel and recommends review before use.';
+    final secondaryText = isSafe
+        ? 'Store the batch in a cool, dry place and keep moisture levels controlled.'
+        : 'Separate the batch and arrange confirmatory testing before handling or sale.';
+
+    return [
+      RecommendationSource(
+        text: primaryText,
+        sourceName: 'AI ANALYSIS',
+        badgeBg: isSafe ? AppColors.primaryContainer : AppColors.error,
+        badgeText: Colors.white,
+      ),
+      RecommendationSource(
+        text: secondaryText,
+        sourceName: 'AFLALERT',
+        badgeBg: isSafe ? AppColors.successLight : AppColors.errorLight,
+        badgeText: Colors.white,
+      ),
+    ];
+  }
 
   // Helper method to display clean snackbar alerts
   void _showActionStatus(BuildContext context, String title, IconData icon, Color color) {
