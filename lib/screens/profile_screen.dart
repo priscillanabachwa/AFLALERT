@@ -3,21 +3,23 @@ import 'dart:async';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
 
+import '../constants/app_colors.dart';
 import '../services/firestore_service.dart';
 import '../utils/user_initials.dart';
 import 'settings_screen.dart';
 
 // ─────────────────────────────────────────────
-//  THEME TOKENS
+//  THEME TOKENS — aliased to the shared AppColors palette
+//  (same theme as the registration screen) plus a couple of
+//  light tints derived from it that AppColors doesn't define.
 // ─────────────────────────────────────────────
-const kGreen = Color(0xFF1A5C38);
+const kGreen = AppColors.primaryContainer;
 const kGreenLight = Color(0xFFE8F5EE);
-const kYellow = Color(0xFFF5C518);
-const kRed = Color(0xFFD62B2B);
-const kRedLight = Color(0xFFFFEEEE);
-const kGrey = Color(0xFF8A8A8A);
-const kBg = Color(0xFFF6F7F9);
-const kCard = Colors.white;
+const kRed = AppColors.error;
+const kRedLight = AppColors.errorLight;
+const kGrey = AppColors.grey;
+const kBg = AppColors.t95;
+const kCard = AppColors.surface;
 
 // ─────────────────────────────────────────────
 //  PROFILE SCREEN

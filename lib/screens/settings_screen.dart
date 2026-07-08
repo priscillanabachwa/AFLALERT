@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
+import '../constants/app_colors.dart';
 import 'legal_screen.dart';
 
 class SettingsScreen extends StatefulWidget {
@@ -12,12 +13,12 @@ class SettingsScreen extends StatefulWidget {
 }
 
 class _SettingsScreenState extends State<SettingsScreen> {
-  // ---- Palette matched to HomeScreen ----
-  static const Color darkGreen = Color(0xFF1E3A24);
-  static const Color primaryGreen = Color(0xFF355E3B);
-  static const Color gold = Color(0xFFD9A520);
-  static const Color background = Color(0xFFF8F6F0);
-  static const Color danger = Color(0xFFC62828);
+  // ---- Palette matched to the shared AppColors theme (registration screen) ----
+  static const Color darkGreen = AppColors.primary;
+  static const Color primaryGreen = AppColors.primaryContainer;
+  static const Color gold = AppColors.secondary;
+  static const Color background = AppColors.t95;
+  static const Color danger = AppColors.error;
 
   // ---- Preference state ----
   bool _notificationsEnabled = true;

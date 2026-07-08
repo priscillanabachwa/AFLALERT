@@ -22,4 +22,13 @@ class AppColors {
   // T95 tone — replaces the plain white theme surface on auth screens.
   // Matches the cream used on the home screen.
   static const t95 = Color(0xFFF8F6F0);
+
+  // Shared destructive/at-risk red used for logout, danger actions, and
+  // "at risk" scan badges across screens.
+  static const error = Color(0xFFC62828);
+  static const errorLight = Color(0xFFFDECEA);
+
+  // Shared "safe/healthy" green used for positive scan results and badges.
+  static const success = primaryContainer;
+  static const successLight = Color(0xFFE8F5E9);
 }

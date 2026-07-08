@@ -5,15 +5,15 @@ import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
 
 import '../constants/app_colors.dart';
-import '../services/api_service.dart';
-import '../services/firebase_storage.dart';
-import '../services/firestore_service.dart';
 
 import '../widgets/custom_app_bar.dart';
 import '../widgets/ai_animation.dart';
 import '../widgets/progress_section.dart';
 import '../widgets/custom_bottom_nav.dart';
 import 'result_screen.dart';
+import '../services/firebase_storage.dart';
+import '../services/firestore_service.dart';
+import '../services/tflite_service.dart';
 
 class AnalysisScreenArgs {
   final XFile photo;
@@ -115,17 +115,20 @@ class _AnalysisScreenState extends State<AnalysisScreen> {
   }
 
   Future<ResultsScreenArgs?> _analyzePhoto(AnalysisScreenArgs args) async {
-    final String? imageUrl =
-        await StorageService().uploadMaizeImage(File(args.photo.path));
-    if (imageUrl == null) return null;
+    final File photoFile = File(args.photo.path);
 
-    final Map<String, dynamic>? raw = await ApiService().analyzeMaizeImage(imageUrl);
+    // Classification runs entirely on-device, so it doesn't depend on
+    // network/storage availability.
+    final Map<String, dynamic>? raw = await TfliteService().classifyMaize(photoFile);
     if (raw == null) return null;
 
     final _MaizeAnalysis analysis = _MaizeAnalysis.fromResponse(raw);
 
+    // Best-effort: upload the photo and log the scan record. A failure here
+    // shouldn't block showing the user their on-device diagnosis.
+    final String? imageUrl = await StorageService().uploadMaizeImage(photoFile);
     await FirestoreService().saveScanRecord(
-      imageUrl: imageUrl,
+      imageUrl: imageUrl ?? '',
       classificationLabel: analysis.label,
       confidenceScore: analysis.confidencePercent / 100,
       location: args.location,

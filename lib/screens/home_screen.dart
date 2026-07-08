@@ -2,29 +2,22 @@ import 'package:camera/camera.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:flutter/material.dart';
 
+import '../constants/app_colors.dart';
 import '../services/firestore_service.dart';
 import '../services/location_service.dart';
 import '../services/weather_service.dart';
+import '../widgets/custom_bottom_nav.dart';
 import 'analysis_screen.dart';
+import 'profile_screen.dart';
 
 class HomeScreen extends StatefulWidget {
   const HomeScreen({super.key});
-
-  static const Color darkGreen = Color(0xFF1E3A24);
-  static const Color primaryGreen = Color(0xFF355E3B);
-  static const Color gold = Color(0xFFD9A520);
-  static const Color background = Color(0xFFF8F6F0);
 
   @override
   State<HomeScreen> createState() => _HomeScreenState();
 }
 
 class _HomeScreenState extends State<HomeScreen> {
-  static const Color darkGreen = HomeScreen.darkGreen;
-  static const Color primaryGreen = HomeScreen.primaryGreen;
-  static const Color gold = HomeScreen.gold;
-  static const Color background = HomeScreen.background;
-
   LocationResult? _location;
   WeatherInfo? _weather;
   bool _weatherLoading = true;
@@ -56,7 +49,7 @@ class _HomeScreenState extends State<HomeScreen> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: background,
+      backgroundColor: AppColors.t95,
       body: SafeArea(
         child: SingleChildScrollView(
           padding: const EdgeInsets.symmetric(horizontal: 20),
@@ -64,7 +57,7 @@ class _HomeScreenState extends State<HomeScreen> {
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
               const SizedBox(height: 12),
-              _buildHeader(),
+              _buildHeader(context),
               const SizedBox(height: 24),
               StreamBuilder<DocumentSnapshot<Map<String, dynamic>>>(
                 stream: FirestoreService().getUserProfile(),
@@ -120,20 +113,23 @@ class _HomeScreenState extends State<HomeScreen> {
           ),
         ),
       ),
-      bottomNavigationBar: _buildBottomNavBar(),
+      bottomNavigationBar: const CustomBottomNav(),
     );
   }
 
-  Widget _buildHeader() {
+  Widget _buildHeader(BuildContext context) {
     return Row(
       children: [
-        ClipRRect(
-          borderRadius: BorderRadius.circular(10),
-          child: Image.asset(
-            'lib/assets/images/aflalert_logo.png',
-            width: 32,
-            height: 32,
-            fit: BoxFit.cover,
+        Container(
+          padding: const EdgeInsets.all(8),
+          decoration: BoxDecoration(
+            color: AppColors.primary,
+            borderRadius: BorderRadius.circular(10),
+          ),
+          child: const Icon(
+            Icons.shield_outlined,
+            color: Colors.white,
+            size: 20,
           ),
         ),
         const SizedBox(width: 10),
@@ -142,14 +138,22 @@ class _HomeScreenState extends State<HomeScreen> {
           style: TextStyle(
             fontSize: 18,
             fontWeight: FontWeight.bold,
-            color: darkGreen,
+            color: AppColors.primary,
           ),
         ),
         const Spacer(),
-        const CircleAvatar(
-          radius: 20,
-          backgroundColor: gold,
-          child: Icon(Icons.person, color: Colors.white),
+        GestureDetector(
+          onTap: () {
+            Navigator.push(
+              context,
+              MaterialPageRoute(builder: (_) => const ProfileScreen()),
+            );
+          },
+          child: const CircleAvatar(
+            radius: 20,
+            backgroundColor: AppColors.secondary,
+            child: Icon(Icons.person, color: Colors.white),
+          ),
         ),
       ],
     );
@@ -171,7 +175,7 @@ class _HomeScreenState extends State<HomeScreen> {
           style: const TextStyle(
             fontSize: 28,
             fontWeight: FontWeight.w400,
-            color: darkGreen,
+            color: AppColors.primary,
           ),
         ),
         Text(
@@ -179,7 +183,7 @@ class _HomeScreenState extends State<HomeScreen> {
           style: const TextStyle(
             fontSize: 32,
             fontWeight: FontWeight.bold,
-            color: darkGreen,
+            color: AppColors.primary,
           ),
         ),
         const SizedBox(height: 6),
@@ -230,7 +234,7 @@ class _HomeScreenState extends State<HomeScreen> {
                   style: const TextStyle(
                     fontSize: 24,
                     fontWeight: FontWeight.bold,
-                    color: darkGreen,
+                    color: AppColors.primary,
                   ),
                 ),
                 const SizedBox(height: 4),
@@ -242,7 +246,7 @@ class _HomeScreenState extends State<HomeScreen> {
                   ),
                 ),
                 const SizedBox(height: 12),
-                Icon(_weather?.icon ?? Icons.cloud_off, color: gold, size: 28),
+                Icon(_weather?.icon ?? Icons.cloud_off, color: AppColors.secondary, size: 28),
               ],
             ),
           ),
@@ -252,20 +256,20 @@ class _HomeScreenState extends State<HomeScreen> {
           child: Container(
             padding: const EdgeInsets.all(16),
             decoration: BoxDecoration(
-              color: primaryGreen,
+              color: AppColors.primaryContainer,
               borderRadius: BorderRadius.circular(16),
             ),
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: const [
-                Icon(Icons.lightbulb_outline, color: gold, size: 20),
+                Icon(Icons.lightbulb_outline, color: AppColors.secondary, size: 20),
                 SizedBox(height: 8),
                 Text(
                   'DAILY TIP',
                   style: TextStyle(
                     fontSize: 10,
                     fontWeight: FontWeight.w700,
-                    color: gold,
+                    color: AppColors.secondary,
                     letterSpacing: 0.5,
                   ),
                 ),
@@ -316,7 +320,7 @@ class _HomeScreenState extends State<HomeScreen> {
           margin: const EdgeInsets.all(8),
           decoration: const BoxDecoration(
             shape: BoxShape.circle,
-            color: darkGreen,
+            color: AppColors.primary,
           ),
           child: Material(
             color: Colors.transparent,
@@ -408,11 +412,11 @@ class _HomeScreenState extends State<HomeScreen> {
       ),
       child: Row(
         children: [
-          _buildStatItem('$healthy', 'HEALTHY', primaryGreen),
+          _buildStatItem('$healthy', 'HEALTHY', AppColors.primaryContainer),
           _buildDivider(),
-          _buildStatItem('$risky', 'RISKY', const Color(0xFFC62828)),
+          _buildStatItem('$risky', 'RISKY', AppColors.error),
           _buildDivider(),
-          _buildStatItem(lastScanLabel, 'LAST SCAN', darkGreen),
+          _buildStatItem(lastScanLabel, 'LAST SCAN', AppColors.primary),
         ],
       ),
     );
@@ -441,7 +445,7 @@ class _HomeScreenState extends State<HomeScreen> {
     final Timestamp? timestamp = data['timestamp'] as Timestamp?;
     final String timeText = timestamp != null ? _relativeTime(timestamp.toDate()) : 'Just now';
     final String subtitle = location.isNotEmpty ? '$location · $timeText' : timeText;
-    final Color statusColor = isMoldy ? const Color(0xFFC62828) : primaryGreen;
+    final Color statusColor = isMoldy ? AppColors.error : AppColors.primaryContainer;
 
     return _buildScanTile(
       icon: isMoldy ? Icons.warning_amber_rounded : Icons.eco,
@@ -449,7 +453,7 @@ class _HomeScreenState extends State<HomeScreen> {
       title: label,
       subtitle: subtitle,
       badgeText: isMoldy ? 'AT RISK' : 'SAFE',
-      badgeColor: isMoldy ? const Color(0xFFFDECEA) : const Color(0xFFE8F5E9),
+      badgeColor: isMoldy ? AppColors.errorLight : const Color(0xFFE8F5E9),
       badgeTextColor: statusColor,
       trailingText: '$matchPercent% Match',
       trailingColor: statusColor,
@@ -500,7 +504,7 @@ class _HomeScreenState extends State<HomeScreen> {
           style: TextStyle(
             fontSize: 18,
             fontWeight: FontWeight.bold,
-            color: darkGreen,
+            color: AppColors.primary,
           ),
         ),
         TextButton(
@@ -509,7 +513,7 @@ class _HomeScreenState extends State<HomeScreen> {
             'See All',
             style: TextStyle(
               fontSize: 13,
-              color: gold,
+              color: AppColors.secondary,
               fontWeight: FontWeight.w600,
             ),
           ),
@@ -562,7 +566,7 @@ class _HomeScreenState extends State<HomeScreen> {
                   style: const TextStyle(
                     fontSize: 14,
                     fontWeight: FontWeight.w600,
-                    color: darkGreen,
+                    color: AppColors.primary,
                   ),
                 ),
                 const SizedBox(height: 4),
@@ -611,43 +615,4 @@ class _HomeScreenState extends State<HomeScreen> {
     );
   }
 
-  Widget _buildBottomNavBar() {
-    return Container(
-      margin: const EdgeInsets.fromLTRB(20, 0, 20, 20),
-      padding: const EdgeInsets.symmetric(vertical: 12),
-      decoration: BoxDecoration(
-        color: darkGreen,
-        borderRadius: BorderRadius.circular(30),
-      ),
-      child: Row(
-        mainAxisAlignment: MainAxisAlignment.spaceEvenly,
-        children: [
-          _buildNavItem(Icons.home, 'Home', true),
-          _buildNavItem(Icons.history, 'History', false),
-          _buildNavItem(Icons.notifications_none, 'Notifications', false),
-        ],
-      ),
-    );
-  }
-
-  Widget _buildNavItem(IconData icon, String label, bool isActive) {
-    return Column(
-      mainAxisSize: MainAxisSize.min,
-      children: [
-        Icon(
-          icon,
-          color: isActive ? gold : Colors.white70,
-          size: 24,
-        ),
-        const SizedBox(height: 2),
-        Text(
-          label,
-          style: TextStyle(
-            fontSize: 10,
-            color: isActive ? gold : Colors.white70,
-          ),
-        ),
-      ],
-    );
-  }
 }
