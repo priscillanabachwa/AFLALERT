@@ -27,13 +27,10 @@ import 'package:flutter/material.dart';
 
 import '../constants/app_colors.dart';
 
-// ---------------------------------------------------------------------------
-// Colors — matches the AflAlert dark theme
-// ---------------------------------------------------------------------------
+
 class _AflColors {
   static const bg = Color(0xFF0D1410);
-  // Same hue as AppColors.primaryContainer, lightened for contrast against
-  // the dark viewfinder background.
+
   static final good = HSLColor.fromColor(AppColors.primaryContainer)
       .withLightness(0.50)
       .withSaturation(0.55)
