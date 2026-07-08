@@ -1,4 +1,8 @@
+import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
+
+import '../services/firestore_service.dart';
+import 'settings_screen.dart';
 
 // ─────────────────────────────────────────────
 //  THEME TOKENS
@@ -23,21 +27,49 @@ class ProfileScreen extends StatefulWidget {
 }
 
 class _ProfileScreenState extends State<ProfileScreen> {
+  final FirestoreService _firestoreService = FirestoreService();
+
   bool _darkMode = false;
   String _selectedLanguage = 'English';
+  bool _isLoadingProfile = true;
 
-  // ── dummy user data (replace with Firebase later)
-  final String _userName = 'John Doe';
-  final String _userEmail = 'johndoe@gmail.com';
-  final String _userPhone = '+256 700 123 456';
-  final String _userLocation = 'Kampala, Uganda';
-  final String _userType = 'FARMER';
+  String _userName = '';
+  String _userEmail = '';
+  String _userPhone = '';
+  String _userLocation = '';
+  String _userType = '';
   final int _totalScans = 128;
   final int _healthyScans = 112;
   final int _detectedScans = 16;
 
   @override
+  void initState() {
+    super.initState();
+    _loadProfile();
+  }
+
+  Future<void> _loadProfile() async {
+    final user = FirebaseAuth.instance.currentUser;
+    final profile = await _firestoreService.getUserProfile();
+    setState(() {
+      _userName = profile?['fullName'] as String? ?? user?.displayName ?? 'Your account';
+      _userEmail = profile?['email'] as String? ?? user?.email ?? '';
+      _userPhone = profile?['phone'] as String? ?? '';
+      _userLocation = profile?['district'] as String? ?? '';
+      _userType = (profile?['userType'] as String? ?? '').toUpperCase();
+      _isLoadingProfile = false;
+    });
+  }
+
+  @override
   Widget build(BuildContext context) {
+    if (_isLoadingProfile) {
+      return const Scaffold(
+        backgroundColor: kBg,
+        body: Center(child: CircularProgressIndicator(color: kGreen)),
+      );
+    }
+
     return Scaffold(
       backgroundColor: kBg,
       body: CustomScrollView(
@@ -88,25 +120,16 @@ class _ProfileScreenState extends State<ProfileScreen> {
       ),
       centerTitle: false,
       actions: [
-        Padding(
-          padding: const EdgeInsets.only(right: 16),
-          child: GestureDetector(
-            onTap: _showEditProfile,
-            child: CircleAvatar(
-              radius: 18,
-              backgroundColor: kGreen,
-              backgroundImage: null,
-              child: const Text(
-                'JD',
-                style: TextStyle(
-                  color: Colors.white,
-                  fontSize: 12,
-                  fontWeight: FontWeight.bold,
-                ),
-              ),
-            ),
-          ),
+        IconButton(
+          icon: const Icon(Icons.settings_outlined, color: Colors.black87),
+          onPressed: () {
+            Navigator.push(
+              context,
+              MaterialPageRoute(builder: (_) => const SettingsScreen()),
+            );
+          },
         ),
+        const SizedBox(width: 8),
       ],
     );
   }

@@ -33,6 +33,20 @@ class FirestoreService {
     }
   }
 
+  /// Fetches the profile document for the currently signed-in user.
+  Future<Map<String, dynamic>?> getUserProfile() async {
+    final User? currentUser = _auth.currentUser;
+    if (currentUser == null) return null;
+
+    try {
+      final doc = await _db.collection('users').doc(currentUser.uid).get();
+      return doc.data();
+    } catch (e) {
+      debugPrint('FirestoreService Error fetching user profile: $e');
+      return null;
+    }
+  }
+
   /// Saves a maize diagnostic record to the user's scan history collection.
   Future<bool> saveScanRecord({
     required String imageUrl,
