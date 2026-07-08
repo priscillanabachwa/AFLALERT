@@ -7,9 +7,9 @@ import 'package:tflite_flutter/tflite_flutter.dart';
 // Runs the bundled maize classification model (lib/assets/best.tflite)
 // entirely on-device. The model is an Ultralytics/YOLOv8 classification
 // export: input [1, 3, 224, 224] float32 (NCHW, values scaled to 0-1),
-// output [1, 2] float32 already softmaxed — index 0 is the "moldy /
-// aflatoxin risk" class, index 1 is "healthy" (confirmed against the
-// training export; there is no embedded label metadata to read this from).
+// output [1, 2] float32 already softmaxed — index 0 is "healthy", index 1
+// is the "moldy / aflatoxin risk" class (confirmed against the training
+// export; there is no embedded label metadata to read this from).
 class TfliteService {
   static const int _inputSize = 224;
   static const String _modelAsset = 'lib/assets/best.tflite';
@@ -58,8 +58,8 @@ class TfliteService {
 
       interpreter.run(inputTensor, output);
 
-      final double moldyProb = output[0][0];
-      final double healthyProb = output[0][1];
+      final double healthyProb = output[0][0];
+      final double moldyProb = output[0][1];
       final bool isMoldy = moldyProb > healthyProb;
       final double confidence = isMoldy ? moldyProb : healthyProb;
 
