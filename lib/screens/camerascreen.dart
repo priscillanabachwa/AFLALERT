@@ -25,13 +25,23 @@ import 'dart:io';
 import 'package:camera/camera.dart';
 import 'package:flutter/material.dart';
 
+import '../constants/app_colors.dart';
+
 // ---------------------------------------------------------------------------
 // Colors — matches the AflAlert dark theme
 // ---------------------------------------------------------------------------
 class _AflColors {
   static const bg = Color(0xFF0D1410);
-  static const good = Color(0xFF97C459); // green ramp
-  static const goodText = Color(0xFFEAF3DE);
+  // Same hue as AppColors.primaryContainer, lightened for contrast against
+  // the dark viewfinder background.
+  static final good = HSLColor.fromColor(AppColors.primaryContainer)
+      .withLightness(0.50)
+      .withSaturation(0.55)
+      .toColor();
+  static final goodText = HSLColor.fromColor(AppColors.primaryContainer)
+      .withLightness(0.92)
+      .withSaturation(0.35)
+      .toColor();
   static const warn = Color(0xFFFAC775); // amber ramp
   static const warnText = Color(0xFFFAEEDA);
   static const danger = Color(0xFFF09595); // red ramp
@@ -210,7 +220,7 @@ class _CameraCaptureScreenState extends State<CameraCaptureScreen> {
             if (_controller == null ||
                 snapshot.connectionState != ConnectionState.done ||
                 !_controller!.value.isInitialized) {
-              return const Center(
+              return Center(
                 child: CircularProgressIndicator(color: _AflColors.good),
               );
             }
