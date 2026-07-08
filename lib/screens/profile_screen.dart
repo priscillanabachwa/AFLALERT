@@ -2,6 +2,7 @@ import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
 
 import '../services/firestore_service.dart';
+import '../utils/user_initials.dart';
 import 'settings_screen.dart';
 
 // ─────────────────────────────────────────────
@@ -29,18 +30,12 @@ class ProfileScreen extends StatefulWidget {
 class _ProfileScreenState extends State<ProfileScreen> {
   final FirestoreService _firestoreService = FirestoreService();
 
-  bool _darkMode = false;
-  String _selectedLanguage = 'English';
   bool _isLoadingProfile = true;
 
   String _userName = '';
-  String _userEmail = '';
   String _userPhone = '';
   String _userLocation = '';
   String _userType = '';
-  int _totalScans = 0;
-  int _healthyScans = 0;
-  int _detectedScans = 0;
 
   @override
   void initState() {
@@ -51,16 +46,11 @@ class _ProfileScreenState extends State<ProfileScreen> {
   Future<void> _loadProfile() async {
     final user = FirebaseAuth.instance.currentUser;
     final profile = await _firestoreService.getUserProfile();
-    final stats = await _firestoreService.getUserScanStats();
     setState(() {
       _userName = profile?['fullName'] as String? ?? user?.displayName ?? 'Your account';
-      _userEmail = profile?['email'] as String? ?? user?.email ?? '';
       _userPhone = profile?['phone'] as String? ?? '';
       _userLocation = profile?['district'] as String? ?? '';
       _userType = (profile?['userType'] as String? ?? '').toUpperCase();
-      _totalScans = stats.total;
-      _healthyScans = stats.healthy;
-      _detectedScans = stats.atRisk;
       _isLoadingProfile = false;
     });
   }
@@ -83,13 +73,6 @@ class _ProfileScreenState extends State<ProfileScreen> {
             child: Column(
               children: [
                 _buildProfileHeader(),
-                _buildStatsRow(),
-                const SizedBox(height: 20),
-                _buildSectionLabel('ACCOUNT SETTINGS'),
-                _buildSettingsCard(),
-                const SizedBox(height: 20),
-                _buildSectionLabel('ACCOUNT INFO'),
-                _buildInfoCard(),
                 const SizedBox(height: 20),
                 _buildLogoutButton(),
                 const SizedBox(height: 100),
@@ -115,7 +98,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
         onPressed: () => Navigator.maybePop(context),
       ),
       title: const Text(
-        'Aflatoxin Detector',
+        'Profile',
         style: TextStyle(
           color: Colors.black87,
           fontWeight: FontWeight.bold,
@@ -158,7 +141,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
                   radius: 52,
                   backgroundColor: kGreenLight,
                   child: Text(
-                    _getInitials(_userName),
+                    getInitials(_userName),
                     style: const TextStyle(
                       fontSize: 32,
                       fontWeight: FontWeight.bold,
@@ -233,177 +216,6 @@ class _ProfileScreenState extends State<ProfileScreen> {
     );
   }
 
-  // ── stats row ────────────────────────────────
-  Widget _buildStatsRow() {
-    return Padding(
-      padding: const EdgeInsets.fromLTRB(16, 16, 16, 0),
-      child: Row(
-        children: [
-          Expanded(
-            child: _StatCard(
-              value: _totalScans.toString(),
-              label: 'Total Scans',
-              icon: Icons.bar_chart_rounded,
-              iconColor: kGreen,
-              bgColor: kGreenLight,
-            ),
-          ),
-          const SizedBox(width: 12),
-          Expanded(
-            child: _StatCard(
-              value: _healthyScans.toString(),
-              label: 'Healthy Scans',
-              icon: Icons.check_circle_outline,
-              iconColor: kGreen,
-              bgColor: kGreenLight,
-              highlighted: true,
-            ),
-          ),
-          const SizedBox(width: 12),
-          Expanded(
-            child: _StatCard(
-              value: _detectedScans.toString(),
-              label: 'Detected Scans',
-              icon: Icons.warning_amber_rounded,
-              iconColor: kRed,
-              bgColor: kRedLight,
-            ),
-          ),
-        ],
-      ),
-    );
-  }
-
-  // ── section label ────────────────────────────
-  Widget _buildSectionLabel(String label) {
-    return Padding(
-      padding: const EdgeInsets.fromLTRB(16, 0, 16, 8),
-      child: Align(
-        alignment: Alignment.centerLeft,
-        child: Text(
-          label,
-          style: const TextStyle(
-            fontSize: 11,
-            fontWeight: FontWeight.w700,
-            letterSpacing: 1.2,
-            color: kGrey,
-          ),
-        ),
-      ),
-    );
-  }
-
-  // ── settings card ────────────────────────────
-  Widget _buildSettingsCard() {
-    return Container(
-      margin: const EdgeInsets.symmetric(horizontal: 16),
-      decoration: BoxDecoration(
-        color: kCard,
-        borderRadius: BorderRadius.circular(16),
-        boxShadow: [
-          BoxShadow(
-            color: Colors.black.withAlpha((0.05 * 255).round()),
-            blurRadius: 8,
-            offset: const Offset(0, 2),
-          ),
-        ],
-      ),
-      child: Column(
-        children: [
-          // dark mode toggle
-          _SettingsTile(
-            icon: Icons.dark_mode_outlined,
-            label: 'Dark Mode',
-            trailing: Switch(
-              value: _darkMode,
-              onChanged: (val) => setState(() => _darkMode = val),
-              activeThumbColor: kGreen,
-            ),
-          ),
-          _buildDivider(),
-
-          // language
-          _SettingsTile(
-            icon: Icons.language_outlined,
-            label: 'Language',
-            trailing: GestureDetector(
-              onTap: _showLanguageSheet,
-              child: Row(
-                mainAxisSize: MainAxisSize.min,
-                children: [
-                  Text(
-                    _selectedLanguage,
-                    style: const TextStyle(color: kGrey, fontSize: 14),
-                  ),
-                  const SizedBox(width: 4),
-                  const Icon(Icons.chevron_right, color: kGrey, size: 18),
-                ],
-              ),
-            ),
-            onTap: _showLanguageSheet,
-          ),
-          _buildDivider(),
-
-          // privacy
-          _SettingsTile(
-            icon: Icons.privacy_tip_outlined,
-            label: 'Privacy',
-            trailing: const Icon(Icons.chevron_right, color: kGrey, size: 18),
-            onTap: () => _showComingSoon('Privacy'),
-          ),
-          _buildDivider(),
-
-          // help & support
-          _SettingsTile(
-            icon: Icons.help_outline_rounded,
-            label: 'Help & Support',
-            trailing: const Icon(Icons.chevron_right, color: kGrey, size: 18),
-            onTap: () => _showComingSoon('Help & Support'),
-          ),
-        ],
-      ),
-    );
-  }
-
-  // ── account info card ────────────────────────
-  Widget _buildInfoCard() {
-    return Container(
-      margin: const EdgeInsets.symmetric(horizontal: 16),
-      decoration: BoxDecoration(
-        color: kCard,
-        borderRadius: BorderRadius.circular(16),
-        boxShadow: [
-          BoxShadow(
-            color: Colors.black.withAlpha((0.05 * 255).round()),
-            blurRadius: 8,
-            offset: const Offset(0, 2),
-          ),
-        ],
-      ),
-      child: Column(
-        children: [
-          _InfoTile(
-            icon: Icons.email_outlined,
-            label: 'Email',
-            value: _userEmail,
-          ),
-          _buildDivider(),
-          _InfoTile(
-            icon: Icons.phone_outlined,
-            label: 'Phone',
-            value: _userPhone,
-          ),
-          _buildDivider(),
-          _InfoTile(
-            icon: Icons.location_on_outlined,
-            label: 'District',
-            value: _userLocation,
-          ),
-        ],
-      ),
-    );
-  }
-
   // ── logout button ────────────────────────────
   Widget _buildLogoutButton() {
     return Padding(
@@ -434,16 +246,6 @@ class _ProfileScreenState extends State<ProfileScreen> {
           ),
         ),
       ),
-    );
-  }
-
-  // ── divider ──────────────────────────────────
-  Widget _buildDivider() {
-    return const Divider(
-      height: 1,
-      thickness: 1,
-      color: Color(0xFFF0F0F0),
-      indent: 56,
     );
   }
 
@@ -485,14 +287,6 @@ class _ProfileScreenState extends State<ProfileScreen> {
   }
 
   // ── helpers ──────────────────────────────────
-  String _getInitials(String name) {
-    final parts = name.trim().split(' ');
-    if (parts.length >= 2) {
-      return '${parts[0][0]}${parts[1][0]}'.toUpperCase();
-    }
-    return parts[0][0].toUpperCase();
-  }
-
   void _showEditProfile() {
     showModalBottomSheet(
       context: context,
@@ -504,33 +298,6 @@ class _ProfileScreenState extends State<ProfileScreen> {
         name: _userName,
         phone: _userPhone,
         location: _userLocation,
-      ),
-    );
-  }
-
-  void _showLanguageSheet() {
-    showModalBottomSheet(
-      context: context,
-      shape: const RoundedRectangleBorder(
-        borderRadius: BorderRadius.vertical(top: Radius.circular(24)),
-      ),
-      builder: (_) => _LanguageSheet(
-        current: _selectedLanguage,
-        onSelected: (lang) {
-          setState(() => _selectedLanguage = lang);
-          Navigator.pop(context);
-        },
-      ),
-    );
-  }
-
-  void _showComingSoon(String feature) {
-    ScaffoldMessenger.of(context).showSnackBar(
-      SnackBar(
-        content: Text('$feature coming soon'),
-        backgroundColor: kGreen,
-        behavior: SnackBarBehavior.floating,
-        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
       ),
     );
   }
@@ -572,193 +339,6 @@ class _ProfileScreenState extends State<ProfileScreen> {
               ),
             ),
             child: const Text('Logout', style: TextStyle(color: Colors.white)),
-          ),
-        ],
-      ),
-    );
-  }
-}
-
-// ─────────────────────────────────────────────
-//  STAT CARD WIDGET
-// ─────────────────────────────────────────────
-class _StatCard extends StatelessWidget {
-  final String value;
-  final String label;
-  final IconData icon;
-  final Color iconColor;
-  final Color bgColor;
-  final bool highlighted;
-
-  const _StatCard({
-    required this.value,
-    required this.label,
-    required this.icon,
-    required this.iconColor,
-    required this.bgColor,
-    this.highlighted = false,
-  });
-
-  @override
-  Widget build(BuildContext context) {
-    return Container(
-      padding: const EdgeInsets.symmetric(vertical: 16, horizontal: 12),
-      decoration: BoxDecoration(
-        color: highlighted ? kGreenLight : kCard,
-        borderRadius: BorderRadius.circular(16),
-        border: highlighted
-            ? Border.all(
-                color: kGreen.withAlpha((0.3 * 255).round()),
-                width: 1.5,
-              )
-            : null,
-        boxShadow: [
-          BoxShadow(
-            color: Colors.black.withAlpha((0.05 * 255).round()),
-            blurRadius: 8,
-            offset: const Offset(0, 2),
-          ),
-        ],
-      ),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Container(
-            padding: const EdgeInsets.all(6),
-            decoration: BoxDecoration(
-              color: bgColor,
-              borderRadius: BorderRadius.circular(8),
-            ),
-            child: Icon(icon, color: iconColor, size: 16),
-          ),
-          const SizedBox(height: 10),
-          Text(
-            value,
-            style: TextStyle(
-              fontSize: 24,
-              fontWeight: FontWeight.w800,
-              color: iconColor,
-            ),
-          ),
-          const SizedBox(height: 2),
-          Text(
-            label,
-            style: const TextStyle(
-              fontSize: 11,
-              color: kGrey,
-              fontWeight: FontWeight.w500,
-            ),
-          ),
-        ],
-      ),
-    );
-  }
-}
-
-// ─────────────────────────────────────────────
-//  SETTINGS TILE WIDGET
-// ─────────────────────────────────────────────
-class _SettingsTile extends StatelessWidget {
-  final IconData icon;
-  final String label;
-  final Widget trailing;
-  final VoidCallback? onTap;
-
-  const _SettingsTile({
-    required this.icon,
-    required this.label,
-    required this.trailing,
-    this.onTap,
-  });
-
-  @override
-  Widget build(BuildContext context) {
-    return InkWell(
-      onTap: onTap,
-      borderRadius: BorderRadius.circular(16),
-      child: Padding(
-        padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
-        child: Row(
-          children: [
-            Container(
-              padding: const EdgeInsets.all(8),
-              decoration: BoxDecoration(
-                color: kBg,
-                borderRadius: BorderRadius.circular(10),
-              ),
-              child: Icon(icon, size: 18, color: kGreen),
-            ),
-            const SizedBox(width: 14),
-            Expanded(
-              child: Text(
-                label,
-                style: const TextStyle(
-                  fontSize: 15,
-                  fontWeight: FontWeight.w500,
-                  color: Colors.black87,
-                ),
-              ),
-            ),
-            trailing,
-          ],
-        ),
-      ),
-    );
-  }
-}
-
-// ─────────────────────────────────────────────
-//  INFO TILE WIDGET
-// ─────────────────────────────────────────────
-class _InfoTile extends StatelessWidget {
-  final IconData icon;
-  final String label;
-  final String value;
-
-  const _InfoTile({
-    required this.icon,
-    required this.label,
-    required this.value,
-  });
-
-  @override
-  Widget build(BuildContext context) {
-    return Padding(
-      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
-      child: Row(
-        children: [
-          Container(
-            padding: const EdgeInsets.all(8),
-            decoration: BoxDecoration(
-              color: kBg,
-              borderRadius: BorderRadius.circular(10),
-            ),
-            child: Icon(icon, size: 18, color: kGreen),
-          ),
-          const SizedBox(width: 14),
-          Expanded(
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Text(
-                  label,
-                  style: const TextStyle(
-                    fontSize: 11,
-                    color: kGrey,
-                    fontWeight: FontWeight.w500,
-                  ),
-                ),
-                const SizedBox(height: 2),
-                Text(
-                  value,
-                  style: const TextStyle(
-                    fontSize: 14,
-                    color: Colors.black87,
-                    fontWeight: FontWeight.w600,
-                  ),
-                ),
-              ],
-            ),
           ),
         ],
       ),
@@ -907,95 +487,4 @@ class _EditProfileSheetState extends State<_EditProfileSheet> {
       ],
     );
   }
-}
-
-// ─────────────────────────────────────────────
-//  LANGUAGE BOTTOM SHEET
-// ─────────────────────────────────────────────
-class _LanguageSheet extends StatelessWidget {
-  final String current;
-  final ValueChanged<String> onSelected;
-
-  const _LanguageSheet({required this.current, required this.onSelected});
-
-  static const _languages = [
-    'English',
-    'Luganda',
-    'Swahili',
-    'Runyankore',
-    'Ateso',
-    'Luo',
-  ];
-
-  @override
-  Widget build(BuildContext context) {
-    return Padding(
-      padding: const EdgeInsets.fromLTRB(24, 20, 24, 36),
-      child: Column(
-        mainAxisSize: MainAxisSize.min,
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Center(
-            child: Container(
-              width: 40,
-              height: 4,
-              margin: const EdgeInsets.only(bottom: 20),
-              decoration: BoxDecoration(
-                color: Colors.grey[300],
-                borderRadius: BorderRadius.circular(2),
-              ),
-            ),
-          ),
-          const Text(
-            'Select Language',
-            style: TextStyle(
-              fontSize: 20,
-              fontWeight: FontWeight.bold,
-              color: Colors.black87,
-            ),
-          ),
-          const SizedBox(height: 16),
-          ..._languages.map(
-            (lang) => ListTile(
-              contentPadding: EdgeInsets.zero,
-              leading: Container(
-                padding: const EdgeInsets.all(8),
-                decoration: BoxDecoration(
-                  color: current == lang ? kGreenLight : kBg,
-                  borderRadius: BorderRadius.circular(10),
-                ),
-                child: Icon(
-                  Icons.language,
-                  color: current == lang ? kGreen : kGrey,
-                  size: 18,
-                ),
-              ),
-              title: Text(
-                lang,
-                style: TextStyle(
-                  fontWeight: current == lang
-                      ? FontWeight.w700
-                      : FontWeight.w500,
-                  color: current == lang ? kGreen : Colors.black87,
-                ),
-              ),
-              trailing: current == lang
-                  ? const Icon(Icons.check_circle, color: kGreen, size: 20)
-                  : null,
-              onTap: () => onSelected(lang),
-            ),
-          ),
-        ],
-      ),
-    );
-  }
-}
-
-// ─────────────────────────────────────────────
-//  ENTRY POINT FOR TESTING
-// ─────────────────────────────────────────────
-void main() {
-  runApp(
-    const MaterialApp(debugShowCheckedModeBanner: false, home: ProfileScreen()),
-  );
 }

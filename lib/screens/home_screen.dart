@@ -1,14 +1,43 @@
 import 'package:flutter/material.dart';
 
+import '../services/firestore_service.dart';
+import '../utils/user_initials.dart';
 import 'profile_screen.dart';
 
-class HomeScreen extends StatelessWidget {
+class HomeScreen extends StatefulWidget {
   const HomeScreen({super.key});
 
   static const Color darkGreen = Color(0xFF1E3A24);
   static const Color primaryGreen = Color(0xFF355E3B);
   static const Color gold = Color(0xFFD9A520);
   static const Color background = Color(0xFFF8F6F0);
+
+  @override
+  State<HomeScreen> createState() => _HomeScreenState();
+}
+
+class _HomeScreenState extends State<HomeScreen> {
+  static const Color darkGreen = HomeScreen.darkGreen;
+  static const Color primaryGreen = HomeScreen.primaryGreen;
+  static const Color gold = HomeScreen.gold;
+  static const Color background = HomeScreen.background;
+
+  final FirestoreService _firestoreService = FirestoreService();
+  String _userName = '';
+
+  @override
+  void initState() {
+    super.initState();
+    _loadUserName();
+  }
+
+  Future<void> _loadUserName() async {
+    final profile = await _firestoreService.getUserProfile();
+    if (!mounted) return;
+    setState(() {
+      _userName = profile?['fullName'] as String? ?? '';
+    });
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -107,10 +136,23 @@ class HomeScreen extends StatelessWidget {
               MaterialPageRoute(builder: (_) => const ProfileScreen()),
             );
           },
-          child: const CircleAvatar(
-            radius: 20,
-            backgroundColor: gold,
-            child: Icon(Icons.person, color: Colors.white),
+          child: Container(
+            decoration: BoxDecoration(
+              shape: BoxShape.circle,
+              border: Border.all(color: kGreen, width: 2),
+            ),
+            child: CircleAvatar(
+              radius: 20,
+              backgroundColor: kGreenLight,
+              child: Text(
+                getInitials(_userName),
+                style: const TextStyle(
+                  fontSize: 14,
+                  fontWeight: FontWeight.bold,
+                  color: kGreen,
+                ),
+              ),
+            ),
           ),
         ),
       ],
@@ -118,10 +160,14 @@ class HomeScreen extends StatelessWidget {
   }
 
   Widget _buildGreeting() {
+    final String firstName = _userName.trim().isEmpty
+        ? 'there'
+        : _userName.trim().split(' ').first;
+
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
-      children: const [
-        Text(
+      children: [
+        const Text(
           'Good Morning,',
           style: TextStyle(
             fontSize: 28,
@@ -130,15 +176,15 @@ class HomeScreen extends StatelessWidget {
           ),
         ),
         Text(
-          'John',
-          style: TextStyle(
+          firstName,
+          style: const TextStyle(
             fontSize: 32,
             fontWeight: FontWeight.bold,
             color: darkGreen,
           ),
         ),
-        SizedBox(height: 6),
-        Text(
+        const SizedBox(height: 6),
+        const Text(
           'Ready to secure your harvest today?',
           style: TextStyle(
             fontSize: 14,

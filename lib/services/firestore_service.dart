@@ -2,8 +2,6 @@ import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/foundation.dart';
 
-import '../utils/scan_classification.dart';
-
 class FirestoreService {
   // 1. Establish database instance references
   final FirebaseFirestore _db = FirebaseFirestore.instance;
@@ -82,32 +80,6 @@ class FirestoreService {
     } catch (e) {
       debugPrint('FirestoreService Error saving log: $e');
       return false;
-    }
-  }
-
-  /// Computes total/healthy/at-risk scan counts for the signed-in user.
-  Future<({int total, int healthy, int atRisk})> getUserScanStats() async {
-    final User? currentUser = _auth.currentUser;
-    if (currentUser == null) return (total: 0, healthy: 0, atRisk: 0);
-
-    try {
-      final snapshot = await _db
-          .collection('users')
-          .doc(currentUser.uid)
-          .collection('scans')
-          .get();
-
-      int atRisk = 0;
-      for (final doc in snapshot.docs) {
-        final label = (doc.data()['label'] as String?) ?? '';
-        if (isHighRiskLabel(label)) atRisk++;
-      }
-
-      final total = snapshot.docs.length;
-      return (total: total, healthy: total - atRisk, atRisk: atRisk);
-    } catch (e) {
-      debugPrint('FirestoreService Error fetching scan stats: $e');
-      return (total: 0, healthy: 0, atRisk: 0);
     }
   }
 
