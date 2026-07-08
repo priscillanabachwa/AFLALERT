@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
-import 'package:firebase_core/firebase_core.dart';
 import 'package:google_fonts/google_fonts.dart';
-import 'package:aflalert/screens/homescreen.dart';
+import 'package:firebase_core/firebase_core.dart';
+import 'package:aflalert/screens/home_screen.dart';
 
 import 'firebase_options.dart';
 
@@ -10,7 +10,7 @@ import 'package:aflalert/screens/welcomepage.dart';
 import 'package:aflalert/screens/login_screen.dart';
 import 'package:aflalert/screens/analysis_screen.dart';
 import 'package:aflalert/screens/registration_screen.dart';
-import 'package:aflalert/screens/camerascreen.dart';
+import 'package:aflalert/screens/camera_screen.dart';
 
 Future<void> main() async {
   WidgetsFlutterBinding.ensureInitialized();
@@ -28,8 +28,9 @@ class AflAlert extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return MaterialApp(
-      debugShowCheckedModeBanner: false,
       title: 'AflAlert',
+      debugShowCheckedModeBanner: false,
+
       theme: ThemeData(
         useMaterial3: true,
         colorScheme: ColorScheme.fromSeed(
@@ -40,57 +41,77 @@ class AflAlert extends StatelessWidget {
         ),
         scaffoldBackgroundColor: const Color(0xFFF8F9FA),
         textTheme: GoogleFonts.poppinsTextTheme(),
+
         appBarTheme: const AppBarTheme(
           backgroundColor: Colors.white,
           foregroundColor: Color(0xFF00462D),
           elevation: 0,
           centerTitle: true,
         ),
+
         elevatedButtonTheme: ElevatedButtonThemeData(
           style: ElevatedButton.styleFrom(
-            backgroundColor: const Color(0xFF00462D),
+            backgroundColor: const Color(0xFF1E3A24),
             foregroundColor: Colors.white,
             minimumSize: const Size(double.infinity, 56),
-            elevation: 0,
             shape: RoundedRectangleBorder(
               borderRadius: BorderRadius.circular(28),
             ),
+            elevation: 0,
             textStyle: const TextStyle(
               fontSize: 18,
               fontWeight: FontWeight.bold,
             ),
           ),
         ),
+
         inputDecorationTheme: InputDecorationTheme(
           filled: true,
           fillColor: Colors.white,
+          hintStyle: TextStyle(color: Colors.grey.shade500),
           contentPadding: const EdgeInsets.symmetric(
             horizontal: 16,
             vertical: 18,
           ),
           border: OutlineInputBorder(
             borderRadius: BorderRadius.circular(12),
-            borderSide: const BorderSide(color: Color(0xFFD1D5DB)),
+            borderSide: const BorderSide(
+              color: Color(0xFFD1D5DB),
+            ),
           ),
           enabledBorder: OutlineInputBorder(
             borderRadius: BorderRadius.circular(12),
-            borderSide: const BorderSide(color: Color(0xFFD1D5DB)),
+            borderSide: const BorderSide(
+              color: Color(0xFFD1D5DB),
+            ),
           ),
           focusedBorder: OutlineInputBorder(
             borderRadius: BorderRadius.circular(12),
-            borderSide: const BorderSide(color: Color(0xFF00462D), width: 2),
+            borderSide: const BorderSide(
+              color: Color(0xFF00462D),
+              width: 2,
+            ),
           ),
         ),
       ),
-      initialRoute: '/camera',
+
+      // First screen shown when the app starts (serves as '/')
+      home: const SplashScreen(),
+
       routes: {
-        '/': (context) => const SplashScreen(),
-        '/welcome': (context) => const OnboardingScreen(),
+        '/welcome': (context) {
+          debugPrint('ROUTE_TRACE: building /welcome');
+          return const OnboardingScreen();
+        },
+
         '/login': (context) => const LoginScreen(),
+        '/home': (context) => HomeScreen(),
         '/analysis': (context) => const AnalysisScreen(),
         '/register': (context) => const RegistrationScreen(),
-        '/camera': (context) => const CameraCaptureScreen(),
-        '/home': (context) => const HomeScreen(),
+        '/camera': (context) { 
+          debugPrint('ROUTE_TRACE: building /camera'); 
+          return CameraCaptureScreen(); 
+        },
       },
     );
   }

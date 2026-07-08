@@ -2,6 +2,8 @@ import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
 
 import '../constants/app_colors.dart';
+import '../services/firebase_auth.dart';
+import '../services/firestore_service.dart';
 
 class RegistrationScreen extends StatefulWidget {
   const RegistrationScreen({super.key});
@@ -18,6 +20,9 @@ class _RegistrationScreenState extends State<RegistrationScreen> {
   final TextEditingController _confirmPasswordController =
       TextEditingController();
   final TextEditingController _phoneController = TextEditingController();
+
+  final AuthService _authService = AuthService();
+  final FirestoreService _firestoreService = FirestoreService();
 
   String? _selectedDistrict;
   String? _selectedUserType;
@@ -64,43 +69,68 @@ class _RegistrationScreenState extends State<RegistrationScreen> {
     super.dispose();
   }
 
-  void _registerUser() {
-    if (_formKey.currentState!.validate()) {
-      if (!_agreedToTerms) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(
-            content: Text('Please agree to the Terms of Service'),
-            backgroundColor: Color(0xFFDC2626),
-          ),
-        );
-        return;
-      }
+  Future<void> _registerUser() async {
+    if (!_formKey.currentState!.validate()) return;
 
-      setState(() {
-        _isLoading = true;
-      });
-
-      // Simulate API call
-      Future.delayed(const Duration(seconds: 2), () {
-        if (!mounted) return;
-        setState(() {
-          _isLoading = false;
-        });
-        ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(
-            content: Text('Registration successful!'),
-            backgroundColor: Color(0xFF059669),
-          ),
-        );
-        // Navigate to next screen or login
-      });
+    if (!_agreedToTerms) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text('Please agree to the Terms of Service'),
+          backgroundColor: Color(0xFFDC2626),
+        ),
+      );
+      return;
     }
+
+    setState(() {
+      _isLoading = true;
+    });
+
+    final result = await _authService.registerWithEmailAndPassword(
+      _emailController.text.trim(),
+      _passwordController.text,
+    );
+
+    if (!mounted) return;
+
+    if (result is String) {
+      setState(() {
+        _isLoading = false;
+      });
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text(result), backgroundColor: const Color(0xFFDC2626)),
+      );
+      return;
+    }
+
+    await _firestoreService.createUserProfile(
+      uid: result.uid,
+      fullName: _fullNameController.text.trim(),
+      email: _emailController.text.trim(),
+      phone: _phoneController.text.trim(),
+      district: _selectedDistrict!,
+      userType: _selectedUserType!,
+    );
+
+    if (!mounted) return;
+    setState(() {
+      _isLoading = false;
+    });
+
+    ScaffoldMessenger.of(context).showSnackBar(
+      const SnackBar(
+        content: Text('Registration successful!'),
+        backgroundColor: Color(0xFF059669),
+      ),
+    );
+
+    Navigator.pushReplacementNamed(context, '/home');
   }
 
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: const Color(0xFFF8F9FA),
+      backgroundColor: AppColors.logoCream,
       body: SafeArea(
         child: SingleChildScrollView(
           padding: const EdgeInsets.symmetric(horizontal: 24.0),
@@ -109,32 +139,28 @@ class _RegistrationScreenState extends State<RegistrationScreen> {
             children: [
               const SizedBox(height: 40),
 
-              // Logo Container
-              Container(
-                width: 100,
-                height: 100,
-                decoration: BoxDecoration(
-                  color: Colors.white,
-                  borderRadius: BorderRadius.circular(12),
-                  boxShadow: [
-                    BoxShadow(
-                      color: Colors.black.withValues(alpha: 0.05),
-                      blurRadius: 10,
-                      offset: const Offset(0, 4),
-                    ),
-                  ],
-                ),
-                padding: const EdgeInsets.all(16),
+              // Logo — background matches the cream baked into the artwork, so no square backing shows.
+              SizedBox(
+                width: 160,
+                height: 160,
                 child: Image.asset(
-                  'assets/images/logo.jpeg',
-                  fit: BoxFit.contain,
+                  'lib/assets/images/aflalert_logo.png',
+                  fit: BoxFit.cover,
                 ),
               ),
 
               const SizedBox(height: 32),
 
               Text(
-                'Join AflAlert',
+                'Join',
+                style: GoogleFonts.inter(
+                  fontSize: 20,
+                  fontWeight: FontWeight.normal,
+                  color: AppColors.primaryContainer,
+                ),
+              ),
+              Text(
+                'AflAlert',
                 style: GoogleFonts.inter(
                   fontSize: 32,
                   fontWeight: FontWeight.bold,
@@ -159,7 +185,7 @@ class _RegistrationScreenState extends State<RegistrationScreen> {
               Container(
                 padding: const EdgeInsets.all(24),
                 decoration: BoxDecoration(
-                  color: Colors.white,
+                  color: AppColors.t95,
                   borderRadius: BorderRadius.circular(24),
                   border: Border.all(color: const Color(0xFFE5E7EB)),
                 ),
@@ -206,7 +232,7 @@ class _RegistrationScreenState extends State<RegistrationScreen> {
                         controller: _emailController,
                         keyboardType: TextInputType.emailAddress,
                         decoration: const InputDecoration(
-                          hintText: 'name@farm-hq.com',
+                          hintText: 'example@gmail.com',
                           prefixIcon: Icon(Icons.email_outlined),
                         ),
                         validator: (value) {
@@ -487,39 +513,6 @@ class _RegistrationScreenState extends State<RegistrationScreen> {
                         ],
                       ),
 
-                      const SizedBox(height: 12),
-
-                      // Lab Testing Disclaimer
-                      Row(
-                        children: [
-                          SizedBox(
-                            height: 24,
-                            width: 24,
-                            child: Checkbox(
-                              value: _agreedToTerms,
-                              onChanged: (value) {
-                                setState(() {
-                                  _agreedToTerms = value ?? false;
-                                });
-                              },
-                              shape: RoundedRectangleBorder(
-                                borderRadius: BorderRadius.circular(4),
-                              ),
-                            ),
-                          ),
-                          const SizedBox(width: 8),
-                          Expanded(
-                            child: Text(
-                              'AI-detected results must be confirmed by certified lab testing',
-                              style: GoogleFonts.inter(
-                                color: AppColors.primaryContainer,
-                                fontSize: 14,
-                              ),
-                            ),
-                          ),
-                        ],
-                      ),
-
                       const SizedBox(height: 28),
 
                       // Register Button
@@ -578,7 +571,7 @@ class _RegistrationScreenState extends State<RegistrationScreen> {
                   ),
                   GestureDetector(
                     onTap: () {
-                      Navigator.pop(context);
+                      Navigator.pushReplacementNamed(context, '/login');
                     },
                     child: const Text(
                       'Login here',
