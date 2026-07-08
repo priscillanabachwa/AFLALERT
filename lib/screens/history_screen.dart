@@ -1,6 +1,8 @@
+import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:flutter/material.dart';
 
 import 'login_screen.dart';
+import '../services/firestore_service.dart';
 
 // ─────────────────────────────────────────
 //  DESIGN TOKENS  (match your app palette)
@@ -40,55 +42,40 @@ class ScanRecord {
 }
 
 // ─────────────────────────────────────────
-//  DUMMY DATA  (replace with Firestore)
+//  FIRESTORE MAPPING
 // ─────────────────────────────────────────
-final List<ScanRecord> _allScans = [
-  ScanRecord(
-    id: 'MZ-0012',
-    title: 'Yellow Maize Sample',
-    location: 'Store Lot 1',
-    date: 'Oct 24, 2023',
-    status: ScanStatus.healthy,
-    matchPercent: 98,
-    imagePath: '',
-  ),
-  ScanRecord(
-    id: 'MZ-0011',
-    title: 'Stockpile 402B',
-    location: 'North Field',
-    date: 'Oct 22, 2023',
-    status: ScanStatus.moldDetected,
-    matchPercent: 85,
-    imagePath: '',
-  ),
-  ScanRecord(
-    id: 'MZ-0010',
-    title: 'Post-Dry Testing',
-    location: 'Drying Bay 2',
-    date: 'Oct 20, 2023',
-    status: ScanStatus.healthy,
-    matchPercent: 94,
-    imagePath: '',
-  ),
-  ScanRecord(
-    id: 'MZ-0009',
-    title: 'Warehouse A – Lot 12',
-    location: 'Main Warehouse',
-    date: 'Oct 18, 2023',
-    status: ScanStatus.healthy,
-    matchPercent: 97,
-    imagePath: '',
-  ),
-  ScanRecord(
-    id: 'MZ-0008',
-    title: 'Field North – Sec 3',
-    location: 'North Section',
-    date: 'Oct 16, 2023',
-    status: ScanStatus.moldDetected,
-    matchPercent: 91,
-    imagePath: '',
-  ),
+const List<String> _kMonthAbbrev = [
+  'Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun',
+  'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec',
 ];
+
+String _formatScanDate(DateTime dt) =>
+    '${_kMonthAbbrev[dt.month - 1]} ${dt.day}, ${dt.year}';
+
+ScanRecord _scanRecordFromDoc(QueryDocumentSnapshot doc) {
+  final data = doc.data() as Map<String, dynamic>;
+
+  final String label = (data['label'] ?? 'Unknown').toString();
+  final num confidenceRaw = (data['confidence'] ?? 0) as num;
+  final int matchPercent =
+      (confidenceRaw <= 1 ? confidenceRaw * 100 : confidenceRaw).round().clamp(0, 100);
+
+  final bool isMoldy = RegExp(r'mold|aflatox|contamin|infect|positive', caseSensitive: false)
+          .hasMatch(label) &&
+      !RegExp(r'no mold|healthy|clean|safe|negative', caseSensitive: false).hasMatch(label);
+
+  final Timestamp? timestamp = data['timestamp'] as Timestamp?;
+
+  return ScanRecord(
+    id: doc.id,
+    title: label,
+    location: (data['location'] ?? '').toString(),
+    date: timestamp != null ? _formatScanDate(timestamp.toDate()) : 'Just now',
+    status: isMoldy ? ScanStatus.moldDetected : ScanStatus.healthy,
+    matchPercent: matchPercent,
+    imagePath: (data['imageUrl'] ?? '').toString(),
+  );
+}
 
 // ─────────────────────────────────────────
 //  HISTORY SCREEN
@@ -102,11 +89,12 @@ class HistoryScreen extends StatefulWidget {
 
 class _HistoryScreenState extends State<HistoryScreen> {
   final TextEditingController _searchCtrl = TextEditingController();
+  final FirestoreService _firestoreService = FirestoreService();
   ScanStatus? _activeFilter; // null = show all
   String _query = '';
 
-  List<ScanRecord> get _filtered {
-    return _allScans.where((s) {
+  List<ScanRecord> _filterRecords(List<ScanRecord> source) {
+    return source.where((s) {
       final matchesQuery =
           _query.isEmpty ||
           s.title.toLowerCase().contains(_query.toLowerCase()) ||
@@ -132,23 +120,39 @@ class _HistoryScreenState extends State<HistoryScreen> {
 
   @override
   Widget build(BuildContext context) {
-    final results = _filtered;
-
     return Scaffold(
       backgroundColor: kPageBg,
       appBar: _buildAppBar(),
-      body: Column(
-        children: [
-          _buildSearchBar(),
-          _buildFilterChips(),
-          const SizedBox(height: 4),
-          Expanded(
-            child: results.isEmpty
-                ? _buildEmptyState()
-                : _buildScanList(results),
-          ),
-          _buildBottomBar(results),
-        ],
+      body: StreamBuilder<QuerySnapshot>(
+        stream: _firestoreService.getUserScanHistory(),
+        builder: (context, snapshot) {
+          if (snapshot.hasError) {
+            return _buildErrorState();
+          }
+          if (snapshot.connectionState == ConnectionState.waiting) {
+            return const Center(
+              child: CircularProgressIndicator(color: kPrimaryGreen),
+            );
+          }
+
+          final allScans =
+              (snapshot.data?.docs ?? []).map(_scanRecordFromDoc).toList();
+          final results = _filterRecords(allScans);
+
+          return Column(
+            children: [
+              _buildSearchBar(),
+              _buildFilterChips(),
+              const SizedBox(height: 4),
+              Expanded(
+                child: results.isEmpty
+                    ? _buildEmptyState()
+                    : _buildScanList(results),
+              ),
+              _buildBottomBar(results),
+            ],
+          );
+        },
       ),
       bottomNavigationBar: _buildBottomNav(),
     );
@@ -402,6 +406,37 @@ class _HistoryScreenState extends State<HistoryScreen> {
     );
   }
 
+  // ── ERROR STATE ──────────────────────────
+  Widget _buildErrorState() {
+    return Center(
+      child: Column(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          Icon(
+            Icons.cloud_off,
+            size: 64,
+            color: kDangerRed.withAlpha((0.4 * 255).round()),
+          ),
+          const SizedBox(height: 16),
+          const Text(
+            "Couldn't load scan history",
+            style: TextStyle(
+              fontSize: 16,
+              fontWeight: FontWeight.w700,
+              color: kPrimaryGreen,
+            ),
+          ),
+          const SizedBox(height: 6),
+          const Text(
+            'Check your connection and try again.',
+            textAlign: TextAlign.center,
+            style: TextStyle(fontSize: 13, color: kSubtitle, height: 1.5),
+          ),
+        ],
+      ),
+    );
+  }
+
   // ── BOTTOM NAV ───────────────────────────
   Widget _buildBottomNav() {
     return Container(
@@ -508,7 +543,7 @@ class _HistoryScreenState extends State<HistoryScreen> {
               ),
               const SizedBox(height: 8),
               Text(
-                'Location: ${record.location}',
+                'Location: ${record.location.isNotEmpty ? record.location : 'Not recorded'}',
                 style: const TextStyle(fontSize: 14, color: Color(0xFF263238)),
               ),
               const SizedBox(height: 4),
@@ -627,13 +662,15 @@ class _ScanCard extends StatelessWidget {
                 width: 88,
                 height: 88,
                 color: kPrimaryGreen.withAlpha((0.08 * 255).round()),
-                child: record.imagePath.isNotEmpty
-                    ? Image.asset(record.imagePath, fit: BoxFit.cover)
-                    : Icon(
+                child: record.imagePath.isEmpty
+                    ? Icon(
                         Icons.grain,
                         size: 36,
                         color: kPrimaryGreen.withAlpha((0.3 * 255).round()),
-                      ),
+                      )
+                    : (record.imagePath.startsWith('http')
+                        ? Image.network(record.imagePath, fit: BoxFit.cover)
+                        : Image.asset(record.imagePath, fit: BoxFit.cover)),
               ),
             ),
 
@@ -687,7 +724,7 @@ class _ScanCard extends StatelessWidget {
 
                     const SizedBox(height: 5),
 
-                    // Date
+                    // Date (+ location, when known)
                     Row(
                       children: [
                         Icon(
@@ -703,24 +740,26 @@ class _ScanCard extends StatelessWidget {
                             color: kSubtitle,
                           ),
                         ),
-                        const SizedBox(width: 10),
-                        Icon(
-                          Icons.location_on_outlined,
-                          size: 12,
-                          color: kSubtitle,
-                        ),
-                        const SizedBox(width: 2),
-                        Expanded(
-                          child: Text(
-                            record.location,
-                            style: const TextStyle(
-                              fontSize: 12,
-                              color: kSubtitle,
-                            ),
-                            maxLines: 1,
-                            overflow: TextOverflow.ellipsis,
+                        if (record.location.isNotEmpty) ...[
+                          const SizedBox(width: 10),
+                          Icon(
+                            Icons.location_on_outlined,
+                            size: 12,
+                            color: kSubtitle,
                           ),
-                        ),
+                          const SizedBox(width: 2),
+                          Expanded(
+                            child: Text(
+                              record.location,
+                              style: const TextStyle(
+                                fontSize: 12,
+                                color: kSubtitle,
+                              ),
+                              maxLines: 1,
+                              overflow: TextOverflow.ellipsis,
+                            ),
+                          ),
+                        ],
                       ],
                     ),
 
