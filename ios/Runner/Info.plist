@@ -66,5 +66,9 @@
 		<string>UIInterfaceOrientationLandscapeLeft</string>
 		<string>UIInterfaceOrientationLandscapeRight</string>
 	</array>
+	<key>NSCameraUsageDescription</key>
+	<string>AFLALERT needs camera access to capture images of maize for quality analysis.</string>
+	<key>NSPhotoLibraryUsageDescription</key>
+	<string>AFLALERT needs photo library access to select saved maize images for quality analysis.</string>
 </dict>
 </plist>
