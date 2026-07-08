@@ -26,6 +26,7 @@ import 'package:camera/camera.dart';
 import 'package:flutter/material.dart';
 import '../services/api_service.dart';
 import '../services/firebase_storage.dart';
+import '../services/firestore_service.dart';
 
 // ---------------------------------------------------------------------------
 // Colors — matches the AflAlert dark theme
