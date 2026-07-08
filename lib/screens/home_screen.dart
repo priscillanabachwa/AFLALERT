@@ -1,8 +1,11 @@
+import 'package:camera/camera.dart';
+import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:flutter/material.dart';
 
 import '../services/firestore_service.dart';
-import '../utils/user_initials.dart';
-import 'profile_screen.dart';
+import '../services/location_service.dart';
+import '../services/weather_service.dart';
+import 'analysis_screen.dart';
 
 class HomeScreen extends StatefulWidget {
   const HomeScreen({super.key});
@@ -22,20 +25,31 @@ class _HomeScreenState extends State<HomeScreen> {
   static const Color gold = HomeScreen.gold;
   static const Color background = HomeScreen.background;
 
-  final FirestoreService _firestoreService = FirestoreService();
-  String _userName = '';
+  LocationResult? _location;
+  WeatherInfo? _weather;
+  bool _weatherLoading = true;
 
   @override
   void initState() {
     super.initState();
-    _loadUserName();
+    _loadWeather();
   }
 
-  Future<void> _loadUserName() async {
-    final profile = await _firestoreService.getUserProfile();
+  Future<void> _loadWeather() async {
+    final LocationResult? location = await LocationService().getCurrentLocation();
+    if (location == null) {
+      if (mounted) setState(() => _weatherLoading = false);
+      return;
+    }
+
+    final WeatherInfo? weather =
+        await WeatherService().getCurrentWeather(location.latitude, location.longitude);
+
     if (!mounted) return;
     setState(() {
-      _userName = profile?['fullName'] as String? ?? '';
+      _location = location;
+      _weather = weather;
+      _weatherLoading = false;
     });
   }
 
@@ -50,13 +64,22 @@ class _HomeScreenState extends State<HomeScreen> {
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
               const SizedBox(height: 12),
-              _buildHeader(context),
+              _buildHeader(),
               const SizedBox(height: 24),
-              _buildGreeting(),
+              StreamBuilder<DocumentSnapshot<Map<String, dynamic>>>(
+                stream: FirestoreService().getUserProfile(),
+                builder: (context, snapshot) {
+                  final String? fullName = snapshot.data?.data()?['fullName'] as String?;
+                  final String firstName = (fullName != null && fullName.trim().isNotEmpty)
+                      ? fullName.trim().split(' ').first
+                      : 'there';
+                  return _buildGreeting(firstName);
+                },
+              ),
               const SizedBox(height: 20),
               _buildInfoCards(),
               const SizedBox(height: 32),
-              _buildScanButton(),
+              _buildScanButton(context),
               const SizedBox(height: 12),
               const Center(
                 child: Text(
@@ -68,34 +91,31 @@ class _HomeScreenState extends State<HomeScreen> {
                 ),
               ),
               const SizedBox(height: 28),
-              _buildStatsRow(),
-              const SizedBox(height: 28),
-              _buildRecentScansHeader(),
-              const SizedBox(height: 16),
-              _buildScanTile(
-                icon: Icons.warehouse,
-                iconColor: gold,
-                title: 'Warehouse A - Lot 12',
-                subtitle: '2 hours ago',
-                badgeText: 'SAFE',
-                badgeColor: const Color(0xFFE8F5E9),
-                badgeTextColor: primaryGreen,
-                trailingText: '98% Match',
-                trailingColor: primaryGreen,
+              StreamBuilder<QuerySnapshot>(
+                stream: FirestoreService().getUserScanHistory(),
+                builder: (context, snapshot) {
+                  final docs = snapshot.data?.docs ?? [];
+                  final recentDocs = docs.take(2).toList();
+                  return Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      _buildStatsRow(docs),
+                      const SizedBox(height: 28),
+                      _buildRecentScansHeader(),
+                      const SizedBox(height: 16),
+                      if (recentDocs.isEmpty)
+                        _buildNoScansYet()
+                      else
+                        for (int i = 0; i < recentDocs.length; i++)
+                          Padding(
+                            padding: EdgeInsets.only(bottom: i == recentDocs.length - 1 ? 0 : 12),
+                            child: _buildScanTileFromDoc(recentDocs[i]),
+                          ),
+                    ],
+                  );
+                },
               ),
-              const SizedBox(height: 12),
-              _buildScanTile(
-                icon: Icons.grass,
-                iconColor: gold,
-                title: 'Field North - Sec 3',
-                subtitle: 'Yesterday, 4:30 PM',
-                badgeText: 'AT RISK',
-                badgeColor: const Color(0xFFFDECEA),
-                badgeTextColor: const Color(0xFFC62828),
-                trailingText: 'Re-scan Suggested',
-                trailingColor: const Color(0xFFC62828),
-              ),
-              const SizedBox(height: 100),
+              const SizedBox(height: 88),
             ],
           ),
         ),
@@ -104,7 +124,7 @@ class _HomeScreenState extends State<HomeScreen> {
     );
   }
 
-  Widget _buildHeader(BuildContext context) {
+  Widget _buildHeader() {
     return Row(
       children: [
         Container(
@@ -129,54 +149,36 @@ class _HomeScreenState extends State<HomeScreen> {
           ),
         ),
         const Spacer(),
-        GestureDetector(
-          onTap: () {
-            Navigator.push(
-              context,
-              MaterialPageRoute(builder: (_) => const ProfileScreen()),
-            );
-          },
-          child: Container(
-            decoration: BoxDecoration(
-              shape: BoxShape.circle,
-              border: Border.all(color: kGreen, width: 2),
-            ),
-            child: CircleAvatar(
-              radius: 20,
-              backgroundColor: kGreenLight,
-              child: Text(
-                getInitials(_userName),
-                style: const TextStyle(
-                  fontSize: 14,
-                  fontWeight: FontWeight.bold,
-                  color: kGreen,
-                ),
-              ),
-            ),
-          ),
+        const CircleAvatar(
+          radius: 20,
+          backgroundColor: gold,
+          child: Icon(Icons.person, color: Colors.white),
         ),
       ],
     );
   }
 
-  Widget _buildGreeting() {
-    final String firstName = _userName.trim().isEmpty
-        ? 'there'
-        : _userName.trim().split(' ').first;
+  static String _greetingForHour(int hour) {
+    if (hour >= 5 && hour < 12) return 'Good Morning';
+    if (hour >= 12 && hour < 17) return 'Good Afternoon';
+    if (hour >= 17 && hour < 21) return 'Good Evening';
+    return 'Good Night';
+  }
 
+  Widget _buildGreeting(String name) {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        const Text(
-          'Good Morning,',
-          style: TextStyle(
+        Text(
+          '${_greetingForHour(DateTime.now().hour)},',
+          style: const TextStyle(
             fontSize: 28,
             fontWeight: FontWeight.w400,
             color: darkGreen,
           ),
         ),
         Text(
-          firstName,
+          name,
           style: const TextStyle(
             fontSize: 32,
             fontWeight: FontWeight.bold,
@@ -214,35 +216,36 @@ class _HomeScreenState extends State<HomeScreen> {
             ),
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
-              children: const [
+              children: [
                 Text(
-                  'NAIROBI, KENYA',
-                  style: TextStyle(
+                  (_location?.placeName?.toUpperCase()) ??
+                      (_weatherLoading ? 'LOCATING...' : 'LOCATION UNAVAILABLE'),
+                  style: const TextStyle(
                     fontSize: 10,
                     fontWeight: FontWeight.w600,
                     color: Colors.grey,
                     letterSpacing: 0.5,
                   ),
                 ),
-                SizedBox(height: 8),
+                const SizedBox(height: 8),
                 Text(
-                  '24°C',
-                  style: TextStyle(
+                  _weather != null ? '${_weather!.temperatureC.round()}°C' : '--°C',
+                  style: const TextStyle(
                     fontSize: 24,
                     fontWeight: FontWeight.bold,
                     color: darkGreen,
                   ),
                 ),
-                SizedBox(height: 4),
+                const SizedBox(height: 4),
                 Text(
-                  'Cloudy',
-                  style: TextStyle(
+                  _weather?.condition ?? (_weatherLoading ? 'Fetching weather...' : 'Unavailable'),
+                  style: const TextStyle(
                     fontSize: 13,
                     color: Colors.grey,
                   ),
                 ),
-                SizedBox(height: 12),
-                Icon(Icons.cloud, color: gold, size: 28),
+                const SizedBox(height: 12),
+                Icon(_weather?.icon ?? Icons.cloud_off, color: gold, size: 28),
               ],
             ),
           ),
@@ -286,7 +289,24 @@ class _HomeScreenState extends State<HomeScreen> {
     );
   }
 
-  Widget _buildScanButton() {
+  Future<void> _onScanTap(BuildContext context) async {
+    // Reuse the location already resolved for the weather card when
+    // possible, falling back to a fresh lookup if that hasn't landed yet.
+    final String? location =
+        _location?.placeName ?? await LocationService().getCurrentPlaceName();
+    if (!context.mounted) return;
+
+    final Object? photo = await Navigator.pushNamed(context, '/camera');
+    if (photo is! XFile || !context.mounted) return;
+
+    Navigator.pushNamed(
+      context,
+      '/analysis',
+      arguments: AnalysisScreenArgs(photo: photo, location: location),
+    );
+  }
+
+  Widget _buildScanButton(BuildContext context) {
     return Center(
       child: Container(
         width: 160,
@@ -305,7 +325,7 @@ class _HomeScreenState extends State<HomeScreen> {
             color: Colors.transparent,
             child: InkWell(
               customBorder: const CircleBorder(),
-              onTap: () {},
+              onTap: () => _onScanTap(context),
               child: Column(
                 mainAxisAlignment: MainAxisAlignment.center,
                 children: const [
@@ -329,7 +349,53 @@ class _HomeScreenState extends State<HomeScreen> {
     );
   }
 
-  Widget _buildStatsRow() {
+  static const List<String> _monthAbbrev = [
+    'Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun',
+    'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec',
+  ];
+
+  static bool _isMoldyLabel(String label) {
+    return RegExp(r'mold|aflatox|contamin|infect|positive', caseSensitive: false).hasMatch(label) &&
+        !RegExp(r'no mold|healthy|clean|safe|negative', caseSensitive: false).hasMatch(label);
+  }
+
+  static String _formatScanDate(DateTime dt) => '${_monthAbbrev[dt.month - 1]} ${dt.day}';
+
+  static String _formatTime(DateTime dt) {
+    final int hour = dt.hour % 12 == 0 ? 12 : dt.hour % 12;
+    final String minute = dt.minute.toString().padLeft(2, '0');
+    final String period = dt.hour >= 12 ? 'PM' : 'AM';
+    return '$hour:$minute $period';
+  }
+
+  static String _relativeTime(DateTime dt) {
+    final Duration diff = DateTime.now().difference(dt);
+    if (diff.inMinutes < 1) return 'Just now';
+    if (diff.inMinutes < 60) return '${diff.inMinutes} min ago';
+    if (diff.inHours < 24) return '${diff.inHours} hour${diff.inHours == 1 ? '' : 's'} ago';
+    if (diff.inDays == 1) return 'Yesterday, ${_formatTime(dt)}';
+    if (diff.inDays < 7) return '${diff.inDays} days ago';
+    return _formatScanDate(dt);
+  }
+
+  Widget _buildStatsRow(List<QueryDocumentSnapshot> docs) {
+    int healthy = 0;
+    int risky = 0;
+    String lastScanLabel = '--';
+
+    if (docs.isNotEmpty) {
+      for (final doc in docs) {
+        final data = doc.data() as Map<String, dynamic>;
+        if (_isMoldyLabel((data['label'] ?? '').toString())) {
+          risky++;
+        } else {
+          healthy++;
+        }
+      }
+      final Timestamp? latest = (docs.first.data() as Map<String, dynamic>)['timestamp'] as Timestamp?;
+      if (latest != null) lastScanLabel = _formatScanDate(latest.toDate());
+    }
+
     return Container(
       padding: const EdgeInsets.symmetric(vertical: 18, horizontal: 12),
       decoration: BoxDecoration(
@@ -345,13 +411,51 @@ class _HomeScreenState extends State<HomeScreen> {
       ),
       child: Row(
         children: [
-          _buildStatItem('124', 'HEALTHY', primaryGreen),
+          _buildStatItem('$healthy', 'HEALTHY', primaryGreen),
           _buildDivider(),
-          _buildStatItem('02', 'RISKY', const Color(0xFFC62828)),
+          _buildStatItem('$risky', 'RISKY', const Color(0xFFC62828)),
           _buildDivider(),
-          _buildStatItem('Aug 24', 'LAST SCAN', darkGreen),
+          _buildStatItem(lastScanLabel, 'LAST SCAN', darkGreen),
         ],
       ),
+    );
+  }
+
+  Widget _buildNoScansYet() {
+    return Container(
+      padding: const EdgeInsets.symmetric(vertical: 28),
+      alignment: Alignment.center,
+      child: const Text(
+        'No scans yet — tap "AI Scan" above to check your first batch.',
+        textAlign: TextAlign.center,
+        style: TextStyle(color: Colors.grey, fontSize: 13),
+      ),
+    );
+  }
+
+  Widget _buildScanTileFromDoc(QueryDocumentSnapshot doc) {
+    final data = doc.data() as Map<String, dynamic>;
+    final String label = (data['label'] ?? 'Unknown').toString();
+    final String location = (data['location'] ?? '').toString();
+    final num confidenceRaw = (data['confidence'] ?? 0) as num;
+    final int matchPercent =
+        (confidenceRaw <= 1 ? confidenceRaw * 100 : confidenceRaw).round().clamp(0, 100);
+    final bool isMoldy = _isMoldyLabel(label);
+    final Timestamp? timestamp = data['timestamp'] as Timestamp?;
+    final String timeText = timestamp != null ? _relativeTime(timestamp.toDate()) : 'Just now';
+    final String subtitle = location.isNotEmpty ? '$location · $timeText' : timeText;
+    final Color statusColor = isMoldy ? const Color(0xFFC62828) : primaryGreen;
+
+    return _buildScanTile(
+      icon: isMoldy ? Icons.warning_amber_rounded : Icons.eco,
+      iconColor: statusColor,
+      title: label,
+      subtitle: subtitle,
+      badgeText: isMoldy ? 'AT RISK' : 'SAFE',
+      badgeColor: isMoldy ? const Color(0xFFFDECEA) : const Color(0xFFE8F5E9),
+      badgeTextColor: statusColor,
+      trailingText: '$matchPercent% Match',
+      trailingColor: statusColor,
     );
   }
 

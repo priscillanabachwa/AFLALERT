@@ -24,10 +24,7 @@ import 'dart:io';
 
 import 'package:camera/camera.dart';
 import 'package:flutter/material.dart';
-import '../services/api_service.dart';
-import '../services/firebase_storage.dart';
-import '../services/firestore_service.dart';
-import '../services/location_service.dart';
+import 'package:image_picker/image_picker.dart';
 
 import '../constants/app_colors.dart';
 
@@ -159,9 +156,24 @@ class _CameraCaptureScreenState extends State<CameraCaptureScreen> {
   }
 
   Future<void> _pickFromGallery() async {
-    // Hook up image_picker here if you want a gallery fallback:
-    //   final picked = await ImagePicker().pickImage(source: ImageSource.gallery);
-    //   if (picked != null && mounted) Navigator.pop(context, picked);
+    final XFile? picked =
+        await ImagePicker().pickImage(source: ImageSource.gallery);
+    if (picked == null || !mounted) return;
+
+    final result = await Navigator.push<_ReviewResult>(
+      context,
+      MaterialPageRoute(
+        builder: (_) => _ReviewScreen(
+          imageFile: picked,
+          lightGood: true,
+          focusGood: true,
+        ),
+      ),
+    );
+
+    if (result == _ReviewResult.usePhoto && mounted) {
+      Navigator.pop(context, picked);
+    }
   }
 
   Future<void> _onCapture() async {
@@ -191,6 +203,8 @@ class _CameraCaptureScreenState extends State<CameraCaptureScreen> {
         // Resume live view for another attempt.
         _startBrightnessMonitoring();
         _simulateFocusSettle();
+      } else if (result == _ReviewResult.usePhoto && mounted) {
+        Navigator.pop(context, file);
       }
     } catch (e) {
       if (mounted) {
@@ -400,7 +414,7 @@ class _CameraCaptureScreenState extends State<CameraCaptureScreen> {
         ? 'Move to a brighter, well-lit area'
         : (_focus == _FocusQuality.blurry
             ? 'Hold the phone steady before capturing'
-            : 'Spread the kernel(s) flat in the frame');
+            : '');
     final String subGuidance = allGood
         ? 'Hold phone about 20cm above the sample'
         : 'Adjust and the frame will turn white when ready';
@@ -565,9 +579,9 @@ class _CornerBracketsPainter extends CustomPainter {
 // ---------------------------------------------------------------------------
 // Review screen — shown after capture, with retake / use photo
 // ---------------------------------------------------------------------------
-enum _ReviewResult { retake }
+enum _ReviewResult { retake, usePhoto }
 
-class _ReviewScreen extends StatefulWidget {
+class _ReviewScreen extends StatelessWidget {
   final XFile imageFile;
   final bool lightGood;
   final bool focusGood;
@@ -579,83 +593,11 @@ class _ReviewScreen extends StatefulWidget {
   });
 
   @override
-  State<_ReviewScreen> createState() => _ReviewScreenState();
-}
-
-class _ReviewScreenState extends State<_ReviewScreen> {
-  final StorageService _storageService = StorageService();
-  final ApiService _apiService = ApiService();
-  final FirestoreService _firestoreService = FirestoreService();
-  final LocationService _locationService = LocationService();
-
-  bool _isProcessing = false;
-
-  Future<void> _useThisPhoto() async {
-    if (_isProcessing) return;
-    setState(() => _isProcessing = true);
-
-    // Kick off location resolution alongside the upload/analysis network
-    // calls so it doesn't add extra wait time on top of them.
-    final Future<String?> locationFuture = _locationService.getCurrentPlaceName();
-
-    try {
-      final String? imageUrl =
-          await _storageService.uploadMaizeImage(File(widget.imageFile.path));
-      if (imageUrl == null) {
-        _showError('Failed to upload photo. Please try again.');
-        return;
-      }
-
-      final Map<String, dynamic>? analysis =
-          await _apiService.analyzeMaizeImage(imageUrl);
-      if (analysis == null) {
-        _showError('The AI engine failed to analyze this crop sample.');
-        return;
-      }
-
-      // Best-effort history log — the diagnosis already succeeded, so a
-      // logging failure (e.g. no signed-in user, no location fix) shouldn't
-      // block the flow.
-      final num confidenceRaw = (analysis['confidence'] ??
-          analysis['score'] ??
-          analysis['probability'] ??
-          0) as num;
-      final String? location = await locationFuture;
-      await _firestoreService.saveScanRecord(
-        imageUrl: imageUrl,
-        classificationLabel:
-            (analysis['label'] ?? analysis['prediction'] ?? analysis['result'] ?? 'Unknown')
-                .toString(),
-        confidenceScore: confidenceRaw.toDouble(),
-        location: location,
-      );
-
-      if (!mounted) return;
-      Navigator.of(context).pushNamedAndRemoveUntil(
-        '/analysis',
-        ModalRoute.withName('/home'),
-        arguments: analysis,
-      );
-    } catch (_) {
-      _showError('An unexpected error occurred. Please try again.');
-    } finally {
-      if (mounted) setState(() => _isProcessing = false);
-    }
-  }
-
-  void _showError(String message) {
-    if (!mounted) return;
-    ScaffoldMessenger.of(context).showSnackBar(
-      SnackBar(content: Text(message), backgroundColor: _AflColors.danger),
-    );
-  }
-
-  @override
   Widget build(BuildContext context) {
-    final bool allGood = widget.lightGood && widget.focusGood;
+    final bool allGood = lightGood && focusGood;
     final String qualityLabel = allGood
         ? 'Sharp and well lit'
-        : (!widget.lightGood ? 'Photo may be too dark' : 'Photo may be blurry');
+        : (!lightGood ? 'Photo may be too dark' : 'Photo may be blurry');
 
     return Scaffold(
       backgroundColor: _AflColors.bg,
@@ -685,7 +627,7 @@ class _ReviewScreenState extends State<_ReviewScreen> {
                     ),
                   ),
                   clipBehavior: Clip.antiAlias,
-                  child: Image.file(File(widget.imageFile.path), fit: BoxFit.cover),
+                  child: Image.file(File(imageFile.path), fit: BoxFit.cover),
                 ),
               ),
             ),
@@ -729,9 +671,8 @@ class _ReviewScreenState extends State<_ReviewScreen> {
                 children: [
                   Expanded(
                     child: OutlinedButton.icon(
-                      onPressed: _isProcessing
-                          ? null
-                          : () => Navigator.pop(context, _ReviewResult.retake),
+                      onPressed: () =>
+                          Navigator.pop(context, _ReviewResult.retake),
                       icon: const Icon(Icons.refresh, color: Colors.white, size: 16),
                       label: const Text('Retake',
                           style: TextStyle(color: Colors.white)),
@@ -750,7 +691,8 @@ class _ReviewScreenState extends State<_ReviewScreen> {
                   const SizedBox(width: 12),
                   Expanded(
                     child: ElevatedButton(
-                      onPressed: _isProcessing ? null : _useThisPhoto,
+                      onPressed: () =>
+                          Navigator.pop(context, _ReviewResult.usePhoto),
                       style: ElevatedButton.styleFrom(
                         padding: const EdgeInsets.symmetric(vertical: 14),
                         backgroundColor: _AflColors.amberCta,
@@ -760,19 +702,10 @@ class _ReviewScreenState extends State<_ReviewScreen> {
                         ),
                         elevation: 0,
                       ),
-                      child: _isProcessing
-                          ? const SizedBox(
-                              width: 18,
-                              height: 18,
-                              child: CircularProgressIndicator(
-                                strokeWidth: 2,
-                                color: _AflColors.amberCtaText,
-                              ),
-                            )
-                          : const Text(
-                              'Use photo',
-                              style: TextStyle(fontWeight: FontWeight.w500),
-                            ),
+                      child: const Text(
+                        'Use photo',
+                        style: TextStyle(fontWeight: FontWeight.w500),
+                      ),
                     ),
                   ),
                 ],

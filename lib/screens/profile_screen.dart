@@ -1,3 +1,5 @@
+import 'dart:async';
+
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
 
@@ -29,6 +31,7 @@ class ProfileScreen extends StatefulWidget {
 
 class _ProfileScreenState extends State<ProfileScreen> {
   final FirestoreService _firestoreService = FirestoreService();
+  StreamSubscription<dynamic>? _profileSub;
 
   bool _isLoadingProfile = true;
 
@@ -40,19 +43,23 @@ class _ProfileScreenState extends State<ProfileScreen> {
   @override
   void initState() {
     super.initState();
-    _loadProfile();
+    final user = FirebaseAuth.instance.currentUser;
+    _profileSub = _firestoreService.getUserProfile().listen((doc) {
+      final profile = doc.data();
+      setState(() {
+        _userName = profile?['fullName'] as String? ?? user?.displayName ?? 'Your account';
+        _userPhone = profile?['phone'] as String? ?? '';
+        _userLocation = profile?['district'] as String? ?? '';
+        _userType = (profile?['userType'] as String? ?? '').toUpperCase();
+        _isLoadingProfile = false;
+      });
+    });
   }
 
-  Future<void> _loadProfile() async {
-    final user = FirebaseAuth.instance.currentUser;
-    final profile = await _firestoreService.getUserProfile();
-    setState(() {
-      _userName = profile?['fullName'] as String? ?? user?.displayName ?? 'Your account';
-      _userPhone = profile?['phone'] as String? ?? '';
-      _userLocation = profile?['district'] as String? ?? '';
-      _userType = (profile?['userType'] as String? ?? '').toUpperCase();
-      _isLoadingProfile = false;
-    });
+  @override
+  void dispose() {
+    _profileSub?.cancel();
+    super.dispose();
   }
 
   @override
