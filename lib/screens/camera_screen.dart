@@ -24,6 +24,7 @@ import 'dart:io';
 
 import 'package:camera/camera.dart';
 import 'package:flutter/material.dart';
+import 'package:image_picker/image_picker.dart';
 
 import '../constants/app_colors.dart';
 
@@ -155,9 +156,24 @@ class _CameraCaptureScreenState extends State<CameraCaptureScreen> {
   }
 
   Future<void> _pickFromGallery() async {
-    // Hook up image_picker here if you want a gallery fallback:
-    //   final picked = await ImagePicker().pickImage(source: ImageSource.gallery);
-    //   if (picked != null && mounted) Navigator.pop(context, picked);
+    final XFile? picked =
+        await ImagePicker().pickImage(source: ImageSource.gallery);
+    if (picked == null || !mounted) return;
+
+    final result = await Navigator.push<_ReviewResult>(
+      context,
+      MaterialPageRoute(
+        builder: (_) => _ReviewScreen(
+          imageFile: picked,
+          lightGood: true,
+          focusGood: true,
+        ),
+      ),
+    );
+
+    if (result == _ReviewResult.usePhoto && mounted) {
+      Navigator.pop(context, picked);
+    }
   }
 
   Future<void> _onCapture() async {
