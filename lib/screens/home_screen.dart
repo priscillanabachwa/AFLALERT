@@ -4,15 +4,54 @@ import 'package:flutter/material.dart';
 
 import '../services/firestore_service.dart';
 import '../services/location_service.dart';
+import '../services/weather_service.dart';
 import 'analysis_screen.dart';
 
-class HomeScreen extends StatelessWidget {
+class HomeScreen extends StatefulWidget {
   const HomeScreen({super.key});
 
   static const Color darkGreen = Color(0xFF1E3A24);
   static const Color primaryGreen = Color(0xFF355E3B);
   static const Color gold = Color(0xFFD9A520);
   static const Color background = Color(0xFFF8F6F0);
+
+  @override
+  State<HomeScreen> createState() => _HomeScreenState();
+}
+
+class _HomeScreenState extends State<HomeScreen> {
+  static const Color darkGreen = HomeScreen.darkGreen;
+  static const Color primaryGreen = HomeScreen.primaryGreen;
+  static const Color gold = HomeScreen.gold;
+  static const Color background = HomeScreen.background;
+
+  LocationResult? _location;
+  WeatherInfo? _weather;
+  bool _weatherLoading = true;
+
+  @override
+  void initState() {
+    super.initState();
+    _loadWeather();
+  }
+
+  Future<void> _loadWeather() async {
+    final LocationResult? location = await LocationService().getCurrentLocation();
+    if (location == null) {
+      if (mounted) setState(() => _weatherLoading = false);
+      return;
+    }
+
+    final WeatherInfo? weather =
+        await WeatherService().getCurrentWeather(location.latitude, location.longitude);
+
+    if (!mounted) return;
+    setState(() {
+      _location = location;
+      _weather = weather;
+      _weatherLoading = false;
+    });
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -180,35 +219,36 @@ class HomeScreen extends StatelessWidget {
             ),
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
-              children: const [
+              children: [
                 Text(
-                  'NAIROBI, KENYA',
-                  style: TextStyle(
+                  (_location?.placeName?.toUpperCase()) ??
+                      (_weatherLoading ? 'LOCATING...' : 'LOCATION UNAVAILABLE'),
+                  style: const TextStyle(
                     fontSize: 10,
                     fontWeight: FontWeight.w600,
                     color: Colors.grey,
                     letterSpacing: 0.5,
                   ),
                 ),
-                SizedBox(height: 8),
+                const SizedBox(height: 8),
                 Text(
-                  '24°C',
-                  style: TextStyle(
+                  _weather != null ? '${_weather!.temperatureC.round()}°C' : '--°C',
+                  style: const TextStyle(
                     fontSize: 24,
                     fontWeight: FontWeight.bold,
                     color: darkGreen,
                   ),
                 ),
-                SizedBox(height: 4),
+                const SizedBox(height: 4),
                 Text(
-                  'Cloudy',
-                  style: TextStyle(
+                  _weather?.condition ?? (_weatherLoading ? 'Fetching weather...' : 'Unavailable'),
+                  style: const TextStyle(
                     fontSize: 13,
                     color: Colors.grey,
                   ),
                 ),
-                SizedBox(height: 12),
-                Icon(Icons.cloud, color: gold, size: 28),
+                const SizedBox(height: 12),
+                Icon(_weather?.icon ?? Icons.cloud_off, color: gold, size: 28),
               ],
             ),
           ),
@@ -253,9 +293,10 @@ class HomeScreen extends StatelessWidget {
   }
 
   Future<void> _onScanTap(BuildContext context) async {
-    // Ask for device location (used to tag scan results) right when the
-    // user chooses to scan, rather than earlier in the app lifecycle.
-    final String? location = await LocationService().getCurrentPlaceName();
+    // Reuse the location already resolved for the weather card when
+    // possible, falling back to a fresh lookup if that hasn't landed yet.
+    final String? location =
+        _location?.placeName ?? await LocationService().getCurrentPlaceName();
     if (!context.mounted) return;
 
     final Object? photo = await Navigator.pushNamed(context, '/camera');
