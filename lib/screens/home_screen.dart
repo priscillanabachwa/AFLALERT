@@ -25,7 +25,7 @@ class HomeScreen extends StatelessWidget {
               const SizedBox(height: 20),
               _buildInfoCards(),
               const SizedBox(height: 32),
-              _buildScanButton(),
+              _buildScanButton(context),
               const SizedBox(height: 12),
               const Center(
                 child: Text(
@@ -230,7 +230,7 @@ class HomeScreen extends StatelessWidget {
     );
   }
 
-  Widget _buildScanButton() {
+  Widget _buildScanButton(BuildContext context) {
     return Center(
       child: Container(
         width: 160,
@@ -249,7 +249,7 @@ class HomeScreen extends StatelessWidget {
             color: Colors.transparent,
             child: InkWell(
               customBorder: const CircleBorder(),
-              onTap: () {},
+              onTap: () => Navigator.pushNamed(context, '/camera'),
               child: Column(
                 mainAxisAlignment: MainAxisAlignment.center,
                 children: const [
