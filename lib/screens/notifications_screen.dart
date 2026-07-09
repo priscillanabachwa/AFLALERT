@@ -1,5 +1,7 @@
 import 'package:flutter/material.dart';
 
+import '../widgets/custom_bottom_nav.dart';
+
 /// Standalone demo entry point.
 ///
 /// Run this file as-is (`flutter run`) to preview the screen on its own,
@@ -237,6 +239,7 @@ class _NotificationsScreenState extends State<NotificationsScreen> {
           ),
         ],
       ),
+      bottomNavigationBar: const CustomBottomNav(currentIndex: 2),
     );
   }
 }

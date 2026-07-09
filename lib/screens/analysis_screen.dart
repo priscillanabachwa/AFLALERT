@@ -214,7 +214,7 @@ class _AnalysisScreenState extends State<AnalysisScreen> {
           ],
         ),
       ),
-      bottomNavigationBar: const CustomBottomNav(),
+      bottomNavigationBar: const CustomBottomNav(currentIndex: 0),
     );
   }
 
