@@ -11,6 +11,8 @@ import 'package:aflalert/screens/login_screen.dart';
 import 'package:aflalert/screens/analysis_screen.dart';
 import 'package:aflalert/screens/registration_screen.dart';
 import 'package:aflalert/screens/camera_screen.dart';
+import 'package:aflalert/screens/downloaded_reports_screen.dart';
+import 'package:aflalert/screens/settings_screen.dart';
 
 Future<void> main() async {
   WidgetsFlutterBinding.ensureInitialized();
@@ -108,6 +110,8 @@ class AflAlert extends StatelessWidget {
         '/home': (context) => HomeScreen(),
         '/analysis': (context) => const AnalysisScreen(),
         '/register': (context) => const RegistrationScreen(),
+        '/downloadedReports': (context) => const DownloadedReportsScreen(),
+        '/settings': (context) => const SettingsScreen(),
         '/camera': (context) { 
           debugPrint('ROUTE_TRACE: building /camera'); 
           return CameraCaptureScreen(); 
