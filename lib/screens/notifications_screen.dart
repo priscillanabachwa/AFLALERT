@@ -183,16 +183,6 @@ class _NotificationsScreenState extends State<NotificationsScreen> {
             fontSize: 22,
           ),
         ),
-        actions: const [
-          Padding(
-            padding: EdgeInsets.only(right: 16),
-            child: CircleAvatar(
-              radius: 20,
-              backgroundColor: Color(0xFFD9D3C7),
-              child: Icon(Icons.person, color: Colors.white, size: 20),
-            ),
-          ),
-        ],
       ),
       body: Stack(
         children: [

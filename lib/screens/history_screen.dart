@@ -179,16 +179,6 @@ class _HistoryScreenState extends State<HistoryScreen> {
         ),
       ),
       centerTitle: false,
-      actions: [
-        Padding(
-          padding: const EdgeInsets.only(right: 16),
-          child: CircleAvatar(
-            radius: 18,
-            backgroundColor: kPrimaryGreen.withAlpha((0.15 * 255).round()),
-            child: const Icon(Icons.person, color: kPrimaryGreen, size: 20),
-          ),
-        ),
-      ],
       bottom: PreferredSize(
         preferredSize: const Size.fromHeight(1),
         child: Container(height: 1, color: kDivider),
