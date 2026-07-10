@@ -74,6 +74,7 @@ class FirestoreService {
     required String fullName,
     required String phone,
     required String district,
+    String? photoUrl,
   }) async {
     try {
       final User? currentUser = _auth.currentUser;
@@ -86,10 +87,14 @@ class FirestoreService {
         'fullName': fullName,
         'phone': phone,
         'district': district,
+        'photoUrl': ?photoUrl,
       });
 
       if (fullName.isNotEmpty && currentUser.displayName != fullName) {
         await currentUser.updateDisplayName(fullName);
+      }
+      if (photoUrl != null) {
+        await currentUser.updatePhotoURL(photoUrl);
       }
 
       debugPrint('FirestoreService: User profile updated for ${currentUser.uid}.');

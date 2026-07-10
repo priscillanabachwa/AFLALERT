@@ -1,9 +1,12 @@
 import 'dart:async';
+import 'dart:io';
 
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
+import 'package:image_picker/image_picker.dart';
 
 import '../constants/app_colors.dart';
+import '../services/firebase_storage.dart';
 import '../services/firestore_service.dart';
 import '../utils/user_initials.dart';
 import '../widgets/custom_bottom_nav.dart';
@@ -41,6 +44,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
   String _userPhone = '';
   String _userLocation = '';
   String _userType = '';
+  String _userPhotoUrl = '';
 
   @override
   void initState() {
@@ -53,6 +57,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
         _userPhone = profile?['phone'] as String? ?? '';
         _userLocation = profile?['district'] as String? ?? '';
         _userType = (profile?['userType'] as String? ?? '').toUpperCase();
+        _userPhotoUrl = profile?['photoUrl'] as String? ?? user?.photoURL ?? '';
         _isLoadingProfile = false;
       });
     });
@@ -149,14 +154,17 @@ class _ProfileScreenState extends State<ProfileScreen> {
                 child: CircleAvatar(
                   radius: 52,
                   backgroundColor: kGreenLight,
-                  child: Text(
-                    getInitials(_userName),
-                    style: const TextStyle(
-                      fontSize: 32,
-                      fontWeight: FontWeight.bold,
-                      color: kGreen,
-                    ),
-                  ),
+                  backgroundImage: _userPhotoUrl.isNotEmpty ? NetworkImage(_userPhotoUrl) : null,
+                  child: _userPhotoUrl.isEmpty
+                      ? Text(
+                          getInitials(_userName),
+                          style: const TextStyle(
+                            fontSize: 32,
+                            fontWeight: FontWeight.bold,
+                            color: kGreen,
+                          ),
+                        )
+                      : null,
                 ),
               ),
               GestureDetector(
@@ -242,29 +250,32 @@ class _ProfileScreenState extends State<ProfileScreen> {
             ),
           ],
         ),
-        child: Column(
-          children: [
-            ListTile(
-              contentPadding: EdgeInsets.zero,
-              leading: const Icon(Icons.lock_outline, color: kGreen, size: 20),
-              title: const Text(
-                'Change password',
-                style: TextStyle(color: Colors.black87, fontSize: 14),
+        child: Material(
+          color: Colors.transparent,
+          child: Column(
+            children: [
+              ListTile(
+                contentPadding: EdgeInsets.zero,
+                leading: const Icon(Icons.lock_outline, color: kGreen, size: 20),
+                title: const Text(
+                  'Change password',
+                  style: TextStyle(color: Colors.black87, fontSize: 14),
+                ),
+                trailing: const Icon(Icons.chevron_right, color: kGrey, size: 18),
+                onTap: _showChangePassword,
               ),
-              trailing: const Icon(Icons.chevron_right, color: kGrey, size: 18),
-              onTap: _showChangePassword,
-            ),
-            const Divider(height: 1, color: Color(0xFFEDEDED)),
-            ListTile(
-              contentPadding: EdgeInsets.zero,
-              leading: const Icon(Icons.logout_rounded, color: kRed, size: 20),
-              title: const Text(
-                'Logout',
-                style: TextStyle(color: kRed, fontWeight: FontWeight.w600, fontSize: 14),
+              const Divider(height: 1, color: Color(0xFFEDEDED)),
+              ListTile(
+                contentPadding: EdgeInsets.zero,
+                leading: const Icon(Icons.logout_rounded, color: kRed, size: 20),
+                title: const Text(
+                  'Logout',
+                  style: TextStyle(color: kRed, fontWeight: FontWeight.w600, fontSize: 14),
+                ),
+                onTap: _confirmLogout,
               ),
-              onTap: _confirmLogout,
-            ),
-          ],
+            ],
+          ),
         ),
       ),
     );
@@ -282,6 +293,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
         name: _userName,
         phone: _userPhone,
         location: _userLocation,
+        photoUrl: _userPhotoUrl,
       ),
     );
   }
@@ -343,11 +355,13 @@ class _EditProfileSheet extends StatefulWidget {
   final String name;
   final String phone;
   final String location;
+  final String photoUrl;
 
   const _EditProfileSheet({
     required this.name,
     required this.phone,
     required this.location,
+    required this.photoUrl,
   });
 
   @override
@@ -356,9 +370,11 @@ class _EditProfileSheet extends StatefulWidget {
 
 class _EditProfileSheetState extends State<_EditProfileSheet> {
   final _firestoreService = FirestoreService();
+  final _storageService = StorageService();
   late TextEditingController _nameCtrl;
   late TextEditingController _phoneCtrl;
   late TextEditingController _locationCtrl;
+  File? _pickedImage;
   bool _isSaving = false;
 
   @override
@@ -377,6 +393,48 @@ class _EditProfileSheetState extends State<_EditProfileSheet> {
     super.dispose();
   }
 
+  Future<void> _pickImage() async {
+    final picked = await showModalBottomSheet<XFile?>(
+      context: context,
+      shape: const RoundedRectangleBorder(
+        borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
+      ),
+      builder: (sheetContext) => SafeArea(
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            ListTile(
+              leading: const Icon(Icons.photo_camera_outlined, color: kGreen),
+              title: const Text('Take a photo'),
+              onTap: () async {
+                final file = await ImagePicker().pickImage(
+                  source: ImageSource.camera,
+                  imageQuality: 80,
+                );
+                if (sheetContext.mounted) Navigator.pop(sheetContext, file);
+              },
+            ),
+            ListTile(
+              leading: const Icon(Icons.photo_library_outlined, color: kGreen),
+              title: const Text('Choose from gallery'),
+              onTap: () async {
+                final file = await ImagePicker().pickImage(
+                  source: ImageSource.gallery,
+                  imageQuality: 80,
+                );
+                if (sheetContext.mounted) Navigator.pop(sheetContext, file);
+              },
+            ),
+          ],
+        ),
+      ),
+    );
+
+    if (picked != null) {
+      setState(() => _pickedImage = File(picked.path));
+    }
+  }
+
   Future<void> _save() async {
     final name = _nameCtrl.text.trim();
     if (name.isEmpty) {
@@ -391,10 +449,32 @@ class _EditProfileSheetState extends State<_EditProfileSheet> {
     }
 
     setState(() => _isSaving = true);
+
+    String? photoUrl;
+    if (_pickedImage != null) {
+      final user = FirebaseAuth.instance.currentUser;
+      photoUrl = user != null
+          ? await _storageService.uploadProfileImage(_pickedImage!, user.uid)
+          : null;
+      if (photoUrl == null) {
+        if (!mounted) return;
+        setState(() => _isSaving = false);
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(
+            content: Text('Could not upload profile picture. Please try again.'),
+            backgroundColor: kRed,
+            behavior: SnackBarBehavior.floating,
+          ),
+        );
+        return;
+      }
+    }
+
     final success = await _firestoreService.updateUserProfile(
       fullName: name,
       phone: _phoneCtrl.text.trim(),
       district: _locationCtrl.text.trim(),
+      photoUrl: photoUrl,
     );
     if (!mounted) return;
 
@@ -450,6 +530,44 @@ class _EditProfileSheetState extends State<_EditProfileSheet> {
               fontSize: 20,
               fontWeight: FontWeight.bold,
               color: Colors.black87,
+            ),
+          ),
+          const SizedBox(height: 20),
+          Center(
+            child: GestureDetector(
+              onTap: _pickImage,
+              child: Stack(
+                alignment: Alignment.bottomRight,
+                children: [
+                  CircleAvatar(
+                    radius: 44,
+                    backgroundColor: kGreenLight,
+                    backgroundImage: _pickedImage != null
+                        ? FileImage(_pickedImage!)
+                        : (widget.photoUrl.isNotEmpty ? NetworkImage(widget.photoUrl) : null)
+                            as ImageProvider?,
+                    child: _pickedImage == null && widget.photoUrl.isEmpty
+                        ? Text(
+                            getInitials(widget.name),
+                            style: const TextStyle(
+                              fontSize: 26,
+                              fontWeight: FontWeight.bold,
+                              color: kGreen,
+                            ),
+                          )
+                        : null,
+                  ),
+                  Container(
+                    padding: const EdgeInsets.all(6),
+                    decoration: BoxDecoration(
+                      color: kGreen,
+                      shape: BoxShape.circle,
+                      border: Border.all(color: Colors.white, width: 2),
+                    ),
+                    child: const Icon(Icons.camera_alt, color: Colors.white, size: 14),
+                  ),
+                ],
+              ),
             ),
           ),
           const SizedBox(height: 20),
