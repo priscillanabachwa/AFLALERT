@@ -1,38 +1,20 @@
 import 'dart:io';
+import 'dart:math' as math;
 import 'dart:typed_data';
 
+import 'package:flutter/foundation.dart' show debugPrint;
 import 'package:image/image.dart' as img;
-import 'package:aflalert/services/ml_service.dart'; 
+import 'package:tflite_flutter/tflite_flutter.dart';
 
-// Thrown when the photo is rejected before/after inference because it
-// doesn't look like maize — either its color palette doesn't resemble
-// kernels/husks, or the model itself isn't confident in either class.
-// The model (see below) only ever outputs "healthy" or "moldy" — it has no
-// third "not maize" class to fall back on — so this is the only guard
-// against classifying an unrelated photo (e.g. a person, a wall).
 class NotMaizeException implements Exception {
   const NotMaizeException();
 }
 
-
-// Runs the bundled maize classification model (lib/assets/best.tflite)
-// entirely on-device. The model is an Ultralytics/YOLOv8 classification
-// export: input [1, 3, 224, 224] float32 (NCHW, values scaled to 0-1),
-// output [1, 2] float32 already softmaxed — index 0 is "healthy", index 1
-// is the "moldy / aflatoxin risk" class (confirmed against the training
-// export; there is no embedded label metadata to read this from).
 class TfliteService {
   static const int _inputSize = 224;
   static const String _modelAsset = 'lib/assets/best.tflite';
-  
 
-  // Fraction of sampled pixels that must fall within the maize color
-  // palette (yellow/tan/brown/green kernels and husks, or pale/cream
-  // kernels) before we even bother running inference.
   static const double _minMaizeColorRatio = 0.35;
-
-  // The model always picks a side even on unrelated photos, so a low top
-  // probability is itself a signal the input isn't something it recognizes.
   static const double _minConfidence = 0.6;
 
   static final TfliteService _instance = TfliteService._internal();
@@ -40,17 +22,20 @@ class TfliteService {
   TfliteService._internal();
 
   Interpreter? _interpreter;
+  bool _inputIsNchw = true; // detected at load time
 
   Future<void> _ensureLoaded() async {
-    _interpreter ??= await Interpreter.fromAsset(_modelAsset);
+    if (_interpreter != null) return;
+    _interpreter = await Interpreter.fromAsset(_modelAsset);
+
+    final inputShape = _interpreter!.getInputTensor(0).shape;
+    final outputShape = _interpreter!.getOutputTensor(0).shape;
+    debugPrint('TFLite input shape: $inputShape, output shape: $outputShape');
+
+    // [1, 3, 224, 224] => NCHW; [1, 224, 224, 3] => NHWC
+    _inputIsNchw = inputShape.length == 4 && inputShape[1] == 3;
   }
 
-  /// Classifies [imageFile] and returns a map compatible with the app's
-  /// existing analysis pipeline, or null if inference fails.
-  ///
-  /// Throws [NotMaizeException] if the photo doesn't look like maize — the
-  /// caller should show a distinct "take a photo of maize" message rather
-  /// than a generic failure in that case.
   Future<Map<String, dynamic>?> classifyMaize(File imageFile) async {
     await _ensureLoaded();
     final interpreter = _interpreter!;
@@ -59,6 +44,7 @@ class TfliteService {
     final decoded = img.decodeImage(bytes);
     if (decoded == null) return null;
 
+    // ---- Check 1: is it maize? (color gate) ----
     if (!_looksLikeMaize(decoded)) {
       throw const NotMaizeException();
     }
@@ -72,48 +58,83 @@ class TfliteService {
 
       final input = Float32List(1 * 3 * _inputSize * _inputSize);
       int i = 0;
-      for (int c = 0; c < 3; c++) {
+
+      if (_inputIsNchw) {
+        for (int c = 0; c < 3; c++) {
+          for (int y = 0; y < _inputSize; y++) {
+            for (int x = 0; x < _inputSize; x++) {
+              final p = resized.getPixel(x, y);
+              final num v = c == 0 ? p.r : (c == 1 ? p.g : p.b);
+              input[i++] = v / 255.0;
+            }
+          }
+        }
+      } else {
         for (int y = 0; y < _inputSize; y++) {
           for (int x = 0; x < _inputSize; x++) {
-            final pixel = resized.getPixel(x, y);
-            final num channelValue = c == 0 ? pixel.r : (c == 1 ? pixel.g : pixel.b);
-            input[i++] = channelValue / 255.0;
+            final p = resized.getPixel(x, y);
+            input[i++] = p.r / 255.0;
+            input[i++] = p.g / 255.0;
+            input[i++] = p.b / 255.0;
           }
         }
       }
 
-      final inputTensor = input.reshape([1, 3, _inputSize, _inputSize]);
-      final output = [List<double>.filled(2, 0.0)];
+      final inputTensor = _inputIsNchw
+          ? input.reshape([1, 3, _inputSize, _inputSize])
+          : input.reshape([1, _inputSize, _inputSize, 3]);
 
+      final output = [List<double>.filled(2, 0.0)];
       interpreter.run(inputTensor, output);
 
-      final double healthyProb = output[0][0];
-      final double moldyProb = output[0][1];
+      List<double> probs = List<double>.from(output[0]);
+
+      // If outputs are raw logits (don't sum to ~1), apply softmax.
+      final double sum = probs[0] + probs[1];
+      final bool looksLikeProbs =
+          probs.every((v) => v >= 0 && v <= 1) && (sum - 1.0).abs() < 0.05;
+      if (!looksLikeProbs) {
+        probs = _softmax(probs);
+      }
+
+      final double healthyProb = probs[0];
+      final double moldyProb = probs[1];
       final bool isMoldy = moldyProb > healthyProb;
       final double confidence = isMoldy ? moldyProb : healthyProb;
 
+      debugPrint(
+        'TFLite probs -> healthy: ${healthyProb.toStringAsFixed(3)}, '
+        'moldy: ${moldyProb.toStringAsFixed(3)}',
+      );
+
+      // ---- Check 1b: model unsure => likely not maize ----
       if (confidence < _minConfidence) {
         throw const NotMaizeException();
       }
 
+      // ---- Check 2: dynamic result from probabilities ----
       return {
-        'label': isMoldy ? 'Aflatoxin contamination detected' : 'Healthy — no mold detected',
+        'label': isMoldy
+            ? 'Aflatoxin contamination detected'
+            : 'Healthy — no mold detected',
         'confidence': confidence,
         'mold_detected': isMoldy,
       };
     } on NotMaizeException {
       rethrow;
-    } catch (_) {
+    } catch (e) {
+      debugPrint('TFLite inference failed: $e');
       return null;
     }
   }
 
-  /// Quick color-palette sanity check run before inference: maize kernels
-  /// and husks are yellow, cream, tan/brown, or green. Photos dominated by
-  /// other colors (skin tones vary, but portraits/scenes/objects usually
-  /// pull in blues, strong reds, or near-black/white regions maize doesn't
-  /// have) are rejected without wasting a model run — and more importantly,
-  /// without producing a confident-but-meaningless "healthy"/"moldy" label.
+  List<double> _softmax(List<double> logits) {
+    final double maxLogit = logits.reduce(math.max);
+    final exps = logits.map((v) => math.exp(v - maxLogit)).toList();
+    final double sumExp = exps.reduce((a, b) => a + b);
+    return exps.map((v) => v / sumExp).toList();
+  }
+
   bool _looksLikeMaize(img.Image image) {
     final int stepX = (image.width / 64).ceil().clamp(1, 100);
     final int stepY = (image.height / 64).ceil().clamp(1, 100);
@@ -128,8 +149,8 @@ class TfliteService {
         final double g = pixel.g / 255.0;
         final double b = pixel.b / 255.0;
 
-        final double maxC = r > g ? (r > b ? r : b) : (g > b ? g : b);
-        final double minC = r < g ? (r < b ? r : b) : (g < b ? g : b);
+        final double maxC = math.max(r, math.max(g, b));
+        final double minC = math.min(r, math.min(g, b));
         final double value = maxC;
         final double delta = maxC - minC;
         final double saturation = maxC == 0 ? 0.0 : delta / maxC;
@@ -148,12 +169,13 @@ class TfliteService {
 
         sampled++;
 
-        // Yellow/olive/brown/green hues with visible color (ripe kernels,
-        // dried husks, green husk leaves) ...
-        final bool colorfulMaizeHue =
-            saturation >= 0.12 && hue >= 15 && hue <= 100 && value >= 0.15 && value <= 0.95;
-        // ... or pale/cream kernels (low saturation, bright but not blown out).
-        final bool creamKernel = saturation < 0.12 && value >= 0.55 && value <= 0.98;
+        final bool colorfulMaizeHue = saturation >= 0.12 &&
+            hue >= 15 &&
+            hue <= 100 &&
+            value >= 0.15 &&
+            value <= 0.95;
+        final bool creamKernel =
+            saturation < 0.12 && value >= 0.55 && value <= 0.98;
 
         if (colorfulMaizeHue || creamKernel) {
           maizeLike++;
