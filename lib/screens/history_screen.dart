@@ -92,6 +92,7 @@ class HistoryScreen extends StatefulWidget {
 class _HistoryScreenState extends State<HistoryScreen> {
   final TextEditingController _searchCtrl = TextEditingController();
   final FirestoreService _firestoreService = FirestoreService();
+  late final Stream<QuerySnapshot> _scanHistoryStream = _firestoreService.getUserScanHistory();
   ScanStatus? _activeFilter; // null = show all
   String _query = '';
 
@@ -126,7 +127,7 @@ class _HistoryScreenState extends State<HistoryScreen> {
       backgroundColor: kPageBg,
       appBar: _buildAppBar(),
       body: StreamBuilder<QuerySnapshot>(
-        stream: _firestoreService.getUserScanHistory(),
+        stream: _scanHistoryStream,
         builder: (context, snapshot) {
           if (snapshot.hasError) {
             return _buildErrorState();
