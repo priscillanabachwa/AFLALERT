@@ -73,6 +73,48 @@ Future<File> cropImageToSquareFrame(File imageFile, {int maxDimension = 1080}) a
   return outputFile;
 }
 
+// Crops the captured photo down to exactly the area covered by the on-screen
+// guide frame, rather than a generic center square of the whole sensor image.
+// [previewSize] is the rendered size (in logical pixels) of the live
+// CameraPreview widget, and [frameSize] is the side length of the guide
+// frame drawn on top of it — both share the same screen center, so the
+// crop rectangle in raw image pixels is the frame's fraction of the preview,
+// scaled up by the ratio between the full-resolution photo and the preview.
+Future<File> cropImageToViewfinderFrame(
+  File imageFile, {
+  required Size previewSize,
+  required double frameSize,
+  int maxDimension = 1080,
+}) async {
+  final bytes = await imageFile.readAsBytes();
+  final rawDecoded = img.decodeImage(bytes);
+  if (rawDecoded == null) {
+    return imageFile;
+  }
+  // Normalize pixel data to match the upright orientation the preview and
+  // final photo are displayed in, so width/height line up with previewSize.
+  final decoded = img.bakeOrientation(rawDecoded);
+
+  final shortestSide =
+      decoded.width < decoded.height ? decoded.width : decoded.height;
+  if (previewSize.width <= 0 || previewSize.height <= 0) {
+    return cropImageToSquareFrame(imageFile, maxDimension: maxDimension);
+  }
+
+  final scale = decoded.width / previewSize.width;
+  final side = (frameSize * scale).round().clamp(1, shortestSide).toInt();
+  final x = (decoded.width - side) ~/ 2;
+  final y = (decoded.height - side) ~/ 2;
+  final cropped = img.copyCrop(decoded, x: x, y: y, width: side, height: side);
+  final resized = img.copyResize(cropped, width: maxDimension, height: maxDimension);
+
+  final tempDir = await Directory.systemTemp.createTemp('aflalert_crop');
+  final outputPath = '${tempDir.path}/capture_${DateTime.now().microsecondsSinceEpoch}.jpg';
+  final outputFile = File(outputPath);
+  await outputFile.writeAsBytes(img.encodeJpg(resized, quality: 92));
+  return outputFile;
+}
+
 class CameraCaptureScreen extends StatefulWidget {
   const CameraCaptureScreen({super.key});
 
@@ -81,6 +123,10 @@ class CameraCaptureScreen extends StatefulWidget {
 }
 
 class _CameraCaptureScreenState extends State<CameraCaptureScreen> {
+  static const double _frameSize = 210;
+
+  final GlobalKey _previewBoxKey = GlobalKey();
+
   CameraController? _controller;
   Future<void>? _initFuture;
 
@@ -214,7 +260,15 @@ class _CameraCaptureScreenState extends State<CameraCaptureScreen> {
       final XFile file = await _controller!.takePicture();
       if (!mounted) return;
 
-      final croppedFile = await cropImageToSquareFrame(File(file.path));
+      final previewBox =
+          _previewBoxKey.currentContext?.findRenderObject() as RenderBox?;
+      final File croppedFile = (previewBox != null && previewBox.hasSize)
+          ? await cropImageToViewfinderFrame(
+              File(file.path),
+              previewSize: previewBox.size,
+              frameSize: _frameSize,
+            )
+          : await cropImageToSquareFrame(File(file.path));
       final croppedXFile = XFile(croppedFile.path);
       if (!mounted) return;
 
@@ -273,6 +327,7 @@ class _CameraCaptureScreenState extends State<CameraCaptureScreen> {
                 children: [
                   Center(
                     child: GestureDetector(
+                      key: _previewBoxKey,
                       onTapUp: (d) => _onTapToFocus(d, constraints),
                       child: CameraPreview(_controller!),
                     ),
@@ -456,7 +511,7 @@ class _CameraCaptureScreenState extends State<CameraCaptureScreen> {
         mainAxisSize: MainAxisSize.min,
         children: [
           CustomPaint(
-            size: const Size(210, 210),
+            size: const Size(_frameSize, _frameSize),
             painter: _CornerBracketsPainter(color: bracketColor),
           ),
           const SizedBox(height: 12),
