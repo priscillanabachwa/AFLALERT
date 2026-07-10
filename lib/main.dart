@@ -53,7 +53,9 @@ class AflAlert extends StatelessWidget {
 
         elevatedButtonTheme: ElevatedButtonThemeData(
           style: ElevatedButton.styleFrom(
+            backgroundColor: const Color(0xFF00462D),
             foregroundColor: Colors.white,
+            disabledBackgroundColor: const Color(0xFF00462D).withValues(alpha: 0.4),
             minimumSize: const Size(double.infinity, 56),
             shape: RoundedRectangleBorder(
               borderRadius: BorderRadius.circular(28),
