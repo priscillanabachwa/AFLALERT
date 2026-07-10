@@ -1,7 +1,6 @@
 import 'dart:io';
 
 import 'package:camera/camera.dart';
-import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
 
 import '../constants/app_colors.dart';
@@ -9,7 +8,6 @@ import '../constants/app_colors.dart';
 import '../widgets/custom_app_bar.dart';
 import '../widgets/ai_animation.dart';
 import '../widgets/progress_section.dart';
-import '../widgets/custom_bottom_nav.dart';
 import 'result_screen.dart';
 import '../services/firebase_storage.dart';
 import '../services/firestore_service.dart';
@@ -72,6 +70,7 @@ class _AnalysisScreenState extends State<AnalysisScreen> {
   bool _isProcessing = true;
   String? _errorMessage;
   bool _started = false;
+  AnalysisScreenArgs? _args;
 
   @override
   void didChangeDependencies() {
@@ -81,10 +80,25 @@ class _AnalysisScreenState extends State<AnalysisScreen> {
 
     final Object? args = ModalRoute.of(context)?.settings.arguments;
     if (args is AnalysisScreenArgs) {
+      _args = args;
       _runAnalysis(args);
     } else {
       setState(() => _isProcessing = false);
     }
+  }
+
+  Future<void> _retakeAndAnalyze() async {
+    final Object? photo = await Navigator.of(context).pushNamed('/camera');
+    if (photo is! XFile || !mounted) return;
+
+    final AnalysisScreenArgs newArgs =
+        AnalysisScreenArgs(photo: photo, location: _args?.location);
+    setState(() {
+      _args = newArgs;
+      _isProcessing = true;
+      _errorMessage = null;
+    });
+    _runAnalysis(newArgs);
   }
 
   Future<void> _runAnalysis(AnalysisScreenArgs args) async {
@@ -142,16 +156,9 @@ class _AnalysisScreenState extends State<AnalysisScreen> {
       location: args.location,
     );
 
-    final user = FirebaseAuth.instance.currentUser;
-    final String? email = user?.email;
-    final String initial =
-        (email != null && email.isNotEmpty) ? email[0].toUpperCase() : 'U';
-
     return ResultsScreenArgs(
       isSafe: !analysis.isMoldy,
       confidence: analysis.confidencePercent / 100,
-      userPhotoUrl: user?.photoURL,
-      userInitial: initial,
       analysisLabel: analysis.label,
     );
   }
@@ -215,7 +222,6 @@ class _AnalysisScreenState extends State<AnalysisScreen> {
           ],
         ),
       ),
-      bottomNavigationBar: const CustomBottomNav(currentIndex: 0),
     );
   }
 
@@ -272,8 +278,8 @@ class _AnalysisScreenState extends State<AnalysisScreen> {
         ),
         const SizedBox(height: 28),
         ElevatedButton(
-          onPressed: () => Navigator.of(context).pushNamed('/camera'),
-          child: Text(isError ? 'Try again' : 'Scan a sample'),
+          onPressed: _retakeAndAnalyze,
+a          child: Text(isError ? 'Try again' : 'Scan a sample'),
         ),
       ],
     );

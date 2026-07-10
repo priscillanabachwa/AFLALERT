@@ -11,6 +11,8 @@ import 'package:aflalert/screens/login_screen.dart';
 import 'package:aflalert/screens/analysis_screen.dart';
 import 'package:aflalert/screens/registration_screen.dart';
 import 'package:aflalert/screens/camera_screen.dart';
+import 'package:aflalert/screens/downloaded_reports_screen.dart';
+import 'package:aflalert/screens/settings_screen.dart';
 import 'package:aflalert/screens/result_screen.dart';
 
 // main.dart
@@ -61,7 +63,9 @@ class AflAlert extends StatelessWidget {
 
         elevatedButtonTheme: ElevatedButtonThemeData(
           style: ElevatedButton.styleFrom(
+            backgroundColor: const Color(0xFF00462D),
             foregroundColor: Colors.white,
+            disabledBackgroundColor: const Color(0xFF00462D).withValues(alpha: 0.4),
             minimumSize: const Size(double.infinity, 56),
             shape: RoundedRectangleBorder(
               borderRadius: BorderRadius.circular(28),
@@ -120,12 +124,12 @@ class AflAlert extends StatelessWidget {
           return ResultsScreen(
             isSafe: args.isSafe,
             confidence: args.confidence,
-            userPhotoUrl: args.userPhotoUrl,
-            userInitial: args.userInitial,
             analysisLabel: args.analysisLabel,
           );
         },
         '/register': (context) => const RegistrationScreen(),
+        '/downloadedReports': (context) => const DownloadedReportsScreen(),
+        '/settings': (context) => const SettingsScreen(),
         '/camera': (context) { 
           debugPrint('ROUTE_TRACE: building /camera'); 
           return CameraCaptureScreen(); 

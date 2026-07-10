@@ -6,13 +6,25 @@ import 'package:flutter/foundation.dart' show debugPrint;
 import 'package:image/image.dart' as img;
 import 'package:tflite_flutter/tflite_flutter.dart';
 
+// Thrown when the photo is rejected before/after inference because it
+// doesn't look like maize — either its color palette doesn't resemble
+// kernels/husks, or the model itself classified it as the "non_maize" class,
+// or the model isn't confident in any class.
 class NotMaizeException implements Exception {
   const NotMaizeException();
 }
 
+// Runs the bundled maize classification model (lib/assets/best.tflite)
+// output [1, 3] float32 already softmaxed. Class folders were fed to
+// training in alphabetical order (Ultralytics' default), so the output
+// indices are: 0 = "healthy", 1 = "moldy" (aflatoxin risk), 2 = "non_maize"
+// (confirmed against the training export; there is no embedded label
+// metadata to read this from).
 class TfliteService {
   static const int _inputSize = 224;
-  static const String _modelAsset = 'lib/assets/best.tflite';
+  static const int _numClasses = 3;
+  static const int _moldyIndex = 1;
+  static const int _nonMaizeIndex = 2;
 
   static const double _minMaizeColorRatio = 0.35;
   static const double _minConfidence = 0.6;
@@ -50,10 +62,16 @@ class TfliteService {
     }
 
     try {
-      final resized = img.copyResize(
+      // Resize the shorter side to fit then center-crop to a square, instead
+      // of squashing the whole frame into a square. This mirrors Ultralytics'
+      // classify_transforms (Resize + CenterCrop) used during training/
+      // validation — a plain squash-resize distorts kernel shape/spacing in
+      // ways the model never saw, which hurts real-world accuracy even when
+      // validation accuracy looks great.
+      final resized = img.copyResizeCropSquare(
         decoded,
-        width: _inputSize,
-        height: _inputSize,
+        size: _inputSize,
+        interpolation: img.Interpolation.linear,
       );
 
       final input = Float32List(1 * 3 * _inputSize * _inputSize);
@@ -80,45 +98,30 @@ class TfliteService {
         }
       }
 
-      final inputTensor = _inputIsNchw
-          ? input.reshape([1, 3, _inputSize, _inputSize])
-          : input.reshape([1, _inputSize, _inputSize, 3]);
+      final inputTensor = input.reshape([1, 3, _inputSize, _inputSize]);
+      final output = [List<double>.filled(_numClasses, 0.0)];
 
       final output = [List<double>.filled(2, 0.0)];
       interpreter.run(inputTensor, output);
+
 
       List<double> probs = List<double>.from(output[0]);
 
       // If outputs are raw logits (don't sum to ~1), apply softmax.
       final double sum = probs[0] + probs[1];
       final bool looksLikeProbs =
-          probs.every((v) => v >= 0 && v <= 1) && (sum - 1.0).abs() < 0.05;
-      if (!looksLikeProbs) {
-        probs = _softmax(probs);
-      }
 
-      final double healthyProb = probs[0];
-      final double moldyProb = probs[1];
-      final bool isMoldy = moldyProb > healthyProb;
-      final double confidence = isMoldy ? moldyProb : healthyProb;
-
-      debugPrint(
-        'TFLite probs -> healthy: ${healthyProb.toStringAsFixed(3)}, '
-        'moldy: ${moldyProb.toStringAsFixed(3)}',
-      );
-
-      // ---- Check 1b: model unsure => likely not maize ----
-      if (confidence < _minConfidence) {
+      if (predictedIndex == _nonMaizeIndex || confidence < _minConfidence) {
         throw const NotMaizeException();
       }
 
-      // ---- Check 2: dynamic result from probabilities ----
+      final bool isMoldy = predictedIndex == _moldyIndex;
+
       return {
         'label': isMoldy
             ? 'Aflatoxin contamination detected'
             : 'Healthy — no mold detected',
         'confidence': confidence,
-        'mold_detected': isMoldy,
       };
     } on NotMaizeException {
       rethrow;

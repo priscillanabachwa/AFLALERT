@@ -1,9 +1,12 @@
 import 'dart:async';
+import 'dart:io';
 
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
+import 'package:image_picker/image_picker.dart';
 
 import '../constants/app_colors.dart';
+import '../services/firebase_storage.dart';
 import '../services/firestore_service.dart';
 import '../utils/user_initials.dart';
 import '../widgets/custom_bottom_nav.dart';
@@ -17,7 +20,6 @@ import 'settings_screen.dart';
 const kGreen = AppColors.primaryContainer;
 const kGreenLight = Color(0xFFE8F5EE);
 const kRed = AppColors.error;
-const kRedLight = AppColors.errorLight;
 const kGrey = AppColors.grey;
 const kBg = AppColors.t95;
 const kCard = AppColors.surface;
@@ -42,6 +44,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
   String _userPhone = '';
   String _userLocation = '';
   String _userType = '';
+  String _userPhotoUrl = '';
 
   @override
   void initState() {
@@ -54,6 +57,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
         _userPhone = profile?['phone'] as String? ?? '';
         _userLocation = profile?['district'] as String? ?? '';
         _userType = (profile?['userType'] as String? ?? '').toUpperCase();
+        _userPhotoUrl = profile?['photoUrl'] as String? ?? user?.photoURL ?? '';
         _isLoadingProfile = false;
       });
     });
@@ -84,14 +88,14 @@ class _ProfileScreenState extends State<ProfileScreen> {
               children: [
                 _buildProfileHeader(),
                 const SizedBox(height: 20),
-                _buildLogoutButton(),
+                _buildAccountSection(),
                 const SizedBox(height: 100),
               ],
             ),
           ),
         ],
       ),
-      bottomNavigationBar: const CustomBottomNav(currentIndex: 3),
+      bottomNavigationBar: const CustomBottomNav(currentIndex: -1),
     );
   }
 
@@ -150,14 +154,17 @@ class _ProfileScreenState extends State<ProfileScreen> {
                 child: CircleAvatar(
                   radius: 52,
                   backgroundColor: kGreenLight,
-                  child: Text(
-                    getInitials(_userName),
-                    style: const TextStyle(
-                      fontSize: 32,
-                      fontWeight: FontWeight.bold,
-                      color: kGreen,
-                    ),
-                  ),
+                  backgroundImage: _userPhotoUrl.isNotEmpty ? NetworkImage(_userPhotoUrl) : null,
+                  child: _userPhotoUrl.isEmpty
+                      ? Text(
+                          getInitials(_userName),
+                          style: const TextStyle(
+                            fontSize: 32,
+                            fontWeight: FontWeight.bold,
+                            color: kGreen,
+                          ),
+                        )
+                      : null,
                 ),
               ),
               GestureDetector(
@@ -226,31 +233,46 @@ class _ProfileScreenState extends State<ProfileScreen> {
     );
   }
 
-  // ── logout button ────────────────────────────
-  Widget _buildLogoutButton() {
+  // ── account section (change password / logout) ──
+  Widget _buildAccountSection() {
     return Padding(
       padding: const EdgeInsets.symmetric(horizontal: 16),
-      child: GestureDetector(
-        onTap: _confirmLogout,
-        child: Container(
-          padding: const EdgeInsets.symmetric(vertical: 16),
-          decoration: BoxDecoration(
-            color: kRedLight,
-            borderRadius: BorderRadius.circular(16),
-            border: Border.all(color: kRed.withAlpha((0.3 * 255).round())),
-          ),
-          child: const Row(
-            mainAxisAlignment: MainAxisAlignment.center,
+      child: Container(
+        padding: const EdgeInsets.symmetric(horizontal: 14),
+        decoration: BoxDecoration(
+          color: kCard,
+          borderRadius: BorderRadius.circular(16),
+          boxShadow: [
+            BoxShadow(
+              color: Colors.black.withValues(alpha: 0.05),
+              blurRadius: 10,
+              offset: const Offset(0, 4),
+            ),
+          ],
+        ),
+        child: Material(
+          color: Colors.transparent,
+          child: Column(
             children: [
-              Icon(Icons.logout_rounded, color: kRed, size: 20),
-              SizedBox(width: 10),
-              Text(
-                'Logout',
-                style: TextStyle(
-                  color: kRed,
-                  fontWeight: FontWeight.w700,
-                  fontSize: 15,
+              ListTile(
+                contentPadding: EdgeInsets.zero,
+                leading: const Icon(Icons.lock_outline, color: kGreen, size: 20),
+                title: const Text(
+                  'Change password',
+                  style: TextStyle(color: Colors.black87, fontSize: 14),
                 ),
+                trailing: const Icon(Icons.chevron_right, color: kGrey, size: 18),
+                onTap: _showChangePassword,
+              ),
+              const Divider(height: 1, color: Color(0xFFEDEDED)),
+              ListTile(
+                contentPadding: EdgeInsets.zero,
+                leading: const Icon(Icons.logout_rounded, color: kRed, size: 20),
+                title: const Text(
+                  'Logout',
+                  style: TextStyle(color: kRed, fontWeight: FontWeight.w600, fontSize: 14),
+                ),
+                onTap: _confirmLogout,
               ),
             ],
           ),
@@ -271,7 +293,19 @@ class _ProfileScreenState extends State<ProfileScreen> {
         name: _userName,
         phone: _userPhone,
         location: _userLocation,
+        photoUrl: _userPhotoUrl,
       ),
+    );
+  }
+
+  void _showChangePassword() {
+    showModalBottomSheet(
+      context: context,
+      isScrollControlled: true,
+      shape: const RoundedRectangleBorder(
+        borderRadius: BorderRadius.vertical(top: Radius.circular(24)),
+      ),
+      builder: (_) => const _ChangePasswordSheet(),
     );
   }
 
@@ -294,16 +328,11 @@ class _ProfileScreenState extends State<ProfileScreen> {
             child: const Text('Cancel', style: TextStyle(color: kGrey)),
           ),
           ElevatedButton(
-            onPressed: () {
+            onPressed: () async {
               Navigator.pop(context);
-              // Navigate to login when screens are linked
-              ScaffoldMessenger.of(context).showSnackBar(
-                const SnackBar(
-                  content: Text('Logged out successfully'),
-                  backgroundColor: kRed,
-                  behavior: SnackBarBehavior.floating,
-                ),
-              );
+              await FirebaseAuth.instance.signOut();
+              if (!mounted) return;
+              Navigator.pushNamedAndRemoveUntil(context, '/login', (route) => false);
             },
             style: ElevatedButton.styleFrom(
               backgroundColor: kRed,
@@ -326,11 +355,13 @@ class _EditProfileSheet extends StatefulWidget {
   final String name;
   final String phone;
   final String location;
+  final String photoUrl;
 
   const _EditProfileSheet({
     required this.name,
     required this.phone,
     required this.location,
+    required this.photoUrl,
   });
 
   @override
@@ -338,9 +369,13 @@ class _EditProfileSheet extends StatefulWidget {
 }
 
 class _EditProfileSheetState extends State<_EditProfileSheet> {
+  final _firestoreService = FirestoreService();
+  final _storageService = StorageService();
   late TextEditingController _nameCtrl;
   late TextEditingController _phoneCtrl;
   late TextEditingController _locationCtrl;
+  File? _pickedImage;
+  bool _isSaving = false;
 
   @override
   void initState() {
@@ -356,6 +391,112 @@ class _EditProfileSheetState extends State<_EditProfileSheet> {
     _phoneCtrl.dispose();
     _locationCtrl.dispose();
     super.dispose();
+  }
+
+  Future<void> _pickImage() async {
+    final picked = await showModalBottomSheet<XFile?>(
+      context: context,
+      shape: const RoundedRectangleBorder(
+        borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
+      ),
+      builder: (sheetContext) => SafeArea(
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            ListTile(
+              leading: const Icon(Icons.photo_camera_outlined, color: kGreen),
+              title: const Text('Take a photo'),
+              onTap: () async {
+                final file = await ImagePicker().pickImage(
+                  source: ImageSource.camera,
+                  imageQuality: 80,
+                );
+                if (sheetContext.mounted) Navigator.pop(sheetContext, file);
+              },
+            ),
+            ListTile(
+              leading: const Icon(Icons.photo_library_outlined, color: kGreen),
+              title: const Text('Choose from gallery'),
+              onTap: () async {
+                final file = await ImagePicker().pickImage(
+                  source: ImageSource.gallery,
+                  imageQuality: 80,
+                );
+                if (sheetContext.mounted) Navigator.pop(sheetContext, file);
+              },
+            ),
+          ],
+        ),
+      ),
+    );
+
+    if (picked != null) {
+      setState(() => _pickedImage = File(picked.path));
+    }
+  }
+
+  Future<void> _save() async {
+    final name = _nameCtrl.text.trim();
+    if (name.isEmpty) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text('Full name cannot be empty'),
+          backgroundColor: kRed,
+          behavior: SnackBarBehavior.floating,
+        ),
+      );
+      return;
+    }
+
+    setState(() => _isSaving = true);
+
+    String? photoUrl;
+    if (_pickedImage != null) {
+      final user = FirebaseAuth.instance.currentUser;
+      photoUrl = user != null
+          ? await _storageService.uploadProfileImage(_pickedImage!, user.uid)
+          : null;
+      if (photoUrl == null) {
+        if (!mounted) return;
+        setState(() => _isSaving = false);
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(
+            content: Text('Could not upload profile picture. Please try again.'),
+            backgroundColor: kRed,
+            behavior: SnackBarBehavior.floating,
+          ),
+        );
+        return;
+      }
+    }
+
+    final success = await _firestoreService.updateUserProfile(
+      fullName: name,
+      phone: _phoneCtrl.text.trim(),
+      district: _locationCtrl.text.trim(),
+      photoUrl: photoUrl,
+    );
+    if (!mounted) return;
+
+    if (success) {
+      Navigator.pop(context);
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text('Profile updated successfully'),
+          backgroundColor: kGreen,
+          behavior: SnackBarBehavior.floating,
+        ),
+      );
+    } else {
+      setState(() => _isSaving = false);
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text('Could not update profile. Please try again.'),
+          backgroundColor: kRed,
+          behavior: SnackBarBehavior.floating,
+        ),
+      );
+    }
   }
 
   @override
@@ -392,6 +533,44 @@ class _EditProfileSheetState extends State<_EditProfileSheet> {
             ),
           ),
           const SizedBox(height: 20),
+          Center(
+            child: GestureDetector(
+              onTap: _pickImage,
+              child: Stack(
+                alignment: Alignment.bottomRight,
+                children: [
+                  CircleAvatar(
+                    radius: 44,
+                    backgroundColor: kGreenLight,
+                    backgroundImage: _pickedImage != null
+                        ? FileImage(_pickedImage!)
+                        : (widget.photoUrl.isNotEmpty ? NetworkImage(widget.photoUrl) : null)
+                            as ImageProvider?,
+                    child: _pickedImage == null && widget.photoUrl.isEmpty
+                        ? Text(
+                            getInitials(widget.name),
+                            style: const TextStyle(
+                              fontSize: 26,
+                              fontWeight: FontWeight.bold,
+                              color: kGreen,
+                            ),
+                          )
+                        : null,
+                  ),
+                  Container(
+                    padding: const EdgeInsets.all(6),
+                    decoration: BoxDecoration(
+                      color: kGreen,
+                      shape: BoxShape.circle,
+                      border: Border.all(color: Colors.white, width: 2),
+                    ),
+                    child: const Icon(Icons.camera_alt, color: Colors.white, size: 14),
+                  ),
+                ],
+              ),
+            ),
+          ),
+          const SizedBox(height: 20),
           _buildField('Full Name', _nameCtrl, Icons.person_outline),
           const SizedBox(height: 12),
           _buildField('Phone Number', _phoneCtrl, Icons.phone_outlined),
@@ -399,16 +578,7 @@ class _EditProfileSheetState extends State<_EditProfileSheet> {
           _buildField('Location', _locationCtrl, Icons.location_on_outlined),
           const SizedBox(height: 24),
           ElevatedButton(
-            onPressed: () {
-              Navigator.pop(context);
-              ScaffoldMessenger.of(context).showSnackBar(
-                const SnackBar(
-                  content: Text('Profile updated successfully'),
-                  backgroundColor: kGreen,
-                  behavior: SnackBarBehavior.floating,
-                ),
-              );
-            },
+            onPressed: _isSaving ? null : _save,
             style: ElevatedButton.styleFrom(
               backgroundColor: kGreen,
               minimumSize: const Size(double.infinity, 52),
@@ -417,14 +587,20 @@ class _EditProfileSheetState extends State<_EditProfileSheet> {
               ),
               elevation: 0,
             ),
-            child: const Text(
-              'Save Changes',
-              style: TextStyle(
-                color: Colors.white,
-                fontWeight: FontWeight.w700,
-                fontSize: 15,
-              ),
-            ),
+            child: _isSaving
+                ? const SizedBox(
+                    height: 20,
+                    width: 20,
+                    child: CircularProgressIndicator(strokeWidth: 2, color: Colors.white),
+                  )
+                : const Text(
+                    'Save Changes',
+                    style: TextStyle(
+                      color: Colors.white,
+                      fontWeight: FontWeight.w700,
+                      fontSize: 15,
+                    ),
+                  ),
           ),
         ],
       ),
@@ -448,6 +624,219 @@ class _EditProfileSheetState extends State<_EditProfileSheet> {
           controller: ctrl,
           decoration: InputDecoration(
             prefixIcon: Icon(icon, color: kGreen, size: 18),
+            filled: true,
+            fillColor: kBg,
+            border: OutlineInputBorder(
+              borderRadius: BorderRadius.circular(12),
+              borderSide: BorderSide.none,
+            ),
+            contentPadding: const EdgeInsets.symmetric(vertical: 14),
+          ),
+        ),
+      ],
+    );
+  }
+}
+
+// ─────────────────────────────────────────────
+//  CHANGE PASSWORD BOTTOM SHEET
+// ─────────────────────────────────────────────
+class _ChangePasswordSheet extends StatefulWidget {
+  const _ChangePasswordSheet();
+
+  @override
+  State<_ChangePasswordSheet> createState() => _ChangePasswordSheetState();
+}
+
+class _ChangePasswordSheetState extends State<_ChangePasswordSheet> {
+  final _formKey = GlobalKey<FormState>();
+  final _currentCtrl = TextEditingController();
+  final _newCtrl = TextEditingController();
+  final _confirmCtrl = TextEditingController();
+
+  bool _isSaving = false;
+  bool _obscureCurrent = true;
+  bool _obscureNew = true;
+  bool _obscureConfirm = true;
+
+  @override
+  void dispose() {
+    _currentCtrl.dispose();
+    _newCtrl.dispose();
+    _confirmCtrl.dispose();
+    super.dispose();
+  }
+
+  Future<void> _submit() async {
+    if (!_formKey.currentState!.validate()) return;
+
+    setState(() => _isSaving = true);
+    try {
+      final user = FirebaseAuth.instance.currentUser;
+      final email = user?.email;
+      if (user == null || email == null) {
+        throw FirebaseAuthException(code: 'no-current-user');
+      }
+
+      final credential = EmailAuthProvider.credential(
+        email: email,
+        password: _currentCtrl.text,
+      );
+      await user.reauthenticateWithCredential(credential);
+      await user.updatePassword(_newCtrl.text);
+
+      if (!mounted) return;
+      Navigator.pop(context);
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text('Password updated successfully'),
+          backgroundColor: kGreen,
+          behavior: SnackBarBehavior.floating,
+        ),
+      );
+    } on FirebaseAuthException catch (e) {
+      String message = 'Could not change password. Please try again.';
+      if (e.code == 'wrong-password' || e.code == 'invalid-credential') {
+        message = 'Current password is incorrect.';
+      } else if (e.code == 'weak-password') {
+        message = 'New password is too weak.';
+      } else if (e.code == 'requires-recent-login') {
+        message = 'Please log out and log back in, then try again.';
+      }
+      if (!mounted) return;
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text(message), backgroundColor: kRed, behavior: SnackBarBehavior.floating),
+      );
+    } finally {
+      if (mounted) setState(() => _isSaving = false);
+    }
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return Padding(
+      padding: EdgeInsets.fromLTRB(
+        24,
+        20,
+        24,
+        MediaQuery.of(context).viewInsets.bottom + 36,
+      ),
+      child: Form(
+        key: _formKey,
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            // handle
+            Center(
+              child: Container(
+                width: 40,
+                height: 4,
+                margin: const EdgeInsets.only(bottom: 20),
+                decoration: BoxDecoration(
+                  color: Colors.grey[300],
+                  borderRadius: BorderRadius.circular(2),
+                ),
+              ),
+            ),
+            const Text(
+              'Change Password',
+              style: TextStyle(
+                fontSize: 20,
+                fontWeight: FontWeight.bold,
+                color: Colors.black87,
+              ),
+            ),
+            const SizedBox(height: 20),
+            _buildPasswordField(
+              'Current Password',
+              _currentCtrl,
+              _obscureCurrent,
+              () => setState(() => _obscureCurrent = !_obscureCurrent),
+              validator: (v) => (v == null || v.isEmpty) ? 'Enter your current password' : null,
+            ),
+            const SizedBox(height: 12),
+            _buildPasswordField(
+              'New Password',
+              _newCtrl,
+              _obscureNew,
+              () => setState(() => _obscureNew = !_obscureNew),
+              validator: (v) =>
+                  (v == null || v.length < 6) ? 'Password must be at least 6 characters' : null,
+            ),
+            const SizedBox(height: 12),
+            _buildPasswordField(
+              'Confirm New Password',
+              _confirmCtrl,
+              _obscureConfirm,
+              () => setState(() => _obscureConfirm = !_obscureConfirm),
+              validator: (v) => v != _newCtrl.text ? 'Passwords do not match' : null,
+            ),
+            const SizedBox(height: 24),
+            ElevatedButton(
+              onPressed: _isSaving ? null : _submit,
+              style: ElevatedButton.styleFrom(
+                backgroundColor: kGreen,
+                minimumSize: const Size(double.infinity, 52),
+                shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(14),
+                ),
+                elevation: 0,
+              ),
+              child: _isSaving
+                  ? const SizedBox(
+                      height: 20,
+                      width: 20,
+                      child: CircularProgressIndicator(strokeWidth: 2, color: Colors.white),
+                    )
+                  : const Text(
+                      'Update Password',
+                      style: TextStyle(
+                        color: Colors.white,
+                        fontWeight: FontWeight.w700,
+                        fontSize: 15,
+                      ),
+                    ),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
+  Widget _buildPasswordField(
+    String label,
+    TextEditingController ctrl,
+    bool obscure,
+    VoidCallback toggleObscure, {
+    required String? Function(String?) validator,
+  }) {
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Text(
+          label,
+          style: const TextStyle(
+            fontSize: 12,
+            fontWeight: FontWeight.w600,
+            color: kGrey,
+          ),
+        ),
+        const SizedBox(height: 6),
+        TextFormField(
+          controller: ctrl,
+          obscureText: obscure,
+          validator: validator,
+          decoration: InputDecoration(
+            prefixIcon: const Icon(Icons.lock_outline, color: kGreen, size: 18),
+            suffixIcon: IconButton(
+              icon: Icon(
+                obscure ? Icons.visibility_off_outlined : Icons.visibility_outlined,
+                size: 18,
+                color: kGrey,
+              ),
+              onPressed: toggleObscure,
+            ),
             filled: true,
             fillColor: kBg,
             border: OutlineInputBorder(

@@ -24,6 +24,7 @@ import 'dart:io';
 
 import 'package:camera/camera.dart';
 import 'package:flutter/material.dart';
+import 'package:image/image.dart' as img;
 import 'package:image_picker/image_picker.dart';
 
 import '../constants/app_colors.dart';
@@ -52,6 +53,68 @@ enum _LightQuality { good, low }
 
 enum _FocusQuality { adjusting, sharp, blurry }
 
+Future<File> cropImageToSquareFrame(File imageFile, {int maxDimension = 1080}) async {
+  final bytes = await imageFile.readAsBytes();
+  final decoded = img.decodeImage(bytes);
+  if (decoded == null) {
+    return imageFile;
+  }
+
+  final side = decoded.width < decoded.height ? decoded.width : decoded.height;
+  final x = (decoded.width - side) ~/ 2;
+  final y = (decoded.height - side) ~/ 2;
+  final cropped = img.copyCrop(decoded, x: x, y: y, width: side, height: side);
+  final resized = img.copyResize(cropped, width: maxDimension, height: maxDimension);
+
+  final tempDir = await Directory.systemTemp.createTemp('aflalert_crop');
+  final outputPath = '${tempDir.path}/capture_${DateTime.now().microsecondsSinceEpoch}.jpg';
+  final outputFile = File(outputPath);
+  await outputFile.writeAsBytes(img.encodeJpg(resized, quality: 92));
+  return outputFile;
+}
+
+// Crops the captured photo down to exactly the area covered by the on-screen
+// guide frame, rather than a generic center square of the whole sensor image.
+// [previewSize] is the rendered size (in logical pixels) of the live
+// CameraPreview widget, and [frameSize] is the side length of the guide
+// frame drawn on top of it — both share the same screen center, so the
+// crop rectangle in raw image pixels is the frame's fraction of the preview,
+// scaled up by the ratio between the full-resolution photo and the preview.
+Future<File> cropImageToViewfinderFrame(
+  File imageFile, {
+  required Size previewSize,
+  required double frameSize,
+  int maxDimension = 1080,
+}) async {
+  final bytes = await imageFile.readAsBytes();
+  final rawDecoded = img.decodeImage(bytes);
+  if (rawDecoded == null) {
+    return imageFile;
+  }
+  // Normalize pixel data to match the upright orientation the preview and
+  // final photo are displayed in, so width/height line up with previewSize.
+  final decoded = img.bakeOrientation(rawDecoded);
+
+  final shortestSide =
+      decoded.width < decoded.height ? decoded.width : decoded.height;
+  if (previewSize.width <= 0 || previewSize.height <= 0) {
+    return cropImageToSquareFrame(imageFile, maxDimension: maxDimension);
+  }
+
+  final scale = decoded.width / previewSize.width;
+  final side = (frameSize * scale).round().clamp(1, shortestSide).toInt();
+  final x = (decoded.width - side) ~/ 2;
+  final y = (decoded.height - side) ~/ 2;
+  final cropped = img.copyCrop(decoded, x: x, y: y, width: side, height: side);
+  final resized = img.copyResize(cropped, width: maxDimension, height: maxDimension);
+
+  final tempDir = await Directory.systemTemp.createTemp('aflalert_crop');
+  final outputPath = '${tempDir.path}/capture_${DateTime.now().microsecondsSinceEpoch}.jpg';
+  final outputFile = File(outputPath);
+  await outputFile.writeAsBytes(img.encodeJpg(resized, quality: 92));
+  return outputFile;
+}
+
 class CameraCaptureScreen extends StatefulWidget {
   const CameraCaptureScreen({super.key});
 
@@ -60,6 +123,10 @@ class CameraCaptureScreen extends StatefulWidget {
 }
 
 class _CameraCaptureScreenState extends State<CameraCaptureScreen> {
+  static const double _frameSize = 210;
+
+  final GlobalKey _previewBoxKey = GlobalKey();
+
   CameraController? _controller;
   Future<void>? _initFuture;
 
@@ -160,11 +227,16 @@ class _CameraCaptureScreenState extends State<CameraCaptureScreen> {
         await ImagePicker().pickImage(source: ImageSource.gallery);
     if (picked == null || !mounted) return;
 
+    final croppedFile = await cropImageToSquareFrame(File(picked.path));
+    final croppedPick = XFile(croppedFile.path);
+
+    if (!mounted) return;
+
     final result = await Navigator.push<_ReviewResult>(
       context,
       MaterialPageRoute(
         builder: (_) => _ReviewScreen(
-          imageFile: picked,
+          imageFile: croppedPick,
           lightGood: true,
           focusGood: true,
         ),
@@ -172,7 +244,7 @@ class _CameraCaptureScreenState extends State<CameraCaptureScreen> {
     );
 
     if (result == _ReviewResult.usePhoto && mounted) {
-      Navigator.pop(context, picked);
+      Navigator.pop(context, croppedPick);
     }
   }
 
@@ -188,11 +260,23 @@ class _CameraCaptureScreenState extends State<CameraCaptureScreen> {
       final XFile file = await _controller!.takePicture();
       if (!mounted) return;
 
+      final previewBox =
+          _previewBoxKey.currentContext?.findRenderObject() as RenderBox?;
+      final File croppedFile = (previewBox != null && previewBox.hasSize)
+          ? await cropImageToViewfinderFrame(
+              File(file.path),
+              previewSize: previewBox.size,
+              frameSize: _frameSize,
+            )
+          : await cropImageToSquareFrame(File(file.path));
+      final croppedXFile = XFile(croppedFile.path);
+      if (!mounted) return;
+
       final result = await Navigator.push<_ReviewResult>(
         context,
         MaterialPageRoute(
           builder: (_) => _ReviewScreen(
-            imageFile: file,
+            imageFile: croppedXFile,
             lightGood: _light == _LightQuality.good,
             focusGood: _focus == _FocusQuality.sharp,
           ),
@@ -204,7 +288,7 @@ class _CameraCaptureScreenState extends State<CameraCaptureScreen> {
         _startBrightnessMonitoring();
         _simulateFocusSettle();
       } else if (result == _ReviewResult.usePhoto && mounted) {
-        Navigator.pop(context, file);
+        Navigator.pop(context, croppedXFile);
       }
     } catch (e) {
       if (mounted) {
@@ -241,9 +325,12 @@ class _CameraCaptureScreenState extends State<CameraCaptureScreen> {
               builder: (context, constraints) => Stack(
                 fit: StackFit.expand,
                 children: [
-                  GestureDetector(
-                    onTapUp: (d) => _onTapToFocus(d, constraints),
-                    child: CameraPreview(_controller!),
+                  Center(
+                    child: GestureDetector(
+                      key: _previewBoxKey,
+                      onTapUp: (d) => _onTapToFocus(d, constraints),
+                      child: CameraPreview(_controller!),
+                    ),
                   ),
                   _buildTopBar(),
                   _buildQualityPills(),
@@ -420,43 +507,40 @@ class _CameraCaptureScreenState extends State<CameraCaptureScreen> {
         : 'Adjust and the frame will turn white when ready';
 
     return Center(
-      child: Padding(
-        padding: const EdgeInsets.only(bottom: 90),
-        child: Column(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            CustomPaint(
-              size: const Size(210, 210),
-              painter: _CornerBracketsPainter(color: bracketColor),
-            ),
-            const SizedBox(height: 12),
-            Padding(
-              padding: const EdgeInsets.symmetric(horizontal: 30),
-              child: Column(
-                children: [
-                  Text(
-                    mainGuidance,
-                    textAlign: TextAlign.center,
-                    style: const TextStyle(
-                      color: Colors.white,
-                      fontSize: 13,
-                      fontWeight: FontWeight.w500,
-                    ),
+      child: Column(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          CustomPaint(
+            size: const Size(_frameSize, _frameSize),
+            painter: _CornerBracketsPainter(color: bracketColor),
+          ),
+          const SizedBox(height: 12),
+          Padding(
+            padding: const EdgeInsets.symmetric(horizontal: 30),
+            child: Column(
+              children: [
+                Text(
+                  mainGuidance,
+                  textAlign: TextAlign.center,
+                  style: const TextStyle(
+                    color: Colors.white,
+                    fontSize: 13,
+                    fontWeight: FontWeight.w500,
                   ),
-                  const SizedBox(height: 4),
-                  Text(
-                    subGuidance,
-                    textAlign: TextAlign.center,
-                    style: TextStyle(
-                      color: Colors.white.withValues(alpha: 0.55),
-                      fontSize: 11,
-                    ),
+                ),
+                const SizedBox(height: 4),
+                Text(
+                  subGuidance,
+                  textAlign: TextAlign.center,
+                  style: TextStyle(
+                    color: Colors.white.withValues(alpha: 0.55),
+                    fontSize: 11,
                   ),
-                ],
-              ),
+                ),
+              ],
             ),
-          ],
-        ),
+          ),
+        ],
       ),
     );
   }
