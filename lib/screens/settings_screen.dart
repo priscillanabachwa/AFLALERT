@@ -1,5 +1,4 @@
 import 'package:flutter/material.dart';
-import 'package:firebase_auth/firebase_auth.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
 import '../constants/app_colors.dart';
@@ -16,7 +15,6 @@ class _SettingsScreenState extends State<SettingsScreen> {
   // ---- Palette matched to the shared AppColors theme (registration screen) ----
   static const Color darkGreen = AppColors.primary;
   static const Color primaryGreen = AppColors.primaryContainer;
-  static const Color gold = AppColors.secondary;
   static const Color background = AppColors.t95;
   static const Color danger = AppColors.error;
 
@@ -27,7 +25,6 @@ class _SettingsScreenState extends State<SettingsScreen> {
   bool _biometricLockEnabled = false;
   bool _isLoadingPrefs = true;
 
-  final FirebaseAuth _auth = FirebaseAuth.instance;
   SharedPreferences? _prefs;
 
   @override
@@ -52,34 +49,6 @@ class _SettingsScreenState extends State<SettingsScreen> {
 
   Future<void> _setPref(String key, bool value) async {
     await _prefs?.setBool(key, value);
-  }
-
-  Future<void> _confirmAndSignOut() async {
-    final confirmed = await showDialog<bool>(
-      context: context,
-      builder: (ctx) => AlertDialog(
-        backgroundColor: Colors.white,
-        title: const Text('Log out?'),
-        content: const Text('You will need to sign in again to access your account.'),
-        actions: [
-          TextButton(
-            onPressed: () => Navigator.pop(ctx, false),
-            child: const Text('Cancel'),
-          ),
-          TextButton(
-            onPressed: () => Navigator.pop(ctx, true),
-            child: const Text('Log out', style: TextStyle(color: danger)),
-          ),
-        ],
-      ),
-    );
-
-    if (confirmed == true) {
-      await _auth.signOut();
-      if (mounted) {
-        Navigator.pushNamedAndRemoveUntil(context, '/login', (route) => false);
-      }
-    }
   }
 
   Future<void> _confirmClearCache() async {
@@ -115,8 +84,6 @@ class _SettingsScreenState extends State<SettingsScreen> {
 
   @override
   Widget build(BuildContext context) {
-    final user = _auth.currentUser;
-
     if (_isLoadingPrefs) {
       return const Scaffold(
         backgroundColor: background,
@@ -144,55 +111,6 @@ class _SettingsScreenState extends State<SettingsScreen> {
               ],
             ),
             const SizedBox(height: 20),
-
-            // ---------------- Account ----------------
-            _SectionHeader(title: 'Account'),
-            _SettingsCard(
-              children: [
-                ListTile(
-                  contentPadding: EdgeInsets.zero,
-                  leading: CircleAvatar(
-                    radius: 22,
-                    backgroundColor: gold,
-                    backgroundImage: user?.photoURL != null ? NetworkImage(user!.photoURL!) : null,
-                    child: user?.photoURL == null
-                        ? const Icon(Icons.person, color: Colors.white)
-                        : null,
-                  ),
-                  title: Text(
-                    user?.displayName?.isNotEmpty == true ? user!.displayName! : 'Your account',
-                    style: const TextStyle(color: darkGreen, fontWeight: FontWeight.w600),
-                  ),
-                  subtitle: Text(
-                    user?.email ?? 'Not signed in',
-                    style: const TextStyle(color: Colors.grey, fontSize: 12),
-                  ),
-                ),
-                const Divider(height: 20, color: Color(0xFFEDEDED)),
-                _SettingsTile(
-                  icon: Icons.person_outline,
-                  label: 'Edit profile',
-                  onTap: () {
-                    // TODO: navigate to an edit-profile screen
-                  },
-                ),
-                _SettingsTile(
-                  icon: Icons.lock_outline,
-                  label: 'Change password',
-                  onTap: () {
-                    // TODO: navigate to change-password flow
-                  },
-                ),
-                _SettingsTile(
-                  icon: Icons.logout,
-                  label: 'Log out',
-                  labelColor: danger,
-                  iconColor: danger,
-                  onTap: _confirmAndSignOut,
-                ),
-              ],
-            ),
-            const SizedBox(height: 24),
 
             // ---------------- App preferences ----------------
             _SectionHeader(title: 'App preferences'),
@@ -407,25 +325,21 @@ class _SettingsTile extends StatelessWidget {
   final IconData icon;
   final String label;
   final VoidCallback onTap;
-  final Color? labelColor;
-  final Color? iconColor;
 
   const _SettingsTile({
     required this.icon,
     required this.label,
     required this.onTap,
-    this.labelColor,
-    this.iconColor,
   });
 
   @override
   Widget build(BuildContext context) {
     return ListTile(
       contentPadding: EdgeInsets.zero,
-      leading: Icon(icon, color: iconColor ?? Colors.grey, size: 20),
+      leading: Icon(icon, color: Colors.grey, size: 20),
       title: Text(
         label,
-        style: TextStyle(color: labelColor ?? _SettingsScreenState.darkGreen, fontSize: 14),
+        style: const TextStyle(color: _SettingsScreenState.darkGreen, fontSize: 14),
       ),
       trailing: const Icon(Icons.chevron_right, color: Colors.grey, size: 18),
       onTap: onTap,
