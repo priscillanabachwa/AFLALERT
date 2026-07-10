@@ -47,9 +47,9 @@ class StorageService {
       
       debugPrint('StorageService Success: File uploaded to path: ${snapshot.ref.fullPath}');
       debugPrint('StorageService Success: Public URL obtained: $downloadUrl');
-      
+
       return downloadUrl;
-      
+
     } on FirebaseException catch (firebaseError) {
       // Catch specific Firebase issues (e.g., Permission Denied, Quota Exceeded)
       debugPrint('Firebase Storage specific error occurred: ${firebaseError.code} - ${firebaseError.message}');
@@ -57,6 +57,35 @@ class StorageService {
     } catch (genericError) {
       // Catch any other standard Dart/system errors (e.g., out of memory, unexpected disruptions)
       debugPrint('An unexpected error occurred during image upload: $genericError');
+      return null;
+    }
+  }
+
+  /// Uploads a user's profile picture, keyed by [uid] so re-uploading
+  /// replaces the previous picture instead of leaving orphaned files behind.
+  ///
+  /// Returns the secure, permanent download URL if successful, or [null].
+  Future<String?> uploadProfileImage(File file, String uid) async {
+    if (!await file.exists()) {
+      debugPrint('StorageService Error: The local file does not exist.');
+      return null;
+    }
+
+    try {
+      Reference destinationRef = _storage.ref().child('profile_images/$uid.jpg');
+      SettableMetadata metadata = SettableMetadata(contentType: 'image/jpeg');
+
+      UploadTask uploadTask = destinationRef.putFile(file, metadata);
+      TaskSnapshot snapshot = await uploadTask;
+      String downloadUrl = await snapshot.ref.getDownloadURL();
+
+      debugPrint('StorageService Success: Profile image uploaded to path: ${snapshot.ref.fullPath}');
+      return downloadUrl;
+    } on FirebaseException catch (firebaseError) {
+      debugPrint('Firebase Storage specific error occurred: ${firebaseError.code} - ${firebaseError.message}');
+      return null;
+    } catch (genericError) {
+      debugPrint('An unexpected error occurred during profile image upload: $genericError');
       return null;
     }
   }

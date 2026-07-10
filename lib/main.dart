@@ -114,8 +114,6 @@ class AflAlert extends StatelessWidget {
           return ResultsScreen(
             isSafe: args.isSafe,
             confidence: args.confidence,
-            userPhotoUrl: args.userPhotoUrl,
-            userInitial: args.userInitial,
             analysisLabel: args.analysisLabel,
           );
         },

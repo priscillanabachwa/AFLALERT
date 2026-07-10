@@ -1,7 +1,6 @@
 import 'dart:io';
 
 import 'package:camera/camera.dart';
-import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
 
 import '../constants/app_colors.dart';
@@ -9,7 +8,6 @@ import '../constants/app_colors.dart';
 import '../widgets/custom_app_bar.dart';
 import '../widgets/ai_animation.dart';
 import '../widgets/progress_section.dart';
-import '../widgets/custom_bottom_nav.dart';
 import 'result_screen.dart';
 import '../services/firebase_storage.dart';
 import '../services/firestore_service.dart';
@@ -157,16 +155,9 @@ class _AnalysisScreenState extends State<AnalysisScreen> {
       location: args.location,
     );
 
-    final user = FirebaseAuth.instance.currentUser;
-    final String? email = user?.email;
-    final String initial =
-        (email != null && email.isNotEmpty) ? email[0].toUpperCase() : 'U';
-
     return ResultsScreenArgs(
       isSafe: !analysis.isMoldy,
       confidence: analysis.confidencePercent / 100,
-      userPhotoUrl: user?.photoURL,
-      userInitial: initial,
       analysisLabel: analysis.label,
     );
   }
@@ -230,7 +221,6 @@ class _AnalysisScreenState extends State<AnalysisScreen> {
           ],
         ),
       ),
-      bottomNavigationBar: const CustomBottomNav(currentIndex: 0),
     );
   }
 
