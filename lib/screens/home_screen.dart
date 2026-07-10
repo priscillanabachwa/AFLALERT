@@ -13,6 +13,7 @@ import '../services/weather_service.dart';
 import '../utils/user_initials.dart';
 import '../widgets/custom_bottom_nav.dart';
 import 'analysis_screen.dart';
+import 'history_screen.dart';
 import 'profile_screen.dart';
 
 class HomeScreen extends StatefulWidget {
@@ -576,7 +577,10 @@ class _HomeScreenState extends State<HomeScreen> {
           ),
         ),
         TextButton(
-          onPressed: () {},
+          onPressed: () => Navigator.push(
+            context,
+            MaterialPageRoute(builder: (_) => const HistoryScreen()),
+          ),
           child: const Text(
             'See All',
             style: TextStyle(
