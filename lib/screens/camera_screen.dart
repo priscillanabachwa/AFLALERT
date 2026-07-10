@@ -24,6 +24,7 @@ import 'dart:io';
 
 import 'package:camera/camera.dart';
 import 'package:flutter/material.dart';
+import 'package:image/image.dart' as img;
 import 'package:image_picker/image_picker.dart';
 
 import '../constants/app_colors.dart';
@@ -51,6 +52,26 @@ class _AflColors {
 enum _LightQuality { good, low }
 
 enum _FocusQuality { adjusting, sharp, blurry }
+
+Future<File> cropImageToSquareFrame(File imageFile, {int maxDimension = 1080}) async {
+  final bytes = await imageFile.readAsBytes();
+  final decoded = img.decodeImage(bytes);
+  if (decoded == null) {
+    return imageFile;
+  }
+
+  final side = decoded.width < decoded.height ? decoded.width : decoded.height;
+  final x = (decoded.width - side) ~/ 2;
+  final y = (decoded.height - side) ~/ 2;
+  final cropped = img.copyCrop(decoded, x: x, y: y, width: side, height: side);
+  final resized = img.copyResize(cropped, width: maxDimension, height: maxDimension);
+
+  final tempDir = await Directory.systemTemp.createTemp('aflalert_crop');
+  final outputPath = '${tempDir.path}/capture_${DateTime.now().microsecondsSinceEpoch}.jpg';
+  final outputFile = File(outputPath);
+  await outputFile.writeAsBytes(img.encodeJpg(resized, quality: 92));
+  return outputFile;
+}
 
 class CameraCaptureScreen extends StatefulWidget {
   const CameraCaptureScreen({super.key});
@@ -160,11 +181,14 @@ class _CameraCaptureScreenState extends State<CameraCaptureScreen> {
         await ImagePicker().pickImage(source: ImageSource.gallery);
     if (picked == null || !mounted) return;
 
+    final croppedFile = await cropImageToSquareFrame(File(picked.path));
+    final croppedPick = XFile(croppedFile.path);
+
     final result = await Navigator.push<_ReviewResult>(
       context,
       MaterialPageRoute(
         builder: (_) => _ReviewScreen(
-          imageFile: picked,
+          imageFile: croppedPick,
           lightGood: true,
           focusGood: true,
         ),
@@ -172,7 +196,7 @@ class _CameraCaptureScreenState extends State<CameraCaptureScreen> {
     );
 
     if (result == _ReviewResult.usePhoto && mounted) {
-      Navigator.pop(context, picked);
+      Navigator.pop(context, croppedPick);
     }
   }
 
@@ -188,11 +212,14 @@ class _CameraCaptureScreenState extends State<CameraCaptureScreen> {
       final XFile file = await _controller!.takePicture();
       if (!mounted) return;
 
+      final croppedFile = await cropImageToSquareFrame(File(file.path));
+      final croppedXFile = XFile(croppedFile.path);
+
       final result = await Navigator.push<_ReviewResult>(
         context,
         MaterialPageRoute(
           builder: (_) => _ReviewScreen(
-            imageFile: file,
+            imageFile: croppedXFile,
             lightGood: _light == _LightQuality.good,
             focusGood: _focus == _FocusQuality.sharp,
           ),
@@ -204,7 +231,7 @@ class _CameraCaptureScreenState extends State<CameraCaptureScreen> {
         _startBrightnessMonitoring();
         _simulateFocusSettle();
       } else if (result == _ReviewResult.usePhoto && mounted) {
-        Navigator.pop(context, file);
+        Navigator.pop(context, croppedXFile);
       }
     } catch (e) {
       if (mounted) {
