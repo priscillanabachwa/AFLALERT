@@ -184,6 +184,8 @@ class _CameraCaptureScreenState extends State<CameraCaptureScreen> {
     final croppedFile = await cropImageToSquareFrame(File(picked.path));
     final croppedPick = XFile(croppedFile.path);
 
+    if (!mounted) return;
+
     final result = await Navigator.push<_ReviewResult>(
       context,
       MaterialPageRoute(
@@ -214,6 +216,7 @@ class _CameraCaptureScreenState extends State<CameraCaptureScreen> {
 
       final croppedFile = await cropImageToSquareFrame(File(file.path));
       final croppedXFile = XFile(croppedFile.path);
+      if (!mounted) return;
 
       final result = await Navigator.push<_ReviewResult>(
         context,
