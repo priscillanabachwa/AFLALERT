@@ -6,6 +6,7 @@ import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
 
 import '../constants/app_colors.dart';
+import '../constants/daily_tips.dart';
 import '../services/firestore_service.dart';
 import '../services/location_service.dart';
 import '../services/weather_service.dart';
@@ -84,15 +85,22 @@ class _HomeScreenState extends State<HomeScreen> {
                 StreamBuilder<DocumentSnapshot<Map<String, dynamic>>>(
                   stream: FirestoreService().getUserProfile(),
                   builder: (context, snapshot) {
-                    final String? fullName = snapshot.data?.data()?['fullName'] as String?;
+                    final Map<String, dynamic>? profile = snapshot.data?.data();
+                    final String? fullName = profile?['fullName'] as String?;
                     final String firstName = (fullName != null && fullName.trim().isNotEmpty)
                         ? fullName.trim().split(' ').first
                         : 'there';
-                    return _buildGreeting(firstName);
+                    final String userType = profile?['userType'] as String? ?? '';
+                    return Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        _buildGreeting(firstName),
+                        const SizedBox(height: 20),
+                        _buildInfoCards(tipOfTheDay(userType)),
+                      ],
+                    );
                   },
                 ),
-                const SizedBox(height: 20),
-                _buildInfoCards(),
                 const SizedBox(height: 32),
                 _buildScanButton(context),
                 const SizedBox(height: 12),
@@ -258,7 +266,7 @@ class _HomeScreenState extends State<HomeScreen> {
     );
   }
 
-  Widget _buildInfoCards() {
+  Widget _buildInfoCards(String dailyTip) {
     return Row(
       children: [
         Expanded(
@@ -321,10 +329,10 @@ class _HomeScreenState extends State<HomeScreen> {
             ),
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
-              children: const [
-                Icon(Icons.lightbulb_outline, color: AppColors.secondary, size: 20),
-                SizedBox(height: 8),
-                Text(
+              children: [
+                const Icon(Icons.lightbulb_outline, color: AppColors.secondary, size: 20),
+                const SizedBox(height: 8),
+                const Text(
                   'DAILY TIP',
                   style: TextStyle(
                     fontSize: 10,
@@ -333,10 +341,10 @@ class _HomeScreenState extends State<HomeScreen> {
                     letterSpacing: 0.5,
                   ),
                 ),
-                SizedBox(height: 8),
+                const SizedBox(height: 8),
                 Text(
-                  'Keep corn moisture below 13.5% to prevent mold growth.',
-                  style: TextStyle(
+                  dailyTip,
+                  style: const TextStyle(
                     fontSize: 12,
                     color: Colors.white,
                     height: 1.4,
