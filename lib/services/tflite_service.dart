@@ -6,10 +6,8 @@ import 'package:tflite_flutter/tflite_flutter.dart';
 
 // Thrown when the photo is rejected before/after inference because it
 // doesn't look like maize — either its color palette doesn't resemble
-// kernels/husks, or the model itself isn't confident in either class.
-// The model (see below) only ever outputs "healthy" or "moldy" — it has no
-// third "not maize" class to fall back on — so this is the only guard
-// against classifying an unrelated photo (e.g. a person, a wall).
+// kernels/husks, or the model itself classified it as the "non_maize" class,
+// or the model isn't confident in any class.
 class NotMaizeException implements Exception {
   const NotMaizeException();
 }
@@ -17,12 +15,17 @@ class NotMaizeException implements Exception {
 // Runs the bundled maize classification model (lib/assets/best.tflite)
 // entirely on-device. The model is an Ultralytics/YOLOv8 classification
 // export: input [1, 3, 224, 224] float32 (NCHW, values scaled to 0-1),
-// output [1, 2] float32 already softmaxed — index 0 is "healthy", index 1
-// is the "moldy / aflatoxin risk" class (confirmed against the training
-// export; there is no embedded label metadata to read this from).
+// output [1, 3] float32 already softmaxed. Class folders were fed to
+// training in alphabetical order (Ultralytics' default), so the output
+// indices are: 0 = "healthy", 1 = "moldy" (aflatoxin risk), 2 = "non_maize"
+// (confirmed against the training export; there is no embedded label
+// metadata to read this from).
 class TfliteService {
   static const int _inputSize = 224;
   static const String _modelAsset = 'lib/assets/best.tflite';
+  static const int _numClasses = 3;
+  static const int _moldyIndex = 1;
+  static const int _nonMaizeIndex = 2;
 
   // Fraction of sampled pixels that must fall within the maize color
   // palette (yellow/tan/brown/green kernels and husks, or pale/cream
@@ -81,18 +84,22 @@ class TfliteService {
       }
 
       final inputTensor = input.reshape([1, 3, _inputSize, _inputSize]);
-      final output = [List<double>.filled(2, 0.0)];
+      final output = [List<double>.filled(_numClasses, 0.0)];
 
       interpreter.run(inputTensor, output);
 
-      final double healthyProb = output[0][0];
-      final double moldyProb = output[0][1];
-      final bool isMoldy = moldyProb > healthyProb;
-      final double confidence = isMoldy ? moldyProb : healthyProb;
+      final List<double> probs = output[0];
+      int predictedIndex = 0;
+      for (int c = 1; c < probs.length; c++) {
+        if (probs[c] > probs[predictedIndex]) predictedIndex = c;
+      }
+      final double confidence = probs[predictedIndex];
 
-      if (confidence < _minConfidence) {
+      if (predictedIndex == _nonMaizeIndex || confidence < _minConfidence) {
         throw const NotMaizeException();
       }
+
+      final bool isMoldy = predictedIndex == _moldyIndex;
 
       return {
         'label': isMoldy ? 'Aflatoxin contamination detected' : 'Healthy — no mold detected',
