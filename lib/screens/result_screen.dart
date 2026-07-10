@@ -5,15 +5,11 @@ import '../constants/app_colors.dart';
 class ResultsScreenArgs {
   final bool isSafe;
   final double confidence;
-  final String? userPhotoUrl;
-  final String userInitial;
   final String? analysisLabel;
 
   const ResultsScreenArgs({
     required this.isSafe,
     required this.confidence,
-    this.userPhotoUrl,
-    this.userInitial = 'U',
     this.analysisLabel,
   });
 }
@@ -35,16 +31,12 @@ class RecommendationSource {
 class ResultsScreen extends StatelessWidget {
   final bool isSafe; // true = Healthy Maize, false = Contaminated
   final double confidence; // 0.0 - 1.0
-  final String? userPhotoUrl;
-  final String userInitial;
   final String? analysisLabel;
 
   const ResultsScreen({
     super.key,
     required this.isSafe,
     required this.confidence,
-    this.userPhotoUrl,
-    this.userInitial = 'U',
     this.analysisLabel,
   });
 
@@ -162,25 +154,6 @@ class ResultsScreen extends StatelessWidget {
                         color: AppColors.primary,
                         fontSize: 17,
                         fontWeight: FontWeight.w500,
-                      ),
-                    ),
-                    const Spacer(),
-                    GestureDetector(
-                      onTap: () => Navigator.pushNamed(context, '/profile'),
-                      child: CircleAvatar(
-                        radius: 19,
-                        backgroundColor: AppColors.secondary,
-                        backgroundImage:
-                            userPhotoUrl != null ? NetworkImage(userPhotoUrl!) : null,
-                        child: userPhotoUrl == null
-                            ? Text(
-                                userInitial.toUpperCase(),
-                                style: const TextStyle(
-                                  color: AppColors.primary,
-                                  fontWeight: FontWeight.w500,
-                                ),
-                              )
-                            : null,
                       ),
                     ),
                   ],

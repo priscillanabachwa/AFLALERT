@@ -69,6 +69,42 @@ class FirestoreService {
     }
   }
 
+  /// Updates the active logged-in user's editable profile fields.
+  Future<bool> updateUserProfile({
+    required String fullName,
+    required String phone,
+    required String district,
+    String? photoUrl,
+  }) async {
+    try {
+      final User? currentUser = _auth.currentUser;
+      if (currentUser == null) {
+        debugPrint('FirestoreService: Cannot update profile, no authenticated user found.');
+        return false;
+      }
+
+      await _db.collection('users').doc(currentUser.uid).update({
+        'fullName': fullName,
+        'phone': phone,
+        'district': district,
+        'photoUrl': ?photoUrl,
+      });
+
+      if (fullName.isNotEmpty && currentUser.displayName != fullName) {
+        await currentUser.updateDisplayName(fullName);
+      }
+      if (photoUrl != null) {
+        await currentUser.updatePhotoURL(photoUrl);
+      }
+
+      debugPrint('FirestoreService: User profile updated for ${currentUser.uid}.');
+      return true;
+    } catch (e) {
+      debugPrint('FirestoreService Error updating user profile: $e');
+      return false;
+    }
+  }
+
   /// Streams the active logged-in user's profile document (full name, district, etc.).
   Stream<DocumentSnapshot<Map<String, dynamic>>> getUserProfile() {
     final User? currentUser = _auth.currentUser;

@@ -12,7 +12,6 @@ void main() {
           isSafe: false,
           confidence: 0.91,
           analysisLabel: 'Mold detected',
-          userInitial: 'U',
         ),
       ),
     );
