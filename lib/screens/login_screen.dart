@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 import 'forgot_password_screen.dart';
 import '../constants/app_colors.dart';
 import '../services/firebase_auth.dart';
@@ -12,6 +13,7 @@ class LoginScreen extends StatefulWidget {
 }
 
 class _LoginScreenState extends State<LoginScreen> {
+  static const String _rememberedEmailKey = 'remembered_email';
 
   // Added these controllers and variables right inside the State class
   final _formKey = GlobalKey<FormState>();
@@ -20,6 +22,23 @@ class _LoginScreenState extends State<LoginScreen> {
   final AuthService _authService = AuthService();
   bool _isLoading = false;
   bool _obscurePassword = true;
+  bool _rememberMe = false;
+
+  @override
+  void initState() {
+    super.initState();
+    _loadRememberedEmail();
+  }
+
+  Future<void> _loadRememberedEmail() async {
+    final prefs = await SharedPreferences.getInstance();
+    final String? savedEmail = prefs.getString(_rememberedEmailKey);
+    if (savedEmail == null || !mounted) return;
+    setState(() {
+      _emailController.text = savedEmail;
+      _rememberMe = true;
+    });
+  }
 
   // Added this function to process the sign-in
   Future<void> _login() async {
@@ -44,6 +63,14 @@ class _LoginScreenState extends State<LoginScreen> {
       );
       return;
     }
+
+    final prefs = await SharedPreferences.getInstance();
+    if (_rememberMe) {
+      await prefs.setString(_rememberedEmailKey, _emailController.text.trim());
+    } else {
+      await prefs.remove(_rememberedEmailKey);
+    }
+    if (!mounted) return;
 
     Navigator.pushReplacementNamed(context, '/home');
   }
@@ -213,17 +240,24 @@ class _LoginScreenState extends State<LoginScreen> {
                               height: 24,
                               width: 24,
                               child: Checkbox(
-                                value: false,
-                                onChanged: (value) {},
+                                value: _rememberMe,
+                                onChanged: (value) {
+                                  setState(() => _rememberMe = value ?? false);
+                                },
                                 shape: RoundedRectangleBorder(
                                   borderRadius: BorderRadius.circular(4),
                                 ),
                               ),
                             ),
                             const SizedBox(width: 8),
-                            const Text(
-                              'Remember me',
-                              style: TextStyle(color: AppColors.primaryContainer),
+                            GestureDetector(
+                              onTap: () {
+                                setState(() => _rememberMe = !_rememberMe);
+                              },
+                              child: const Text(
+                                'Remember me',
+                                style: TextStyle(color: AppColors.primaryContainer),
+                              ),
                             ),
                           ],
                         ),

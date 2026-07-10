@@ -69,6 +69,7 @@ class _AnalysisScreenState extends State<AnalysisScreen> {
   bool _isProcessing = true;
   String? _errorMessage;
   bool _started = false;
+  AnalysisScreenArgs? _args;
 
   @override
   void didChangeDependencies() {
@@ -78,10 +79,25 @@ class _AnalysisScreenState extends State<AnalysisScreen> {
 
     final Object? args = ModalRoute.of(context)?.settings.arguments;
     if (args is AnalysisScreenArgs) {
+      _args = args;
       _runAnalysis(args);
     } else {
       setState(() => _isProcessing = false);
     }
+  }
+
+  Future<void> _retakeAndAnalyze() async {
+    final Object? photo = await Navigator.of(context).pushNamed('/camera');
+    if (photo is! XFile || !mounted) return;
+
+    final AnalysisScreenArgs newArgs =
+        AnalysisScreenArgs(photo: photo, location: _args?.location);
+    setState(() {
+      _args = newArgs;
+      _isProcessing = true;
+      _errorMessage = null;
+    });
+    _runAnalysis(newArgs);
   }
 
   Future<void> _runAnalysis(AnalysisScreenArgs args) async {
@@ -261,7 +277,7 @@ class _AnalysisScreenState extends State<AnalysisScreen> {
         ),
         const SizedBox(height: 28),
         ElevatedButton(
-          onPressed: () => Navigator.of(context).pushNamed('/camera'),
+          onPressed: _retakeAndAnalyze,
           child: Text(isError ? 'Try again' : 'Scan a sample'),
         ),
       ],
