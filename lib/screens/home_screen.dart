@@ -2,12 +2,14 @@ import 'dart:async';
 
 import 'package:camera/camera.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
+import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
 
 import '../constants/app_colors.dart';
 import '../services/firestore_service.dart';
 import '../services/location_service.dart';
 import '../services/weather_service.dart';
+import '../utils/user_initials.dart';
 import '../widgets/custom_bottom_nav.dart';
 import 'analysis_screen.dart';
 import 'profile_screen.dart';
@@ -173,17 +175,45 @@ class _HomeScreenState extends State<HomeScreen> {
             ),
           ),
         ),
-        InkWell(
-          borderRadius: BorderRadius.circular(20),
-          onTap: () => Navigator.push(
-            context,
-            MaterialPageRoute(builder: (_) => const ProfileScreen()),
-          ),
-          child: const CircleAvatar(
-            radius: 18,
-            backgroundColor: AppColors.secondary,
-            child: Icon(Icons.person_outline, color: AppColors.primary, size: 20),
-          ),
+        StreamBuilder<DocumentSnapshot<Map<String, dynamic>>>(
+          stream: FirestoreService().getUserProfile(),
+          builder: (context, snapshot) {
+            final user = FirebaseAuth.instance.currentUser;
+            final profile = snapshot.data?.data();
+            final String name = profile?['fullName'] as String? ?? user?.displayName ?? '';
+            final String photoUrl = profile?['photoUrl'] as String? ?? user?.photoURL ?? '';
+
+            return InkWell(
+              borderRadius: BorderRadius.circular(20),
+              onTap: () => Navigator.push(
+                context,
+                MaterialPageRoute(builder: (_) => const ProfileScreen()),
+              ),
+              child: Container(
+                decoration: const BoxDecoration(
+                  shape: BoxShape.circle,
+                  border: Border.fromBorderSide(
+                    BorderSide(color: AppColors.secondary, width: 2),
+                  ),
+                ),
+                child: CircleAvatar(
+                  radius: 18,
+                  backgroundColor: AppColors.primaryContainer,
+                  backgroundImage: photoUrl.isNotEmpty ? NetworkImage(photoUrl) : null,
+                  child: photoUrl.isEmpty
+                      ? Text(
+                          getInitials(name).isNotEmpty ? getInitials(name) : '?',
+                          style: const TextStyle(
+                            fontSize: 13,
+                            fontWeight: FontWeight.bold,
+                            color: Colors.white,
+                          ),
+                        )
+                      : null,
+                ),
+              ),
+            );
+          },
         ),
       ],
     );
