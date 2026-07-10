@@ -2,7 +2,7 @@ import 'dart:io';
 import 'dart:typed_data';
 
 import 'package:image/image.dart' as img;
-import 'package:tflite_flutter/tflite_flutter.dart';
+import 'package:aflalert/services/ml_service.dart'; 
 
 // Thrown when the photo is rejected before/after inference because it
 // doesn't look like maize — either its color palette doesn't resemble

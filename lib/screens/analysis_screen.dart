@@ -13,7 +13,8 @@ import '../widgets/custom_bottom_nav.dart';
 import 'result_screen.dart';
 import '../services/firebase_storage.dart';
 import '../services/firestore_service.dart';
-import '../services/tflite_service.dart';
+//import '../services/tflite_service.dart';
+import 'package:aflalert/services/ml_service.dart';
 
 class AnalysisScreenArgs {
   final XFile photo;
@@ -126,7 +127,7 @@ class _AnalysisScreenState extends State<AnalysisScreen> {
 
     // Classification runs entirely on-device, so it doesn't depend on
     // network/storage availability.
-    final Map<String, dynamic>? raw = await TfliteService().classifyMaize(photoFile);
+  final Map<String, dynamic>? raw = await getMlService().classifyMaize(photoFile.path);
     if (raw == null) return null;
 
     final _MaizeAnalysis analysis = _MaizeAnalysis.fromResponse(raw);
