@@ -105,6 +105,13 @@ class _AnalysisScreenState extends State<AnalysisScreen> {
         return;
       }
       Navigator.pushReplacementNamed(context, '/results', arguments: resultsArgs);
+    } on NotMaizeException {
+      if (!mounted) return;
+      setState(() {
+        _isProcessing = false;
+        _errorMessage =
+            'This doesn\'t look like a photo of maize. Please retake a clear photo of maize kernels.';
+      });
     } catch (e) {
       if (!mounted) return;
       setState(() {
@@ -207,7 +214,7 @@ class _AnalysisScreenState extends State<AnalysisScreen> {
           ],
         ),
       ),
-      bottomNavigationBar: const CustomBottomNav(),
+      bottomNavigationBar: const CustomBottomNav(currentIndex: 0),
     );
   }
 

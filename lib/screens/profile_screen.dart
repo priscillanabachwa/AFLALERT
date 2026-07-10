@@ -6,6 +6,7 @@ import 'package:flutter/material.dart';
 import '../constants/app_colors.dart';
 import '../services/firestore_service.dart';
 import '../utils/user_initials.dart';
+import '../widgets/custom_bottom_nav.dart';
 import 'settings_screen.dart';
 
 // ─────────────────────────────────────────────
@@ -90,7 +91,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
           ),
         ],
       ),
-      bottomNavigationBar: _buildBottomNav(),
+      bottomNavigationBar: const CustomBottomNav(currentIndex: 3),
     );
   }
 
@@ -255,43 +256,6 @@ class _ProfileScreenState extends State<ProfileScreen> {
           ),
         ),
       ),
-    );
-  }
-
-  // ── bottom navigation ────────────────────────
-  Widget _buildBottomNav() {
-    return BottomNavigationBar(
-      currentIndex: 3,
-      selectedItemColor: kGreen,
-      unselectedItemColor: kGrey,
-      showSelectedLabels: true,
-      showUnselectedLabels: true,
-      type: BottomNavigationBarType.fixed,
-      backgroundColor: kCard,
-      elevation: 0,
-      selectedLabelStyle: const TextStyle(
-        fontSize: 11,
-        fontWeight: FontWeight.w600,
-      ),
-      unselectedLabelStyle: const TextStyle(fontSize: 11),
-      items: const [
-        BottomNavigationBarItem(icon: Icon(Icons.home_outlined), label: 'Home'),
-        BottomNavigationBarItem(
-          icon: Icon(Icons.history_rounded),
-          label: 'History',
-        ),
-        BottomNavigationBarItem(
-          icon: Icon(Icons.notifications_outlined),
-          label: 'Notifications',
-        ),
-        BottomNavigationBarItem(
-          icon: Icon(Icons.person_outline),
-          label: 'Profile',
-        ),
-      ],
-      onTap: (i) {
-        // Connect to router when linking screens
-      },
     );
   }
 

@@ -8,7 +8,6 @@ import '../services/location_service.dart';
 import '../services/weather_service.dart';
 import '../widgets/custom_bottom_nav.dart';
 import 'analysis_screen.dart';
-import 'profile_screen.dart';
 
 class HomeScreen extends StatefulWidget {
   const HomeScreen({super.key});
@@ -113,23 +112,32 @@ class _HomeScreenState extends State<HomeScreen> {
           ),
         ),
       ),
-      bottomNavigationBar: const CustomBottomNav(),
+      bottomNavigationBar: const CustomBottomNav(currentIndex: 0),
     );
   }
 
   Widget _buildHeader(BuildContext context) {
     return Row(
       children: [
-        Container(
-          padding: const EdgeInsets.all(8),
-          decoration: BoxDecoration(
-            color: AppColors.primary,
-            borderRadius: BorderRadius.circular(10),
-          ),
-          child: const Icon(
-            Icons.shield_outlined,
-            color: Colors.white,
-            size: 20,
+        ClipRRect(
+          borderRadius: BorderRadius.circular(10),
+          child: Image.asset(
+            'lib/assets/images/aflalert_logo.png',
+            width: 36,
+            height: 36,
+            fit: BoxFit.cover,
+            errorBuilder: (context, error, stackTrace) => Container(
+              padding: const EdgeInsets.all(8),
+              decoration: BoxDecoration(
+                color: AppColors.primary,
+                borderRadius: BorderRadius.circular(10),
+              ),
+              child: const Icon(
+                Icons.shield_outlined,
+                color: Colors.white,
+                size: 20,
+              ),
+            ),
           ),
         ),
         const SizedBox(width: 10),
@@ -139,20 +147,6 @@ class _HomeScreenState extends State<HomeScreen> {
             fontSize: 18,
             fontWeight: FontWeight.bold,
             color: AppColors.primary,
-          ),
-        ),
-        const Spacer(),
-        GestureDetector(
-          onTap: () {
-            Navigator.push(
-              context,
-              MaterialPageRoute(builder: (_) => const ProfileScreen()),
-            );
-          },
-          child: const CircleAvatar(
-            radius: 20,
-            backgroundColor: AppColors.secondary,
-            child: Icon(Icons.person, color: Colors.white),
           ),
         ),
       ],

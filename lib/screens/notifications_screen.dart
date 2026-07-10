@@ -1,5 +1,7 @@
 import 'package:flutter/material.dart';
 
+import '../widgets/custom_bottom_nav.dart';
+
 /// Standalone demo entry point.
 ///
 /// Run this file as-is (`flutter run`) to preview the screen on its own,
@@ -181,16 +183,6 @@ class _NotificationsScreenState extends State<NotificationsScreen> {
             fontSize: 22,
           ),
         ),
-        actions: const [
-          Padding(
-            padding: EdgeInsets.only(right: 16),
-            child: CircleAvatar(
-              radius: 20,
-              backgroundColor: Color(0xFFD9D3C7),
-              child: Icon(Icons.person, color: Colors.white, size: 20),
-            ),
-          ),
-        ],
       ),
       body: Stack(
         children: [
@@ -237,6 +229,7 @@ class _NotificationsScreenState extends State<NotificationsScreen> {
           ),
         ],
       ),
+      bottomNavigationBar: const CustomBottomNav(currentIndex: 2),
     );
   }
 }
