@@ -184,48 +184,29 @@ class _NotificationsScreenState extends State<NotificationsScreen> {
           ),
         ),
       ),
-      body: Stack(
+      body: Column(
         children: [
-          Column(
-            children: [
-              _FilterRow(
-                filters: _filters,
-                selected: _selectedFilter,
-                onSelected: (filter) =>
-                    setState(() => _selectedFilter = filter),
-              ),
-              const SizedBox(height: 8),
-              Expanded(
-                child: filtered.isEmpty
-                    ? const _EmptyState()
-                    : ListView.builder(
-                        padding: const EdgeInsets.fromLTRB(16, 8, 16, 170),
-                        itemCount: filtered.length,
-                        itemBuilder: (context, index) {
-                          final notification = filtered[index];
-                          return _NotificationCard(
-                            notification: notification,
-                            onTap: () =>
-                                setState(() => notification.unread = false),
-                          );
-                        },
-                      ),
-              ),
-            ],
+          _FilterRow(
+            filters: _filters,
+            selected: _selectedFilter,
+            onSelected: (filter) => setState(() => _selectedFilter = filter),
           ),
-          Positioned(
-            left: 16,
-            right: 16,
-            bottom: 16,
-            child: _TipBanner(
-              onReadGuide: () {
-                ScaffoldMessenger.of(context).showSnackBar(
-                  const SnackBar(
-                    content: Text('Opening ventilation guide…'),
+          const SizedBox(height: 8),
+          Expanded(
+            child: filtered.isEmpty
+                ? const _EmptyState()
+                : ListView.builder(
+                    padding: const EdgeInsets.fromLTRB(16, 8, 16, 16),
+                    itemCount: filtered.length,
+                    itemBuilder: (context, index) {
+                      final notification = filtered[index];
+                      return _NotificationCard(
+                        notification: notification,
+                        onTap: () =>
+                            setState(() => notification.unread = false),
+                      );
+                    },
                   ),
-                );
-              },
-            ),
           ),
         ],
       ),
@@ -279,81 +260,6 @@ class _FilterRow extends StatelessWidget {
             padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
           );
         },
-      ),
-    );
-  }
-}
-
-// ---------------------------------------------------------------------------
-// Floating "tip" banner docked to the bottom of the screen
-// ---------------------------------------------------------------------------
-
-class _TipBanner extends StatelessWidget {
-  const _TipBanner({required this.onReadGuide});
-
-  final VoidCallback onReadGuide;
-
-  @override
-  Widget build(BuildContext context) {
-    return Container(
-      padding: const EdgeInsets.all(18),
-      decoration: BoxDecoration(
-        color: kDarkGreen,
-        borderRadius: BorderRadius.circular(20),
-        boxShadow: [
-          BoxShadow(
-            color: Colors.black.withValues(alpha: 0.18),
-            blurRadius: 16,
-            offset: const Offset(0, 8),
-          ),
-        ],
-      ),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        mainAxisSize: MainAxisSize.min,
-        children: [
-          const Text(
-            'Did you know?',
-            style: TextStyle(
-              color: Colors.white,
-              fontSize: 18,
-              fontWeight: FontWeight.w700,
-            ),
-          ),
-          const SizedBox(height: 6),
-          const Text(
-            'Proper ventilation can reduce moisture buildup by up to '
-            '40%, lowering the risk of fungal growth.',
-            style: TextStyle(
-              color: Colors.white70,
-              fontSize: 13,
-              height: 1.4,
-            ),
-          ),
-          const SizedBox(height: 14),
-          Align(
-            alignment: Alignment.centerLeft,
-            child: ElevatedButton(
-              onPressed: onReadGuide,
-              style: ElevatedButton.styleFrom(
-                backgroundColor: kAmber,
-                foregroundColor: Colors.black87,
-                elevation: 0,
-                shape: RoundedRectangleBorder(
-                  borderRadius: BorderRadius.circular(24),
-                ),
-                padding: const EdgeInsets.symmetric(
-                  horizontal: 20,
-                  vertical: 10,
-                ),
-              ),
-              child: const Text(
-                'Read Guide',
-                style: TextStyle(fontWeight: FontWeight.w700),
-              ),
-            ),
-          ),
-        ],
       ),
     );
   }
