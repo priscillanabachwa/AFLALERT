@@ -272,8 +272,8 @@ class _CameraCaptureScreenState extends State<CameraCaptureScreen> {
                 fit: StackFit.expand,
                 children: [
                   Center(
-                    child: AspectRatio(
-                      aspectRatio: _controller!.value.aspectRatio,
+                    child: GestureDetector(
+                      onTapUp: (d) => _onTapToFocus(d, constraints),
                       child: CameraPreview(_controller!),
                     ),
                   ),
@@ -473,20 +473,19 @@ class _CameraCaptureScreenState extends State<CameraCaptureScreen> {
                     fontWeight: FontWeight.w500,
                   ),
                 ),
-                  const SizedBox(height: 4),
-                  Text(
-                    subGuidance,
-                    textAlign: TextAlign.center,
-                    style: TextStyle(
-                      color: Colors.white.withValues(alpha: 0.55),
-                      fontSize: 11,
-                    ),
+                const SizedBox(height: 4),
+                Text(
+                  subGuidance,
+                  textAlign: TextAlign.center,
+                  style: TextStyle(
+                    color: Colors.white.withValues(alpha: 0.55),
+                    fontSize: 11,
                   ),
-                ],
-              ),
+                ),
+              ],
             ),
-          ],
-        ),
+          ),
+        ],
       ),
     );
   }
