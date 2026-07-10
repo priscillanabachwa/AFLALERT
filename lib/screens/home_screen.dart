@@ -8,6 +8,7 @@ import '../services/location_service.dart';
 import '../services/weather_service.dart';
 import '../widgets/custom_bottom_nav.dart';
 import 'analysis_screen.dart';
+import 'profile_screen.dart';
 
 class HomeScreen extends StatefulWidget {
   const HomeScreen({super.key});
@@ -141,12 +142,26 @@ class _HomeScreenState extends State<HomeScreen> {
           ),
         ),
         const SizedBox(width: 10),
-        const Text(
-          'AflAlert',
-          style: TextStyle(
-            fontSize: 18,
-            fontWeight: FontWeight.bold,
-            color: AppColors.primary,
+        const Expanded(
+          child: Text(
+            'AflAlert',
+            style: TextStyle(
+              fontSize: 18,
+              fontWeight: FontWeight.bold,
+              color: AppColors.primary,
+            ),
+          ),
+        ),
+        InkWell(
+          borderRadius: BorderRadius.circular(20),
+          onTap: () => Navigator.push(
+            context,
+            MaterialPageRoute(builder: (_) => const ProfileScreen()),
+          ),
+          child: const CircleAvatar(
+            radius: 18,
+            backgroundColor: AppColors.primaryContainer,
+            child: Icon(Icons.person_outline, color: AppColors.primary, size: 20),
           ),
         ),
       ],
