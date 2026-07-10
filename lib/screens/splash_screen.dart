@@ -61,28 +61,6 @@ class _SplashScreenState extends State<SplashScreen>
     super.dispose();
   }
 
-  Widget buildDot(int delay) {
-    return TweenAnimationBuilder<double>(
-      tween: Tween(begin: 0.3, end: 1),
-      duration: Duration(milliseconds: 600 + delay),
-      curve: Curves.easeInOut,
-      builder: (context, value, child) {
-        return AnimatedOpacity(
-          duration: Duration(milliseconds: 600 + delay),
-          opacity: value,
-          child: child,
-        );
-      },
-      child: Container(
-        width: 10,
-        height: 10,
-        decoration: const BoxDecoration(
-          color: Color(0xFFFFDF94),
-          shape: BoxShape.circle,
-        ),
-      ),
-    );
-  }
 
   @override
   Widget build(BuildContext context) {
@@ -148,12 +126,12 @@ class _SplashScreenState extends State<SplashScreen>
 
               Row(
                 mainAxisAlignment: MainAxisAlignment.center,
-                children: [
-                  buildDot(0),
-                  const SizedBox(width: 10),
-                  buildDot(200),
-                  const SizedBox(width: 10),
-                  buildDot(400),
+                children: const [
+                  _LoadingDot(delayMs: 0),
+                  SizedBox(width: 10),
+                  _LoadingDot(delayMs: 200),
+                  SizedBox(width: 10),
+                  _LoadingDot(delayMs: 400),
                 ],
               ),
 
@@ -171,6 +149,60 @@ class _SplashScreenState extends State<SplashScreen>
               const SizedBox(height: 30),
             ],
           ),
+        ),
+      ),
+    );
+  }
+}
+
+// A dot that fades in, then pulses in a continuous loop (staggered by
+// [delayMs]) to read as an active loading indicator rather than a
+// one-shot fade-in.
+class _LoadingDot extends StatefulWidget {
+  final int delayMs;
+
+  const _LoadingDot({required this.delayMs});
+
+  @override
+  State<_LoadingDot> createState() => _LoadingDotState();
+}
+
+class _LoadingDotState extends State<_LoadingDot>
+    with SingleTickerProviderStateMixin {
+  late final AnimationController _controller;
+  late final Animation<double> _opacity;
+
+  @override
+  void initState() {
+    super.initState();
+    _controller = AnimationController(
+      vsync: this,
+      duration: const Duration(milliseconds: 600),
+    );
+    _opacity = Tween<double>(begin: 0.3, end: 1.0).animate(
+      CurvedAnimation(parent: _controller, curve: Curves.easeInOut),
+    );
+    Future.delayed(Duration(milliseconds: widget.delayMs), () {
+      if (mounted) _controller.repeat(reverse: true);
+    });
+  }
+
+  @override
+  void dispose() {
+    _controller.dispose();
+    super.dispose();
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return FadeTransition(
+      opacity: _opacity,
+      child: Container(
+        width: 10,
+        height: 10,
+        decoration: const BoxDecoration(
+          color: Color(0xFFFFDF94),
+          shape: BoxShape.circle,
         ),
       ),
     );

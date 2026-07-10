@@ -2,18 +2,20 @@ import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:flutter/material.dart';
 
 import 'login_screen.dart';
+import '../constants/app_colors.dart';
 import '../services/firestore_service.dart';
 
 // ─────────────────────────────────────────
-//  DESIGN TOKENS  (match your app palette)
+//  DESIGN TOKENS — aliased to the shared AppColors palette
+//  (same theme as the registration screen)
 // ─────────────────────────────────────────
-const kPrimaryGreen = Color(0xFF1B4332);
-const kAccentGold = Color(0xFFF5C518);
-const kDangerRed = Color(0xFFD32F2F);
-const kSafeGreen = Color(0xFF2E7D32);
-const kCardBg = Color(0xFFFFFFFF);
-const kPageBg = Color(0xFFF5F6F5);
-const kSubtitle = Color(0xFF78909C);
+const kPrimaryGreen = AppColors.primaryContainer;
+const kAccentGold = AppColors.secondary;
+const kDangerRed = AppColors.error;
+const kSafeGreen = AppColors.primaryContainer;
+const kCardBg = AppColors.surface;
+const kPageBg = AppColors.t95;
+const kSubtitle = AppColors.grey;
 const kDivider = Color(0xFFECEFF1);
 
 // ─────────────────────────────────────────

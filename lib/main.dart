@@ -13,6 +13,7 @@ import 'package:aflalert/screens/registration_screen.dart';
 import 'package:aflalert/screens/camera_screen.dart';
 import 'package:aflalert/screens/downloaded_reports_screen.dart';
 import 'package:aflalert/screens/settings_screen.dart';
+import 'package:aflalert/screens/result_screen.dart';
 
 Future<void> main() async {
   WidgetsFlutterBinding.ensureInitialized();
@@ -30,7 +31,6 @@ class AflAlert extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return MaterialApp(
-      title: 'AflAlert',
       debugShowCheckedModeBanner: false,
 
       theme: ThemeData(
@@ -53,13 +53,11 @@ class AflAlert extends StatelessWidget {
 
         elevatedButtonTheme: ElevatedButtonThemeData(
           style: ElevatedButton.styleFrom(
-            backgroundColor: const Color(0xFF1E3A24),
             foregroundColor: Colors.white,
             minimumSize: const Size(double.infinity, 56),
             shape: RoundedRectangleBorder(
               borderRadius: BorderRadius.circular(28),
             ),
-            elevation: 0,
             textStyle: const TextStyle(
               fontSize: 18,
               fontWeight: FontWeight.bold,
@@ -109,6 +107,16 @@ class AflAlert extends StatelessWidget {
         '/login': (context) => const LoginScreen(),
         '/home': (context) => HomeScreen(),
         '/analysis': (context) => const AnalysisScreen(),
+        '/results': (context) {
+          final args = ModalRoute.of(context)!.settings.arguments as ResultsScreenArgs;
+          return ResultsScreen(
+            isSafe: args.isSafe,
+            confidence: args.confidence,
+            userPhotoUrl: args.userPhotoUrl,
+            userInitial: args.userInitial,
+            analysisLabel: args.analysisLabel,
+          );
+        },
         '/register': (context) => const RegistrationScreen(),
         '/downloadedReports': (context) => const DownloadedReportsScreen(),
         '/settings': (context) => const SettingsScreen(),

@@ -1,3 +1,7 @@
+import 'dart:io';
+
+import 'package:camera/camera.dart';
+import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
 
 import '../constants/app_colors.dart';
@@ -6,6 +10,17 @@ import '../widgets/custom_app_bar.dart';
 import '../widgets/ai_animation.dart';
 import '../widgets/progress_section.dart';
 import '../widgets/custom_bottom_nav.dart';
+import 'result_screen.dart';
+import '../services/firebase_storage.dart';
+import '../services/firestore_service.dart';
+import '../services/tflite_service.dart';
+
+class AnalysisScreenArgs {
+  final XFile photo;
+  final String? location;
+
+  const AnalysisScreenArgs({required this.photo, this.location});
+}
 
 class _MaizeAnalysis {
   final String label;
@@ -53,25 +68,88 @@ class AnalysisScreen extends StatefulWidget {
 }
 
 class _AnalysisScreenState extends State<AnalysisScreen> {
-  bool _showResult = false;
+  bool _isProcessing = true;
+  String? _errorMessage;
+  bool _started = false;
 
   @override
-  void initState() {
-    super.initState();
-    // The scan result already arrived from the camera screen by the time we
-    // get here — this delay just lets the processing animation play instead
-    // of jumping straight to the result.
-    Future.delayed(const Duration(milliseconds: 1400), () {
-      if (mounted) setState(() => _showResult = true);
-    });
+  void didChangeDependencies() {
+    super.didChangeDependencies();
+    if (_started) return;
+    _started = true;
+
+    final Object? args = ModalRoute.of(context)?.settings.arguments;
+    if (args is AnalysisScreenArgs) {
+      _runAnalysis(args);
+    } else {
+      setState(() => _isProcessing = false);
+    }
+  }
+
+  Future<void> _runAnalysis(AnalysisScreenArgs args) async {
+    try {
+      // Run the real work alongside a minimum delay so the processing
+      // animation always gets a chance to play instead of flashing by.
+      final results = await Future.wait([
+        _analyzePhoto(args),
+        Future.delayed(const Duration(milliseconds: 1400)),
+      ]);
+      final resultsArgs = results[0] as ResultsScreenArgs?;
+
+      if (!mounted) return;
+      if (resultsArgs == null) {
+        setState(() {
+          _isProcessing = false;
+          _errorMessage = 'Could not analyze this photo. Please try again.';
+        });
+        return;
+      }
+      Navigator.pushReplacementNamed(context, '/results', arguments: resultsArgs);
+    } catch (e) {
+      if (!mounted) return;
+      setState(() {
+        _isProcessing = false;
+        _errorMessage = 'Could not analyze this photo. Please try again.';
+      });
+    }
+  }
+
+  Future<ResultsScreenArgs?> _analyzePhoto(AnalysisScreenArgs args) async {
+    final File photoFile = File(args.photo.path);
+
+    // Classification runs entirely on-device, so it doesn't depend on
+    // network/storage availability.
+    final Map<String, dynamic>? raw = await TfliteService().classifyMaize(photoFile);
+    if (raw == null) return null;
+
+    final _MaizeAnalysis analysis = _MaizeAnalysis.fromResponse(raw);
+
+    // Best-effort: upload the photo and log the scan record. A failure here
+    // shouldn't block showing the user their on-device diagnosis.
+    final String? imageUrl = await StorageService().uploadMaizeImage(photoFile);
+    await FirestoreService().saveScanRecord(
+      imageUrl: imageUrl ?? '',
+      classificationLabel: analysis.label,
+      confidenceScore: analysis.confidencePercent / 100,
+      location: args.location,
+    );
+
+    final user = FirebaseAuth.instance.currentUser;
+    final String? email = user?.email;
+    final String initial =
+        (email != null && email.isNotEmpty) ? email[0].toUpperCase() : 'U';
+
+    return ResultsScreenArgs(
+      isSafe: !analysis.isMoldy,
+      confidence: analysis.confidencePercent / 100,
+      userPhotoUrl: user?.photoURL,
+      userInitial: initial,
+      analysisLabel: analysis.label,
+    );
   }
 
   @override
   Widget build(BuildContext context) {
-    final Object? args = ModalRoute.of(context)?.settings.arguments;
-    final Map<String, dynamic>? rawResult =
-        args is Map<String, dynamic> ? args : null;
-
     return Scaffold(
       backgroundColor: AppColors.background,
       appBar: const PreferredSize(
@@ -121,11 +199,9 @@ class _AnalysisScreenState extends State<AnalysisScreen> {
             SafeArea(
               child: SingleChildScrollView(
                 padding: const EdgeInsets.all(20),
-                child: !_showResult
+                child: _isProcessing
                     ? _buildLoading()
-                    : (rawResult == null
-                        ? _buildNoResult(context)
-                        : _buildResult(context, _MaizeAnalysis.fromResponse(rawResult))),
+                    : _buildFallback(context),
               ),
             ),
           ],
@@ -160,139 +236,36 @@ class _AnalysisScreenState extends State<AnalysisScreen> {
     );
   }
 
-  Widget _buildNoResult(BuildContext context) {
+  Widget _buildFallback(BuildContext context) {
+    final bool isError = _errorMessage != null;
+
     return Column(
       children: [
         const SizedBox(height: 60),
-        Icon(Icons.search_off, size: 64, color: AppColors.grey),
+        Icon(
+          isError ? Icons.error_outline : Icons.search_off,
+          size: 64,
+          color: AppColors.grey,
+        ),
         const SizedBox(height: 20),
-        const Text(
-          "No scan result found",
-          style: TextStyle(
+        Text(
+          isError ? "Analysis failed" : "No scan result found",
+          style: const TextStyle(
             fontSize: 22,
             fontWeight: FontWeight.bold,
             color: AppColors.primary,
           ),
         ),
         const SizedBox(height: 8),
-        const Text(
-          "Scan a maize sample to see its diagnosis here.",
+        Text(
+          _errorMessage ?? "Scan a maize sample to see its diagnosis here.",
           textAlign: TextAlign.center,
-          style: TextStyle(color: AppColors.grey),
+          style: const TextStyle(color: AppColors.grey),
         ),
         const SizedBox(height: 28),
         ElevatedButton(
           onPressed: () => Navigator.of(context).pushNamed('/camera'),
-          child: const Text('Scan a sample'),
-        ),
-      ],
-    );
-  }
-
-  Widget _buildResult(BuildContext context, _MaizeAnalysis result) {
-    final Color statusColor =
-        result.isMoldy ? const Color(0xFFD32F2F) : const Color(0xFF2E7D32);
-    final IconData statusIcon =
-        result.isMoldy ? Icons.warning_amber_rounded : Icons.check_circle;
-    final String statusHeadline =
-        result.isMoldy ? 'Aflatoxin risk detected' : 'Looks healthy';
-
-    return Column(
-      children: [
-        const SizedBox(height: 12),
-        Container(
-          width: 96,
-          height: 96,
-          decoration: BoxDecoration(
-            shape: BoxShape.circle,
-            color: statusColor.withValues(alpha: .1),
-          ),
-          child: Icon(statusIcon, size: 52, color: statusColor),
-        ),
-        const SizedBox(height: 20),
-        Text(
-          statusHeadline,
-          style: TextStyle(
-            fontSize: 24,
-            fontWeight: FontWeight.bold,
-            color: statusColor,
-          ),
-        ),
-        const SizedBox(height: 6),
-        Text(
-          result.label,
-          textAlign: TextAlign.center,
-          style: const TextStyle(fontSize: 16, color: AppColors.text),
-        ),
-        const SizedBox(height: 28),
-        Container(
-          width: double.infinity,
-          padding: const EdgeInsets.all(18),
-          decoration: BoxDecoration(
-            color: Colors.white,
-            borderRadius: BorderRadius.circular(18),
-            border: Border.all(color: AppColors.outline.withValues(alpha: .4)),
-            boxShadow: [
-              BoxShadow(
-                color: Colors.black.withValues(alpha: .04),
-                blurRadius: 8,
-                offset: const Offset(0, 3),
-              ),
-            ],
-          ),
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              Row(
-                mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                children: [
-                  const Text(
-                    "Confidence",
-                    style: TextStyle(
-                      fontWeight: FontWeight.bold,
-                      fontSize: 16,
-                      color: AppColors.primary,
-                    ),
-                  ),
-                  Text(
-                    "${result.confidencePercent.toStringAsFixed(0)}%",
-                    style: const TextStyle(
-                      color: Color(0xFF765B00),
-                      fontWeight: FontWeight.bold,
-                      fontSize: 18,
-                    ),
-                  ),
-                ],
-              ),
-              const SizedBox(height: 12),
-              ClipRRect(
-                borderRadius: BorderRadius.circular(20),
-                child: LinearProgressIndicator(
-                  value: result.confidencePercent / 100,
-                  minHeight: 14,
-                  backgroundColor: const Color(0xFFE7E0EB),
-                  valueColor: AlwaysStoppedAnimation(statusColor),
-                ),
-              ),
-            ],
-          ),
-        ),
-        const SizedBox(height: 28),
-        SizedBox(
-          width: double.infinity,
-          child: ElevatedButton(
-            onPressed: () => Navigator.of(context).pushNamed('/camera'),
-            child: const Text('Scan another sample'),
-          ),
-        ),
-        const SizedBox(height: 10),
-        SizedBox(
-          width: double.infinity,
-          child: OutlinedButton(
-            onPressed: () =>
-                Navigator.of(context).pushNamedAndRemoveUntil('/home', (r) => false),
-            child: const Text('Back to home'),
-          ),
+          child: Text(isError ? 'Try again' : 'Scan a sample'),
         ),
       ],
     );
