@@ -1,3 +1,5 @@
+import 'dart:async';
+
 import 'package:camera/camera.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:flutter/material.dart';
@@ -18,17 +20,31 @@ class HomeScreen extends StatefulWidget {
 }
 
 class _HomeScreenState extends State<HomeScreen> {
+  // Weather can change quickly, so keep it fresh instead of only fetching
+  // once when the screen first mounts.
+  static const Duration _refreshInterval = Duration(minutes: 5);
+
   LocationResult? _location;
   WeatherInfo? _weather;
   bool _weatherLoading = true;
+  Timer? _weatherRefreshTimer;
 
   @override
   void initState() {
     super.initState();
     _loadWeather();
+    _weatherRefreshTimer = Timer.periodic(_refreshInterval, (_) => _loadWeather());
+  }
+
+  @override
+  void dispose() {
+    _weatherRefreshTimer?.cancel();
+    super.dispose();
   }
 
   Future<void> _loadWeather() async {
+    // Always request a fresh GPS fix rather than reusing a cached one, so a
+    // move to a new location is reflected immediately.
     final LocationResult? location = await LocationService().getCurrentLocation();
     if (location == null) {
       if (mounted) setState(() => _weatherLoading = false);
@@ -51,65 +67,70 @@ class _HomeScreenState extends State<HomeScreen> {
     return Scaffold(
       backgroundColor: AppColors.t95,
       body: SafeArea(
-        child: SingleChildScrollView(
-          padding: const EdgeInsets.symmetric(horizontal: 20),
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              const SizedBox(height: 12),
-              _buildHeader(context),
-              const SizedBox(height: 24),
-              StreamBuilder<DocumentSnapshot<Map<String, dynamic>>>(
-                stream: FirestoreService().getUserProfile(),
-                builder: (context, snapshot) {
-                  final String? fullName = snapshot.data?.data()?['fullName'] as String?;
-                  final String firstName = (fullName != null && fullName.trim().isNotEmpty)
-                      ? fullName.trim().split(' ').first
-                      : 'there';
-                  return _buildGreeting(firstName);
-                },
-              ),
-              const SizedBox(height: 20),
-              _buildInfoCards(),
-              const SizedBox(height: 32),
-              _buildScanButton(context),
-              const SizedBox(height: 12),
-              const Center(
-                child: Text(
-                  'Tap to scan crops',
-                  style: TextStyle(
-                    fontSize: 14,
-                    color: Colors.grey,
+        child: RefreshIndicator(
+          color: AppColors.primary,
+          onRefresh: _loadWeather,
+          child: SingleChildScrollView(
+            physics: const AlwaysScrollableScrollPhysics(),
+            padding: const EdgeInsets.symmetric(horizontal: 20),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                const SizedBox(height: 12),
+                _buildHeader(context),
+                const SizedBox(height: 24),
+                StreamBuilder<DocumentSnapshot<Map<String, dynamic>>>(
+                  stream: FirestoreService().getUserProfile(),
+                  builder: (context, snapshot) {
+                    final String? fullName = snapshot.data?.data()?['fullName'] as String?;
+                    final String firstName = (fullName != null && fullName.trim().isNotEmpty)
+                        ? fullName.trim().split(' ').first
+                        : 'there';
+                    return _buildGreeting(firstName);
+                  },
+                ),
+                const SizedBox(height: 20),
+                _buildInfoCards(),
+                const SizedBox(height: 32),
+                _buildScanButton(context),
+                const SizedBox(height: 12),
+                const Center(
+                  child: Text(
+                    'Tap to scan crops',
+                    style: TextStyle(
+                      fontSize: 14,
+                      color: Colors.grey,
+                    ),
                   ),
                 ),
-              ),
-              const SizedBox(height: 28),
-              StreamBuilder<QuerySnapshot>(
-                stream: FirestoreService().getUserScanHistory(),
-                builder: (context, snapshot) {
-                  final docs = snapshot.data?.docs ?? [];
-                  final recentDocs = docs.take(2).toList();
-                  return Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      _buildStatsRow(docs),
-                      const SizedBox(height: 28),
-                      _buildRecentScansHeader(),
-                      const SizedBox(height: 16),
-                      if (recentDocs.isEmpty)
-                        _buildNoScansYet()
-                      else
-                        for (int i = 0; i < recentDocs.length; i++)
-                          Padding(
-                            padding: EdgeInsets.only(bottom: i == recentDocs.length - 1 ? 0 : 12),
-                            child: _buildScanTileFromDoc(recentDocs[i]),
-                          ),
-                    ],
-                  );
-                },
-              ),
-              const SizedBox(height: 88),
-            ],
+                const SizedBox(height: 28),
+                StreamBuilder<QuerySnapshot>(
+                  stream: FirestoreService().getUserScanHistory(),
+                  builder: (context, snapshot) {
+                    final docs = snapshot.data?.docs ?? [];
+                    final recentDocs = docs.take(2).toList();
+                    return Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        _buildStatsRow(docs),
+                        const SizedBox(height: 28),
+                        _buildRecentScansHeader(),
+                        const SizedBox(height: 16),
+                        if (recentDocs.isEmpty)
+                          _buildNoScansYet()
+                        else
+                          for (int i = 0; i < recentDocs.length; i++)
+                            Padding(
+                              padding: EdgeInsets.only(bottom: i == recentDocs.length - 1 ? 0 : 12),
+                              child: _buildScanTileFromDoc(recentDocs[i]),
+                            ),
+                      ],
+                    );
+                  },
+                ),
+                const SizedBox(height: 88),
+              ],
+            ),
           ),
         ),
       ),
