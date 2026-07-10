@@ -450,29 +450,27 @@ class _CameraCaptureScreenState extends State<CameraCaptureScreen> {
         : 'Adjust and the frame will turn white when ready';
 
     return Center(
-      child: Padding(
-        padding: const EdgeInsets.only(bottom: 90),
-        child: Column(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            CustomPaint(
-              size: const Size(210, 210),
-              painter: _CornerBracketsPainter(color: bracketColor),
-            ),
-            const SizedBox(height: 12),
-            Padding(
-              padding: const EdgeInsets.symmetric(horizontal: 30),
-              child: Column(
-                children: [
-                  Text(
-                    mainGuidance,
-                    textAlign: TextAlign.center,
-                    style: const TextStyle(
-                      color: Colors.white,
-                      fontSize: 13,
-                      fontWeight: FontWeight.w500,
-                    ),
+      child: Column(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          CustomPaint(
+            size: const Size(210, 210),
+            painter: _CornerBracketsPainter(color: bracketColor),
+          ),
+          const SizedBox(height: 12),
+          Padding(
+            padding: const EdgeInsets.symmetric(horizontal: 30),
+            child: Column(
+              children: [
+                Text(
+                  mainGuidance,
+                  textAlign: TextAlign.center,
+                  style: const TextStyle(
+                    color: Colors.white,
+                    fontSize: 13,
+                    fontWeight: FontWeight.w500,
                   ),
+                ),
                   const SizedBox(height: 4),
                   Text(
                     subGuidance,
