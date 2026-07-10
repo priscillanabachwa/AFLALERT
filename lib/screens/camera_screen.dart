@@ -271,9 +271,11 @@ class _CameraCaptureScreenState extends State<CameraCaptureScreen> {
               builder: (context, constraints) => Stack(
                 fit: StackFit.expand,
                 children: [
-                  GestureDetector(
-                    onTapUp: (d) => _onTapToFocus(d, constraints),
-                    child: CameraPreview(_controller!),
+                  Center(
+                    child: AspectRatio(
+                      aspectRatio: _controller!.value.aspectRatio,
+                      child: CameraPreview(_controller!),
+                    ),
                   ),
                   _buildTopBar(),
                   _buildQualityPills(),
