@@ -7,12 +7,16 @@ import 'package:flutter/material.dart';
 
 import '../constants/app_colors.dart';
 import '../constants/daily_tips.dart';
+import '../models/app_notification.dart';
 import '../services/firestore_service.dart';
+import '../services/local_notification_service.dart';
 import '../services/location_service.dart';
+import '../services/notification_center.dart';
 import '../services/weather_service.dart';
 import '../utils/user_initials.dart';
 import '../widgets/custom_bottom_nav.dart';
 import 'analysis_screen.dart';
+import 'history_screen.dart';
 import 'profile_screen.dart';
 
 class HomeScreen extends StatefulWidget {
@@ -32,16 +36,29 @@ class _HomeScreenState extends State<HomeScreen> {
   bool _weatherLoading = true;
   Timer? _weatherRefreshTimer;
 
+  String _userType = '';
+  StreamSubscription<DocumentSnapshot<Map<String, dynamic>>>? _profileSub;
+
+  // Edge-triggered so the alert fires once when it becomes hot, not on
+  // every 5-minute refresh while it stays hot.
+  bool _heatAlertNotified = false;
+
   @override
   void initState() {
     super.initState();
     _loadWeather();
     _weatherRefreshTimer = Timer.periodic(_refreshInterval, (_) => _loadWeather());
+    _profileSub = FirestoreService().getUserProfile().listen((doc) {
+      final String userType = doc.data()?['userType'] as String? ?? '';
+      if (userType == _userType) return;
+      setState(() => _userType = userType);
+    });
   }
 
   @override
   void dispose() {
     _weatherRefreshTimer?.cancel();
+    _profileSub?.cancel();
     super.dispose();
   }
 
@@ -63,6 +80,39 @@ class _HomeScreenState extends State<HomeScreen> {
       _weather = weather;
       _weatherLoading = false;
     });
+    _checkHeatAlert();
+  }
+
+  void _checkHeatAlert() {
+    final bool alertNow = isHeatAlert(_weather?.temperatureC);
+    if (!alertNow) {
+      _heatAlertNotified = false;
+      return;
+    }
+    if (_heatAlertNotified) return;
+    _heatAlertNotified = true;
+
+    final String tip = tipForConditions(_userType, _weather?.temperatureC);
+    final int tempRounded = _weather!.temperatureC.round();
+
+    NotificationCenter.instance.add(
+      AppNotification(
+        title: 'Heat Alert',
+        description: tip,
+        time: 'Just now',
+        icon: Icons.whatshot,
+        iconColor: const Color(0xFFE0562A),
+        iconBackground: const Color(0xFFFBDCCB),
+        category: NotificationCategory.alert,
+        unread: true,
+        highPriority: true,
+      ),
+    );
+
+    LocalNotificationService.instance.show(
+      title: 'Heat Alert — $tempRounded°C',
+      body: tip,
+    );
   }
 
   @override
@@ -96,7 +146,10 @@ class _HomeScreenState extends State<HomeScreen> {
                       children: [
                         _buildGreeting(firstName),
                         const SizedBox(height: 20),
-                        _buildInfoCards(tipOfTheDay(userType)),
+                        _buildInfoCards(
+                          tipForConditions(userType, _weather?.temperatureC),
+                          isHeatAlert(_weather?.temperatureC),
+                        ),
                       ],
                     );
                   },
@@ -266,7 +319,7 @@ class _HomeScreenState extends State<HomeScreen> {
     );
   }
 
-  Widget _buildInfoCards(String dailyTip) {
+  Widget _buildInfoCards(String dailyTip, bool heatAlert) {
     return Row(
       children: [
         Expanded(
@@ -330,11 +383,15 @@ class _HomeScreenState extends State<HomeScreen> {
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                const Icon(Icons.lightbulb_outline, color: AppColors.secondary, size: 20),
+                Icon(
+                  heatAlert ? Icons.whatshot : Icons.lightbulb_outline,
+                  color: AppColors.secondary,
+                  size: 20,
+                ),
                 const SizedBox(height: 8),
-                const Text(
-                  'DAILY TIP',
-                  style: TextStyle(
+                Text(
+                  heatAlert ? 'HEAT ALERT' : 'DAILY TIP',
+                  style: const TextStyle(
                     fontSize: 10,
                     fontWeight: FontWeight.w700,
                     color: AppColors.secondary,
@@ -576,7 +633,10 @@ class _HomeScreenState extends State<HomeScreen> {
           ),
         ),
         TextButton(
-          onPressed: () {},
+          onPressed: () => Navigator.push(
+            context,
+            MaterialPageRoute(builder: (_) => const HistoryScreen()),
+          ),
           child: const Text(
             'See All',
             style: TextStyle(

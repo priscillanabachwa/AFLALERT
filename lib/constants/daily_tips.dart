@@ -47,8 +47,41 @@ const List<String> traderDailyTips = [
 /// Picks a tip for [userType] ("Farmer" or "Trader", case-insensitive) that
 /// changes once per day. Defaults to the farmer list for unknown/empty types.
 String tipOfTheDay(String userType) {
-  final List<String> tips =
-      userType.trim().toLowerCase() == 'trader' ? traderDailyTips : farmerDailyTips;
-  final int dayOfYear = DateTime.now().difference(DateTime(DateTime.now().year)).inDays;
-  return tips[dayOfYear % tips.length];
+  final List<String> tips = _isTrader(userType) ? traderDailyTips : farmerDailyTips;
+  return tips[_dayOfYear() % tips.length];
 }
+
+// Aflatoxin-producing molds thrive fastest once ambient temperature climbs
+// past this point, so it's used to trigger a heat-specific warning in place
+// of the regular rotating tip.
+const double highHeatThresholdC = 30.0;
+
+const List<String> farmerHeatAlertTips = [
+  'Temperatures above 30°C raise aflatoxin risk — check drying grain more often and keep it out of direct sun once dry.',
+  'Hot weather speeds up mold growth in damp grain — move stored maize to the coolest, most shaded space you have.',
+  'High heat stresses standing crops, making them more vulnerable to aflatoxin — water where possible and monitor closely.',
+];
+
+const List<String> traderHeatAlertTips = [
+  'Temperatures above 30°C raise spoilage risk — inspect stored batches more frequently for heat and moisture buildup.',
+  'Hot weather accelerates mold growth in warehouses — improve airflow and keep bags out of direct sun.',
+  'High heat increases aflatoxin risk in stock — prioritize testing older or borderline batches during hot spells.',
+];
+
+/// True when [temperatureC] is hot enough to warrant a heat-risk warning
+/// instead of the regular rotating tip.
+bool isHeatAlert(double? temperatureC) =>
+    temperatureC != null && temperatureC >= highHeatThresholdC;
+
+/// Picks the tip to show for [userType] given the current [temperatureC].
+/// When it's hot enough to meaningfully raise aflatoxin risk, this returns a
+/// heat-specific warning instead of the normal rotating daily tip.
+String tipForConditions(String userType, double? temperatureC) {
+  if (!isHeatAlert(temperatureC)) return tipOfTheDay(userType);
+  final List<String> tips = _isTrader(userType) ? traderHeatAlertTips : farmerHeatAlertTips;
+  return tips[_dayOfYear() % tips.length];
+}
+
+bool _isTrader(String userType) => userType.trim().toLowerCase() == 'trader';
+
+int _dayOfYear() => DateTime.now().difference(DateTime(DateTime.now().year)).inDays;
