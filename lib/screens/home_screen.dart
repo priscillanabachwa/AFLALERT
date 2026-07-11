@@ -1,13 +1,23 @@
+import 'dart:async';
+
 import 'package:camera/camera.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
+import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
 
 import '../constants/app_colors.dart';
+import '../constants/daily_tips.dart';
+import '../models/app_notification.dart';
 import '../services/firestore_service.dart';
+import '../services/local_notification_service.dart';
 import '../services/location_service.dart';
+import '../services/notification_center.dart';
 import '../services/weather_service.dart';
+import '../utils/user_initials.dart';
 import '../widgets/custom_bottom_nav.dart';
 import 'analysis_screen.dart';
+import 'history_screen.dart';
+import 'profile_screen.dart';
 
 class HomeScreen extends StatefulWidget {
   const HomeScreen({super.key});
@@ -17,17 +27,44 @@ class HomeScreen extends StatefulWidget {
 }
 
 class _HomeScreenState extends State<HomeScreen> {
+  // Weather can change quickly, so keep it fresh instead of only fetching
+  // once when the screen first mounts.
+  static const Duration _refreshInterval = Duration(minutes: 5);
+
   LocationResult? _location;
   WeatherInfo? _weather;
   bool _weatherLoading = true;
+  Timer? _weatherRefreshTimer;
+
+  String _userType = '';
+  StreamSubscription<DocumentSnapshot<Map<String, dynamic>>>? _profileSub;
+
+  // Edge-triggered so the alert fires once when it becomes hot, not on
+  // every 5-minute refresh while it stays hot.
+  bool _heatAlertNotified = false;
 
   @override
   void initState() {
     super.initState();
     _loadWeather();
+    _weatherRefreshTimer = Timer.periodic(_refreshInterval, (_) => _loadWeather());
+    _profileSub = FirestoreService().getUserProfile().listen((doc) {
+      final String userType = doc.data()?['userType'] as String? ?? '';
+      if (userType == _userType) return;
+      setState(() => _userType = userType);
+    });
+  }
+
+  @override
+  void dispose() {
+    _weatherRefreshTimer?.cancel();
+    _profileSub?.cancel();
+    super.dispose();
   }
 
   Future<void> _loadWeather() async {
+    // Always request a fresh GPS fix rather than reusing a cached one, so a
+    // move to a new location is reflected immediately.
     final LocationResult? location = await LocationService().getCurrentLocation();
     if (location == null) {
       if (mounted) setState(() => _weatherLoading = false);
@@ -43,6 +80,39 @@ class _HomeScreenState extends State<HomeScreen> {
       _weather = weather;
       _weatherLoading = false;
     });
+    _checkHeatAlert();
+  }
+
+  void _checkHeatAlert() {
+    final bool alertNow = isHeatAlert(_weather?.temperatureC);
+    if (!alertNow) {
+      _heatAlertNotified = false;
+      return;
+    }
+    if (_heatAlertNotified) return;
+    _heatAlertNotified = true;
+
+    final String tip = tipForConditions(_userType, _weather?.temperatureC);
+    final int tempRounded = _weather!.temperatureC.round();
+
+    NotificationCenter.instance.add(
+      AppNotification(
+        title: 'Heat Alert',
+        description: tip,
+        time: 'Just now',
+        icon: Icons.whatshot,
+        iconColor: const Color(0xFFE0562A),
+        iconBackground: const Color(0xFFFBDCCB),
+        category: NotificationCategory.alert,
+        unread: true,
+        highPriority: true,
+      ),
+    );
+
+    LocalNotificationService.instance.show(
+      title: 'Heat Alert — $tempRounded°C',
+      body: tip,
+    );
   }
 
   @override
@@ -50,65 +120,80 @@ class _HomeScreenState extends State<HomeScreen> {
     return Scaffold(
       backgroundColor: AppColors.t95,
       body: SafeArea(
-        child: SingleChildScrollView(
-          padding: const EdgeInsets.symmetric(horizontal: 20),
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              const SizedBox(height: 12),
-              _buildHeader(context),
-              const SizedBox(height: 24),
-              StreamBuilder<DocumentSnapshot<Map<String, dynamic>>>(
-                stream: FirestoreService().getUserProfile(),
-                builder: (context, snapshot) {
-                  final String? fullName = snapshot.data?.data()?['fullName'] as String?;
-                  final String firstName = (fullName != null && fullName.trim().isNotEmpty)
-                      ? fullName.trim().split(' ').first
-                      : 'there';
-                  return _buildGreeting(firstName);
-                },
-              ),
-              const SizedBox(height: 20),
-              _buildInfoCards(),
-              const SizedBox(height: 32),
-              _buildScanButton(context),
-              const SizedBox(height: 12),
-              const Center(
-                child: Text(
-                  'Tap to scan crops',
-                  style: TextStyle(
-                    fontSize: 14,
-                    color: Colors.grey,
+        child: RefreshIndicator(
+          color: AppColors.primary,
+          onRefresh: _loadWeather,
+          child: SingleChildScrollView(
+            physics: const AlwaysScrollableScrollPhysics(),
+            padding: const EdgeInsets.symmetric(horizontal: 20),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                const SizedBox(height: 12),
+                _buildHeader(context),
+                const SizedBox(height: 24),
+                StreamBuilder<DocumentSnapshot<Map<String, dynamic>>>(
+                  stream: FirestoreService().getUserProfile(),
+                  builder: (context, snapshot) {
+                    final Map<String, dynamic>? profile = snapshot.data?.data();
+                    final String? fullName = profile?['fullName'] as String?;
+                    final String firstName = (fullName != null && fullName.trim().isNotEmpty)
+                        ? fullName.trim().split(' ').first
+                        : 'there';
+                    final String userType = profile?['userType'] as String? ?? '';
+                    return Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        _buildGreeting(firstName),
+                        const SizedBox(height: 20),
+                        _buildInfoCards(
+                          tipForConditions(userType, _weather?.temperatureC),
+                          isHeatAlert(_weather?.temperatureC),
+                        ),
+                      ],
+                    );
+                  },
+                ),
+                const SizedBox(height: 32),
+                _buildScanButton(context),
+                const SizedBox(height: 12),
+                const Center(
+                  child: Text(
+                    'Tap to scan crops',
+                    style: TextStyle(
+                      fontSize: 14,
+                      color: Colors.grey,
+                    ),
                   ),
                 ),
-              ),
-              const SizedBox(height: 28),
-              StreamBuilder<QuerySnapshot>(
-                stream: FirestoreService().getUserScanHistory(),
-                builder: (context, snapshot) {
-                  final docs = snapshot.data?.docs ?? [];
-                  final recentDocs = docs.take(2).toList();
-                  return Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      _buildStatsRow(docs),
-                      const SizedBox(height: 28),
-                      _buildRecentScansHeader(),
-                      const SizedBox(height: 16),
-                      if (recentDocs.isEmpty)
-                        _buildNoScansYet()
-                      else
-                        for (int i = 0; i < recentDocs.length; i++)
-                          Padding(
-                            padding: EdgeInsets.only(bottom: i == recentDocs.length - 1 ? 0 : 12),
-                            child: _buildScanTileFromDoc(recentDocs[i]),
-                          ),
-                    ],
-                  );
-                },
-              ),
-              const SizedBox(height: 88),
-            ],
+                const SizedBox(height: 28),
+                StreamBuilder<QuerySnapshot>(
+                  stream: FirestoreService().getUserScanHistory(),
+                  builder: (context, snapshot) {
+                    final docs = snapshot.data?.docs ?? [];
+                    final recentDocs = docs.take(2).toList();
+                    return Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        _buildStatsRow(docs),
+                        const SizedBox(height: 28),
+                        _buildRecentScansHeader(),
+                        const SizedBox(height: 16),
+                        if (recentDocs.isEmpty)
+                          _buildNoScansYet()
+                        else
+                          for (int i = 0; i < recentDocs.length; i++)
+                            Padding(
+                              padding: EdgeInsets.only(bottom: i == recentDocs.length - 1 ? 0 : 12),
+                              child: _buildScanTileFromDoc(recentDocs[i]),
+                            ),
+                      ],
+                    );
+                  },
+                ),
+                const SizedBox(height: 88),
+              ],
+            ),
           ),
         ),
       ),
@@ -141,13 +226,55 @@ class _HomeScreenState extends State<HomeScreen> {
           ),
         ),
         const SizedBox(width: 10),
-        const Text(
-          'AflAlert',
-          style: TextStyle(
-            fontSize: 18,
-            fontWeight: FontWeight.bold,
-            color: AppColors.primary,
+        const Expanded(
+          child: Text(
+            'AflAlert',
+            style: TextStyle(
+              fontSize: 18,
+              fontWeight: FontWeight.bold,
+              color: AppColors.primary,
+            ),
           ),
+        ),
+        StreamBuilder<DocumentSnapshot<Map<String, dynamic>>>(
+          stream: FirestoreService().getUserProfile(),
+          builder: (context, snapshot) {
+            final user = FirebaseAuth.instance.currentUser;
+            final profile = snapshot.data?.data();
+            final String name = profile?['fullName'] as String? ?? user?.displayName ?? '';
+            final String photoUrl = profile?['photoUrl'] as String? ?? user?.photoURL ?? '';
+
+            return InkWell(
+              borderRadius: BorderRadius.circular(20),
+              onTap: () => Navigator.push(
+                context,
+                MaterialPageRoute(builder: (_) => const ProfileScreen()),
+              ),
+              child: Container(
+                decoration: const BoxDecoration(
+                  shape: BoxShape.circle,
+                  border: Border.fromBorderSide(
+                    BorderSide(color: AppColors.secondary, width: 2),
+                  ),
+                ),
+                child: CircleAvatar(
+                  radius: 18,
+                  backgroundColor: AppColors.primaryContainer,
+                  backgroundImage: photoUrl.isNotEmpty ? NetworkImage(photoUrl) : null,
+                  child: photoUrl.isEmpty
+                      ? Text(
+                          getInitials(name).isNotEmpty ? getInitials(name) : '?',
+                          style: const TextStyle(
+                            fontSize: 13,
+                            fontWeight: FontWeight.bold,
+                            color: Colors.white,
+                          ),
+                        )
+                      : null,
+                ),
+              ),
+            );
+          },
         ),
       ],
     );
@@ -192,7 +319,7 @@ class _HomeScreenState extends State<HomeScreen> {
     );
   }
 
-  Widget _buildInfoCards() {
+  Widget _buildInfoCards(String dailyTip, bool heatAlert) {
     return Row(
       children: [
         Expanded(
@@ -255,22 +382,26 @@ class _HomeScreenState extends State<HomeScreen> {
             ),
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
-              children: const [
-                Icon(Icons.lightbulb_outline, color: AppColors.secondary, size: 20),
-                SizedBox(height: 8),
+              children: [
+                Icon(
+                  heatAlert ? Icons.whatshot : Icons.lightbulb_outline,
+                  color: AppColors.secondary,
+                  size: 20,
+                ),
+                const SizedBox(height: 8),
                 Text(
-                  'DAILY TIP',
-                  style: TextStyle(
+                  heatAlert ? 'HEAT ALERT' : 'DAILY TIP',
+                  style: const TextStyle(
                     fontSize: 10,
                     fontWeight: FontWeight.w700,
                     color: AppColors.secondary,
                     letterSpacing: 0.5,
                   ),
                 ),
-                SizedBox(height: 8),
+                const SizedBox(height: 8),
                 Text(
-                  'Keep corn moisture below 13.5% to prevent mold growth.',
-                  style: TextStyle(
+                  dailyTip,
+                  style: const TextStyle(
                     fontSize: 12,
                     color: Colors.white,
                     height: 1.4,
@@ -502,7 +633,10 @@ class _HomeScreenState extends State<HomeScreen> {
           ),
         ),
         TextButton(
-          onPressed: () {},
+          onPressed: () => Navigator.push(
+            context,
+            MaterialPageRoute(builder: (_) => const HistoryScreen()),
+          ),
           child: const Text(
             'See All',
             style: TextStyle(

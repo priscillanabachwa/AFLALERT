@@ -1,5 +1,7 @@
 import 'package:flutter/material.dart';
 
+import '../models/app_notification.dart';
+import '../services/notification_center.dart';
 import '../widgets/custom_bottom_nav.dart';
 
 /// Standalone demo entry point.
@@ -42,38 +44,6 @@ const Color kDarkGreen = Color(0xFF1B4332);
 const Color kAmber = Color(0xFFF5B942);
 
 // ---------------------------------------------------------------------------
-// Model
-// ---------------------------------------------------------------------------
-
-enum NotificationCategory { alert, tip, update }
-
-class AppNotification {
-  AppNotification({
-    required this.title,
-    required this.description,
-    required this.time,
-    required this.icon,
-    required this.iconColor,
-    required this.iconBackground,
-    required this.category,
-    this.unread = false,
-    this.highPriority = false,
-    this.actionLabel,
-  });
-
-  final String title;
-  final String description;
-  final String time;
-  final IconData icon;
-  final Color iconColor;
-  final Color iconBackground;
-  final NotificationCategory category;
-  final String? actionLabel;
-  final bool highPriority;
-  bool unread; // mutable so tapping a card can mark it as read
-}
-
-// ---------------------------------------------------------------------------
 // Screen
 // ---------------------------------------------------------------------------
 
@@ -88,148 +58,74 @@ class _NotificationsScreenState extends State<NotificationsScreen> {
   static const List<String> _filters = ['All', 'Alerts', 'Tips', 'Updates'];
   String _selectedFilter = 'All';
 
-  final List<AppNotification> _notifications = [
-    AppNotification(
-      title: 'Storage Issue Detected',
-      description:
-          'High humidity levels detected in the silo. Risk of fungal '
-          'growth is increasing — immediate ventilation is recommended.',
-      time: '2 hours ago',
-      icon: Icons.warning_amber_rounded,
-      iconColor: const Color(0xFFE0562A),
-      iconBackground: const Color(0xFFFBDCCB),
-      category: NotificationCategory.alert,
-      unread: true,
-      highPriority: true,
-    ),
-    AppNotification(
-      title: 'AI Scan Completed',
-      description:
-          'Your recent batch analysis for Field A is ready. Soil quality '
-          'and nutrient levels were successfully detected.',
-      time: '4 hours ago',
-      icon: Icons.check_circle_rounded,
-      iconColor: kDarkGreen,
-      iconBackground: const Color(0xFFCDE7D8),
-      category: NotificationCategory.update,
-      unread: true,
-      actionLabel: 'VIEW',
-    ),
-    AppNotification(
-      title: 'Task Running Slow',
-      description:
-          'Cover-crop irrigation is taking longer than expected. Check '
-          'soil drainage and hose connections in Field C before the '
-          'pre-harvest window closes.',
-      time: '3 hours ago',
-      icon: Icons.hourglass_bottom_rounded,
-      iconColor: const Color(0xFFB07D0A),
-      iconBackground: const Color(0xFFFBE7B8),
-      category: NotificationCategory.alert,
-      unread: true,
-    ),
-    AppNotification(
-      title: 'System Update',
-      description:
-          'Data-sync accuracy improved for real-time content across all '
-          'connected devices.',
-      time: 'Yesterday',
-      icon: Icons.sync_rounded,
-      iconColor: const Color(0xFF6B7280),
-      iconBackground: const Color(0xFFE5E7EB),
-      category: NotificationCategory.update,
-    ),
-  ];
-
-  List<AppNotification> get _filteredNotifications {
+  List<AppNotification> _filteredNotifications(List<AppNotification> notifications) {
     switch (_selectedFilter) {
       case 'Alerts':
-        return _notifications
-            .where((n) => n.category == NotificationCategory.alert)
-            .toList();
+        return notifications.where((n) => n.category == NotificationCategory.alert).toList();
       case 'Tips':
-        return _notifications
-            .where((n) => n.category == NotificationCategory.tip)
-            .toList();
+        return notifications.where((n) => n.category == NotificationCategory.tip).toList();
       case 'Updates':
-        return _notifications
-            .where((n) => n.category == NotificationCategory.update)
-            .toList();
+        return notifications.where((n) => n.category == NotificationCategory.update).toList();
       case 'All':
       default:
-        return _notifications;
+        return notifications;
     }
   }
 
   @override
   Widget build(BuildContext context) {
-    final filtered = _filteredNotifications;
+    return ListenableBuilder(
+      listenable: NotificationCenter.instance,
+      builder: (context, _) {
+        final filtered = _filteredNotifications(NotificationCenter.instance.notifications);
 
-    return Scaffold(
-      backgroundColor: kBackground,
-      appBar: AppBar(
-        backgroundColor: kBackground,
-        elevation: 0,
-        scrolledUnderElevation: 0,
-        leading: IconButton(
-          icon: const Icon(Icons.arrow_back, color: Colors.black87),
-          onPressed: () => Navigator.maybePop(context),
-        ),
-        title: const Text(
-          'Notifications',
-          style: TextStyle(
-            color: Colors.black87,
-            fontWeight: FontWeight.w700,
-            fontSize: 22,
+        return Scaffold(
+          backgroundColor: kBackground,
+          appBar: AppBar(
+            backgroundColor: kBackground,
+            elevation: 0,
+            scrolledUnderElevation: 0,
+            leading: IconButton(
+              icon: const Icon(Icons.arrow_back, color: Colors.black87),
+              onPressed: () => Navigator.maybePop(context),
+            ),
+            title: const Text(
+              'Notifications',
+              style: TextStyle(
+                color: Colors.black87,
+                fontWeight: FontWeight.w700,
+                fontSize: 22,
+              ),
+            ),
           ),
-        ),
-      ),
-      body: Stack(
-        children: [
-          Column(
+          body: Column(
             children: [
               _FilterRow(
                 filters: _filters,
                 selected: _selectedFilter,
-                onSelected: (filter) =>
-                    setState(() => _selectedFilter = filter),
+                onSelected: (filter) => setState(() => _selectedFilter = filter),
               ),
               const SizedBox(height: 8),
               Expanded(
                 child: filtered.isEmpty
                     ? const _EmptyState()
                     : ListView.builder(
-                        padding: const EdgeInsets.fromLTRB(16, 8, 16, 170),
+                        padding: const EdgeInsets.fromLTRB(16, 8, 16, 16),
                         itemCount: filtered.length,
                         itemBuilder: (context, index) {
                           final notification = filtered[index];
                           return _NotificationCard(
                             notification: notification,
-                            onTap: () =>
-                                setState(() => notification.unread = false),
+                            onTap: () => NotificationCenter.instance.markRead(notification),
                           );
                         },
                       ),
               ),
             ],
           ),
-          Positioned(
-            left: 16,
-            right: 16,
-            bottom: 16,
-            child: _TipBanner(
-              onReadGuide: () {
-                ScaffoldMessenger.of(context).showSnackBar(
-                  const SnackBar(
-                    content: Text('Opening ventilation guide…'),
-                  ),
-                );
-              },
-            ),
-          ),
-        ],
-      ),
-      bottomNavigationBar: const CustomBottomNav(currentIndex: 2),
+          bottomNavigationBar: const CustomBottomNav(currentIndex: 2),
+        );
+      },
     );
   }
 }
@@ -279,81 +175,6 @@ class _FilterRow extends StatelessWidget {
             padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
           );
         },
-      ),
-    );
-  }
-}
-
-// ---------------------------------------------------------------------------
-// Floating "tip" banner docked to the bottom of the screen
-// ---------------------------------------------------------------------------
-
-class _TipBanner extends StatelessWidget {
-  const _TipBanner({required this.onReadGuide});
-
-  final VoidCallback onReadGuide;
-
-  @override
-  Widget build(BuildContext context) {
-    return Container(
-      padding: const EdgeInsets.all(18),
-      decoration: BoxDecoration(
-        color: kDarkGreen,
-        borderRadius: BorderRadius.circular(20),
-        boxShadow: [
-          BoxShadow(
-            color: Colors.black.withValues(alpha: 0.18),
-            blurRadius: 16,
-            offset: const Offset(0, 8),
-          ),
-        ],
-      ),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        mainAxisSize: MainAxisSize.min,
-        children: [
-          const Text(
-            'Did you know?',
-            style: TextStyle(
-              color: Colors.white,
-              fontSize: 18,
-              fontWeight: FontWeight.w700,
-            ),
-          ),
-          const SizedBox(height: 6),
-          const Text(
-            'Proper ventilation can reduce moisture buildup by up to '
-            '40%, lowering the risk of fungal growth.',
-            style: TextStyle(
-              color: Colors.white70,
-              fontSize: 13,
-              height: 1.4,
-            ),
-          ),
-          const SizedBox(height: 14),
-          Align(
-            alignment: Alignment.centerLeft,
-            child: ElevatedButton(
-              onPressed: onReadGuide,
-              style: ElevatedButton.styleFrom(
-                backgroundColor: kAmber,
-                foregroundColor: Colors.black87,
-                elevation: 0,
-                shape: RoundedRectangleBorder(
-                  borderRadius: BorderRadius.circular(24),
-                ),
-                padding: const EdgeInsets.symmetric(
-                  horizontal: 20,
-                  vertical: 10,
-                ),
-              ),
-              child: const Text(
-                'Read Guide',
-                style: TextStyle(fontWeight: FontWeight.w700),
-              ),
-            ),
-          ),
-        ],
       ),
     );
   }

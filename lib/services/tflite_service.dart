@@ -65,10 +65,16 @@ class TfliteService {
     }
 
     try {
-      final resized = img.copyResize(
+      // Resize the shorter side to fit then center-crop to a square, instead
+      // of squashing the whole frame into a square. This mirrors Ultralytics'
+      // classify_transforms (Resize + CenterCrop) used during training/
+      // validation — a plain squash-resize distorts kernel shape/spacing in
+      // ways the model never saw, which hurts real-world accuracy even when
+      // validation accuracy looks great.
+      final resized = img.copyResizeCropSquare(
         decoded,
-        width: _inputSize,
-        height: _inputSize,
+        size: _inputSize,
+        interpolation: img.Interpolation.linear,
       );
 
       final input = Float32List(1 * 3 * _inputSize * _inputSize);

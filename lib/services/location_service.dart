@@ -51,9 +51,17 @@ class LocationService {
 
         if (placemarks.isNotEmpty) {
           final Placemark place = placemarks.first;
-          final String name = [place.locality, place.subAdministrativeArea, place.country]
-              .where((part) => part != null && part.trim().isNotEmpty)
-              .join(', ');
+          final List<String> seen = [];
+          for (final part in [place.locality, place.subAdministrativeArea, place.country]) {
+            final String trimmed = part?.trim() ?? '';
+            if (trimmed.isEmpty) continue;
+            // Uganda's districts often share a name with their main city
+            // (e.g. locality "Kampala" + subAdministrativeArea "Kampala"),
+            // so drop repeats instead of showing "Kampala, Kampala".
+            if (seen.any((s) => s.toLowerCase() == trimmed.toLowerCase())) continue;
+            seen.add(trimmed);
+          }
+          final String name = seen.join(', ');
           placeName = name.isEmpty ? null : name;
         }
       } catch (error) {
