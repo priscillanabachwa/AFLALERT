@@ -229,8 +229,10 @@ class _SettingsScreenState extends State<SettingsScreen> {
                   icon: Icons.folder_outlined,
                   label: 'Manage saved reports',
                   onTap: () {
-                    // TODO: navigate to a saved-reports list screen
+                      Navigator.pushNamed(context, '/downloadedReports');
                   },
+                    // TODO: navigate to a saved-reports list screen
+                  
                 ),
                 _SettingsTile(
                   icon: Icons.delete_sweep_outlined,
