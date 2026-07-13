@@ -237,8 +237,8 @@ class _HomeScreenState extends State<HomeScreen> {
           borderRadius: BorderRadius.circular(10),
           child: Image.asset(
             'lib/assets/images/aflalert_logo.png',
-            width: 36,
-            height: 36,
+            width: 50,
+            height: 50,
             fit: BoxFit.cover,
             errorBuilder: (context, error, stackTrace) => Container(
               padding: const EdgeInsets.all(8),
@@ -259,7 +259,7 @@ class _HomeScreenState extends State<HomeScreen> {
           child: Text(
             'AflAlert',
             style: TextStyle(
-              fontSize: 18,
+              fontSize: 24,
               fontWeight: FontWeight.bold,
               color: AppColors.primary,
             ),
