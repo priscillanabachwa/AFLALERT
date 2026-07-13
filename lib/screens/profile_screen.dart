@@ -6,8 +6,11 @@ import 'package:flutter/material.dart';
 import 'package:image_picker/image_picker.dart';
 
 import '../constants/app_colors.dart';
+import '../models/app_notification.dart';
 import '../services/firebase_storage.dart';
 import '../services/firestore_service.dart';
+import '../services/local_notification_service.dart';
+import '../services/notification_center.dart';
 import '../utils/user_initials.dart';
 import 'settings_screen.dart';
 
@@ -695,6 +698,24 @@ class _ChangePasswordSheetState extends State<_ChangePasswordSheet> {
       );
       await user.reauthenticateWithCredential(credential);
       await user.updatePassword(_newCtrl.text);
+
+      NotificationCenter.instance.add(
+        AppNotification(
+          title: 'Password Changed',
+          description: 'Your account password was changed successfully.',
+          time: 'Just now',
+          icon: Icons.lock_reset,
+          iconColor: kGreen,
+          iconBackground: kGreenLight,
+          category: NotificationCategory.update,
+          unread: true,
+          highPriority: true,
+        ),
+      );
+      LocalNotificationService.instance.show(
+        title: 'Password Changed',
+        body: 'Your account password was changed successfully.',
+      );
 
       if (!mounted) return;
       Navigator.pop(context);
