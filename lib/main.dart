@@ -15,7 +15,7 @@ import 'package:aflalert/screens/downloaded_reports_screen.dart';
 import 'package:aflalert/screens/settings_screen.dart';
 import 'package:aflalert/screens/result_screen.dart';
 import 'package:aflalert/services/local_notification_service.dart';
-import 'package:shared_preferences/shared_preferences.dart';
+import 'package:aflalert/services/theme_controller.dart';
 
 Future<void> main() async {
   WidgetsFlutterBinding.ensureInitialized();
@@ -29,37 +29,21 @@ Future<void> main() async {
   runApp(const AflAlert());
 }
 
-class AflAlert extends StatefulWidget {
+class AflAlert extends StatelessWidget {
   const AflAlert({super.key});
 
   @override
-  State<AflAlert> createState() => _AflAlertState();
-}
-
-class _AflAlertState extends State<AflAlert> {
-  ThemeMode _themeMode = ThemeMode.light;
-  @override
-  void initState() {
-    super.initState();
-    _loadTheme();
-  }
-  Future<void> _loadTheme() async {
-    final prefs = await SharedPreferences.getInstance();
-
-    setState(() {
-      _themeMode = (prefs.getBool('darkModeEnabled') ?? false)
-          ? ThemeMode.dark
-          : ThemeMode.light;
-    });
-  }
-  
-  @override
   Widget build(BuildContext context) {
+    return ValueListenableBuilder<ThemeMode>(
+      valueListenable: ThemeController.instance,
+      builder: (context, themeMode, _) => _buildApp(themeMode),
+    );
+  }
+
+  Widget _buildApp(ThemeMode themeMode) {
     return MaterialApp(
       debugShowCheckedModeBanner: false,
-      themeMode: _themeMode,
-
-  
+      themeMode: themeMode,
        theme: ThemeData(
         useMaterial3: true,
         colorScheme: ColorScheme.fromSeed(

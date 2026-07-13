@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
 import '../constants/app_colors.dart';
+import '../services/theme_controller.dart';
 import 'legal_screen.dart';
 
 class SettingsScreen extends StatefulWidget {
@@ -163,14 +164,12 @@ class _SettingsScreenState extends State<SettingsScreen> {
                   value: _darkModeEnabled,
                   onChanged: (value) {
                     setState(() => _darkModeEnabled = value);
-                    _setPref('darkModeEnabled', value);
+                    ThemeController.instance.setDarkMode(value);
 
                     ScaffoldMessenger.of(context).showSnackBar(
-
                       SnackBar(
-
                         content: Text(
-                          value ? 'Dark mode enabled' : 'Light mode enabled'
+                          value ? 'Dark mode enabled' : 'Light mode enabled',
                         ),
                       ),
                     );
