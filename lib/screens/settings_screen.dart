@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
 import '../constants/app_colors.dart';
+import 'legal_screen.dart';
 
 class SettingsScreen extends StatefulWidget {
   const SettingsScreen({super.key});
@@ -18,7 +19,6 @@ class _SettingsScreenState extends State<SettingsScreen> {
 
   // ---- Preference state ----
   bool _notificationsEnabled = true;
-  bool _autoSaveResults = true;
   bool _isLoadingPrefs = true;
 
   SharedPreferences? _prefs;
@@ -36,7 +36,6 @@ class _SettingsScreenState extends State<SettingsScreen> {
     setState(() {
       _prefs = prefs;
       _notificationsEnabled = prefs.getBool('notificationsEnabled') ?? true;
-      _autoSaveResults = prefs.getBool('autoSaveResults') ?? true;
       _isLoadingPrefs = false;
     });
   }
@@ -93,18 +92,22 @@ class _SettingsScreenState extends State<SettingsScreen> {
                     _setPref('notificationsEnabled', value);
                   },
                 ),
-                SwitchListTile(
-                  contentPadding: EdgeInsets.zero,
-                  activeThumbColor: primaryGreen,
-                  title: const Text('Auto-save results', style: TextStyle(color: darkGreen)),
-                  subtitle: const Text(
-                    'Automatically save every scan result to your device',
-                    style: TextStyle(color: Colors.grey, fontSize: 11.5),
-                  ),
-                  value: _autoSaveResults,
-                  onChanged: (value) {
-                    setState(() => _autoSaveResults = value);
-                    _setPref('autoSaveResults', value);
+              ],
+            ),
+            const SizedBox(height: 24),
+
+            // ---------------- Legal ----------------
+            _SectionHeader(title: 'Legal'),
+            _SettingsCard(
+              children: [
+                _SettingsTile(
+                  icon: Icons.gavel_outlined,
+                  label: 'Legal',
+                  onTap: () {
+                    Navigator.push(
+                      context,
+                      MaterialPageRoute(builder: (_) => const LegalScreen()),
+                    );
                   },
                 ),
               ],
