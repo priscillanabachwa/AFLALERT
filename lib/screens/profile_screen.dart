@@ -12,7 +12,6 @@ import '../services/firestore_service.dart';
 import '../services/local_notification_service.dart';
 import '../services/notification_center.dart';
 import '../utils/user_initials.dart';
-import '../widgets/custom_bottom_nav.dart';
 import 'settings_screen.dart';
 
 // ─────────────────────────────────────────────
@@ -98,7 +97,6 @@ class _ProfileScreenState extends State<ProfileScreen> {
           ),
         ],
       ),
-      bottomNavigationBar: const CustomBottomNav(currentIndex: -1),
     );
   }
 
