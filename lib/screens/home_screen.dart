@@ -34,6 +34,7 @@ class _HomeScreenState extends State<HomeScreen> {
 
   LocationResult? _location;
   WeatherInfo? _weather;
+  RainfallSummary? _rainfall;
   bool _weatherLoading = true;
   Timer? _weatherRefreshTimer;
 
@@ -72,13 +73,17 @@ class _HomeScreenState extends State<HomeScreen> {
       return;
     }
 
-    final WeatherInfo? weather =
-        await WeatherService().getCurrentWeather(location.latitude, location.longitude);
+    final WeatherService weatherService = WeatherService();
+    final List<Object?> results = await Future.wait([
+      weatherService.getCurrentWeather(location.latitude, location.longitude),
+      weatherService.getRecentRainfall(location.latitude, location.longitude),
+    ]);
 
     if (!mounted) return;
     setState(() {
       _location = location;
-      _weather = weather;
+      _weather = results[0] as WeatherInfo?;
+      _rainfall = results[1] as RainfallSummary?;
       _weatherLoading = false;
     });
     _checkHeatAlert();
@@ -426,8 +431,11 @@ class _HomeScreenState extends State<HomeScreen> {
   }
 
   Widget _buildSeasonalGuidelineCard(String userType) {
-    final SeasonalGuideline guideline = currentSeasonalGuideline();
+    final double? recentRainfallMm = _rainfall?.totalMm;
+    final SeasonalGuideline guideline =
+        currentSeasonalGuideline(recentRainfallMm: recentRainfallMm);
     final String advice = seasonalAdviceFor(guideline, userType);
+    final String? caution = weatherCautionFor(guideline.stage, recentRainfallMm);
 
     return Container(
       width: double.infinity,
@@ -486,6 +494,27 @@ class _HomeScreenState extends State<HomeScreen> {
                     height: 1.4,
                   ),
                 ),
+                if (caution != null) ...[
+                  const SizedBox(height: 8),
+                  Row(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      const Icon(Icons.water_drop, color: AppColors.error, size: 14),
+                      const SizedBox(width: 6),
+                      Expanded(
+                        child: Text(
+                          caution,
+                          style: const TextStyle(
+                            fontSize: 12,
+                            color: AppColors.error,
+                            height: 1.4,
+                            fontWeight: FontWeight.w500,
+                          ),
+                        ),
+                      ),
+                    ],
+                  ),
+                ],
               ],
             ),
           ),

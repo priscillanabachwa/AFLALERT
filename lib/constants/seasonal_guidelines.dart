@@ -98,10 +98,55 @@ const Map<int, SeasonStage> _monthToStage = {
 SeasonalGuideline _guidelineForStage(SeasonStage stage) =>
     _guidelines.firstWhere((g) => g.stage == stage);
 
-/// Returns the guideline for the current calendar month.
-SeasonalGuideline currentSeasonalGuideline({DateTime? now}) {
+/// Trailing rainfall (mm) over [rainfallWindowDays] that counts as "the
+/// rains have started" for a given spot. Below this, the ground is treated
+/// as still dry even if the calendar says planting should be underway.
+const double wetSeasonThresholdMm = 15.0;
+const int rainfallWindowDays = 14;
+
+/// Adjusts the calendar-based stage using observed rainfall, so the
+/// guideline reflects what's actually happening on the ground for a given
+/// year/location rather than a fixed date. Rains that arrive early bump
+/// Land Preparation forward into Planting; rains that are late hold
+/// Planting back at Land Preparation.
+SeasonStage _resolveStage(int month, double? recentRainfallMm) {
+  final SeasonStage calendarStage = _monthToStage[month]!;
+  if (recentRainfallMm == null) return calendarStage;
+
+  final bool rainsActive = recentRainfallMm >= wetSeasonThresholdMm;
+  if (calendarStage == SeasonStage.landPreparation && rainsActive) {
+    return SeasonStage.planting;
+  }
+  if (calendarStage == SeasonStage.planting && !rainsActive) {
+    return SeasonStage.landPreparation;
+  }
+  return calendarStage;
+}
+
+/// Returns the guideline for the current month, corrected by
+/// [recentRainfallMm] (trailing total over [rainfallWindowDays]) when
+/// available. Falls back to the plain calendar when rainfall data is null,
+/// e.g. because location/weather couldn't be fetched.
+SeasonalGuideline currentSeasonalGuideline({DateTime? now, double? recentRainfallMm}) {
   final int month = (now ?? DateTime.now()).month;
-  return _guidelineForStage(_monthToStage[month]!);
+  return _guidelineForStage(_resolveStage(month, recentRainfallMm));
+}
+
+/// Extra caution line for conditions the base guideline text doesn't
+/// already cover: rain persisting into the harvest/drying window (grain
+/// can't dry, high mold risk) or an unusually dry spell during growing
+/// (drought stress raises aflatoxin risk in standing crops).
+String? weatherCautionFor(SeasonStage stage, double? recentRainfallMm) {
+  if (recentRainfallMm == null) return null;
+  final bool rainsActive = recentRainfallMm >= wetSeasonThresholdMm;
+
+  if (rainsActive && (stage == SeasonStage.harvest || stage == SeasonStage.dryingStorage)) {
+    return 'Recent rain detected in your area — cover drying grain and avoid leaving it exposed; damp grain is at high risk of mold.';
+  }
+  if (!rainsActive && stage == SeasonStage.growing) {
+    return 'Rainfall has been low in your area recently — watch for drought stress, which raises aflatoxin risk in standing crops.';
+  }
+  return null;
 }
 
 /// Picks the advice text for [userType] ("Farmer" or "Trader",

@@ -56,6 +56,15 @@ class WeatherInfo {
   }
 }
 
+/// Trailing rainfall total for a location, used to tell whether the rains
+/// have actually started/stopped rather than assuming a fixed calendar date.
+class RainfallSummary {
+  final double totalMm;
+  final int windowDays;
+
+  const RainfallSummary({required this.totalMm, required this.windowDays});
+}
+
 class WeatherService {
   static const String _baseUrl = 'https://api.open-meteo.com/v1/forecast';
 
@@ -86,6 +95,45 @@ class WeatherService {
       return WeatherInfo.fromCode(temperature.toDouble(), weatherCode.toInt());
     } catch (error) {
       debugPrint('WeatherService Error fetching current weather: $error');
+      return null;
+    }
+  }
+
+  /// Fetches total rainfall over the trailing [days] (including today) for
+  /// the given coordinates, using Open-Meteo's `past_days` window on the
+  /// same forecast endpoint. Returns `null` if the request fails for any
+  /// reason.
+  Future<RainfallSummary?> getRecentRainfall(
+    double latitude,
+    double longitude, {
+    int days = 14,
+  }) async {
+    final Uri url = Uri.parse(
+      '$_baseUrl?latitude=$latitude&longitude=$longitude'
+      '&daily=precipitation_sum&past_days=$days&forecast_days=1&timezone=auto',
+    );
+
+    try {
+      final http.Response response =
+          await http.get(url).timeout(const Duration(seconds: 10));
+
+      if (response.statusCode != 200) {
+        debugPrint('WeatherService Failure: Server returned status code ${response.statusCode}');
+        return null;
+      }
+
+      final Map<String, dynamic> data = jsonDecode(response.body);
+      final Map<String, dynamic>? daily = data['daily'] as Map<String, dynamic>?;
+      final List<dynamic>? precipitation = daily?['precipitation_sum'] as List<dynamic>?;
+      if (precipitation == null) return null;
+
+      final double total = precipitation
+          .whereType<num>()
+          .fold(0.0, (double sum, num value) => sum + value.toDouble());
+
+      return RainfallSummary(totalMm: total, windowDays: days);
+    } catch (error) {
+      debugPrint('WeatherService Error fetching recent rainfall: $error');
       return null;
     }
   }
