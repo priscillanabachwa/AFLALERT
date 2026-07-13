@@ -1,9 +1,12 @@
+import 'package:camera/camera.dart';
 import 'package:flutter/material.dart';
 
 import '../constants/app_colors.dart';
 import '../models/report_model.dart';
+import '../services/location_service.dart';
 import '../services/pdf_service.dart';
 import '../services/report_storage_service.dart';
+import 'analysis_screen.dart';
 
 class ResultsScreenArgs {
   final bool isSafe;
@@ -79,8 +82,6 @@ class ResultsScreen extends StatelessWidget {
   String get subtitle => isSafe
       ? 'Diagnosis completed successfully'
       : 'Analysis flagged this sample for review';
-  String get riskLevel => isSafe ? 'Very low' : 'High';
-  String get riskTag => isSafe ? 'SAFE · GRADE A' : 'UNSAFE · REJECTED';
 
   List<RecommendationSource> get attributedRecommendations {
     final primaryText = isSafe
@@ -104,6 +105,24 @@ class ResultsScreen extends StatelessWidget {
         badgeText: Colors.white,
       ),
     ];
+  }
+
+  // Re-runs the same capture flow used from Home: open the camera, then hand
+  // the photo off to analysis. Replaces this Results screen so the back
+  // stack stays [Home, Results] once the new analysis completes, instead of
+  // stacking another Results screen underneath.
+  Future<void> _scanAnotherBatch(BuildContext context) async {
+    final String? location = await LocationService().getCurrentPlaceName();
+    if (!context.mounted) return;
+
+    final Object? photo = await Navigator.pushNamed(context, '/camera');
+    if (photo is! XFile || !context.mounted) return;
+
+    Navigator.pushReplacementNamed(
+      context,
+      '/analysis',
+      arguments: AnalysisScreenArgs(photo: photo, location: location),
+    );
   }
 
   Future<void> _exportPdf(BuildContext context) async {
@@ -173,9 +192,6 @@ class ResultsScreen extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final confidencePercent = (confidence * 100).toStringAsFixed(0);
-    final confidenceLabel = confidence >= 0.85 ? 'high' : confidence >= 0.6 ? 'medium' : 'low';
-
     return Scaffold(
       backgroundColor: pageBg,
       body: SafeArea(
@@ -254,92 +270,6 @@ class ResultsScreen extends StatelessWidget {
                 ),
                 const SizedBox(height: 14),
 
-                // Analytics Metrics Box Row
-                Row(
-                  children: [
-                    Expanded(
-                      child: Container(
-                        padding: const EdgeInsets.all(12),
-                        decoration: BoxDecoration(
-                          color: cardBg,
-                          borderRadius: BorderRadius.circular(12),
-                          boxShadow: [
-                            BoxShadow(
-                              color: Colors.black.withValues(alpha: 0.05),
-                              blurRadius: 10,
-                              offset: const Offset(0, 4),
-                            ),
-                          ],
-                        ),
-                        child: Column(
-                          crossAxisAlignment: CrossAxisAlignment.start,
-                          children: [
-                            const Text('Confidence score',
-                                style: TextStyle(fontSize: 11, color: textMuted)),
-                            const SizedBox(height: 4),
-                            RichText(
-                              text: TextSpan(
-                                children: [
-                                  TextSpan(
-                                    text: '$confidencePercent% ',
-                                    style: const TextStyle(
-                                      fontSize: 20,
-                                      fontWeight: FontWeight.w500,
-                                      color: textPrimary,
-                                    ),
-                                  ),
-                                  TextSpan(
-                                    text: confidenceLabel,
-                                    style: const TextStyle(fontSize: 12, color: textMuted),
-                                  ),
-                                ],
-                              ),
-                            ),
-                          ],
-                        ),
-                      ),
-                    ),
-                    const SizedBox(width: 10),
-                    Expanded(
-                      child: Container(
-                        padding: const EdgeInsets.all(12),
-                        decoration: BoxDecoration(
-                          color: cardBg,
-                          borderRadius: BorderRadius.circular(12),
-                          boxShadow: [
-                            BoxShadow(
-                              color: Colors.black.withValues(alpha: 0.05),
-                              blurRadius: 10,
-                              offset: const Offset(0, 4),
-                            ),
-                          ],
-                        ),
-                        child: Column(
-                          crossAxisAlignment: CrossAxisAlignment.start,
-                          children: [
-                            const Text('Risk level',
-                                style: TextStyle(fontSize: 11, color: textMuted)),
-                            const SizedBox(height: 4),
-                            Text(
-                              riskLevel,
-                              style: TextStyle(
-                                fontSize: 16,
-                                fontWeight: FontWeight.w500,
-                                color: iconBg,
-                              ),
-                            ),
-                            Text(
-                              riskTag,
-                              style: const TextStyle(fontSize: 10, color: textMuted),
-                            ),
-                          ],
-                        ),
-                      ),
-                    ),
-                  ],
-                ),
-                const SizedBox(height: 14),
-
                 // Certified Recommendations Box
                 Container(
                   padding: const EdgeInsets.all(14),
@@ -415,52 +345,36 @@ class ResultsScreen extends StatelessWidget {
                 ),
                 const SizedBox(height: 20),
 
-                
-                    
-
-                // Save PDF Report Button
-                OutlinedButton.icon(
+                // Export PDF Button
+                ElevatedButton.icon(
                   onPressed: () => _exportPdf(context),
-                  icon: const Icon(Icons.save_alt_rounded),
-                  label: const Text('Save Report PDF'),
-                  style: OutlinedButton.styleFrom(
-                    foregroundColor: AppColors.primary,
-                    side: const BorderSide(color: AppColors.outline),
-                    padding: const EdgeInsets.symmetric(vertical: 14),
-                    shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+                  icon: const Icon(Icons.save_alt_rounded, size: 16),
+                  label: const Text(
+                    'Export PDF',
+                    style: TextStyle(fontSize: 13, fontWeight: FontWeight.w700),
                   ),
-                ),
-                const SizedBox(height: 10),
-
-                // Share Results Button
-                OutlinedButton.icon(
-                  onPressed: () {
-                    _showActionStatus(context, 'Opening share options...', Icons.share_rounded, AppColors.secondary);
-                  },
-                  icon: const Icon(Icons.share_rounded),
-                  label: const Text('Share Results'),
-                  style: OutlinedButton.styleFrom(
-                    foregroundColor: AppColors.primary,
-                    side: const BorderSide(color: AppColors.outline),
+                  style: ElevatedButton.styleFrom(
+                    backgroundColor: AppColors.secondary,
+                    foregroundColor: AppColors.primaryContainer,
                     padding: const EdgeInsets.symmetric(vertical: 14),
                     shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+                    elevation: 0,
                   ),
                 ),
                 const SizedBox(height: 16),
 
-                // Scan Again Button (Pops route out back into Camera viewfinder layout)
+                // Scan Again Button (opens the camera to capture and analyze a new batch)
                 ElevatedButton.icon(
-                  onPressed: () => Navigator.pop(context),
+                  onPressed: () => _scanAnotherBatch(context),
                   icon: const Icon(Icons.camera_alt_outlined),
                   label: const Text('Scan Another Batch'),
                   style: ElevatedButton.styleFrom(
-                    backgroundColor: cardBg,
-                    foregroundColor: textPrimary,
+                    backgroundColor: AppColors.primary,
+                    foregroundColor: Colors.white,
                     elevation: 0,
                     padding: const EdgeInsets.symmetric(vertical: 14),
                     shape: RoundedRectangleBorder(
                       borderRadius: BorderRadius.circular(12),
-                      side: const BorderSide(color: AppColors.outline),
                     ),
                   ),
                 ),

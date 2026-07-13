@@ -109,13 +109,13 @@ class _ProfileScreenState extends State<ProfileScreen> {
       backgroundColor: kCard,
       elevation: 0,
       leading: IconButton(
-        icon: const Icon(Icons.arrow_back, color: Colors.black87),
+        icon: const Icon(Icons.arrow_back, color: kGreen),
         onPressed: () => Navigator.maybePop(context),
       ),
       title: const Text(
         'Profile',
         style: TextStyle(
-          color: Colors.black87,
+          color: kGreen,
           fontWeight: FontWeight.bold,
           fontSize: 18,
         ),
