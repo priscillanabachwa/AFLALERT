@@ -370,25 +370,8 @@ class ResultsScreen extends StatelessWidget {
                 ),
                 const SizedBox(height: 20),
 
-                // Action Button (Toggled dynamic layout)
-                ElevatedButton.icon(
-                  onPressed: () {
-                    final statusMessage = isSafe
-                        ? 'Batch logged as Healthy'
-                        : 'Batch logged as Contaminated';
-                    _showActionStatus(context, statusMessage, isSafe ? Icons.check_circle : Icons.cancel, iconBg);
-                  },
-                  icon: Icon(isSafe ? Icons.check_circle_rounded : Icons.cancel_rounded, size: 18),
-                  label: Text(isSafe ? 'Approve & Save Batch' : 'Log Contaminated Batch'),
-                  style: ElevatedButton.styleFrom(
-                    backgroundColor: isSafe ? safeIconBg : unsafeIconBg,
-                    foregroundColor: Colors.white,
-                    padding: const EdgeInsets.symmetric(vertical: 14),
-                    shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
-                    elevation: 1,
-                  ),
-                ),
-                const SizedBox(height: 10),
+                
+                    
 
                 // Save PDF Report Button
                 OutlinedButton.icon(
