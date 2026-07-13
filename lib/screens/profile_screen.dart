@@ -406,24 +406,12 @@ class _EditProfileSheetState extends State<_EditProfileSheet> {
             ListTile(
               leading: const Icon(Icons.photo_camera_outlined, color: kGreen),
               title: const Text('Take a photo'),
-              onTap: () async {
-                final file = await ImagePicker().pickImage(
-                  source: ImageSource.camera,
-                  imageQuality: 80,
-                );
-                if (sheetContext.mounted) Navigator.pop(sheetContext, file);
-              },
+              onTap: () => _pickFrom(sheetContext, ImageSource.camera),
             ),
             ListTile(
               leading: const Icon(Icons.photo_library_outlined, color: kGreen),
               title: const Text('Choose from gallery'),
-              onTap: () async {
-                final file = await ImagePicker().pickImage(
-                  source: ImageSource.gallery,
-                  imageQuality: 80,
-                );
-                if (sheetContext.mounted) Navigator.pop(sheetContext, file);
-              },
+              onTap: () => _pickFrom(sheetContext, ImageSource.gallery),
             ),
           ],
         ),
@@ -432,6 +420,31 @@ class _EditProfileSheetState extends State<_EditProfileSheet> {
 
     if (picked != null) {
       setState(() => _pickedImage = File(picked.path));
+    }
+  }
+
+  // Picking can throw (e.g. camera/gallery permission denied) — without a
+  // catch here, that exception previously left the sheet open with no
+  // feedback since Navigator.pop(sheetContext, file) was never reached.
+  Future<void> _pickFrom(BuildContext sheetContext, ImageSource source) async {
+    try {
+      final file = await ImagePicker().pickImage(source: source, imageQuality: 80);
+      if (sheetContext.mounted) Navigator.pop(sheetContext, file);
+    } catch (_) {
+      if (!mounted) return;
+      final messenger = ScaffoldMessenger.of(context);
+      if (sheetContext.mounted) Navigator.pop(sheetContext);
+      messenger.showSnackBar(
+        SnackBar(
+          content: Text(
+            source == ImageSource.camera
+                ? 'Camera access was denied. Enable it in Settings to take a photo.'
+                : 'Photo library access was denied. Enable it in Settings to choose a photo.',
+          ),
+          backgroundColor: kRed,
+          behavior: SnackBarBehavior.floating,
+        ),
+      );
     }
   }
 

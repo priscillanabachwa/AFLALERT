@@ -65,11 +65,13 @@ dependencies:
   local_auth: ^2.2.0
   path: ^1.9.1
   flutter_local_notifications: ^18.0.1
+  
 
 
 dev_dependencies:
   flutter_test:
     sdk: flutter
+  flutter_launcher_icons: ^0.14.1
 
 dependency_overrides:
   package_info_plus: ^10.2.0
@@ -122,4 +124,13 @@ flutter:
   assets:
     - lib/assets/best.tflite
     - lib/assets/images/
+
+flutter_launcher_icons:
+    android: true
+    ios: true
+    image_path: "lib/assets/images/aflalert_logo.png"
+    adaptive_icon_background: "#FFFFFF"
+    adaptive_icon_foreground: "lib/assets/images/aflalert_logo.png"
+
+  
 

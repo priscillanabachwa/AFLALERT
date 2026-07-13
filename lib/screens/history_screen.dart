@@ -356,6 +356,10 @@ class _HistoryScreenState extends State<HistoryScreen> {
             style: ElevatedButton.styleFrom(
               backgroundColor: kAccentGold,
               foregroundColor: kPrimaryGreen,
+              // Override the app-wide full-width default (Size(double.infinity, 56))
+              // so this button sizes to its content instead of forcing infinite
+              // width onto its Row, which isn't wrapped in Expanded/Flexible.
+              minimumSize: Size.zero,
               padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
               shape: RoundedRectangleBorder(
                 borderRadius: BorderRadius.circular(10),
