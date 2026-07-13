@@ -164,8 +164,16 @@ class _SettingsScreenState extends State<SettingsScreen> {
                   onChanged: (value) {
                     setState(() => _darkModeEnabled = value);
                     _setPref('darkModeEnabled', value);
-                    // TODO: wire this into your app-level ThemeMode, e.g. via
-                    // a ThemeNotifier/Provider read at the MaterialApp root.
+
+                    ScaffoldMessenger.of(context).showSnackBar(
+
+                      SnackBar(
+
+                        content: Text(
+                          value ? 'Dark mode enabled' : 'Light mode enabled'
+                        ),
+                      ),
+                    );
                   },
                 ),
               ],
@@ -221,8 +229,10 @@ class _SettingsScreenState extends State<SettingsScreen> {
                   icon: Icons.folder_outlined,
                   label: 'Manage saved reports',
                   onTap: () {
-                    // TODO: navigate to a saved-reports list screen
+                      Navigator.pushNamed(context, '/downloadedReports');
                   },
+                    // TODO: navigate to a saved-reports list screen
+                  
                 ),
                 _SettingsTile(
                   icon: Icons.delete_sweep_outlined,
