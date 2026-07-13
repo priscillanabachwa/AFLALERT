@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
 
-enum NotificationCategory { alert, tip, update }
+enum NotificationCategory { alert, update }
 
 class AppNotification {
   AppNotification({

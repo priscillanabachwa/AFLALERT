@@ -5,43 +5,43 @@
 library;
 
 const List<String> farmerDailyTips = [
-  'Keep corn moisture below 13.5% to prevent mold growth.',
-  'Dry harvested maize on a raised platform, not directly on bare soil.',
-  'Harvest promptly at maturity — delayed harvesting increases aflatoxin risk.',
-  'Remove and discard visibly moldy or discolored kernels before storage.',
-  'Store grain in a cool, dry, well-ventilated space away from direct sunlight.',
-  'Use hermetic (airtight) bags to limit moisture and pest exposure during storage.',
-  'Inspect stored maize regularly for signs of mold, insects, or heat buildup.',
-  'Rotate crops each season to reduce fungal buildup in the soil.',
-  'Avoid drought and heat stress where possible — stressed plants are more prone to aflatoxin.',
-  'Control insect pests in the field; insect damage gives mold an entry point.',
-  'Shell maize only once it is fully dry to avoid trapping moisture.',
-  'Clean storage containers and bags thoroughly before each new harvest.',
-  'Keep stored grain off the ground on pallets to avoid dampness from the floor.',
-  'Use a moisture meter if available rather than guessing by feel.',
-  'Practice timely weeding — weeds compete for water and increase plant stress.',
-  'Avoid piling freshly harvested maize in the field overnight before drying.',
-  'Sun-dry cobs with husks partly removed to speed up even drying.',
-  'Get a free AI scan before selling to confirm your grain is safe.',
+  'Keep corn moisture below 13.5%. Wet grain lets mold grow fast, and that mold is what makes aflatoxin.',
+  'Dry maize on a raised platform, not on bare ground. Wet soil makes the grain damp again and mold grows.',
+  'Harvest as soon as your crop is ready. Waiting too long leaves grain out in the weather, where mold can grow.',
+  'Remove any moldy or discolored kernels before you store the grain. One bad kernel can spoil the whole batch.',
+  'Store grain in a cool, dry place away from the sun. Heat and damp air are what let mold grow.',
+  'Use airtight bags for storage. Keeping out moisture and pests is one of the best ways to stop mold.',
+  'Check stored maize often for mold, insects, or heat. Finding problems early stops them from spreading.',
+  'Change what you plant each season. This stops mold in the soil from building up and spreading to new crops.',
+  'Try to protect your crop from drought and heat. A stressed plant is more likely to get moldy.',
+  'Control insects in your field. Insect bites open the kernel, and mold can get in through the hole.',
+  'Only shell maize once it is fully dry. Shelling wet cobs traps moisture inside, where mold can grow unseen.',
+  'Clean storage containers and bags before each harvest. Old dirt can carry mold into your fresh grain.',
+  'Keep stored grain off the floor on pallets. A damp floor is a common cause of mold in storage.',
+  'Use a moisture meter instead of guessing. Grain can feel dry outside but still be wet enough for mold to grow.',
+  'Weed your field on time. Weeds take water from your crop and make it weaker and more likely to get moldy.',
+  'Do not leave freshly picked maize piled in the field overnight. Piled wet cobs heat up and start molding fast.',
+  'Dry cobs in the sun with the husks opened. Trapped moisture inside closed husks is where mold often starts.',
+  'Get a free AI scan before you sell. It finds mold you cannot see, so you protect your buyer and your name.',
 ];
 
 const List<String> traderDailyTips = [
-  'Test moisture content before accepting a batch — reject anything above 13.5%.',
-  'Inspect for discoloration, musty odor, or insect damage before purchase.',
-  'Avoid mixing suspect batches with clean stock — contamination can spread.',
-  'Keep warehouse humidity low and ensure adequate airflow between stacked bags.',
-  'Use pallets to keep stored bags off the floor and away from moisture.',
-  'Rotate stock (first in, first out) to avoid prolonged storage of older grain.',
-  'Request an AI scan result or lab test for high-value or long-stored batches.',
-  'Buy from farmers who dry and store grain properly — ask about their practices.',
-  'Fumigate or treat storage areas regularly to prevent pest infestation.',
-  'Keep transport vehicles clean and dry — damp trucks can spoil a good batch.',
-  'Label and date batches so older stock is tracked and sold before it degrades.',
-  'Re-check moisture levels periodically during long-term storage, not just at intake.',
-  'Separate and quarantine any batch that fails inspection until it is retested.',
-  'Avoid storing grain directly against warehouse walls, where condensation collects.',
-  'Educate suppliers on proper drying — it protects your business as much as theirs.',
-  'Keep records of scan results per batch to build trust with your buyers.',
+  'Test moisture before you accept a batch. Grain above 13.5% moisture is likely to grow mold in storage.',
+  'Check for bad color, bad smell, or insect holes before you buy. These are early signs of mold.',
+  'Do not mix a suspect batch with clean stock. Mold spreads on contact and can spoil everything.',
+  'Keep the warehouse dry with good airflow between bags. Trapped, damp air is what lets mold spread.',
+  'Put bags on pallets, off the floor. A concrete floor holds moisture that soaks into the bottom bags.',
+  'Sell your oldest stock first. Grain that sits in storage a long time has more time to grow mold.',
+  'Ask for an AI scan or lab test on big or long-stored batches. Mold is not always easy to see.',
+  'Buy from farmers who dry and store their grain well. Bad practice at the farm is the main cause of moldy grain.',
+  'Treat your storage area for pests often. Pest damage on the grain lets mold get in.',
+  'Keep transport trucks clean and dry. A damp truck can spoil grain that was dried well.',
+  'Label and date every batch. This helps you sell older stock first, before it goes bad.',
+  'Check moisture again during long storage, not just when the grain arrives. Grain can pick up moisture from damp air later.',
+  'Separate any batch that fails inspection and test it again. This stops it from spoiling your clean stock.',
+  'Do not stack grain right against warehouse walls. Water collects there and dampens the bags.',
+  'Teach your suppliers how to dry grain properly. Grain that is already moldy cannot be fixed once it reaches you.',
+  'Keep a record of scan results for each batch. This proves your grain is safe if a buyer ever asks.',
 ];
 
 /// Picks a tip for [userType] ("Farmer" or "Trader", case-insensitive) that
@@ -57,15 +57,15 @@ String tipOfTheDay(String userType) {
 const double highHeatThresholdC = 30.0;
 
 const List<String> farmerHeatAlertTips = [
-  'Temperatures above 30°C raise aflatoxin risk — check drying grain more often and keep it out of direct sun once dry.',
-  'Hot weather speeds up mold growth in damp grain — move stored maize to the coolest, most shaded space you have.',
-  'High heat stresses standing crops, making them more vulnerable to aflatoxin — water where possible and monitor closely.',
+  'It is very hot today. Check drying grain more often and keep it out of the sun once it is dry — heat helps mold grow.',
+  'Hot weather makes damp grain mold faster. Move stored maize to the coolest, most shaded place you have.',
+  'Hot weather stresses your growing crop, making it more likely to get moldy. Water it if you can and check on it often.',
 ];
 
 const List<String> traderHeatAlertTips = [
-  'Temperatures above 30°C raise spoilage risk — inspect stored batches more frequently for heat and moisture buildup.',
-  'Hot weather accelerates mold growth in warehouses — improve airflow and keep bags out of direct sun.',
-  'High heat increases aflatoxin risk in stock — prioritize testing older or borderline batches during hot spells.',
+  'It is very hot today. Check your stored batches more often for heat and dampness.',
+  'Hot weather makes mold grow faster in warehouses. Improve airflow and keep bags out of the sun.',
+  'Hot weather raises the risk of mold in your stock. Test your oldest or weakest batches first.',
 ];
 
 /// True when [temperatureC] is hot enough to warrant a heat-risk warning
