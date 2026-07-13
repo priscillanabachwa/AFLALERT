@@ -85,7 +85,7 @@ class _NotificationsScreenState extends State<NotificationsScreen> {
             elevation: 0,
             scrolledUnderElevation: 0,
             leading: IconButton(
-              icon: const Icon(Icons.arrow_back, color: Colors.black87),
+              icon: const Icon(Icons.arrow_back, color: AppColors.primaryContainer),
               onPressed: () => Navigator.maybePop(context),
             ),
             title: const Text(
