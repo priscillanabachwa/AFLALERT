@@ -136,6 +136,7 @@ class _CameraCaptureScreenState extends State<CameraCaptureScreen> {
 
   Timer? _focusSettleTimer;
   bool _isStreamingForBrightness = false;
+  DateTime _lastBrightnessSampleAt = DateTime.fromMillisecondsSinceEpoch(0);
 
   @override
   void initState() {
@@ -172,6 +173,17 @@ class _CameraCaptureScreenState extends State<CameraCaptureScreen> {
     _isStreamingForBrightness = true;
 
     _controller!.startImageStream((CameraImage image) {
+      // Sampling every frame (~30/s) did the luma scan and a potential
+      // setState on every single frame, which was a steady source of GC
+      // churn and contributed to the camera screen's intermittent jank.
+      // The lighting pill doesn't need to update faster than a few times
+      // a second, so throttle how often we actually process a frame.
+      final now = DateTime.now();
+      if (now.difference(_lastBrightnessSampleAt) < const Duration(milliseconds: 400)) {
+        return;
+      }
+      _lastBrightnessSampleAt = now;
+
       try {
         final yPlane = image.planes[0].bytes;
         int sum = 0;
