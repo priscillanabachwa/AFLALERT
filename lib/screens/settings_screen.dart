@@ -16,13 +16,10 @@ class _SettingsScreenState extends State<SettingsScreen> {
   static const Color darkGreen = AppColors.primary;
   static const Color primaryGreen = AppColors.primaryContainer;
   static const Color background = AppColors.t95;
-  static const Color danger = AppColors.error;
 
   // ---- Preference state ----
   bool _notificationsEnabled = true;
   bool _darkModeEnabled = false;
-  bool _autoSaveResults = true;
-  bool _biometricLockEnabled = false;
   bool _isLoadingPrefs = true;
 
   SharedPreferences? _prefs;
@@ -41,45 +38,12 @@ class _SettingsScreenState extends State<SettingsScreen> {
       _prefs = prefs;
       _notificationsEnabled = prefs.getBool('notificationsEnabled') ?? true;
       _darkModeEnabled = prefs.getBool('darkModeEnabled') ?? false;
-      _autoSaveResults = prefs.getBool('autoSaveResults') ?? true;
-      _biometricLockEnabled = prefs.getBool('biometricLockEnabled') ?? false;
       _isLoadingPrefs = false;
     });
   }
 
   Future<void> _setPref(String key, bool value) async {
     await _prefs?.setBool(key, value);
-  }
-
-  Future<void> _confirmClearCache() async {
-    final confirmed = await showDialog<bool>(
-      context: context,
-      builder: (ctx) => AlertDialog(
-        backgroundColor: Colors.white,
-        title: const Text('Clear cached data?'),
-        content: const Text(
-          'This removes locally cached scan history and images. Saved PDF reports on your device will not be affected.',
-        ),
-        actions: [
-          TextButton(
-            onPressed: () => Navigator.pop(ctx, false),
-            child: const Text('Cancel'),
-          ),
-          TextButton(
-            onPressed: () => Navigator.pop(ctx, true),
-            child: const Text('Clear', style: TextStyle(color: danger)),
-          ),
-        ],
-      ),
-    );
-
-    if (confirmed == true && mounted) {
-      // TODO: hook up actual cache-clearing logic (e.g. clear a local
-      // scans directory or Hive/sqflite box) once that storage layer exists.
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('Cache cleared')),
-      );
-    }
   }
 
   @override
@@ -130,20 +94,6 @@ class _SettingsScreenState extends State<SettingsScreen> {
                     _setPref('notificationsEnabled', value);
                   },
                 ),
-                SwitchListTile(
-                  contentPadding: EdgeInsets.zero,
-                  activeThumbColor: primaryGreen,
-                  title: const Text('Auto-save results', style: TextStyle(color: darkGreen)),
-                  subtitle: const Text(
-                    'Automatically save every scan result to your device',
-                    style: TextStyle(color: Colors.grey, fontSize: 11.5),
-                  ),
-                  value: _autoSaveResults,
-                  onChanged: (value) {
-                    setState(() => _autoSaveResults = value);
-                    _setPref('autoSaveResults', value);
-                  },
-                ),
               ],
             ),
             const SizedBox(height: 24),
@@ -164,39 +114,8 @@ class _SettingsScreenState extends State<SettingsScreen> {
                   onChanged: (value) {
                     setState(() => _darkModeEnabled = value);
                     _setPref('darkModeEnabled', value);
-
-                    ScaffoldMessenger.of(context).showSnackBar(
-
-                      SnackBar(
-
-                        content: Text(
-                          value ? 'Dark mode enabled' : 'Light mode enabled'
-                        ),
-                      ),
-                    );
-                  },
-                ),
-              ],
-            ),
-            const SizedBox(height: 24),
-
-            // ---------------- Privacy & security ----------------
-            _SectionHeader(title: 'Privacy & security'),
-            _SettingsCard(
-              children: [
-                SwitchListTile(
-                  contentPadding: EdgeInsets.zero,
-                  activeThumbColor: primaryGreen,
-                  title: const Text('App lock', style: TextStyle(color: darkGreen)),
-                  subtitle: const Text(
-                    'Require fingerprint or PIN to open the app',
-                    style: TextStyle(color: Colors.grey, fontSize: 11.5),
-                  ),
-                  value: _biometricLockEnabled,
-                  onChanged: (value) {
-                    setState(() => _biometricLockEnabled = value);
-                    _setPref('biometricLockEnabled', value);
-                    // TODO: hook up local_auth for real biometric enforcement.
+                    // TODO: wire this into your app-level ThemeMode, e.g. via
+                    // a ThemeNotifier/Provider read at the MaterialApp root.
                   },
                 ),
               ],
@@ -221,39 +140,10 @@ class _SettingsScreenState extends State<SettingsScreen> {
             ),
             const SizedBox(height: 24),
 
-            // ---------------- Storage & data ----------------
-            _SectionHeader(title: 'Storage & data'),
-            _SettingsCard(
-              children: [
-                _SettingsTile(
-                  icon: Icons.folder_outlined,
-                  label: 'Manage saved reports',
-                  onTap: () {
-                      Navigator.pushNamed(context, '/downloadedReports');
-                  },
-                    // TODO: navigate to a saved-reports list screen
-                  
-                ),
-                _SettingsTile(
-                  icon: Icons.delete_sweep_outlined,
-                  label: 'Clear cached data',
-                  onTap: _confirmClearCache,
-                ),
-              ],
-            ),
-            const SizedBox(height: 24),
-
             // ---------------- Help & support ----------------
             _SectionHeader(title: 'Help & support'),
             _SettingsCard(
               children: [
-                _SettingsTile(
-                  icon: Icons.help_outline,
-                  label: 'FAQ',
-                  onTap: () {
-                    // TODO: navigate to an FAQ screen
-                  },
-                ),
                 _SettingsTile(
                   icon: Icons.mail_outline,
                   label: 'Contact support',
