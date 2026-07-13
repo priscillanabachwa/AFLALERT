@@ -1,6 +1,9 @@
 import 'package:flutter/material.dart';
 
 import '../constants/app_colors.dart';
+import '../models/report_model.dart';
+import '../services/pdf_service.dart';
+import '../services/report_storage_service.dart';
 
 class ResultsScreenArgs {
   final bool isSafe;
@@ -101,6 +104,48 @@ class ResultsScreen extends StatelessWidget {
         badgeText: Colors.white,
       ),
     ];
+  }
+
+  Future<void> _exportPdf(BuildContext context) async {
+    _showActionStatus(
+      context,
+      'Generating PDF report...',
+      Icons.picture_as_pdf_rounded,
+      AppColors.primaryContainer,
+    );
+
+    try {
+      final file = await PdfService().generateReport(
+        isSafe: isSafe,
+        confidence: confidence,
+      );
+
+      await ReportStorageService().saveReport(
+        ReportModel(
+          id: DateTime.now().millisecondsSinceEpoch.toString(),
+          result: displayAnalysisLabel,
+          confidence: confidence,
+          date: DateTime.now(),
+          pdfPath: file.path,
+        ),
+      );
+
+      if (!context.mounted) return;
+      _showActionStatus(
+        context,
+        'Report saved — view it in Downloaded Reports',
+        Icons.check_circle_rounded,
+        AppColors.primaryContainer,
+      );
+    } catch (e) {
+      if (!context.mounted) return;
+      _showActionStatus(
+        context,
+        'Could not save PDF report',
+        Icons.error_outline_rounded,
+        AppColors.error,
+      );
+    }
   }
 
   // Helper method to display clean snackbar alerts
@@ -375,10 +420,7 @@ class ResultsScreen extends StatelessWidget {
 
                 // Save PDF Report Button
                 OutlinedButton.icon(
-                  onPressed: () {
-                    // Triggers download feedback alert hook
-                    _showActionStatus(context, 'Downloading PDF Report to Device...', Icons.file_download_done_rounded, AppColors.primaryContainer);
-                  },
+                  onPressed: () => _exportPdf(context),
                   icon: const Icon(Icons.save_alt_rounded),
                   label: const Text('Save Report PDF'),
                   style: OutlinedButton.styleFrom(
