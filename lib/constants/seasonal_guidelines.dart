@@ -30,9 +30,9 @@ const List<SeasonalGuideline> _guidelines = [
     seasonLabel: 'Land Preparation',
     title: 'Prepare your land',
     farmerAdvice:
-        'Clear and plough fields ahead of the rains. Remove old crop debris where mold can overwinter.',
+        'Clear and plough your fields before the rains come. Remove old crop waste — mold can hide in it and spread to your next crop.',
     traderAdvice:
-        'Planting season is approaching — clear out and inspect warehouse space ahead of the next harvest intake.',
+        'Planting time is coming soon. Clear out and check your warehouse space before the next harvest arrives.',
     icon: Icons.agriculture,
   ),
   SeasonalGuideline(
@@ -40,9 +40,9 @@ const List<SeasonalGuideline> _guidelines = [
     seasonLabel: 'Planting Season',
     title: 'Time to plant',
     farmerAdvice:
-        'Plant with the onset of reliable rains. Use certified, disease-resistant seed and proper spacing to reduce plant stress.',
+        'Plant once the rains are steady. Use good seed and space your plants well — crowded plants get stressed and are more likely to get moldy later.',
     traderAdvice:
-        'Farmers are planting now — a good time to line up supply agreements and confirm drying/storage capacity for the coming harvest.',
+        'Farmers are planting now. This is a good time to plan supply deals and make sure you have enough drying and storage space ready.',
     icon: Icons.grass,
   ),
   SeasonalGuideline(
@@ -50,9 +50,9 @@ const List<SeasonalGuideline> _guidelines = [
     seasonLabel: 'Growing Season',
     title: 'Care for your crop',
     farmerAdvice:
-        'Weed regularly and control pests promptly — insect damage and drought stress both raise aflatoxin risk later on.',
+        'Weed your field and control pests right away. Insect damage and dry spells both make mold more likely later on.',
     traderAdvice:
-        'Crops are still in the field. Use this quieter period to service moisture meters and prepare storage bags and pallets.',
+        'Crops are still growing in the field. Use this quiet time to check your moisture meters and get storage bags and pallets ready.',
     icon: Icons.eco,
   ),
   SeasonalGuideline(
@@ -60,9 +60,9 @@ const List<SeasonalGuideline> _guidelines = [
     seasonLabel: 'Harvest Season',
     title: 'Harvest promptly',
     farmerAdvice:
-        'Harvest as soon as crops mature — delayed harvesting is one of the biggest aflatoxin risks. Avoid piling wet cobs in the field overnight.',
+        'Harvest as soon as your crop is ready. Waiting too long is one of the biggest causes of mold. Do not leave wet cobs piled in the field overnight.',
     traderAdvice:
-        'Harvest is underway — test moisture and inspect for mold before accepting any batch, and avoid mixing suspect grain with clean stock.',
+        'Harvest time has started. Test moisture and check for mold before you accept any batch. Do not mix a bad batch with your clean stock.',
     icon: Icons.agriculture_outlined,
   ),
   SeasonalGuideline(
@@ -70,9 +70,9 @@ const List<SeasonalGuideline> _guidelines = [
     seasonLabel: 'Drying & Storage',
     title: 'Dry and store safely',
     farmerAdvice:
-        'Dry grain to below 13.5% moisture on a raised platform, then store in a cool, dry, well-ventilated space away from the ground.',
+        'Dry your grain to below 13.5% moisture on a raised platform. Then store it in a cool, dry place with good airflow, off the ground.',
     traderAdvice:
-        'Keep stored batches off the floor with good airflow, rotate stock first-in-first-out, and re-check moisture periodically during storage.',
+        'Keep stored batches off the floor with good airflow. Sell your oldest stock first, and check moisture again from time to time.',
     icon: Icons.warehouse,
   ),
 ];
@@ -141,10 +141,10 @@ String? weatherCautionFor(SeasonStage stage, double? recentRainfallMm) {
   final bool rainsActive = recentRainfallMm >= wetSeasonThresholdMm;
 
   if (rainsActive && (stage == SeasonStage.harvest || stage == SeasonStage.dryingStorage)) {
-    return 'Recent rain detected in your area — cover drying grain and avoid leaving it exposed; damp grain is at high risk of mold.';
+    return 'It has been raining in your area. Cover your drying grain and do not leave it out — wet grain molds fast.';
   }
   if (!rainsActive && stage == SeasonStage.growing) {
-    return 'Rainfall has been low in your area recently — watch for drought stress, which raises aflatoxin risk in standing crops.';
+    return 'It has been dry in your area lately. Watch your crop for stress from lack of water — a stressed plant is more likely to get moldy.';
   }
   return null;
 }
