@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 
+import '../constants/app_colors.dart';
 import '../models/app_notification.dart';
 import '../services/notification_center.dart';
 import '../widgets/custom_bottom_nav.dart';
@@ -90,7 +91,7 @@ class _NotificationsScreenState extends State<NotificationsScreen> {
             title: const Text(
               'Notifications',
               style: TextStyle(
-                color: Colors.black87,
+                color: AppColors.primaryContainer,
                 fontWeight: FontWeight.w700,
                 fontSize: 22,
               ),
