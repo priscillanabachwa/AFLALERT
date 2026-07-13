@@ -450,7 +450,7 @@ class _HomeScreenState extends State<HomeScreen> {
       width: double.infinity,
       padding: const EdgeInsets.all(16),
       decoration: BoxDecoration(
-        color: Colors.white,
+        color: AppColors.secondary,
         borderRadius: BorderRadius.circular(16),
         boxShadow: [
           BoxShadow(
@@ -466,10 +466,10 @@ class _HomeScreenState extends State<HomeScreen> {
           Container(
             padding: const EdgeInsets.all(10),
             decoration: BoxDecoration(
-              color: AppColors.primaryContainer.withValues(alpha: 0.15),
+              color: Colors.white.withValues(alpha: 0.35),
               borderRadius: BorderRadius.circular(12),
             ),
-            child: Icon(guideline.icon, color: AppColors.primaryContainer, size: 24),
+            child: Icon(guideline.icon, color: AppColors.primary, size: 24),
           ),
           const SizedBox(width: 12),
           Expanded(
@@ -481,7 +481,7 @@ class _HomeScreenState extends State<HomeScreen> {
                   style: const TextStyle(
                     fontSize: 10,
                     fontWeight: FontWeight.w700,
-                    color: AppColors.secondary,
+                    color: AppColors.primary,
                     letterSpacing: 0.5,
                   ),
                 ),
@@ -497,9 +497,9 @@ class _HomeScreenState extends State<HomeScreen> {
                 const SizedBox(height: 6),
                 Text(
                   advice,
-                  style: const TextStyle(
+                  style: TextStyle(
                     fontSize: 12,
-                    color: Colors.grey,
+                    color: AppColors.primary.withValues(alpha: 0.85),
                     height: 1.4,
                   ),
                 ),
