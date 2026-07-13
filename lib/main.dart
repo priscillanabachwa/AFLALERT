@@ -15,6 +15,7 @@ import 'package:aflalert/screens/downloaded_reports_screen.dart';
 import 'package:aflalert/screens/settings_screen.dart';
 import 'package:aflalert/screens/result_screen.dart';
 import 'package:aflalert/services/local_notification_service.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 
 // main.dart
 import 'services/ml_service.dart'
@@ -38,15 +39,37 @@ Future<void> main() async {
   runApp(const AflAlert());
 }
 
-class AflAlert extends StatelessWidget {
+class AflAlert extends StatefulWidget {
   const AflAlert({super.key});
 
   @override
+  State<AflAlert> createState() => _AflAlertState();
+}
+
+class _AflAlertState extends State<AflAlert> {
+  ThemeMode _themeMode = ThemeMode.light;
+  @override
+  void initState() {
+    super.initState();
+    _loadTheme();
+  }
+  Future<void> _loadTheme() async {
+    final prefs = await SharedPreferences.getInstance();
+
+    setState(() {
+      _themeMode = (prefs.getBool('darkModeEnabled') ?? false)
+          ? ThemeMode.dark
+          : ThemeMode.light;
+    });
+  }
+  
   Widget build(BuildContext context) {
     return MaterialApp(
       debugShowCheckedModeBanner: false,
+      themeMode: _themeMode,
 
-      theme: ThemeData(
+  
+       theme: ThemeData(
         useMaterial3: true,
         colorScheme: ColorScheme.fromSeed(
           seedColor: const Color(0xFF00462D),
@@ -109,6 +132,18 @@ class AflAlert extends StatelessWidget {
           ),
         ),
       ),
+       darkTheme: ThemeData(
+    brightness: Brightness.dark,
+    useMaterial3: true,
+    colorScheme: ColorScheme.fromSeed(
+      seedColor: const Color(0xFF00462D),
+      brightness: Brightness.dark,
+    ),
+    textTheme: GoogleFonts.poppinsTextTheme(
+      ThemeData.dark().textTheme,
+    ),
+  ),
+
 
       // First screen shown when the app starts (serves as '/')
       home: const SplashScreen(),
