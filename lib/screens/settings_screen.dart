@@ -2,7 +2,6 @@ import 'package:flutter/material.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
 import '../constants/app_colors.dart';
-import '../services/theme_controller.dart';
 import 'legal_screen.dart';
 
 class SettingsScreen extends StatefulWidget {
@@ -21,7 +20,6 @@ class _SettingsScreenState extends State<SettingsScreen> {
 
   // ---- Preference state ----
   bool _notificationsEnabled = true;
-  bool _darkModeEnabled = false;
   bool _autoSaveResults = true;
   bool _biometricLockEnabled = false;
   bool _isLoadingPrefs = true;
@@ -41,7 +39,6 @@ class _SettingsScreenState extends State<SettingsScreen> {
     setState(() {
       _prefs = prefs;
       _notificationsEnabled = prefs.getBool('notificationsEnabled') ?? true;
-      _darkModeEnabled = prefs.getBool('darkModeEnabled') ?? false;
       _autoSaveResults = prefs.getBool('autoSaveResults') ?? true;
       _biometricLockEnabled = prefs.getBool('biometricLockEnabled') ?? false;
       _isLoadingPrefs = false;
@@ -143,36 +140,6 @@ class _SettingsScreenState extends State<SettingsScreen> {
                   onChanged: (value) {
                     setState(() => _autoSaveResults = value);
                     _setPref('autoSaveResults', value);
-                  },
-                ),
-              ],
-            ),
-            const SizedBox(height: 24),
-
-            // ---------------- Appearance ----------------
-            _SectionHeader(title: 'Appearance'),
-            _SettingsCard(
-              children: [
-                SwitchListTile(
-                  contentPadding: EdgeInsets.zero,
-                  activeThumbColor: primaryGreen,
-                  title: const Text('Dark mode', style: TextStyle(color: darkGreen)),
-                  subtitle: const Text(
-                    'Use a dark theme throughout the app',
-                    style: TextStyle(color: Colors.grey, fontSize: 11.5),
-                  ),
-                  value: _darkModeEnabled,
-                  onChanged: (value) {
-                    setState(() => _darkModeEnabled = value);
-                    ThemeController.instance.setDarkMode(value);
-
-                    ScaffoldMessenger.of(context).showSnackBar(
-                      SnackBar(
-                        content: Text(
-                          value ? 'Dark mode enabled' : 'Light mode enabled',
-                        ),
-                      ),
-                    );
                   },
                 ),
               ],

@@ -15,7 +15,6 @@ import 'package:aflalert/screens/downloaded_reports_screen.dart';
 import 'package:aflalert/screens/settings_screen.dart';
 import 'package:aflalert/screens/result_screen.dart';
 import 'package:aflalert/services/local_notification_service.dart';
-import 'package:aflalert/services/theme_controller.dart';
 
 Future<void> main() async {
   WidgetsFlutterBinding.ensureInitialized();
@@ -34,17 +33,9 @@ class AflAlert extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return ValueListenableBuilder<ThemeMode>(
-      valueListenable: ThemeController.instance,
-      builder: (context, themeMode, _) => _buildApp(themeMode),
-    );
-  }
-
-  Widget _buildApp(ThemeMode themeMode) {
     return MaterialApp(
       debugShowCheckedModeBanner: false,
-      themeMode: themeMode,
-       theme: ThemeData(
+      theme: ThemeData(
         useMaterial3: true,
         colorScheme: ColorScheme.fromSeed(
           seedColor: const Color(0xFF00462D),
@@ -107,18 +98,6 @@ class AflAlert extends StatelessWidget {
           ),
         ),
       ),
-       darkTheme: ThemeData(
-    brightness: Brightness.dark,
-    useMaterial3: true,
-    colorScheme: ColorScheme.fromSeed(
-      seedColor: const Color(0xFF00462D),
-      brightness: Brightness.dark,
-    ),
-    textTheme: GoogleFonts.poppinsTextTheme(
-      ThemeData.dark().textTheme,
-    ),
-  ),
-
 
       // First screen shown when the app starts (serves as '/')
       home: const SplashScreen(),

@@ -127,8 +127,8 @@ class _HomeScreenState extends State<HomeScreen> {
 
   @override
   Widget build(BuildContext context) {
-    final ColorScheme colorScheme = Theme.of(context).colorScheme;
     return Scaffold(
+      backgroundColor: AppColors.t95,
       body: SafeArea(
         child: RefreshIndicator(
           color: AppColors.primary,
@@ -167,12 +167,12 @@ class _HomeScreenState extends State<HomeScreen> {
                   },
                 ),
                 const SizedBox(height: 28),
-                Text(
+                const Text(
                   'Guidelines',
                   style: TextStyle(
                     fontSize: 18,
                     fontWeight: FontWeight.bold,
-                    color: colorScheme.primary,
+                    color: AppColors.primary,
                   ),
                 ),
                 const SizedBox(height: 16),
@@ -187,13 +187,10 @@ class _HomeScreenState extends State<HomeScreen> {
                 const SizedBox(height: 32),
                 _buildScanButton(context),
                 const SizedBox(height: 12),
-                Center(
+                const Center(
                   child: Text(
                     'Tap to scan crops',
-                    style: TextStyle(
-                      fontSize: 14,
-                      color: colorScheme.onSurfaceVariant,
-                    ),
+                    style: TextStyle(fontSize: 14, color: Colors.grey),
                   ),
                 ),
                 const SizedBox(height: 28),
@@ -234,7 +231,6 @@ class _HomeScreenState extends State<HomeScreen> {
   }
 
   Widget _buildHeader(BuildContext context) {
-    final ColorScheme colorScheme = Theme.of(context).colorScheme;
     return Row(
       children: [
         ClipRRect(
@@ -259,13 +255,13 @@ class _HomeScreenState extends State<HomeScreen> {
           ),
         ),
         const SizedBox(width: 10),
-        Expanded(
+        const Expanded(
           child: Text(
             'AflAlert',
             style: TextStyle(
               fontSize: 18,
               fontWeight: FontWeight.bold,
-              color: colorScheme.primary,
+              color: AppColors.primary,
             ),
           ),
         ),
@@ -327,37 +323,35 @@ class _HomeScreenState extends State<HomeScreen> {
   }
 
   Widget _buildGreeting(String name) {
-    final ColorScheme colorScheme = Theme.of(context).colorScheme;
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
         Text(
           '${_greetingForHour(DateTime.now().hour)},',
-          style: TextStyle(
+          style: const TextStyle(
             fontSize: 28,
             fontWeight: FontWeight.w400,
-            color: colorScheme.primary,
+            color: AppColors.primary,
           ),
         ),
         Text(
           name,
-          style: TextStyle(
+          style: const TextStyle(
             fontSize: 32,
             fontWeight: FontWeight.bold,
-            color: colorScheme.primary,
+            color: AppColors.primary,
           ),
         ),
         const SizedBox(height: 6),
-        Text(
+        const Text(
           'Ready to secure your harvest today?',
-          style: TextStyle(fontSize: 14, color: colorScheme.onSurfaceVariant),
+          style: TextStyle(fontSize: 14, color: Colors.grey),
         ),
       ],
     );
   }
 
   Widget _buildInfoCards(String dailyTip, bool heatAlert) {
-    final ColorScheme colorScheme = Theme.of(context).colorScheme;
     return IntrinsicHeight(
       child: Row(
         crossAxisAlignment: CrossAxisAlignment.stretch,
@@ -366,7 +360,7 @@ class _HomeScreenState extends State<HomeScreen> {
             child: Container(
               padding: const EdgeInsets.all(16),
               decoration: BoxDecoration(
-                color: colorScheme.surfaceContainerHigh,
+                color: Colors.white,
                 borderRadius: BorderRadius.circular(16),
                 boxShadow: [
                   BoxShadow(
@@ -384,10 +378,10 @@ class _HomeScreenState extends State<HomeScreen> {
                         (_weatherLoading
                             ? 'LOCATING...'
                             : 'LOCATION UNAVAILABLE'),
-                    style: TextStyle(
+                    style: const TextStyle(
                       fontSize: 10,
                       fontWeight: FontWeight.w600,
-                      color: colorScheme.onSurfaceVariant,
+                      color: Colors.grey,
                       letterSpacing: 0.5,
                     ),
                   ),
@@ -396,10 +390,10 @@ class _HomeScreenState extends State<HomeScreen> {
                     _weather != null
                         ? '${_weather!.temperatureC.round()}°C'
                         : '--°C',
-                    style: TextStyle(
+                    style: const TextStyle(
                       fontSize: 24,
                       fontWeight: FontWeight.bold,
-                      color: colorScheme.primary,
+                      color: AppColors.primary,
                     ),
                   ),
                   const SizedBox(height: 4),
@@ -408,10 +402,7 @@ class _HomeScreenState extends State<HomeScreen> {
                         (_weatherLoading
                             ? 'Fetching weather...'
                             : 'Unavailable'),
-                    style: TextStyle(
-                      fontSize: 13,
-                      color: colorScheme.onSurfaceVariant,
-                    ),
+                    style: const TextStyle(fontSize: 13, color: Colors.grey),
                   ),
                   const SizedBox(height: 12),
                   Icon(
@@ -586,14 +577,13 @@ class _HomeScreenState extends State<HomeScreen> {
   }
 
   Widget _buildScanButton(BuildContext context) {
-    final ColorScheme colorScheme = Theme.of(context).colorScheme;
     return Center(
       child: Container(
         width: 160,
         height: 160,
         decoration: BoxDecoration(
           shape: BoxShape.circle,
-          border: Border.all(color: colorScheme.outlineVariant, width: 8),
+          border: Border.all(color: Colors.grey.shade300, width: 8),
         ),
         child: Container(
           margin: const EdgeInsets.all(8),
@@ -696,11 +686,10 @@ class _HomeScreenState extends State<HomeScreen> {
       if (latest != null) lastScanLabel = _formatScanDate(latest.toDate());
     }
 
-    final ColorScheme colorScheme = Theme.of(context).colorScheme;
     return Container(
       padding: const EdgeInsets.symmetric(vertical: 18, horizontal: 12),
       decoration: BoxDecoration(
-        color: colorScheme.surfaceContainerHigh,
+        color: Colors.white,
         borderRadius: BorderRadius.circular(16),
         boxShadow: [
           BoxShadow(
@@ -716,21 +705,20 @@ class _HomeScreenState extends State<HomeScreen> {
           _buildDivider(),
           _buildStatItem('$risky', 'RISKY', AppColors.error),
           _buildDivider(),
-          _buildStatItem(lastScanLabel, 'LAST SCAN', colorScheme.primary),
+          _buildStatItem(lastScanLabel, 'LAST SCAN', AppColors.primary),
         ],
       ),
     );
   }
 
   Widget _buildNoScansYet() {
-    final ColorScheme colorScheme = Theme.of(context).colorScheme;
     return Container(
       padding: const EdgeInsets.symmetric(vertical: 28),
       alignment: Alignment.center,
-      child: Text(
+      child: const Text(
         'No scans yet — tap "AI Scan" above to check your first batch.',
         textAlign: TextAlign.center,
-        style: TextStyle(color: colorScheme.onSurfaceVariant, fontSize: 13),
+        style: TextStyle(color: Colors.grey, fontSize: 13),
       ),
     );
   }
@@ -770,7 +758,6 @@ class _HomeScreenState extends State<HomeScreen> {
   }
 
   Widget _buildStatItem(String value, String label, Color valueColor) {
-    final ColorScheme colorScheme = Theme.of(context).colorScheme;
     return Expanded(
       child: Column(
         children: [
@@ -785,10 +772,10 @@ class _HomeScreenState extends State<HomeScreen> {
           const SizedBox(height: 4),
           Text(
             label,
-            style: TextStyle(
+            style: const TextStyle(
               fontSize: 10,
               fontWeight: FontWeight.w600,
-              color: colorScheme.onSurfaceVariant,
+              color: Colors.grey,
               letterSpacing: 0.5,
             ),
           ),
@@ -798,24 +785,19 @@ class _HomeScreenState extends State<HomeScreen> {
   }
 
   Widget _buildDivider() {
-    return Container(
-      width: 1,
-      height: 32,
-      color: Theme.of(context).dividerColor,
-    );
+    return Container(width: 1, height: 32, color: Colors.grey.shade200);
   }
 
   Widget _buildRecentScansHeader() {
-    final ColorScheme colorScheme = Theme.of(context).colorScheme;
     return Row(
       mainAxisAlignment: MainAxisAlignment.spaceBetween,
       children: [
-        Text(
+        const Text(
           'Recent Scans',
           style: TextStyle(
             fontSize: 18,
             fontWeight: FontWeight.bold,
-            color: colorScheme.primary,
+            color: AppColors.primary,
           ),
         ),
         TextButton(
@@ -847,11 +829,10 @@ class _HomeScreenState extends State<HomeScreen> {
     required String trailingText,
     required Color trailingColor,
   }) {
-    final ColorScheme colorScheme = Theme.of(context).colorScheme;
     return Container(
       padding: const EdgeInsets.all(14),
       decoration: BoxDecoration(
-        color: colorScheme.surfaceContainerHigh,
+        color: Colors.white,
         borderRadius: BorderRadius.circular(16),
         boxShadow: [
           BoxShadow(
@@ -878,19 +859,16 @@ class _HomeScreenState extends State<HomeScreen> {
               children: [
                 Text(
                   title,
-                  style: TextStyle(
+                  style: const TextStyle(
                     fontSize: 14,
                     fontWeight: FontWeight.w600,
-                    color: colorScheme.primary,
+                    color: AppColors.primary,
                   ),
                 ),
                 const SizedBox(height: 4),
                 Text(
                   subtitle,
-                  style: TextStyle(
-                    fontSize: 12,
-                    color: colorScheme.onSurfaceVariant,
-                  ),
+                  style: const TextStyle(fontSize: 12, color: Colors.grey),
                 ),
               ],
             ),
