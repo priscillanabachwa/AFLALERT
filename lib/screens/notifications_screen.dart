@@ -55,15 +55,13 @@ class NotificationsScreen extends StatefulWidget {
 }
 
 class _NotificationsScreenState extends State<NotificationsScreen> {
-  static const List<String> _filters = ['All', 'Alerts', 'Tips', 'Updates'];
+  static const List<String> _filters = ['All', 'Alerts', 'Updates'];
   String _selectedFilter = 'All';
 
   List<AppNotification> _filteredNotifications(List<AppNotification> notifications) {
     switch (_selectedFilter) {
       case 'Alerts':
         return notifications.where((n) => n.category == NotificationCategory.alert).toList();
-      case 'Tips':
-        return notifications.where((n) => n.category == NotificationCategory.tip).toList();
       case 'Updates':
         return notifications.where((n) => n.category == NotificationCategory.update).toList();
       case 'All':
