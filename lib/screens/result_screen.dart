@@ -6,6 +6,7 @@ import '../models/report_model.dart';
 import '../services/location_service.dart';
 import '../services/pdf_service.dart';
 import '../services/report_storage_service.dart';
+import '../widgets/pdf_export_dialog.dart';
 import 'analysis_screen.dart';
 
 class ResultsScreenArgs {
@@ -150,12 +151,7 @@ class ResultsScreen extends StatelessWidget {
       );
 
       if (!context.mounted) return;
-      _showActionStatus(
-        context,
-        'Report saved — view it in Downloaded Reports',
-        Icons.check_circle_rounded,
-        AppColors.primaryContainer,
-      );
+      await showPdfExportDialog(context, file);
     } catch (e) {
       if (!context.mounted) return;
       _showActionStatus(
