@@ -53,6 +53,7 @@ class _AflAlertState extends State<AflAlert> {
     });
   }
   
+  @override
   Widget build(BuildContext context) {
     return MaterialApp(
       debugShowCheckedModeBanner: false,

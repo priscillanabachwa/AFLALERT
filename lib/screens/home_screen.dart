@@ -7,6 +7,7 @@ import 'package:flutter/material.dart';
 
 import '../constants/app_colors.dart';
 import '../constants/daily_tips.dart';
+import '../constants/seasonal_guidelines.dart';
 import '../models/app_notification.dart';
 import '../services/firestore_service.dart';
 import '../services/local_notification_service.dart';
@@ -152,6 +153,15 @@ class _HomeScreenState extends State<HomeScreen> {
                         ),
                       ],
                     );
+                  },
+                ),
+                const SizedBox(height: 28),
+                StreamBuilder<DocumentSnapshot<Map<String, dynamic>>>(
+                  stream: FirestoreService().getUserProfile(),
+                  builder: (context, snapshot) {
+                    final String userType =
+                        snapshot.data?.data()?['userType'] as String? ?? '';
+                    return _buildSeasonalGuidelineCard(userType);
                   },
                 ),
                 const SizedBox(height: 32),
@@ -412,6 +422,75 @@ class _HomeScreenState extends State<HomeScreen> {
           ),
         ),
       ],
+    );
+  }
+
+  Widget _buildSeasonalGuidelineCard(String userType) {
+    final SeasonalGuideline guideline = currentSeasonalGuideline();
+    final String advice = seasonalAdviceFor(guideline, userType);
+
+    return Container(
+      width: double.infinity,
+      padding: const EdgeInsets.all(16),
+      decoration: BoxDecoration(
+        color: Colors.white,
+        borderRadius: BorderRadius.circular(16),
+        boxShadow: [
+          BoxShadow(
+            color: Colors.black.withValues(alpha: 0.05),
+            blurRadius: 10,
+            offset: const Offset(0, 4),
+          ),
+        ],
+      ),
+      child: Row(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Container(
+            padding: const EdgeInsets.all(10),
+            decoration: BoxDecoration(
+              color: AppColors.primaryContainer.withValues(alpha: 0.15),
+              borderRadius: BorderRadius.circular(12),
+            ),
+            child: Icon(guideline.icon, color: AppColors.primaryContainer, size: 24),
+          ),
+          const SizedBox(width: 12),
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(
+                  guideline.seasonLabel.toUpperCase(),
+                  style: const TextStyle(
+                    fontSize: 10,
+                    fontWeight: FontWeight.w700,
+                    color: AppColors.secondary,
+                    letterSpacing: 0.5,
+                  ),
+                ),
+                const SizedBox(height: 4),
+                Text(
+                  guideline.title,
+                  style: const TextStyle(
+                    fontSize: 15,
+                    fontWeight: FontWeight.bold,
+                    color: AppColors.primary,
+                  ),
+                ),
+                const SizedBox(height: 6),
+                Text(
+                  advice,
+                  style: const TextStyle(
+                    fontSize: 12,
+                    color: Colors.grey,
+                    height: 1.4,
+                  ),
+                ),
+              ],
+            ),
+          ),
+        ],
+      ),
     );
   }
 
