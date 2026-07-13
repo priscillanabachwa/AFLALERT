@@ -161,6 +161,15 @@ class _HomeScreenState extends State<HomeScreen> {
                   },
                 ),
                 const SizedBox(height: 28),
+                const Text(
+                  'Guidelines',
+                  style: TextStyle(
+                    fontSize: 18,
+                    fontWeight: FontWeight.bold,
+                    color: AppColors.primary,
+                  ),
+                ),
+                const SizedBox(height: 16),
                 StreamBuilder<DocumentSnapshot<Map<String, dynamic>>>(
                   stream: FirestoreService().getUserProfile(),
                   builder: (context, snapshot) {
