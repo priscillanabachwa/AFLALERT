@@ -9,7 +9,6 @@ import '../constants/app_colors.dart';
 import '../services/firebase_storage.dart';
 import '../services/firestore_service.dart';
 import '../utils/user_initials.dart';
-import '../widgets/custom_bottom_nav.dart';
 import 'settings_screen.dart';
 
 // ─────────────────────────────────────────────
@@ -95,7 +94,6 @@ class _ProfileScreenState extends State<ProfileScreen> {
           ),
         ],
       ),
-      bottomNavigationBar: const CustomBottomNav(currentIndex: -1),
     );
   }
 
@@ -108,13 +106,13 @@ class _ProfileScreenState extends State<ProfileScreen> {
       backgroundColor: kCard,
       elevation: 0,
       leading: IconButton(
-        icon: const Icon(Icons.arrow_back, color: Colors.black87),
+        icon: const Icon(Icons.arrow_back, color: kGreen),
         onPressed: () => Navigator.maybePop(context),
       ),
       title: const Text(
         'Profile',
         style: TextStyle(
-          color: Colors.black87,
+          color: kGreen,
           fontWeight: FontWeight.bold,
           fontSize: 18,
         ),

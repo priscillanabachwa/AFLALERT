@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 
+import '../constants/app_colors.dart';
 import '../models/app_notification.dart';
 import '../services/notification_center.dart';
 import '../widgets/custom_bottom_nav.dart';
@@ -84,13 +85,13 @@ class _NotificationsScreenState extends State<NotificationsScreen> {
             elevation: 0,
             scrolledUnderElevation: 0,
             leading: IconButton(
-              icon: const Icon(Icons.arrow_back, color: Colors.black87),
+              icon: const Icon(Icons.arrow_back, color: AppColors.primary),
               onPressed: () => Navigator.maybePop(context),
             ),
             title: const Text(
               'Notifications',
               style: TextStyle(
-                color: Colors.black87,
+                color: AppColors.primary,
                 fontWeight: FontWeight.w700,
                 fontSize: 22,
               ),

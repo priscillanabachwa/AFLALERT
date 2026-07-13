@@ -19,7 +19,6 @@ class _SettingsScreenState extends State<SettingsScreen> {
 
   // ---- Preference state ----
   bool _notificationsEnabled = true;
-  bool _darkModeEnabled = false;
   bool _isLoadingPrefs = true;
 
   SharedPreferences? _prefs;
@@ -37,7 +36,6 @@ class _SettingsScreenState extends State<SettingsScreen> {
     setState(() {
       _prefs = prefs;
       _notificationsEnabled = prefs.getBool('notificationsEnabled') ?? true;
-      _darkModeEnabled = prefs.getBool('darkModeEnabled') ?? false;
       _isLoadingPrefs = false;
     });
   }
@@ -92,30 +90,6 @@ class _SettingsScreenState extends State<SettingsScreen> {
                   onChanged: (value) {
                     setState(() => _notificationsEnabled = value);
                     _setPref('notificationsEnabled', value);
-                  },
-                ),
-              ],
-            ),
-            const SizedBox(height: 24),
-
-            // ---------------- Appearance ----------------
-            _SectionHeader(title: 'Appearance'),
-            _SettingsCard(
-              children: [
-                SwitchListTile(
-                  contentPadding: EdgeInsets.zero,
-                  activeThumbColor: primaryGreen,
-                  title: const Text('Dark mode', style: TextStyle(color: darkGreen)),
-                  subtitle: const Text(
-                    'Use a dark theme throughout the app',
-                    style: TextStyle(color: Colors.grey, fontSize: 11.5),
-                  ),
-                  value: _darkModeEnabled,
-                  onChanged: (value) {
-                    setState(() => _darkModeEnabled = value);
-                    _setPref('darkModeEnabled', value);
-                    // TODO: wire this into your app-level ThemeMode, e.g. via
-                    // a ThemeNotifier/Provider read at the MaterialApp root.
                   },
                 ),
               ],

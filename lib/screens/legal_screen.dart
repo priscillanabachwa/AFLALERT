@@ -9,18 +9,21 @@ class LegalScreen extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: AppColors.background,
+      backgroundColor: AppColors.t95,
       appBar: AppBar(
-        backgroundColor: AppColors.background,
-        title: const Text('Legal', style: TextStyle(color: AppColors.text)),
-        iconTheme: const IconThemeData(color: AppColors.text),
+        backgroundColor: AppColors.t95,
+        title: const Text(
+          'Legal',
+          style: TextStyle(color: AppColors.primary, fontWeight: FontWeight.bold),
+        ),
+        iconTheme: const IconThemeData(color: AppColors.primary),
       ),
       body: SafeArea(
         child: ListView(
           children: [
             ListTile(
               leading: const Icon(Icons.description_outlined, color: AppColors.primary),
-              title: const Text('Terms of Service', style: TextStyle(color: AppColors.text)),
+              title: const Text('Terms of Service', style: TextStyle(color: AppColors.primary)),
               trailing: const Icon(Icons.chevron_right, color: AppColors.grey),
               onTap: () {
                 Navigator.push(
@@ -37,7 +40,7 @@ class LegalScreen extends StatelessWidget {
             const Divider(height: 1, color: Color(0xFFEDEDED)),
             ListTile(
               leading: const Icon(Icons.privacy_tip_outlined, color: AppColors.primary),
-              title: const Text('Privacy Policy', style: TextStyle(color: AppColors.text)),
+              title: const Text('Privacy Policy', style: TextStyle(color: AppColors.primary)),
               trailing: const Icon(Icons.chevron_right, color: AppColors.grey),
               onTap: () {
                 Navigator.push(
