@@ -2,7 +2,6 @@ import 'package:flutter/material.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
 import '../constants/app_colors.dart';
-import 'legal_screen.dart';
 
 class SettingsScreen extends StatefulWidget {
   const SettingsScreen({super.key});
@@ -19,12 +18,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
 
   // ---- Preference state ----
   bool _notificationsEnabled = true;
-<<<<<<< HEAD
   bool _autoSaveResults = true;
-  bool _biometricLockEnabled = false;
-=======
-  bool _darkModeEnabled = false;
->>>>>>> 373d85ba9f997933b371cfbac306c39a08a630ac
   bool _isLoadingPrefs = true;
 
   SharedPreferences? _prefs;
@@ -42,12 +36,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
     setState(() {
       _prefs = prefs;
       _notificationsEnabled = prefs.getBool('notificationsEnabled') ?? true;
-<<<<<<< HEAD
       _autoSaveResults = prefs.getBool('autoSaveResults') ?? true;
-      _biometricLockEnabled = prefs.getBool('biometricLockEnabled') ?? false;
-=======
-      _darkModeEnabled = prefs.getBool('darkModeEnabled') ?? false;
->>>>>>> 373d85ba9f997933b371cfbac306c39a08a630ac
       _isLoadingPrefs = false;
     });
   }
@@ -104,64 +93,18 @@ class _SettingsScreenState extends State<SettingsScreen> {
                     _setPref('notificationsEnabled', value);
                   },
                 ),
-              ],
-            ),
-            const SizedBox(height: 24),
-
-<<<<<<< HEAD
-            // ---------------- Privacy & security ----------------
-            _SectionHeader(title: 'Privacy & security'),
-=======
-            // ---------------- Appearance ----------------
-            _SectionHeader(title: 'Appearance'),
->>>>>>> 373d85ba9f997933b371cfbac306c39a08a630ac
-            _SettingsCard(
-              children: [
                 SwitchListTile(
                   contentPadding: EdgeInsets.zero,
                   activeThumbColor: primaryGreen,
-<<<<<<< HEAD
-                  title: const Text('App lock', style: TextStyle(color: darkGreen)),
+                  title: const Text('Auto-save results', style: TextStyle(color: darkGreen)),
                   subtitle: const Text(
-                    'Require fingerprint or PIN to open the app',
+                    'Automatically save every scan result to your device',
                     style: TextStyle(color: Colors.grey, fontSize: 11.5),
                   ),
-                  value: _biometricLockEnabled,
+                  value: _autoSaveResults,
                   onChanged: (value) {
-                    setState(() => _biometricLockEnabled = value);
-                    _setPref('biometricLockEnabled', value);
-                    // TODO: hook up local_auth for real biometric enforcement.
-=======
-                  title: const Text('Dark mode', style: TextStyle(color: darkGreen)),
-                  subtitle: const Text(
-                    'Use a dark theme throughout the app',
-                    style: TextStyle(color: Colors.grey, fontSize: 11.5),
-                  ),
-                  value: _darkModeEnabled,
-                  onChanged: (value) {
-                    setState(() => _darkModeEnabled = value);
-                    _setPref('darkModeEnabled', value);
-                    // TODO: wire this into your app-level ThemeMode, e.g. via
-                    // a ThemeNotifier/Provider read at the MaterialApp root.
->>>>>>> 373d85ba9f997933b371cfbac306c39a08a630ac
-                  },
-                ),
-              ],
-            ),
-            const SizedBox(height: 24),
-
-            // ---------------- Legal ----------------
-            _SectionHeader(title: 'Legal'),
-            _SettingsCard(
-              children: [
-                _SettingsTile(
-                  icon: Icons.gavel_outlined,
-                  label: 'Legal',
-                  onTap: () {
-                    Navigator.push(
-                      context,
-                      MaterialPageRoute(builder: (_) => const LegalScreen()),
-                    );
+                    setState(() => _autoSaveResults = value);
+                    _setPref('autoSaveResults', value);
                   },
                 ),
               ],
