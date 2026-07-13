@@ -16,12 +16,22 @@ import 'package:aflalert/screens/settings_screen.dart';
 import 'package:aflalert/screens/result_screen.dart';
 import 'package:aflalert/services/local_notification_service.dart';
 
+// main.dart
+import 'services/ml_service.dart'
+    if (dart.library.io) 'services/ml_service_mobile.dart'
+    if (dart.library.html) 'services/ml_service_web.dart';
+
+
+
+
 Future<void> main() async {
   WidgetsFlutterBinding.ensureInitialized();
 
   await Firebase.initializeApp(
     options: DefaultFirebaseOptions.currentPlatform,
   );
+  final mlService = getMlService();
+  mlService.initialize();
 
   await LocalNotificationService.instance.init();
 
