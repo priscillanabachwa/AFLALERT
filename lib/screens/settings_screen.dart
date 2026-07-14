@@ -1,6 +1,8 @@
 import 'package:flutter/material.dart';
-import 'package:firebase_auth/firebase_auth.dart';
 import 'package:shared_preferences/shared_preferences.dart';
+
+import '../constants/app_colors.dart';
+import 'legal_screen.dart';
 
 class SettingsScreen extends StatefulWidget {
   const SettingsScreen({super.key});
@@ -10,21 +12,15 @@ class SettingsScreen extends StatefulWidget {
 }
 
 class _SettingsScreenState extends State<SettingsScreen> {
-  // ---- Palette matched to HomeScreen ----
-  static const Color darkGreen = Color(0xFF1E3A24);
-  static const Color primaryGreen = Color(0xFF355E3B);
-  static const Color gold = Color(0xFFD9A520);
-  static const Color background = Color(0xFFF8F6F0);
-  static const Color danger = Color(0xFFC62828);
+  // ---- Palette matched to the shared AppColors theme (registration screen) ----
+  static const Color darkGreen = AppColors.primary;
+  static const Color primaryGreen = AppColors.primaryContainer;
+  static const Color background = AppColors.t95;
 
   // ---- Preference state ----
   bool _notificationsEnabled = true;
-  bool _darkModeEnabled = false;
-  bool _autoSaveResults = true;
-  bool _biometricLockEnabled = false;
   bool _isLoadingPrefs = true;
 
-  final FirebaseAuth _auth = FirebaseAuth.instance;
   SharedPreferences? _prefs;
 
   @override
@@ -40,9 +36,6 @@ class _SettingsScreenState extends State<SettingsScreen> {
     setState(() {
       _prefs = prefs;
       _notificationsEnabled = prefs.getBool('notificationsEnabled') ?? true;
-      _darkModeEnabled = prefs.getBool('darkModeEnabled') ?? false;
-      _autoSaveResults = prefs.getBool('autoSaveResults') ?? true;
-      _biometricLockEnabled = prefs.getBool('biometricLockEnabled') ?? false;
       _isLoadingPrefs = false;
     });
   }
@@ -51,69 +44,8 @@ class _SettingsScreenState extends State<SettingsScreen> {
     await _prefs?.setBool(key, value);
   }
 
-  Future<void> _confirmAndSignOut() async {
-    final confirmed = await showDialog<bool>(
-      context: context,
-      builder: (ctx) => AlertDialog(
-        backgroundColor: Colors.white,
-        title: const Text('Log out?'),
-        content: const Text('You will need to sign in again to access your account.'),
-        actions: [
-          TextButton(
-            onPressed: () => Navigator.pop(ctx, false),
-            child: const Text('Cancel'),
-          ),
-          TextButton(
-            onPressed: () => Navigator.pop(ctx, true),
-            child: const Text('Log out', style: TextStyle(color: danger)),
-          ),
-        ],
-      ),
-    );
-
-    if (confirmed == true) {
-      await _auth.signOut();
-      if (mounted) {
-        Navigator.pushNamedAndRemoveUntil(context, '/login', (route) => false);
-      }
-    }
-  }
-
-  Future<void> _confirmClearCache() async {
-    final confirmed = await showDialog<bool>(
-      context: context,
-      builder: (ctx) => AlertDialog(
-        backgroundColor: Colors.white,
-        title: const Text('Clear cached data?'),
-        content: const Text(
-          'This removes locally cached scan history and images. Saved PDF reports on your device will not be affected.',
-        ),
-        actions: [
-          TextButton(
-            onPressed: () => Navigator.pop(ctx, false),
-            child: const Text('Cancel'),
-          ),
-          TextButton(
-            onPressed: () => Navigator.pop(ctx, true),
-            child: const Text('Clear', style: TextStyle(color: danger)),
-          ),
-        ],
-      ),
-    );
-
-    if (confirmed == true && mounted) {
-      // TODO: hook up actual cache-clearing logic (e.g. clear a local
-      // scans directory or Hive/sqflite box) once that storage layer exists.
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('Cache cleared')),
-      );
-    }
-  }
-
   @override
   Widget build(BuildContext context) {
-    final user = _auth.currentUser;
-
     if (_isLoadingPrefs) {
       return const Scaffold(
         backgroundColor: background,
@@ -142,62 +74,13 @@ class _SettingsScreenState extends State<SettingsScreen> {
             ),
             const SizedBox(height: 20),
 
-            // ---------------- Account ----------------
-            _SectionHeader(title: 'Account'),
-            _SettingsCard(
-              children: [
-                ListTile(
-                  contentPadding: EdgeInsets.zero,
-                  leading: CircleAvatar(
-                    radius: 22,
-                    backgroundColor: gold,
-                    backgroundImage: user?.photoURL != null ? NetworkImage(user!.photoURL!) : null,
-                    child: user?.photoURL == null
-                        ? const Icon(Icons.person, color: Colors.white)
-                        : null,
-                  ),
-                  title: Text(
-                    user?.displayName?.isNotEmpty == true ? user!.displayName! : 'Your account',
-                    style: const TextStyle(color: darkGreen, fontWeight: FontWeight.w600),
-                  ),
-                  subtitle: Text(
-                    user?.email ?? 'Not signed in',
-                    style: const TextStyle(color: Colors.grey, fontSize: 12),
-                  ),
-                ),
-                const Divider(height: 20, color: Color(0xFFEDEDED)),
-                _SettingsTile(
-                  icon: Icons.person_outline,
-                  label: 'Edit profile',
-                  onTap: () {
-                    // TODO: navigate to an edit-profile screen
-                  },
-                ),
-                _SettingsTile(
-                  icon: Icons.lock_outline,
-                  label: 'Change password',
-                  onTap: () {
-                    // TODO: navigate to change-password flow
-                  },
-                ),
-                _SettingsTile(
-                  icon: Icons.logout,
-                  label: 'Log out',
-                  labelColor: danger,
-                  iconColor: danger,
-                  onTap: _confirmAndSignOut,
-                ),
-              ],
-            ),
-            const SizedBox(height: 24),
-
             // ---------------- App preferences ----------------
             _SectionHeader(title: 'App preferences'),
             _SettingsCard(
               children: [
                 SwitchListTile(
                   contentPadding: EdgeInsets.zero,
-                  activeColor: primaryGreen,
+                  activeThumbColor: primaryGreen,
                   title: const Text('Notifications', style: TextStyle(color: darkGreen)),
                   subtitle: const Text(
                     'Alerts about scan results and batch status',
@@ -209,100 +92,23 @@ class _SettingsScreenState extends State<SettingsScreen> {
                     _setPref('notificationsEnabled', value);
                   },
                 ),
-                SwitchListTile(
-                  contentPadding: EdgeInsets.zero,
-                  activeColor: primaryGreen,
-                  title: const Text('Auto-save results', style: TextStyle(color: darkGreen)),
-                  subtitle: const Text(
-                    'Automatically save every scan result to your device',
-                    style: TextStyle(color: Colors.grey, fontSize: 11.5),
-                  ),
-                  value: _autoSaveResults,
-                  onChanged: (value) {
-                    setState(() => _autoSaveResults = value);
-                    _setPref('autoSaveResults', value);
-                  },
-                ),
               ],
             ),
             const SizedBox(height: 24),
 
-            // ---------------- Appearance ----------------
-            _SectionHeader(title: 'Appearance'),
-            _SettingsCard(
-              children: [
-                SwitchListTile(
-                  contentPadding: EdgeInsets.zero,
-                  activeColor: primaryGreen,
-                  title: const Text('Dark mode', style: TextStyle(color: darkGreen)),
-                  subtitle: const Text(
-                    'Use a dark theme throughout the app',
-                    style: TextStyle(color: Colors.grey, fontSize: 11.5),
-                  ),
-                  value: _darkModeEnabled,
-                  onChanged: (value) {
-                    setState(() => _darkModeEnabled = value);
-                    _setPref('darkModeEnabled', value);
-                    // TODO: wire this into your app-level ThemeMode, e.g. via
-                    // a ThemeNotifier/Provider read at the MaterialApp root.
-                  },
-                ),
-              ],
-            ),
-            const SizedBox(height: 24),
-
-            // ---------------- Privacy & security ----------------
-            _SectionHeader(title: 'Privacy & security'),
-            _SettingsCard(
-              children: [
-                SwitchListTile(
-                  contentPadding: EdgeInsets.zero,
-                  activeColor: primaryGreen,
-                  title: const Text('App lock', style: TextStyle(color: darkGreen)),
-                  subtitle: const Text(
-                    'Require fingerprint or PIN to open the app',
-                    style: TextStyle(color: Colors.grey, fontSize: 11.5),
-                  ),
-                  value: _biometricLockEnabled,
-                  onChanged: (value) {
-                    setState(() => _biometricLockEnabled = value);
-                    _setPref('biometricLockEnabled', value);
-                    // TODO: hook up local_auth for real biometric enforcement.
-                  },
-                ),
-                _SettingsTile(
-                  icon: Icons.privacy_tip_outlined,
-                  label: 'Privacy policy',
-                  onTap: () {
-                    // TODO: open a WebView or url_launcher link to your policy
-                  },
-                ),
-                _SettingsTile(
-                  icon: Icons.description_outlined,
-                  label: 'Terms of service',
-                  onTap: () {
-                    // TODO: open a WebView or url_launcher link to your terms
-                  },
-                ),
-              ],
-            ),
-            const SizedBox(height: 24),
-
-            // ---------------- Storage & data ----------------
-            _SectionHeader(title: 'Storage & data'),
+            // ---------------- Legal ----------------
+            _SectionHeader(title: 'Legal'),
             _SettingsCard(
               children: [
                 _SettingsTile(
-                  icon: Icons.folder_outlined,
-                  label: 'Manage saved reports',
+                  icon: Icons.gavel_outlined,
+                  label: 'Legal',
                   onTap: () {
-                    // TODO: navigate to a saved-reports list screen
+                    Navigator.push(
+                      context,
+                      MaterialPageRoute(builder: (_) => const LegalScreen()),
+                    );
                   },
-                ),
-                _SettingsTile(
-                  icon: Icons.delete_sweep_outlined,
-                  label: 'Clear cached data',
-                  onTap: _confirmClearCache,
                 ),
               ],
             ),
@@ -312,13 +118,6 @@ class _SettingsScreenState extends State<SettingsScreen> {
             _SectionHeader(title: 'Help & support'),
             _SettingsCard(
               children: [
-                _SettingsTile(
-                  icon: Icons.help_outline,
-                  label: 'FAQ',
-                  onTap: () {
-                    // TODO: navigate to an FAQ screen
-                  },
-                ),
                 _SettingsTile(
                   icon: Icons.mail_outline,
                   label: 'Contact support',
@@ -391,7 +190,7 @@ class _SettingsCard extends StatelessWidget {
           ),
         ],
       ),
-      child: Column(children: children),
+      child: Material(color: Colors.transparent, child: Column(children: children)),
     );
   }
 }
@@ -400,25 +199,21 @@ class _SettingsTile extends StatelessWidget {
   final IconData icon;
   final String label;
   final VoidCallback onTap;
-  final Color? labelColor;
-  final Color? iconColor;
 
   const _SettingsTile({
     required this.icon,
     required this.label,
     required this.onTap,
-    this.labelColor,
-    this.iconColor,
   });
 
   @override
   Widget build(BuildContext context) {
     return ListTile(
       contentPadding: EdgeInsets.zero,
-      leading: Icon(icon, color: iconColor ?? Colors.grey, size: 20),
+      leading: Icon(icon, color: Colors.grey, size: 20),
       title: Text(
         label,
-        style: TextStyle(color: labelColor ?? _SettingsScreenState.darkGreen, fontSize: 14),
+        style: const TextStyle(color: _SettingsScreenState.darkGreen, fontSize: 14),
       ),
       trailing: const Icon(Icons.chevron_right, color: Colors.grey, size: 18),
       onTap: onTap,

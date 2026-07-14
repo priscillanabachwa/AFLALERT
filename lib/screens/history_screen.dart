@@ -1,19 +1,25 @@
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:flutter/material.dart';
 
-import 'login_screen.dart';
+import '../constants/app_colors.dart';
+import '../models/report_model.dart';
 import '../services/firestore_service.dart';
+import '../services/pdf_service.dart';
+import '../services/report_storage_service.dart';
+import '../widgets/custom_bottom_nav.dart';
+import '../widgets/pdf_export_dialog.dart';
 
 // ─────────────────────────────────────────
-//  DESIGN TOKENS  (match your app palette)
+//  DESIGN TOKENS — aliased to the shared AppColors palette
+//  (same theme as the registration screen)
 // ─────────────────────────────────────────
-const kPrimaryGreen = Color(0xFF1B4332);
-const kAccentGold = Color(0xFFF5C518);
-const kDangerRed = Color(0xFFD32F2F);
-const kSafeGreen = Color(0xFF2E7D32);
-const kCardBg = Color(0xFFFFFFFF);
-const kPageBg = Color(0xFFF5F6F5);
-const kSubtitle = Color(0xFF78909C);
+const kPrimaryGreen = AppColors.primaryContainer;
+const kAccentGold = AppColors.secondary;
+const kDangerRed = AppColors.error;
+const kSafeGreen = AppColors.primaryContainer;
+const kCardBg = AppColors.surface;
+const kPageBg = AppColors.t95;
+const kSubtitle = AppColors.grey;
 const kDivider = Color(0xFFECEFF1);
 
 // ─────────────────────────────────────────
@@ -52,11 +58,20 @@ const List<String> _kMonthAbbrev = [
 String _formatScanDate(DateTime dt) =>
     '${_kMonthAbbrev[dt.month - 1]} ${dt.day}, ${dt.year}';
 
-ScanRecord _scanRecordFromDoc(QueryDocumentSnapshot doc) {
-  final data = doc.data() as Map<String, dynamic>;
+/// Returns null instead of throwing when a document's fields don't match
+/// the expected shape, so one malformed/legacy record can't blank out the
+/// whole list.
+ScanRecord? _scanRecordFromDoc(QueryDocumentSnapshot doc) {
+  final rawData = doc.data();
+  if (rawData is! Map<String, dynamic>) return null;
+  final data = rawData;
 
   final String label = (data['label'] ?? 'Unknown').toString();
-  final num confidenceRaw = (data['confidence'] ?? 0) as num;
+  final num confidenceRaw = switch (data['confidence']) {
+    num n => n,
+    String s => num.tryParse(s) ?? 0,
+    _ => 0,
+  };
   final int matchPercent =
       (confidenceRaw <= 1 ? confidenceRaw * 100 : confidenceRaw).round().clamp(0, 100);
 
@@ -90,6 +105,7 @@ class HistoryScreen extends StatefulWidget {
 class _HistoryScreenState extends State<HistoryScreen> {
   final TextEditingController _searchCtrl = TextEditingController();
   final FirestoreService _firestoreService = FirestoreService();
+  late final Stream<QuerySnapshot> _scanHistoryStream = _firestoreService.getUserScanHistory();
   ScanStatus? _activeFilter; // null = show all
   String _query = '';
 
@@ -124,7 +140,7 @@ class _HistoryScreenState extends State<HistoryScreen> {
       backgroundColor: kPageBg,
       appBar: _buildAppBar(),
       body: StreamBuilder<QuerySnapshot>(
-        stream: _firestoreService.getUserScanHistory(),
+        stream: _scanHistoryStream,
         builder: (context, snapshot) {
           if (snapshot.hasError) {
             return _buildErrorState();
@@ -135,8 +151,10 @@ class _HistoryScreenState extends State<HistoryScreen> {
             );
           }
 
-          final allScans =
-              (snapshot.data?.docs ?? []).map(_scanRecordFromDoc).toList();
+          final allScans = (snapshot.data?.docs ?? [])
+              .map(_scanRecordFromDoc)
+              .whereType<ScanRecord>()
+              .toList();
           final results = _filterRecords(allScans);
 
           return Column(
@@ -154,7 +172,7 @@ class _HistoryScreenState extends State<HistoryScreen> {
           );
         },
       ),
-      bottomNavigationBar: _buildBottomNav(),
+      bottomNavigationBar: const CustomBottomNav(currentIndex: 1),
     );
   }
 
@@ -177,16 +195,6 @@ class _HistoryScreenState extends State<HistoryScreen> {
         ),
       ),
       centerTitle: false,
-      actions: [
-        Padding(
-          padding: const EdgeInsets.only(right: 16),
-          child: CircleAvatar(
-            radius: 18,
-            backgroundColor: kPrimaryGreen.withAlpha((0.15 * 255).round()),
-            child: const Icon(Icons.person, color: kPrimaryGreen, size: 20),
-          ),
-        ),
-      ],
       bottom: PreferredSize(
         preferredSize: const Size.fromHeight(1),
         child: Container(height: 1, color: kDivider),
@@ -343,7 +351,7 @@ class _HistoryScreenState extends State<HistoryScreen> {
           const SizedBox(width: 12),
           // Export PDF button
           ElevatedButton.icon(
-            onPressed: _exportPDF,
+            onPressed: () => _exportPDF(results),
             icon: const Icon(Icons.picture_as_pdf, size: 16),
             label: const Text(
               'Export PDF',
@@ -352,6 +360,10 @@ class _HistoryScreenState extends State<HistoryScreen> {
             style: ElevatedButton.styleFrom(
               backgroundColor: kAccentGold,
               foregroundColor: kPrimaryGreen,
+              // Override the app-wide full-width default (Size(double.infinity, 56))
+              // so this button sizes to its content instead of forcing infinite
+              // width onto its Row, which isn't wrapped in Expanded/Flexible.
+              minimumSize: Size.zero,
               padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
               shape: RoundedRectangleBorder(
                 borderRadius: BorderRadius.circular(10),
@@ -433,76 +445,6 @@ class _HistoryScreenState extends State<HistoryScreen> {
             style: TextStyle(fontSize: 13, color: kSubtitle, height: 1.5),
           ),
         ],
-      ),
-    );
-  }
-
-  // ── BOTTOM NAV ───────────────────────────
-  Widget _buildBottomNav() {
-    return Container(
-      decoration: BoxDecoration(
-        color: kCardBg,
-        boxShadow: [
-          BoxShadow(
-            color: Colors.black.withAlpha((0.06 * 255).round()),
-            blurRadius: 10,
-            offset: const Offset(0, -2),
-          ),
-        ],
-      ),
-      child: BottomNavigationBar(
-        currentIndex: 1, // History tab selected
-        backgroundColor: kCardBg,
-        selectedItemColor: kPrimaryGreen,
-        unselectedItemColor: kSubtitle,
-        selectedLabelStyle: const TextStyle(
-          fontWeight: FontWeight.w700,
-          fontSize: 11,
-        ),
-        unselectedLabelStyle: const TextStyle(fontSize: 11),
-        type: BottomNavigationBarType.fixed,
-        elevation: 0,
-        items: const [
-          BottomNavigationBarItem(
-            icon: Icon(Icons.home_outlined),
-            activeIcon: Icon(Icons.home),
-            label: 'Home',
-          ),
-          BottomNavigationBarItem(
-            icon: Icon(Icons.history_outlined),
-            activeIcon: Icon(Icons.history),
-            label: 'History',
-          ),
-          BottomNavigationBarItem(
-            icon: Icon(Icons.notifications_outlined),
-            activeIcon: Icon(Icons.notifications),
-            label: 'Notifications',
-          ),
-          BottomNavigationBarItem(
-            icon: Icon(Icons.person_outline),
-            activeIcon: Icon(Icons.person),
-            label: 'Profile',
-          ),
-        ],
-        onTap: (index) {
-          if (index == 0) {
-            Navigator.of(
-              context,
-            ).pushReplacement(MaterialPageRoute(builder: (_) => LoginScreen()));
-          } else if (index == 1) {
-            ScaffoldMessenger.of(context).showSnackBar(
-              const SnackBar(content: Text('You are already on History')),
-            );
-          } else if (index == 2) {
-            ScaffoldMessenger.of(context).showSnackBar(
-              const SnackBar(content: Text('Notifications coming soon')),
-            );
-          } else if (index == 3) {
-            ScaffoldMessenger.of(context).showSnackBar(
-              const SnackBar(content: Text('Profile coming soon')),
-            );
-          }
-        },
       ),
     );
   }
@@ -590,8 +532,9 @@ class _HistoryScreenState extends State<HistoryScreen> {
     );
   }
 
-  void _exportPDF() {
-    // TODO: implement PDF export using pdf package
+  Future<void> _exportPDF(List<ScanRecord> records) async {
+    if (records.isEmpty) return;
+
     ScaffoldMessenger.of(context).showSnackBar(
       const SnackBar(
         content: Text('Generating PDF report…'),
@@ -599,6 +542,43 @@ class _HistoryScreenState extends State<HistoryScreen> {
         behavior: SnackBarBehavior.floating,
       ),
     );
+
+    try {
+      final entries = records
+          .map((r) => PdfReportEntry(
+                title: r.title,
+                isSafe: r.status == ScanStatus.healthy,
+                confidence: r.matchPercent / 100,
+                date: r.date,
+                location: r.location,
+              ))
+          .toList();
+
+      final file = await PdfService().generateBulkReport(entries);
+
+      final healthyCount = records.where((r) => r.status == ScanStatus.healthy).length;
+      await ReportStorageService().saveReport(
+        ReportModel(
+          id: DateTime.now().millisecondsSinceEpoch.toString(),
+          result: 'Scan history export (${records.length} scans, $healthyCount healthy)',
+          confidence: healthyCount / records.length,
+          date: DateTime.now(),
+          pdfPath: file.path,
+        ),
+      );
+
+      if (!mounted) return;
+      await showPdfExportDialog(context, file);
+    } catch (e) {
+      if (!mounted) return;
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text('Could not generate PDF report'),
+          backgroundColor: kDangerRed,
+          behavior: SnackBarBehavior.floating,
+        ),
+      );
+    }
   }
 
   void _showFilterSheet() {

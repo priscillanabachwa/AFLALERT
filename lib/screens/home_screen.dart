@@ -1,236 +1,581 @@
+import 'dart:async';
+
+import 'package:camera/camera.dart';
+import 'package:cloud_firestore/cloud_firestore.dart';
+import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
 
-class HomeScreen extends StatelessWidget {
+import '../constants/app_colors.dart';
+import '../constants/daily_tips.dart';
+import '../constants/seasonal_guidelines.dart';
+import '../models/app_notification.dart';
+import '../services/firestore_service.dart';
+import '../services/local_notification_service.dart';
+import '../services/location_service.dart';
+import '../services/notification_center.dart';
+import '../services/weather_service.dart';
+import '../utils/user_initials.dart';
+import '../widgets/custom_bottom_nav.dart';
+import 'analysis_screen.dart';
+import 'history_screen.dart';
+import 'profile_screen.dart';
+
+class HomeScreen extends StatefulWidget {
   const HomeScreen({super.key});
 
-  static const Color darkGreen = Color(0xFF1E3A24);
-  static const Color primaryGreen = Color(0xFF355E3B);
-  static const Color gold = Color(0xFFD9A520);
-  static const Color background = Color(0xFFF8F6F0);
+  @override
+  State<HomeScreen> createState() => _HomeScreenState();
+}
+
+class _HomeScreenState extends State<HomeScreen> {
+  // Weather can change quickly, so keep it fresh instead of only fetching
+  // once when the screen first mounts.
+  static const Duration _refreshInterval = Duration(minutes: 5);
+
+  LocationResult? _location;
+  WeatherInfo? _weather;
+  RainfallSummary? _rainfall;
+  bool _weatherLoading = true;
+  Timer? _weatherRefreshTimer;
+
+  String _userType = '';
+  StreamSubscription<DocumentSnapshot<Map<String, dynamic>>>? _profileSub;
+
+  // Edge-triggered so the alert fires once when it becomes hot, not on
+  // every 5-minute refresh while it stays hot.
+  bool _heatAlertNotified = false;
+
+  @override
+  void initState() {
+    super.initState();
+    _loadWeather();
+    _weatherRefreshTimer = Timer.periodic(
+      _refreshInterval,
+      (_) => _loadWeather(),
+    );
+    _profileSub = FirestoreService().getUserProfile().listen((doc) {
+      final String userType = doc.data()?['userType'] as String? ?? '';
+      if (userType == _userType) return;
+      setState(() => _userType = userType);
+    });
+  }
+
+  @override
+  void dispose() {
+    _weatherRefreshTimer?.cancel();
+    _profileSub?.cancel();
+    super.dispose();
+  }
+
+  Future<void> _loadWeather() async {
+    // Always request a fresh GPS fix rather than reusing a cached one, so a
+    // move to a new location is reflected immediately.
+    final LocationResult? location = await LocationService()
+        .getCurrentLocation();
+    if (location == null) {
+      if (mounted) setState(() => _weatherLoading = false);
+      return;
+    }
+
+    final WeatherService weatherService = WeatherService();
+    final List<Object?> results = await Future.wait([
+      weatherService.getCurrentWeather(location.latitude, location.longitude),
+      weatherService.getRecentRainfall(location.latitude, location.longitude),
+    ]);
+
+    if (!mounted) return;
+    setState(() {
+      _location = location;
+      _weather = results[0] as WeatherInfo?;
+      _rainfall = results[1] as RainfallSummary?;
+      _weatherLoading = false;
+    });
+    _checkHeatAlert();
+  }
+
+  void _checkHeatAlert() {
+    final bool alertNow = isHeatAlert(_weather?.temperatureC);
+    if (!alertNow) {
+      _heatAlertNotified = false;
+      return;
+    }
+    if (_heatAlertNotified) return;
+    _heatAlertNotified = true;
+
+    final String tip = tipForConditions(_userType, _weather?.temperatureC);
+    final int tempRounded = _weather!.temperatureC.round();
+
+    NotificationCenter.instance.add(
+      AppNotification(
+        title: 'Heat Alert',
+        description: tip,
+        icon: Icons.whatshot,
+        iconColor: const Color(0xFFE0562A),
+        iconBackground: const Color(0xFFFBDCCB),
+        category: NotificationCategory.alert,
+        unread: true,
+        highPriority: true,
+      ),
+    );
+
+    LocalNotificationService.instance.show(
+      title: 'Heat Alert — $tempRounded°C',
+      body: tip,
+    );
+  }
 
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: background,
+      backgroundColor: AppColors.t95,
       body: SafeArea(
-        child: SingleChildScrollView(
-          padding: const EdgeInsets.symmetric(horizontal: 20),
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              const SizedBox(height: 12),
-              _buildHeader(),
-              const SizedBox(height: 24),
-              _buildGreeting(),
-              const SizedBox(height: 20),
-              _buildInfoCards(),
-              const SizedBox(height: 32),
-              _buildScanButton(),
-              const SizedBox(height: 12),
-              const Center(
-                child: Text(
-                  'Tap to scan crops',
+        child: RefreshIndicator(
+          color: AppColors.primary,
+          onRefresh: _loadWeather,
+          child: SingleChildScrollView(
+            physics: const AlwaysScrollableScrollPhysics(),
+            padding: const EdgeInsets.symmetric(horizontal: 20),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                const SizedBox(height: 12),
+                _buildHeader(context),
+                const SizedBox(height: 24),
+                StreamBuilder<DocumentSnapshot<Map<String, dynamic>>>(
+                  stream: FirestoreService().getUserProfile(),
+                  builder: (context, snapshot) {
+                    final Map<String, dynamic>? profile = snapshot.data?.data();
+                    final String? fullName = profile?['fullName'] as String?;
+                    final String firstName =
+                        (fullName != null && fullName.trim().isNotEmpty)
+                        ? fullName.trim().split(' ').first
+                        : 'there';
+                    final String userType =
+                        profile?['userType'] as String? ?? '';
+                    return Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        _buildGreeting(firstName),
+                        const SizedBox(height: 20),
+                        _buildInfoCards(
+                          tipForConditions(userType, _weather?.temperatureC),
+                          isHeatAlert(_weather?.temperatureC),
+                        ),
+                      ],
+                    );
+                  },
+                ),
+                const SizedBox(height: 28),
+                const Text(
+                  'Guidelines',
                   style: TextStyle(
-                    fontSize: 14,
-                    color: Colors.grey,
+                    fontSize: 18,
+                    fontWeight: FontWeight.bold,
+                    color: AppColors.primary,
                   ),
                 ),
-              ),
-              const SizedBox(height: 28),
-              _buildStatsRow(),
-              const SizedBox(height: 28),
-              _buildRecentScansHeader(),
-              const SizedBox(height: 16),
-              _buildScanTile(
-                icon: Icons.warehouse,
-                iconColor: gold,
-                title: 'Warehouse A - Lot 12',
-                subtitle: '2 hours ago',
-                badgeText: 'SAFE',
-                badgeColor: const Color(0xFFE8F5E9),
-                badgeTextColor: primaryGreen,
-                trailingText: '98% Match',
-                trailingColor: primaryGreen,
-              ),
-              const SizedBox(height: 12),
-              _buildScanTile(
-                icon: Icons.grass,
-                iconColor: gold,
-                title: 'Field North - Sec 3',
-                subtitle: 'Yesterday, 4:30 PM',
-                badgeText: 'AT RISK',
-                badgeColor: const Color(0xFFFDECEA),
-                badgeTextColor: const Color(0xFFC62828),
-                trailingText: 'Re-scan Suggested',
-                trailingColor: const Color(0xFFC62828),
-              ),
-              const SizedBox(height: 100),
-            ],
+                const SizedBox(height: 16),
+                StreamBuilder<DocumentSnapshot<Map<String, dynamic>>>(
+                  stream: FirestoreService().getUserProfile(),
+                  builder: (context, snapshot) {
+                    final String userType =
+                        snapshot.data?.data()?['userType'] as String? ?? '';
+                    return _buildSeasonalGuidelineCard(userType);
+                  },
+                ),
+                const SizedBox(height: 32),
+                _buildScanButton(context),
+                const SizedBox(height: 12),
+                const Center(
+                  child: Text(
+                    'Tap to scan crops',
+                    style: TextStyle(fontSize: 14, color: Colors.grey),
+                  ),
+                ),
+                const SizedBox(height: 28),
+                StreamBuilder<QuerySnapshot>(
+                  stream: FirestoreService().getUserScanHistory(),
+                  builder: (context, snapshot) {
+                    final docs = snapshot.data?.docs ?? [];
+                    final recentDocs = docs.take(2).toList();
+                    return Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        _buildStatsRow(docs),
+                        const SizedBox(height: 28),
+                        _buildRecentScansHeader(),
+                        const SizedBox(height: 16),
+                        if (recentDocs.isEmpty)
+                          _buildNoScansYet()
+                        else
+                          for (int i = 0; i < recentDocs.length; i++)
+                            Padding(
+                              padding: EdgeInsets.only(
+                                bottom: i == recentDocs.length - 1 ? 0 : 12,
+                              ),
+                              child: _buildScanTileFromDoc(recentDocs[i]),
+                            ),
+                      ],
+                    );
+                  },
+                ),
+                const SizedBox(height: 88),
+              ],
+            ),
           ),
         ),
       ),
-      bottomNavigationBar: _buildBottomNavBar(),
+      bottomNavigationBar: const CustomBottomNav(currentIndex: 0),
     );
   }
 
-  Widget _buildHeader() {
+  Widget _buildHeader(BuildContext context) {
     return Row(
       children: [
-        Container(
-          padding: const EdgeInsets.all(8),
-          decoration: BoxDecoration(
-            color: darkGreen,
-            borderRadius: BorderRadius.circular(10),
-          ),
-          child: const Icon(
-            Icons.shield_outlined,
-            color: Colors.white,
-            size: 20,
+        ClipRRect(
+          borderRadius: BorderRadius.circular(10),
+          child: Image.asset(
+            'lib/assets/images/aflalert_logo.png',
+            width: 50,
+            height: 50,
+            fit: BoxFit.cover,
+            errorBuilder: (context, error, stackTrace) => Container(
+              padding: const EdgeInsets.all(8),
+              decoration: BoxDecoration(
+                color: AppColors.primary,
+                borderRadius: BorderRadius.circular(10),
+              ),
+              child: const Icon(
+                Icons.shield_outlined,
+                color: Colors.white,
+                size: 20,
+              ),
+            ),
           ),
         ),
         const SizedBox(width: 10),
-        const Text(
-          'Aflatoxin Detector',
-          style: TextStyle(
-            fontSize: 18,
-            fontWeight: FontWeight.bold,
-            color: darkGreen,
+        const Expanded(
+          child: Text(
+            'AflAlert',
+            style: TextStyle(
+              fontSize: 24,
+              fontWeight: FontWeight.bold,
+              color: AppColors.primary,
+            ),
           ),
         ),
-        const Spacer(),
-        const CircleAvatar(
-          radius: 20,
-          backgroundColor: gold,
-          child: Icon(Icons.person, color: Colors.white),
+        StreamBuilder<DocumentSnapshot<Map<String, dynamic>>>(
+          stream: FirestoreService().getUserProfile(),
+          builder: (context, snapshot) {
+            final user = FirebaseAuth.instance.currentUser;
+            final profile = snapshot.data?.data();
+            final String name =
+                profile?['fullName'] as String? ?? user?.displayName ?? '';
+            final String photoUrl =
+                profile?['photoUrl'] as String? ?? user?.photoURL ?? '';
+
+            return InkWell(
+              borderRadius: BorderRadius.circular(20),
+              onTap: () => Navigator.push(
+                context,
+                MaterialPageRoute(builder: (_) => const ProfileScreen()),
+              ),
+              child: Container(
+                decoration: const BoxDecoration(
+                  shape: BoxShape.circle,
+                  border: Border.fromBorderSide(
+                    BorderSide(color: AppColors.secondary, width: 2),
+                  ),
+                ),
+                child: CircleAvatar(
+                  radius: 18,
+                  backgroundColor: AppColors.primaryContainer,
+                  backgroundImage: photoUrl.isNotEmpty
+                      ? NetworkImage(photoUrl)
+                      : null,
+                  child: photoUrl.isEmpty
+                      ? Text(
+                          getInitials(name).isNotEmpty
+                              ? getInitials(name)
+                              : '?',
+                          style: const TextStyle(
+                            fontSize: 13,
+                            fontWeight: FontWeight.bold,
+                            color: Colors.white,
+                          ),
+                        )
+                      : null,
+                ),
+              ),
+            );
+          },
         ),
       ],
     );
   }
 
-  Widget _buildGreeting() {
+  static String _greetingForHour(int hour) {
+    if (hour >= 5 && hour < 12) return 'Good Morning';
+    if (hour >= 12 && hour < 17) return 'Good Afternoon';
+    if (hour >= 17 && hour < 21) return 'Good Evening';
+    return 'Good Night';
+  }
+
+  Widget _buildGreeting(String name) {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
-      children: const [
+      children: [
         Text(
-          'Good Morning,',
-          style: TextStyle(
+          '${_greetingForHour(DateTime.now().hour)},',
+          style: const TextStyle(
             fontSize: 28,
             fontWeight: FontWeight.w400,
-            color: darkGreen,
+            color: AppColors.primary,
           ),
         ),
         Text(
-          'John',
-          style: TextStyle(
+          name,
+          style: const TextStyle(
             fontSize: 32,
             fontWeight: FontWeight.bold,
-            color: darkGreen,
+            color: AppColors.primary,
           ),
         ),
-        SizedBox(height: 6),
-        Text(
+        const SizedBox(height: 6),
+        const Text(
           'Ready to secure your harvest today?',
-          style: TextStyle(
-            fontSize: 14,
-            color: Colors.grey,
-          ),
+          style: TextStyle(fontSize: 14, color: Colors.grey),
         ),
       ],
     );
   }
 
-  Widget _buildInfoCards() {
-    return Row(
-      children: [
-        Expanded(
-          child: Container(
-            padding: const EdgeInsets.all(16),
-            decoration: BoxDecoration(
-              color: Colors.white,
-              borderRadius: BorderRadius.circular(16),
-              boxShadow: [
-                BoxShadow(
-                  color: Colors.black.withValues(alpha: 0.05),
-                  blurRadius: 10,
-                  offset: const Offset(0, 4),
-                ),
-              ],
-            ),
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: const [
-                Text(
-                  'NAIROBI, KENYA',
-                  style: TextStyle(
-                    fontSize: 10,
-                    fontWeight: FontWeight.w600,
-                    color: Colors.grey,
-                    letterSpacing: 0.5,
+  Widget _buildInfoCards(String dailyTip, bool heatAlert) {
+    return IntrinsicHeight(
+      child: Row(
+        crossAxisAlignment: CrossAxisAlignment.stretch,
+        children: [
+          Expanded(
+            child: Container(
+              padding: const EdgeInsets.all(16),
+              decoration: BoxDecoration(
+                color: Colors.white,
+                borderRadius: BorderRadius.circular(16),
+                boxShadow: [
+                  BoxShadow(
+                    color: Colors.black.withValues(alpha: 0.05),
+                    blurRadius: 10,
+                    offset: const Offset(0, 4),
                   ),
-                ),
-                SizedBox(height: 8),
-                Text(
-                  '24°C',
-                  style: TextStyle(
-                    fontSize: 24,
-                    fontWeight: FontWeight.bold,
-                    color: darkGreen,
+                ],
+              ),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text(
+                    (_location?.placeName?.toUpperCase()) ??
+                        (_weatherLoading
+                            ? 'LOCATING...'
+                            : 'LOCATION UNAVAILABLE'),
+                    style: const TextStyle(
+                      fontSize: 10,
+                      fontWeight: FontWeight.w600,
+                      color: Colors.grey,
+                      letterSpacing: 0.5,
+                    ),
                   ),
-                ),
-                SizedBox(height: 4),
-                Text(
-                  'Cloudy',
-                  style: TextStyle(
-                    fontSize: 13,
-                    color: Colors.grey,
+                  const SizedBox(height: 8),
+                  Text(
+                    _weather != null
+                        ? '${_weather!.temperatureC.round()}°C'
+                        : '--°C',
+                    style: const TextStyle(
+                      fontSize: 24,
+                      fontWeight: FontWeight.bold,
+                      color: AppColors.primary,
+                    ),
                   ),
-                ),
-                SizedBox(height: 12),
-                Icon(Icons.cloud, color: gold, size: 28),
-              ],
+                  const SizedBox(height: 4),
+                  Text(
+                    _weather?.condition ??
+                        (_weatherLoading
+                            ? 'Fetching weather...'
+                            : 'Unavailable'),
+                    style: const TextStyle(fontSize: 13, color: Colors.grey),
+                  ),
+                  const SizedBox(height: 12),
+                  Icon(
+                    _weather?.icon ?? Icons.cloud_off,
+                    color: AppColors.secondary,
+                    size: 28,
+                  ),
+                ],
+              ),
             ),
           ),
-        ),
-        const SizedBox(width: 14),
-        Expanded(
-          child: Container(
-            padding: const EdgeInsets.all(16),
-            decoration: BoxDecoration(
-              color: primaryGreen,
-              borderRadius: BorderRadius.circular(16),
+          const SizedBox(width: 14),
+          Expanded(
+            child: Container(
+              padding: const EdgeInsets.all(16),
+              decoration: BoxDecoration(
+                color: AppColors.primaryContainer,
+                borderRadius: BorderRadius.circular(16),
+              ),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Icon(
+                    heatAlert ? Icons.whatshot : Icons.lightbulb_outline,
+                    color: AppColors.secondary,
+                    size: 20,
+                  ),
+                  const SizedBox(height: 8),
+                  Text(
+                    heatAlert ? 'HEAT ALERT' : 'DAILY TIP',
+                    style: const TextStyle(
+                      fontSize: 10,
+                      fontWeight: FontWeight.w700,
+                      color: AppColors.secondary,
+                      letterSpacing: 0.5,
+                    ),
+                  ),
+                  const SizedBox(height: 8),
+                  Text(
+                    dailyTip,
+                    style: const TextStyle(
+                      fontSize: 12,
+                      color: Colors.white,
+                      height: 1.4,
+                    ),
+                  ),
+                ],
+              ),
             ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildSeasonalGuidelineCard(String userType) {
+    final double? recentRainfallMm = _rainfall?.totalMm;
+    final SeasonalGuideline guideline = currentSeasonalGuideline(
+      recentRainfallMm: recentRainfallMm,
+    );
+    final String advice = seasonalAdviceFor(guideline, userType);
+    final String? caution = weatherCautionFor(
+      guideline.stage,
+      recentRainfallMm,
+    );
+
+    return Container(
+      width: double.infinity,
+      padding: const EdgeInsets.all(16),
+      decoration: BoxDecoration(
+        color: AppColors.secondary,
+        borderRadius: BorderRadius.circular(16),
+        boxShadow: [
+          BoxShadow(
+            color: Colors.black.withValues(alpha: 0.05),
+            blurRadius: 10,
+            offset: const Offset(0, 4),
+          ),
+        ],
+      ),
+      child: Row(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Container(
+            padding: const EdgeInsets.all(10),
+            decoration: BoxDecoration(
+              color: Colors.white.withValues(alpha: 0.35),
+              borderRadius: BorderRadius.circular(12),
+            ),
+            child: Icon(guideline.icon, color: AppColors.primary, size: 24),
+          ),
+          const SizedBox(width: 12),
+          Expanded(
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
-              children: const [
-                Icon(Icons.lightbulb_outline, color: gold, size: 20),
-                SizedBox(height: 8),
+              children: [
                 Text(
-                  'DAILY TIP',
-                  style: TextStyle(
+                  guideline.seasonLabel.toUpperCase(),
+                  style: const TextStyle(
                     fontSize: 10,
                     fontWeight: FontWeight.w700,
-                    color: gold,
+                    color: AppColors.primary,
                     letterSpacing: 0.5,
                   ),
                 ),
-                SizedBox(height: 8),
+                const SizedBox(height: 4),
                 Text(
-                  'Keep corn moisture below 13.5% to prevent mold growth.',
+                  guideline.title,
+                  style: const TextStyle(
+                    fontSize: 15,
+                    fontWeight: FontWeight.bold,
+                    color: AppColors.primary,
+                  ),
+                ),
+                const SizedBox(height: 6),
+                Text(
+                  advice,
                   style: TextStyle(
                     fontSize: 12,
-                    color: Colors.white,
+                    color: AppColors.primary.withValues(alpha: 0.85),
                     height: 1.4,
                   ),
                 ),
+                if (caution != null) ...[
+                  const SizedBox(height: 8),
+                  Row(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      const Icon(
+                        Icons.water_drop,
+                        color: AppColors.error,
+                        size: 14,
+                      ),
+                      const SizedBox(width: 6),
+                      Expanded(
+                        child: Text(
+                          caution,
+                          style: const TextStyle(
+                            fontSize: 12,
+                            color: AppColors.error,
+                            height: 1.4,
+                            fontWeight: FontWeight.w500,
+                          ),
+                        ),
+                      ),
+                    ],
+                  ),
+                ],
               ],
             ),
           ),
-        ),
-      ],
+        ],
+      ),
     );
   }
 
-  Widget _buildScanButton() {
+  Future<void> _onScanTap(BuildContext context) async {
+    // Reuse the location already resolved for the weather card when
+    // possible, falling back to a fresh lookup if that hasn't landed yet.
+    final String? location =
+        _location?.placeName ?? await LocationService().getCurrentPlaceName();
+    if (!context.mounted) return;
+
+    final Object? photo = await Navigator.pushNamed(context, '/camera');
+    if (photo is! XFile || !context.mounted) return;
+
+    Navigator.pushNamed(
+      context,
+      '/analysis',
+      arguments: AnalysisScreenArgs(photo: photo, location: location),
+    );
+  }
+
+  Widget _buildScanButton(BuildContext context) {
     return Center(
       child: Container(
         width: 160,
@@ -243,13 +588,13 @@ class HomeScreen extends StatelessWidget {
           margin: const EdgeInsets.all(8),
           decoration: const BoxDecoration(
             shape: BoxShape.circle,
-            color: darkGreen,
+            color: AppColors.primary,
           ),
           child: Material(
             color: Colors.transparent,
             child: InkWell(
               customBorder: const CircleBorder(),
-              onTap: () {},
+              onTap: () => _onScanTap(context),
               child: Column(
                 mainAxisAlignment: MainAxisAlignment.center,
                 children: const [
@@ -273,7 +618,73 @@ class HomeScreen extends StatelessWidget {
     );
   }
 
-  Widget _buildStatsRow() {
+  static const List<String> _monthAbbrev = [
+    'Jan',
+    'Feb',
+    'Mar',
+    'Apr',
+    'May',
+    'Jun',
+    'Jul',
+    'Aug',
+    'Sep',
+    'Oct',
+    'Nov',
+    'Dec',
+  ];
+
+  static bool _isMoldyLabel(String label) {
+    return RegExp(
+          r'mold|aflatox|contamin|infect|positive',
+          caseSensitive: false,
+        ).hasMatch(label) &&
+        !RegExp(
+          r'no mold|healthy|clean|safe|negative',
+          caseSensitive: false,
+        ).hasMatch(label);
+  }
+
+  static String _formatScanDate(DateTime dt) =>
+      '${_monthAbbrev[dt.month - 1]} ${dt.day}';
+
+  static String _formatTime(DateTime dt) {
+    final int hour = dt.hour % 12 == 0 ? 12 : dt.hour % 12;
+    final String minute = dt.minute.toString().padLeft(2, '0');
+    final String period = dt.hour >= 12 ? 'PM' : 'AM';
+    return '$hour:$minute $period';
+  }
+
+  static String _relativeTime(DateTime dt) {
+    final Duration diff = DateTime.now().difference(dt);
+    if (diff.inMinutes < 1) return 'Just now';
+    if (diff.inMinutes < 60) return '${diff.inMinutes} min ago';
+    if (diff.inHours < 24)
+      return '${diff.inHours} hour${diff.inHours == 1 ? '' : 's'} ago';
+    if (diff.inDays == 1) return 'Yesterday, ${_formatTime(dt)}';
+    if (diff.inDays < 7) return '${diff.inDays} days ago';
+    return _formatScanDate(dt);
+  }
+
+  Widget _buildStatsRow(List<QueryDocumentSnapshot> docs) {
+    int healthy = 0;
+    int risky = 0;
+    String lastScanLabel = '--';
+
+    if (docs.isNotEmpty) {
+      for (final doc in docs) {
+        final data = doc.data() as Map<String, dynamic>;
+        if (_isMoldyLabel((data['label'] ?? '').toString())) {
+          risky++;
+        } else {
+          healthy++;
+        }
+      }
+      final Timestamp? latest =
+          (docs.first.data() as Map<String, dynamic>)['timestamp']
+              as Timestamp?;
+      if (latest != null) lastScanLabel = _formatScanDate(latest.toDate());
+    }
+
     return Container(
       padding: const EdgeInsets.symmetric(vertical: 18, horizontal: 12),
       decoration: BoxDecoration(
@@ -289,13 +700,59 @@ class HomeScreen extends StatelessWidget {
       ),
       child: Row(
         children: [
-          _buildStatItem('124', 'HEALTHY', primaryGreen),
+          _buildStatItem('$healthy', 'HEALTHY', AppColors.primaryContainer),
           _buildDivider(),
-          _buildStatItem('02', 'RISKY', const Color(0xFFC62828)),
+          _buildStatItem('$risky', 'RISKY', AppColors.error),
           _buildDivider(),
-          _buildStatItem('Aug 24', 'LAST SCAN', darkGreen),
+          _buildStatItem(lastScanLabel, 'LAST SCAN', AppColors.primary),
         ],
       ),
+    );
+  }
+
+  Widget _buildNoScansYet() {
+    return Container(
+      padding: const EdgeInsets.symmetric(vertical: 28),
+      alignment: Alignment.center,
+      child: const Text(
+        'No scans yet — tap "AI Scan" above to check your first batch.',
+        textAlign: TextAlign.center,
+        style: TextStyle(color: Colors.grey, fontSize: 13),
+      ),
+    );
+  }
+
+  Widget _buildScanTileFromDoc(QueryDocumentSnapshot doc) {
+    final data = doc.data() as Map<String, dynamic>;
+    final String label = (data['label'] ?? 'Unknown').toString();
+    final String location = (data['location'] ?? '').toString();
+    final num confidenceRaw = (data['confidence'] ?? 0) as num;
+    final int matchPercent =
+        (confidenceRaw <= 1 ? confidenceRaw * 100 : confidenceRaw)
+            .round()
+            .clamp(0, 100);
+    final bool isMoldy = _isMoldyLabel(label);
+    final Timestamp? timestamp = data['timestamp'] as Timestamp?;
+    final String timeText = timestamp != null
+        ? _relativeTime(timestamp.toDate())
+        : 'Just now';
+    final String subtitle = location.isNotEmpty
+        ? '$location · $timeText'
+        : timeText;
+    final Color statusColor = isMoldy
+        ? AppColors.error
+        : AppColors.primaryContainer;
+
+    return _buildScanTile(
+      icon: isMoldy ? Icons.warning_amber_rounded : Icons.eco,
+      iconColor: statusColor,
+      title: label,
+      subtitle: subtitle,
+      badgeText: isMoldy ? 'AT RISK' : 'SAFE',
+      badgeColor: isMoldy ? AppColors.errorLight : const Color(0xFFE8F5E9),
+      badgeTextColor: statusColor,
+      trailingText: '$matchPercent% Match',
+      trailingColor: statusColor,
     );
   }
 
@@ -327,11 +784,7 @@ class HomeScreen extends StatelessWidget {
   }
 
   Widget _buildDivider() {
-    return Container(
-      width: 1,
-      height: 32,
-      color: Colors.grey.shade200,
-    );
+    return Container(width: 1, height: 32, color: Colors.grey.shade200);
   }
 
   Widget _buildRecentScansHeader() {
@@ -343,16 +796,19 @@ class HomeScreen extends StatelessWidget {
           style: TextStyle(
             fontSize: 18,
             fontWeight: FontWeight.bold,
-            color: darkGreen,
+            color: AppColors.primary,
           ),
         ),
         TextButton(
-          onPressed: () {},
+          onPressed: () => Navigator.push(
+            context,
+            MaterialPageRoute(builder: (_) => const HistoryScreen()),
+          ),
           child: const Text(
             'See All',
             style: TextStyle(
               fontSize: 13,
-              color: gold,
+              color: AppColors.secondary,
               fontWeight: FontWeight.w600,
             ),
           ),
@@ -405,16 +861,13 @@ class HomeScreen extends StatelessWidget {
                   style: const TextStyle(
                     fontSize: 14,
                     fontWeight: FontWeight.w600,
-                    color: darkGreen,
+                    color: AppColors.primary,
                   ),
                 ),
                 const SizedBox(height: 4),
                 Text(
                   subtitle,
-                  style: const TextStyle(
-                    fontSize: 12,
-                    color: Colors.grey,
-                  ),
+                  style: const TextStyle(fontSize: 12, color: Colors.grey),
                 ),
               ],
             ),
@@ -423,8 +876,10 @@ class HomeScreen extends StatelessWidget {
             crossAxisAlignment: CrossAxisAlignment.end,
             children: [
               Container(
-                padding:
-                    const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
+                padding: const EdgeInsets.symmetric(
+                  horizontal: 10,
+                  vertical: 4,
+                ),
                 decoration: BoxDecoration(
                   color: badgeColor,
                   borderRadius: BorderRadius.circular(20),
@@ -451,46 +906,6 @@ class HomeScreen extends StatelessWidget {
           ),
         ],
       ),
-    );
-  }
-
-  Widget _buildBottomNavBar() {
-    return Container(
-      margin: const EdgeInsets.fromLTRB(20, 0, 20, 20),
-      padding: const EdgeInsets.symmetric(vertical: 12),
-      decoration: BoxDecoration(
-        color: darkGreen,
-        borderRadius: BorderRadius.circular(30),
-      ),
-      child: Row(
-        mainAxisAlignment: MainAxisAlignment.spaceEvenly,
-        children: [
-          _buildNavItem(Icons.home, 'Home', true),
-          _buildNavItem(Icons.history, 'History', false),
-          _buildNavItem(Icons.notifications_none, 'Notifications', false),
-        ],
-      ),
-    );
-  }
-
-  Widget _buildNavItem(IconData icon, String label, bool isActive) {
-    return Column(
-      mainAxisSize: MainAxisSize.min,
-      children: [
-        Icon(
-          icon,
-          color: isActive ? gold : Colors.white70,
-          size: 24,
-        ),
-        const SizedBox(height: 2),
-        Text(
-          label,
-          style: TextStyle(
-            fontSize: 10,
-            color: isActive ? gold : Colors.white70,
-          ),
-        ),
-      ],
     );
   }
 }

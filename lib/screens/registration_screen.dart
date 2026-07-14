@@ -1,9 +1,14 @@
+import 'package:flutter/gestures.dart';
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
 
 import '../constants/app_colors.dart';
+import '../models/app_notification.dart';
 import '../services/firebase_auth.dart';
 import '../services/firestore_service.dart';
+import '../services/local_notification_service.dart';
+import '../services/notification_center.dart';
+import 'legal_document_screen.dart';
 
 class RegistrationScreen extends StatefulWidget {
   const RegistrationScreen({super.key});
@@ -116,6 +121,23 @@ class _RegistrationScreenState extends State<RegistrationScreen> {
     setState(() {
       _isLoading = false;
     });
+
+    final String email = _emailController.text.trim();
+    NotificationCenter.instance.add(
+      AppNotification(
+        title: 'Account Created',
+        description: 'Your AflAlert account was created with $email.',
+        icon: Icons.person_add_alt_1,
+        iconColor: AppColors.primaryContainer,
+        iconBackground: const Color(0xFFE8F5EE),
+        category: NotificationCategory.update,
+        unread: true,
+      ),
+    );
+    LocalNotificationService.instance.show(
+      title: 'Account Created',
+      body: 'Your AflAlert account was created with $email.',
+    );
 
     ScaffoldMessenger.of(context).showSnackBar(
       const SnackBar(
@@ -491,8 +513,35 @@ class _RegistrationScreenState extends State<RegistrationScreen> {
                               text: TextSpan(
                                 children: [
                                   const TextSpan(
-                                    text:
-                                        'I agree to the Terms of Service and ',
+                                    text: 'By signing up, you agree to our ',
+                                    style: TextStyle(
+                                      color: AppColors.primaryContainer,
+                                      fontSize: 14,
+                                    ),
+                                  ),
+                                  TextSpan(
+                                    text: 'Terms of Service',
+                                    style: GoogleFonts.inter(
+                                      color: AppColors.primaryContainer,
+                                      fontWeight: FontWeight.bold,
+                                      fontSize: 14,
+                                      decoration: TextDecoration.underline,
+                                    ),
+                                    recognizer: TapGestureRecognizer()
+                                      ..onTap = () {
+                                        Navigator.push(
+                                          context,
+                                          MaterialPageRoute(
+                                            builder: (_) => const LegalDocumentScreen(
+                                              title: 'Terms of Service',
+                                              body: kTermsOfServiceText,
+                                            ),
+                                          ),
+                                        );
+                                      },
+                                  ),
+                                  const TextSpan(
+                                    text: ' and ',
                                     style: TextStyle(
                                       color: AppColors.primaryContainer,
                                       fontSize: 14,
@@ -503,6 +552,26 @@ class _RegistrationScreenState extends State<RegistrationScreen> {
                                     style: GoogleFonts.inter(
                                       color: AppColors.primaryContainer,
                                       fontWeight: FontWeight.bold,
+                                      fontSize: 14,
+                                      decoration: TextDecoration.underline,
+                                    ),
+                                    recognizer: TapGestureRecognizer()
+                                      ..onTap = () {
+                                        Navigator.push(
+                                          context,
+                                          MaterialPageRoute(
+                                            builder: (_) => const LegalDocumentScreen(
+                                              title: 'Privacy Policy',
+                                              body: kPrivacyPolicyText,
+                                            ),
+                                          ),
+                                        );
+                                      },
+                                  ),
+                                  const TextSpan(
+                                    text: '.',
+                                    style: TextStyle(
+                                      color: AppColors.primaryContainer,
                                       fontSize: 14,
                                     ),
                                   ),

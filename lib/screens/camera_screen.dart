@@ -24,10 +24,8 @@ import 'dart:io';
 
 import 'package:camera/camera.dart';
 import 'package:flutter/material.dart';
-import '../services/api_service.dart';
-import '../services/firebase_storage.dart';
-import '../services/firestore_service.dart';
-import '../services/location_service.dart';
+import 'package:image/image.dart' as img;
+import 'package:image_picker/image_picker.dart';
 
 import '../constants/app_colors.dart';
 
@@ -55,6 +53,68 @@ enum _LightQuality { good, low }
 
 enum _FocusQuality { adjusting, sharp, blurry }
 
+Future<File> cropImageToSquareFrame(File imageFile, {int maxDimension = 1080}) async {
+  final bytes = await imageFile.readAsBytes();
+  final decoded = img.decodeImage(bytes);
+  if (decoded == null) {
+    return imageFile;
+  }
+
+  final side = decoded.width < decoded.height ? decoded.width : decoded.height;
+  final x = (decoded.width - side) ~/ 2;
+  final y = (decoded.height - side) ~/ 2;
+  final cropped = img.copyCrop(decoded, x: x, y: y, width: side, height: side);
+  final resized = img.copyResize(cropped, width: maxDimension, height: maxDimension);
+
+  final tempDir = await Directory.systemTemp.createTemp('aflalert_crop');
+  final outputPath = '${tempDir.path}/capture_${DateTime.now().microsecondsSinceEpoch}.jpg';
+  final outputFile = File(outputPath);
+  await outputFile.writeAsBytes(img.encodeJpg(resized, quality: 92));
+  return outputFile;
+}
+
+// Crops the captured photo down to exactly the area covered by the on-screen
+// guide frame, rather than a generic center square of the whole sensor image.
+// [previewSize] is the rendered size (in logical pixels) of the live
+// CameraPreview widget, and [frameSize] is the side length of the guide
+// frame drawn on top of it — both share the same screen center, so the
+// crop rectangle in raw image pixels is the frame's fraction of the preview,
+// scaled up by the ratio between the full-resolution photo and the preview.
+Future<File> cropImageToViewfinderFrame(
+  File imageFile, {
+  required Size previewSize,
+  required double frameSize,
+  int maxDimension = 1080,
+}) async {
+  final bytes = await imageFile.readAsBytes();
+  final rawDecoded = img.decodeImage(bytes);
+  if (rawDecoded == null) {
+    return imageFile;
+  }
+  // Normalize pixel data to match the upright orientation the preview and
+  // final photo are displayed in, so width/height line up with previewSize.
+  final decoded = img.bakeOrientation(rawDecoded);
+
+  final shortestSide =
+      decoded.width < decoded.height ? decoded.width : decoded.height;
+  if (previewSize.width <= 0 || previewSize.height <= 0) {
+    return cropImageToSquareFrame(imageFile, maxDimension: maxDimension);
+  }
+
+  final scale = decoded.width / previewSize.width;
+  final side = (frameSize * scale).round().clamp(1, shortestSide).toInt();
+  final x = (decoded.width - side) ~/ 2;
+  final y = (decoded.height - side) ~/ 2;
+  final cropped = img.copyCrop(decoded, x: x, y: y, width: side, height: side);
+  final resized = img.copyResize(cropped, width: maxDimension, height: maxDimension);
+
+  final tempDir = await Directory.systemTemp.createTemp('aflalert_crop');
+  final outputPath = '${tempDir.path}/capture_${DateTime.now().microsecondsSinceEpoch}.jpg';
+  final outputFile = File(outputPath);
+  await outputFile.writeAsBytes(img.encodeJpg(resized, quality: 92));
+  return outputFile;
+}
+
 class CameraCaptureScreen extends StatefulWidget {
   const CameraCaptureScreen({super.key});
 
@@ -63,6 +123,10 @@ class CameraCaptureScreen extends StatefulWidget {
 }
 
 class _CameraCaptureScreenState extends State<CameraCaptureScreen> {
+  static const double _frameSize = 210;
+
+  final GlobalKey _previewBoxKey = GlobalKey();
+
   CameraController? _controller;
   Future<void>? _initFuture;
 
@@ -72,6 +136,7 @@ class _CameraCaptureScreenState extends State<CameraCaptureScreen> {
 
   Timer? _focusSettleTimer;
   bool _isStreamingForBrightness = false;
+  DateTime _lastBrightnessSampleAt = DateTime.fromMillisecondsSinceEpoch(0);
 
   @override
   void initState() {
@@ -108,6 +173,17 @@ class _CameraCaptureScreenState extends State<CameraCaptureScreen> {
     _isStreamingForBrightness = true;
 
     _controller!.startImageStream((CameraImage image) {
+      // Sampling every frame (~30/s) did the luma scan and a potential
+      // setState on every single frame, which was a steady source of GC
+      // churn and contributed to the camera screen's intermittent jank.
+      // The lighting pill doesn't need to update faster than a few times
+      // a second, so throttle how often we actually process a frame.
+      final now = DateTime.now();
+      if (now.difference(_lastBrightnessSampleAt) < const Duration(milliseconds: 400)) {
+        return;
+      }
+      _lastBrightnessSampleAt = now;
+
       try {
         final yPlane = image.planes[0].bytes;
         int sum = 0;
@@ -159,9 +235,29 @@ class _CameraCaptureScreenState extends State<CameraCaptureScreen> {
   }
 
   Future<void> _pickFromGallery() async {
-    // Hook up image_picker here if you want a gallery fallback:
-    //   final picked = await ImagePicker().pickImage(source: ImageSource.gallery);
-    //   if (picked != null && mounted) Navigator.pop(context, picked);
+    final XFile? picked =
+        await ImagePicker().pickImage(source: ImageSource.gallery);
+    if (picked == null || !mounted) return;
+
+    final croppedFile = await cropImageToSquareFrame(File(picked.path));
+    final croppedPick = XFile(croppedFile.path);
+
+    if (!mounted) return;
+
+    final result = await Navigator.push<_ReviewResult>(
+      context,
+      MaterialPageRoute(
+        builder: (_) => _ReviewScreen(
+          imageFile: croppedPick,
+          lightGood: true,
+          focusGood: true,
+        ),
+      ),
+    );
+
+    if (result == _ReviewResult.usePhoto && mounted) {
+      Navigator.pop(context, croppedPick);
+    }
   }
 
   Future<void> _onCapture() async {
@@ -176,11 +272,23 @@ class _CameraCaptureScreenState extends State<CameraCaptureScreen> {
       final XFile file = await _controller!.takePicture();
       if (!mounted) return;
 
+      final previewBox =
+          _previewBoxKey.currentContext?.findRenderObject() as RenderBox?;
+      final File croppedFile = (previewBox != null && previewBox.hasSize)
+          ? await cropImageToViewfinderFrame(
+              File(file.path),
+              previewSize: previewBox.size,
+              frameSize: _frameSize,
+            )
+          : await cropImageToSquareFrame(File(file.path));
+      final croppedXFile = XFile(croppedFile.path);
+      if (!mounted) return;
+
       final result = await Navigator.push<_ReviewResult>(
         context,
         MaterialPageRoute(
           builder: (_) => _ReviewScreen(
-            imageFile: file,
+            imageFile: croppedXFile,
             lightGood: _light == _LightQuality.good,
             focusGood: _focus == _FocusQuality.sharp,
           ),
@@ -191,6 +299,8 @@ class _CameraCaptureScreenState extends State<CameraCaptureScreen> {
         // Resume live view for another attempt.
         _startBrightnessMonitoring();
         _simulateFocusSettle();
+      } else if (result == _ReviewResult.usePhoto && mounted) {
+        Navigator.pop(context, croppedXFile);
       }
     } catch (e) {
       if (mounted) {
@@ -227,9 +337,12 @@ class _CameraCaptureScreenState extends State<CameraCaptureScreen> {
               builder: (context, constraints) => Stack(
                 fit: StackFit.expand,
                 children: [
-                  GestureDetector(
-                    onTapUp: (d) => _onTapToFocus(d, constraints),
-                    child: CameraPreview(_controller!),
+                  Center(
+                    child: GestureDetector(
+                      key: _previewBoxKey,
+                      onTapUp: (d) => _onTapToFocus(d, constraints),
+                      child: CameraPreview(_controller!),
+                    ),
                   ),
                   _buildTopBar(),
                   _buildQualityPills(),
@@ -400,49 +513,46 @@ class _CameraCaptureScreenState extends State<CameraCaptureScreen> {
         ? 'Move to a brighter, well-lit area'
         : (_focus == _FocusQuality.blurry
             ? 'Hold the phone steady before capturing'
-            : 'Spread the kernel(s) flat in the frame');
+            : '');
     final String subGuidance = allGood
         ? 'Hold phone about 20cm above the sample'
         : 'Adjust and the frame will turn white when ready';
 
     return Center(
-      child: Padding(
-        padding: const EdgeInsets.only(bottom: 90),
-        child: Column(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            CustomPaint(
-              size: const Size(210, 210),
-              painter: _CornerBracketsPainter(color: bracketColor),
-            ),
-            const SizedBox(height: 12),
-            Padding(
-              padding: const EdgeInsets.symmetric(horizontal: 30),
-              child: Column(
-                children: [
-                  Text(
-                    mainGuidance,
-                    textAlign: TextAlign.center,
-                    style: const TextStyle(
-                      color: Colors.white,
-                      fontSize: 13,
-                      fontWeight: FontWeight.w500,
-                    ),
+      child: Column(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          CustomPaint(
+            size: const Size(_frameSize, _frameSize),
+            painter: _CornerBracketsPainter(color: bracketColor),
+          ),
+          const SizedBox(height: 12),
+          Padding(
+            padding: const EdgeInsets.symmetric(horizontal: 30),
+            child: Column(
+              children: [
+                Text(
+                  mainGuidance,
+                  textAlign: TextAlign.center,
+                  style: const TextStyle(
+                    color: Colors.white,
+                    fontSize: 13,
+                    fontWeight: FontWeight.w500,
                   ),
-                  const SizedBox(height: 4),
-                  Text(
-                    subGuidance,
-                    textAlign: TextAlign.center,
-                    style: TextStyle(
-                      color: Colors.white.withValues(alpha: 0.55),
-                      fontSize: 11,
-                    ),
+                ),
+                const SizedBox(height: 4),
+                Text(
+                  subGuidance,
+                  textAlign: TextAlign.center,
+                  style: TextStyle(
+                    color: Colors.white.withValues(alpha: 0.55),
+                    fontSize: 11,
                   ),
-                ],
-              ),
+                ),
+              ],
             ),
-          ],
-        ),
+          ),
+        ],
       ),
     );
   }
@@ -565,9 +675,9 @@ class _CornerBracketsPainter extends CustomPainter {
 // ---------------------------------------------------------------------------
 // Review screen — shown after capture, with retake / use photo
 // ---------------------------------------------------------------------------
-enum _ReviewResult { retake }
+enum _ReviewResult { retake, usePhoto }
 
-class _ReviewScreen extends StatefulWidget {
+class _ReviewScreen extends StatelessWidget {
   final XFile imageFile;
   final bool lightGood;
   final bool focusGood;
@@ -579,83 +689,11 @@ class _ReviewScreen extends StatefulWidget {
   });
 
   @override
-  State<_ReviewScreen> createState() => _ReviewScreenState();
-}
-
-class _ReviewScreenState extends State<_ReviewScreen> {
-  final StorageService _storageService = StorageService();
-  final ApiService _apiService = ApiService();
-  final FirestoreService _firestoreService = FirestoreService();
-  final LocationService _locationService = LocationService();
-
-  bool _isProcessing = false;
-
-  Future<void> _useThisPhoto() async {
-    if (_isProcessing) return;
-    setState(() => _isProcessing = true);
-
-    // Kick off location resolution alongside the upload/analysis network
-    // calls so it doesn't add extra wait time on top of them.
-    final Future<String?> locationFuture = _locationService.getCurrentPlaceName();
-
-    try {
-      final String? imageUrl =
-          await _storageService.uploadMaizeImage(File(widget.imageFile.path));
-      if (imageUrl == null) {
-        _showError('Failed to upload photo. Please try again.');
-        return;
-      }
-
-      final Map<String, dynamic>? analysis =
-          await _apiService.analyzeMaizeImage(imageUrl);
-      if (analysis == null) {
-        _showError('The AI engine failed to analyze this crop sample.');
-        return;
-      }
-
-      // Best-effort history log — the diagnosis already succeeded, so a
-      // logging failure (e.g. no signed-in user, no location fix) shouldn't
-      // block the flow.
-      final num confidenceRaw = (analysis['confidence'] ??
-          analysis['score'] ??
-          analysis['probability'] ??
-          0) as num;
-      final String? location = await locationFuture;
-      await _firestoreService.saveScanRecord(
-        imageUrl: imageUrl,
-        classificationLabel:
-            (analysis['label'] ?? analysis['prediction'] ?? analysis['result'] ?? 'Unknown')
-                .toString(),
-        confidenceScore: confidenceRaw.toDouble(),
-        location: location,
-      );
-
-      if (!mounted) return;
-      Navigator.of(context).pushNamedAndRemoveUntil(
-        '/analysis',
-        ModalRoute.withName('/home'),
-        arguments: analysis,
-      );
-    } catch (_) {
-      _showError('An unexpected error occurred. Please try again.');
-    } finally {
-      if (mounted) setState(() => _isProcessing = false);
-    }
-  }
-
-  void _showError(String message) {
-    if (!mounted) return;
-    ScaffoldMessenger.of(context).showSnackBar(
-      SnackBar(content: Text(message), backgroundColor: _AflColors.danger),
-    );
-  }
-
-  @override
   Widget build(BuildContext context) {
-    final bool allGood = widget.lightGood && widget.focusGood;
+    final bool allGood = lightGood && focusGood;
     final String qualityLabel = allGood
         ? 'Sharp and well lit'
-        : (!widget.lightGood ? 'Photo may be too dark' : 'Photo may be blurry');
+        : (!lightGood ? 'Photo may be too dark' : 'Photo may be blurry');
 
     return Scaffold(
       backgroundColor: _AflColors.bg,
@@ -685,7 +723,7 @@ class _ReviewScreenState extends State<_ReviewScreen> {
                     ),
                   ),
                   clipBehavior: Clip.antiAlias,
-                  child: Image.file(File(widget.imageFile.path), fit: BoxFit.cover),
+                  child: Image.file(File(imageFile.path), fit: BoxFit.cover),
                 ),
               ),
             ),
@@ -729,9 +767,8 @@ class _ReviewScreenState extends State<_ReviewScreen> {
                 children: [
                   Expanded(
                     child: OutlinedButton.icon(
-                      onPressed: _isProcessing
-                          ? null
-                          : () => Navigator.pop(context, _ReviewResult.retake),
+                      onPressed: () =>
+                          Navigator.pop(context, _ReviewResult.retake),
                       icon: const Icon(Icons.refresh, color: Colors.white, size: 16),
                       label: const Text('Retake',
                           style: TextStyle(color: Colors.white)),
@@ -750,7 +787,8 @@ class _ReviewScreenState extends State<_ReviewScreen> {
                   const SizedBox(width: 12),
                   Expanded(
                     child: ElevatedButton(
-                      onPressed: _isProcessing ? null : _useThisPhoto,
+                      onPressed: () =>
+                          Navigator.pop(context, _ReviewResult.usePhoto),
                       style: ElevatedButton.styleFrom(
                         padding: const EdgeInsets.symmetric(vertical: 14),
                         backgroundColor: _AflColors.amberCta,
@@ -760,19 +798,10 @@ class _ReviewScreenState extends State<_ReviewScreen> {
                         ),
                         elevation: 0,
                       ),
-                      child: _isProcessing
-                          ? const SizedBox(
-                              width: 18,
-                              height: 18,
-                              child: CircularProgressIndicator(
-                                strokeWidth: 2,
-                                color: _AflColors.amberCtaText,
-                              ),
-                            )
-                          : const Text(
-                              'Use photo',
-                              style: TextStyle(fontWeight: FontWeight.w500),
-                            ),
+                      child: const Text(
+                        'Use photo',
+                        style: TextStyle(fontWeight: FontWeight.w500),
+                      ),
                     ),
                   ),
                 ],

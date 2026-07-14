@@ -1,16 +1,30 @@
+import 'dart:async';
+import 'dart:io';
+
+import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
+import 'package:image_picker/image_picker.dart';
+
+import '../constants/app_colors.dart';
+import '../models/app_notification.dart';
+import '../services/firebase_storage.dart';
+import '../services/firestore_service.dart';
+import '../services/local_notification_service.dart';
+import '../services/notification_center.dart';
+import '../utils/user_initials.dart';
+import 'settings_screen.dart';
 
 // ─────────────────────────────────────────────
-//  THEME TOKENS
+//  THEME TOKENS — aliased to the shared AppColors palette
+//  (same theme as the registration screen) plus a couple of
+//  light tints derived from it that AppColors doesn't define.
 // ─────────────────────────────────────────────
-const kGreen = Color(0xFF1A5C38);
+const kGreen = AppColors.primaryContainer;
 const kGreenLight = Color(0xFFE8F5EE);
-const kYellow = Color(0xFFF5C518);
-const kRed = Color(0xFFD62B2B);
-const kRedLight = Color(0xFFFFEEEE);
-const kGrey = Color(0xFF8A8A8A);
-const kBg = Color(0xFFF6F7F9);
-const kCard = Colors.white;
+const kRed = AppColors.error;
+const kGrey = AppColors.grey;
+const kBg = AppColors.t95;
+const kCard = AppColors.surface;
 
 // ─────────────────────────────────────────────
 //  PROFILE SCREEN
@@ -23,21 +37,49 @@ class ProfileScreen extends StatefulWidget {
 }
 
 class _ProfileScreenState extends State<ProfileScreen> {
-  bool _darkMode = false;
-  String _selectedLanguage = 'English';
+  final FirestoreService _firestoreService = FirestoreService();
+  StreamSubscription<dynamic>? _profileSub;
 
-  // ── dummy user data (replace with Firebase later)
-  final String _userName = 'John Doe';
-  final String _userEmail = 'johndoe@gmail.com';
-  final String _userPhone = '+256 700 123 456';
-  final String _userLocation = 'Kampala, Uganda';
-  final String _userType = 'FARMER';
-  final int _totalScans = 128;
-  final int _healthyScans = 112;
-  final int _detectedScans = 16;
+  bool _isLoadingProfile = true;
+
+  String _userName = '';
+  String _userPhone = '';
+  String _userLocation = '';
+  String _userType = '';
+  String _userPhotoUrl = '';
+
+  @override
+  void initState() {
+    super.initState();
+    final user = FirebaseAuth.instance.currentUser;
+    _profileSub = _firestoreService.getUserProfile().listen((doc) {
+      final profile = doc.data();
+      setState(() {
+        _userName = profile?['fullName'] as String? ?? user?.displayName ?? 'Your account';
+        _userPhone = profile?['phone'] as String? ?? '';
+        _userLocation = profile?['district'] as String? ?? '';
+        _userType = (profile?['userType'] as String? ?? '').toUpperCase();
+        _userPhotoUrl = profile?['photoUrl'] as String? ?? user?.photoURL ?? '';
+        _isLoadingProfile = false;
+      });
+    });
+  }
+
+  @override
+  void dispose() {
+    _profileSub?.cancel();
+    super.dispose();
+  }
 
   @override
   Widget build(BuildContext context) {
+    if (_isLoadingProfile) {
+      return const Scaffold(
+        backgroundColor: kBg,
+        body: Center(child: CircularProgressIndicator(color: kGreen)),
+      );
+    }
+
     return Scaffold(
       backgroundColor: kBg,
       body: CustomScrollView(
@@ -47,22 +89,14 @@ class _ProfileScreenState extends State<ProfileScreen> {
             child: Column(
               children: [
                 _buildProfileHeader(),
-                _buildStatsRow(),
                 const SizedBox(height: 20),
-                _buildSectionLabel('ACCOUNT SETTINGS'),
-                _buildSettingsCard(),
-                const SizedBox(height: 20),
-                _buildSectionLabel('ACCOUNT INFO'),
-                _buildInfoCard(),
-                const SizedBox(height: 20),
-                _buildLogoutButton(),
+                _buildAccountSection(),
                 const SizedBox(height: 100),
               ],
             ),
           ),
         ],
       ),
-      bottomNavigationBar: _buildBottomNav(),
     );
   }
 
@@ -75,38 +109,29 @@ class _ProfileScreenState extends State<ProfileScreen> {
       backgroundColor: kCard,
       elevation: 0,
       leading: IconButton(
-        icon: const Icon(Icons.arrow_back, color: Colors.black87),
+        icon: const Icon(Icons.arrow_back, color: kGreen),
         onPressed: () => Navigator.maybePop(context),
       ),
       title: const Text(
-        'Aflatoxin Detector',
+        'Profile',
         style: TextStyle(
-          color: Colors.black87,
+          color: kGreen,
           fontWeight: FontWeight.bold,
           fontSize: 18,
         ),
       ),
       centerTitle: false,
       actions: [
-        Padding(
-          padding: const EdgeInsets.only(right: 16),
-          child: GestureDetector(
-            onTap: _showEditProfile,
-            child: CircleAvatar(
-              radius: 18,
-              backgroundColor: kGreen,
-              backgroundImage: null,
-              child: const Text(
-                'JD',
-                style: TextStyle(
-                  color: Colors.white,
-                  fontSize: 12,
-                  fontWeight: FontWeight.bold,
-                ),
-              ),
-            ),
-          ),
+        IconButton(
+          icon: const Icon(Icons.settings_outlined, color: Colors.black87),
+          onPressed: () {
+            Navigator.push(
+              context,
+              MaterialPageRoute(builder: (_) => const SettingsScreen()),
+            );
+          },
         ),
+        const SizedBox(width: 8),
       ],
     );
   }
@@ -130,14 +155,17 @@ class _ProfileScreenState extends State<ProfileScreen> {
                 child: CircleAvatar(
                   radius: 52,
                   backgroundColor: kGreenLight,
-                  child: Text(
-                    _getInitials(_userName),
-                    style: const TextStyle(
-                      fontSize: 32,
-                      fontWeight: FontWeight.bold,
-                      color: kGreen,
-                    ),
-                  ),
+                  backgroundImage: _userPhotoUrl.isNotEmpty ? NetworkImage(_userPhotoUrl) : null,
+                  child: _userPhotoUrl.isEmpty
+                      ? Text(
+                          getInitials(_userName),
+                          style: const TextStyle(
+                            fontSize: 32,
+                            fontWeight: FontWeight.bold,
+                            color: kGreen,
+                          ),
+                        )
+                      : null,
                 ),
               ),
               GestureDetector(
@@ -206,202 +234,46 @@ class _ProfileScreenState extends State<ProfileScreen> {
     );
   }
 
-  // ── stats row ────────────────────────────────
-  Widget _buildStatsRow() {
-    return Padding(
-      padding: const EdgeInsets.fromLTRB(16, 16, 16, 0),
-      child: Row(
-        children: [
-          Expanded(
-            child: _StatCard(
-              value: _totalScans.toString(),
-              label: 'Total Scans',
-              icon: Icons.bar_chart_rounded,
-              iconColor: kGreen,
-              bgColor: kGreenLight,
-            ),
-          ),
-          const SizedBox(width: 12),
-          Expanded(
-            child: _StatCard(
-              value: _healthyScans.toString(),
-              label: 'Healthy Scans',
-              icon: Icons.check_circle_outline,
-              iconColor: kGreen,
-              bgColor: kGreenLight,
-              highlighted: true,
-            ),
-          ),
-          const SizedBox(width: 12),
-          Expanded(
-            child: _StatCard(
-              value: _detectedScans.toString(),
-              label: 'Detected Scans',
-              icon: Icons.warning_amber_rounded,
-              iconColor: kRed,
-              bgColor: kRedLight,
-            ),
-          ),
-        ],
-      ),
-    );
-  }
-
-  // ── section label ────────────────────────────
-  Widget _buildSectionLabel(String label) {
-    return Padding(
-      padding: const EdgeInsets.fromLTRB(16, 0, 16, 8),
-      child: Align(
-        alignment: Alignment.centerLeft,
-        child: Text(
-          label,
-          style: const TextStyle(
-            fontSize: 11,
-            fontWeight: FontWeight.w700,
-            letterSpacing: 1.2,
-            color: kGrey,
-          ),
-        ),
-      ),
-    );
-  }
-
-  // ── settings card ────────────────────────────
-  Widget _buildSettingsCard() {
-    return Container(
-      margin: const EdgeInsets.symmetric(horizontal: 16),
-      decoration: BoxDecoration(
-        color: kCard,
-        borderRadius: BorderRadius.circular(16),
-        boxShadow: [
-          BoxShadow(
-            color: Colors.black.withAlpha((0.05 * 255).round()),
-            blurRadius: 8,
-            offset: const Offset(0, 2),
-          ),
-        ],
-      ),
-      child: Column(
-        children: [
-          // dark mode toggle
-          _SettingsTile(
-            icon: Icons.dark_mode_outlined,
-            label: 'Dark Mode',
-            trailing: Switch(
-              value: _darkMode,
-              onChanged: (val) => setState(() => _darkMode = val),
-              activeThumbColor: kGreen,
-            ),
-          ),
-          _buildDivider(),
-
-          // language
-          _SettingsTile(
-            icon: Icons.language_outlined,
-            label: 'Language',
-            trailing: GestureDetector(
-              onTap: _showLanguageSheet,
-              child: Row(
-                mainAxisSize: MainAxisSize.min,
-                children: [
-                  Text(
-                    _selectedLanguage,
-                    style: const TextStyle(color: kGrey, fontSize: 14),
-                  ),
-                  const SizedBox(width: 4),
-                  const Icon(Icons.chevron_right, color: kGrey, size: 18),
-                ],
-              ),
-            ),
-            onTap: _showLanguageSheet,
-          ),
-          _buildDivider(),
-
-          // privacy
-          _SettingsTile(
-            icon: Icons.privacy_tip_outlined,
-            label: 'Privacy',
-            trailing: const Icon(Icons.chevron_right, color: kGrey, size: 18),
-            onTap: () => _showComingSoon('Privacy'),
-          ),
-          _buildDivider(),
-
-          // help & support
-          _SettingsTile(
-            icon: Icons.help_outline_rounded,
-            label: 'Help & Support',
-            trailing: const Icon(Icons.chevron_right, color: kGrey, size: 18),
-            onTap: () => _showComingSoon('Help & Support'),
-          ),
-        ],
-      ),
-    );
-  }
-
-  // ── account info card ────────────────────────
-  Widget _buildInfoCard() {
-    return Container(
-      margin: const EdgeInsets.symmetric(horizontal: 16),
-      decoration: BoxDecoration(
-        color: kCard,
-        borderRadius: BorderRadius.circular(16),
-        boxShadow: [
-          BoxShadow(
-            color: Colors.black.withAlpha((0.05 * 255).round()),
-            blurRadius: 8,
-            offset: const Offset(0, 2),
-          ),
-        ],
-      ),
-      child: Column(
-        children: [
-          _InfoTile(
-            icon: Icons.email_outlined,
-            label: 'Email',
-            value: _userEmail,
-          ),
-          _buildDivider(),
-          _InfoTile(
-            icon: Icons.phone_outlined,
-            label: 'Phone',
-            value: _userPhone,
-          ),
-          _buildDivider(),
-          _InfoTile(
-            icon: Icons.location_on_outlined,
-            label: 'District',
-            value: _userLocation,
-          ),
-        ],
-      ),
-    );
-  }
-
-  // ── logout button ────────────────────────────
-  Widget _buildLogoutButton() {
+  // ── account section (change password / logout) ──
+  Widget _buildAccountSection() {
     return Padding(
       padding: const EdgeInsets.symmetric(horizontal: 16),
-      child: GestureDetector(
-        onTap: _confirmLogout,
-        child: Container(
-          padding: const EdgeInsets.symmetric(vertical: 16),
-          decoration: BoxDecoration(
-            color: kRedLight,
-            borderRadius: BorderRadius.circular(16),
-            border: Border.all(color: kRed.withAlpha((0.3 * 255).round())),
-          ),
-          child: const Row(
-            mainAxisAlignment: MainAxisAlignment.center,
+      child: Container(
+        padding: const EdgeInsets.symmetric(horizontal: 14),
+        decoration: BoxDecoration(
+          color: kCard,
+          borderRadius: BorderRadius.circular(16),
+          boxShadow: [
+            BoxShadow(
+              color: Colors.black.withValues(alpha: 0.05),
+              blurRadius: 10,
+              offset: const Offset(0, 4),
+            ),
+          ],
+        ),
+        child: Material(
+          color: Colors.transparent,
+          child: Column(
             children: [
-              Icon(Icons.logout_rounded, color: kRed, size: 20),
-              SizedBox(width: 10),
-              Text(
-                'Logout',
-                style: TextStyle(
-                  color: kRed,
-                  fontWeight: FontWeight.w700,
-                  fontSize: 15,
+              ListTile(
+                contentPadding: EdgeInsets.zero,
+                leading: const Icon(Icons.lock_outline, color: kGreen, size: 20),
+                title: const Text(
+                  'Change password',
+                  style: TextStyle(color: Colors.black87, fontSize: 14),
                 ),
+                trailing: const Icon(Icons.chevron_right, color: kGrey, size: 18),
+                onTap: _showChangePassword,
+              ),
+              const Divider(height: 1, color: Color(0xFFEDEDED)),
+              ListTile(
+                contentPadding: EdgeInsets.zero,
+                leading: const Icon(Icons.logout_rounded, color: kRed, size: 20),
+                title: const Text(
+                  'Logout',
+                  style: TextStyle(color: kRed, fontWeight: FontWeight.w600, fontSize: 14),
+                ),
+                onTap: _confirmLogout,
               ),
             ],
           ),
@@ -410,62 +282,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
     );
   }
 
-  // ── divider ──────────────────────────────────
-  Widget _buildDivider() {
-    return const Divider(
-      height: 1,
-      thickness: 1,
-      color: Color(0xFFF0F0F0),
-      indent: 56,
-    );
-  }
-
-  // ── bottom navigation ────────────────────────
-  Widget _buildBottomNav() {
-    return BottomNavigationBar(
-      currentIndex: 3,
-      selectedItemColor: kGreen,
-      unselectedItemColor: kGrey,
-      showSelectedLabels: true,
-      showUnselectedLabels: true,
-      type: BottomNavigationBarType.fixed,
-      backgroundColor: kCard,
-      elevation: 0,
-      selectedLabelStyle: const TextStyle(
-        fontSize: 11,
-        fontWeight: FontWeight.w600,
-      ),
-      unselectedLabelStyle: const TextStyle(fontSize: 11),
-      items: const [
-        BottomNavigationBarItem(icon: Icon(Icons.home_outlined), label: 'Home'),
-        BottomNavigationBarItem(
-          icon: Icon(Icons.history_rounded),
-          label: 'History',
-        ),
-        BottomNavigationBarItem(
-          icon: Icon(Icons.notifications_outlined),
-          label: 'Notifications',
-        ),
-        BottomNavigationBarItem(
-          icon: Icon(Icons.person_outline),
-          label: 'Profile',
-        ),
-      ],
-      onTap: (i) {
-        // Connect to router when linking screens
-      },
-    );
-  }
-
   // ── helpers ──────────────────────────────────
-  String _getInitials(String name) {
-    final parts = name.trim().split(' ');
-    if (parts.length >= 2) {
-      return '${parts[0][0]}${parts[1][0]}'.toUpperCase();
-    }
-    return parts[0][0].toUpperCase();
-  }
-
   void _showEditProfile() {
     showModalBottomSheet(
       context: context,
@@ -477,34 +294,19 @@ class _ProfileScreenState extends State<ProfileScreen> {
         name: _userName,
         phone: _userPhone,
         location: _userLocation,
+        photoUrl: _userPhotoUrl,
       ),
     );
   }
 
-  void _showLanguageSheet() {
+  void _showChangePassword() {
     showModalBottomSheet(
       context: context,
+      isScrollControlled: true,
       shape: const RoundedRectangleBorder(
         borderRadius: BorderRadius.vertical(top: Radius.circular(24)),
       ),
-      builder: (_) => _LanguageSheet(
-        current: _selectedLanguage,
-        onSelected: (lang) {
-          setState(() => _selectedLanguage = lang);
-          Navigator.pop(context);
-        },
-      ),
-    );
-  }
-
-  void _showComingSoon(String feature) {
-    ScaffoldMessenger.of(context).showSnackBar(
-      SnackBar(
-        content: Text('$feature coming soon'),
-        backgroundColor: kGreen,
-        behavior: SnackBarBehavior.floating,
-        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
-      ),
+      builder: (_) => const _ChangePasswordSheet(),
     );
   }
 
@@ -527,16 +329,11 @@ class _ProfileScreenState extends State<ProfileScreen> {
             child: const Text('Cancel', style: TextStyle(color: kGrey)),
           ),
           ElevatedButton(
-            onPressed: () {
+            onPressed: () async {
               Navigator.pop(context);
-              // Navigate to login when screens are linked
-              ScaffoldMessenger.of(context).showSnackBar(
-                const SnackBar(
-                  content: Text('Logged out successfully'),
-                  backgroundColor: kRed,
-                  behavior: SnackBarBehavior.floating,
-                ),
-              );
+              await FirebaseAuth.instance.signOut();
+              if (!mounted) return;
+              Navigator.pushNamedAndRemoveUntil(context, '/login', (route) => false);
             },
             style: ElevatedButton.styleFrom(
               backgroundColor: kRed,
@@ -553,204 +350,19 @@ class _ProfileScreenState extends State<ProfileScreen> {
 }
 
 // ─────────────────────────────────────────────
-//  STAT CARD WIDGET
-// ─────────────────────────────────────────────
-class _StatCard extends StatelessWidget {
-  final String value;
-  final String label;
-  final IconData icon;
-  final Color iconColor;
-  final Color bgColor;
-  final bool highlighted;
-
-  const _StatCard({
-    required this.value,
-    required this.label,
-    required this.icon,
-    required this.iconColor,
-    required this.bgColor,
-    this.highlighted = false,
-  });
-
-  @override
-  Widget build(BuildContext context) {
-    return Container(
-      padding: const EdgeInsets.symmetric(vertical: 16, horizontal: 12),
-      decoration: BoxDecoration(
-        color: highlighted ? kGreenLight : kCard,
-        borderRadius: BorderRadius.circular(16),
-        border: highlighted
-            ? Border.all(
-                color: kGreen.withAlpha((0.3 * 255).round()),
-                width: 1.5,
-              )
-            : null,
-        boxShadow: [
-          BoxShadow(
-            color: Colors.black.withAlpha((0.05 * 255).round()),
-            blurRadius: 8,
-            offset: const Offset(0, 2),
-          ),
-        ],
-      ),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Container(
-            padding: const EdgeInsets.all(6),
-            decoration: BoxDecoration(
-              color: bgColor,
-              borderRadius: BorderRadius.circular(8),
-            ),
-            child: Icon(icon, color: iconColor, size: 16),
-          ),
-          const SizedBox(height: 10),
-          Text(
-            value,
-            style: TextStyle(
-              fontSize: 24,
-              fontWeight: FontWeight.w800,
-              color: iconColor,
-            ),
-          ),
-          const SizedBox(height: 2),
-          Text(
-            label,
-            style: const TextStyle(
-              fontSize: 11,
-              color: kGrey,
-              fontWeight: FontWeight.w500,
-            ),
-          ),
-        ],
-      ),
-    );
-  }
-}
-
-// ─────────────────────────────────────────────
-//  SETTINGS TILE WIDGET
-// ─────────────────────────────────────────────
-class _SettingsTile extends StatelessWidget {
-  final IconData icon;
-  final String label;
-  final Widget trailing;
-  final VoidCallback? onTap;
-
-  const _SettingsTile({
-    required this.icon,
-    required this.label,
-    required this.trailing,
-    this.onTap,
-  });
-
-  @override
-  Widget build(BuildContext context) {
-    return InkWell(
-      onTap: onTap,
-      borderRadius: BorderRadius.circular(16),
-      child: Padding(
-        padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
-        child: Row(
-          children: [
-            Container(
-              padding: const EdgeInsets.all(8),
-              decoration: BoxDecoration(
-                color: kBg,
-                borderRadius: BorderRadius.circular(10),
-              ),
-              child: Icon(icon, size: 18, color: kGreen),
-            ),
-            const SizedBox(width: 14),
-            Expanded(
-              child: Text(
-                label,
-                style: const TextStyle(
-                  fontSize: 15,
-                  fontWeight: FontWeight.w500,
-                  color: Colors.black87,
-                ),
-              ),
-            ),
-            trailing,
-          ],
-        ),
-      ),
-    );
-  }
-}
-
-// ─────────────────────────────────────────────
-//  INFO TILE WIDGET
-// ─────────────────────────────────────────────
-class _InfoTile extends StatelessWidget {
-  final IconData icon;
-  final String label;
-  final String value;
-
-  const _InfoTile({
-    required this.icon,
-    required this.label,
-    required this.value,
-  });
-
-  @override
-  Widget build(BuildContext context) {
-    return Padding(
-      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
-      child: Row(
-        children: [
-          Container(
-            padding: const EdgeInsets.all(8),
-            decoration: BoxDecoration(
-              color: kBg,
-              borderRadius: BorderRadius.circular(10),
-            ),
-            child: Icon(icon, size: 18, color: kGreen),
-          ),
-          const SizedBox(width: 14),
-          Expanded(
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Text(
-                  label,
-                  style: const TextStyle(
-                    fontSize: 11,
-                    color: kGrey,
-                    fontWeight: FontWeight.w500,
-                  ),
-                ),
-                const SizedBox(height: 2),
-                Text(
-                  value,
-                  style: const TextStyle(
-                    fontSize: 14,
-                    color: Colors.black87,
-                    fontWeight: FontWeight.w600,
-                  ),
-                ),
-              ],
-            ),
-          ),
-        ],
-      ),
-    );
-  }
-}
-
-// ─────────────────────────────────────────────
 //  EDIT PROFILE BOTTOM SHEET
 // ─────────────────────────────────────────────
 class _EditProfileSheet extends StatefulWidget {
   final String name;
   final String phone;
   final String location;
+  final String photoUrl;
 
   const _EditProfileSheet({
     required this.name,
     required this.phone,
     required this.location,
+    required this.photoUrl,
   });
 
   @override
@@ -758,9 +370,13 @@ class _EditProfileSheet extends StatefulWidget {
 }
 
 class _EditProfileSheetState extends State<_EditProfileSheet> {
+  final _firestoreService = FirestoreService();
+  final _storageService = StorageService();
   late TextEditingController _nameCtrl;
   late TextEditingController _phoneCtrl;
   late TextEditingController _locationCtrl;
+  File? _pickedImage;
+  bool _isSaving = false;
 
   @override
   void initState() {
@@ -776,6 +392,125 @@ class _EditProfileSheetState extends State<_EditProfileSheet> {
     _phoneCtrl.dispose();
     _locationCtrl.dispose();
     super.dispose();
+  }
+
+  Future<void> _pickImage() async {
+    final picked = await showModalBottomSheet<XFile?>(
+      context: context,
+      shape: const RoundedRectangleBorder(
+        borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
+      ),
+      builder: (sheetContext) => SafeArea(
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            ListTile(
+              leading: const Icon(Icons.photo_camera_outlined, color: kGreen),
+              title: const Text('Take a photo'),
+              onTap: () => _pickFrom(sheetContext, ImageSource.camera),
+            ),
+            ListTile(
+              leading: const Icon(Icons.photo_library_outlined, color: kGreen),
+              title: const Text('Choose from gallery'),
+              onTap: () => _pickFrom(sheetContext, ImageSource.gallery),
+            ),
+          ],
+        ),
+      ),
+    );
+
+    if (picked != null) {
+      setState(() => _pickedImage = File(picked.path));
+    }
+  }
+
+  // Picking can throw (e.g. camera/gallery permission denied) — without a
+  // catch here, that exception previously left the sheet open with no
+  // feedback since Navigator.pop(sheetContext, file) was never reached.
+  Future<void> _pickFrom(BuildContext sheetContext, ImageSource source) async {
+    try {
+      final file = await ImagePicker().pickImage(source: source, imageQuality: 80);
+      if (sheetContext.mounted) Navigator.pop(sheetContext, file);
+    } catch (_) {
+      if (!mounted) return;
+      final messenger = ScaffoldMessenger.of(context);
+      if (sheetContext.mounted) Navigator.pop(sheetContext);
+      messenger.showSnackBar(
+        SnackBar(
+          content: Text(
+            source == ImageSource.camera
+                ? 'Camera access was denied. Enable it in Settings to take a photo.'
+                : 'Photo library access was denied. Enable it in Settings to choose a photo.',
+          ),
+          backgroundColor: kRed,
+          behavior: SnackBarBehavior.floating,
+        ),
+      );
+    }
+  }
+
+  Future<void> _save() async {
+    final name = _nameCtrl.text.trim();
+    if (name.isEmpty) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text('Full name cannot be empty'),
+          backgroundColor: kRed,
+          behavior: SnackBarBehavior.floating,
+        ),
+      );
+      return;
+    }
+
+    setState(() => _isSaving = true);
+
+    String? photoUrl;
+    if (_pickedImage != null) {
+      final user = FirebaseAuth.instance.currentUser;
+      photoUrl = user != null
+          ? await _storageService.uploadProfileImage(_pickedImage!, user.uid)
+          : null;
+      if (photoUrl == null) {
+        if (!mounted) return;
+        setState(() => _isSaving = false);
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(
+            content: Text('Could not upload profile picture. Please try again.'),
+            backgroundColor: kRed,
+            behavior: SnackBarBehavior.floating,
+          ),
+        );
+        return;
+      }
+    }
+
+    final success = await _firestoreService.updateUserProfile(
+      fullName: name,
+      phone: _phoneCtrl.text.trim(),
+      district: _locationCtrl.text.trim(),
+      photoUrl: photoUrl,
+    );
+    if (!mounted) return;
+
+    if (success) {
+      Navigator.pop(context);
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text('Profile updated successfully'),
+          backgroundColor: kGreen,
+          behavior: SnackBarBehavior.floating,
+        ),
+      );
+    } else {
+      setState(() => _isSaving = false);
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text('Could not update profile. Please try again.'),
+          backgroundColor: kRed,
+          behavior: SnackBarBehavior.floating,
+        ),
+      );
+    }
   }
 
   @override
@@ -812,6 +547,44 @@ class _EditProfileSheetState extends State<_EditProfileSheet> {
             ),
           ),
           const SizedBox(height: 20),
+          Center(
+            child: GestureDetector(
+              onTap: _pickImage,
+              child: Stack(
+                alignment: Alignment.bottomRight,
+                children: [
+                  CircleAvatar(
+                    radius: 44,
+                    backgroundColor: kGreenLight,
+                    backgroundImage: _pickedImage != null
+                        ? FileImage(_pickedImage!)
+                        : (widget.photoUrl.isNotEmpty ? NetworkImage(widget.photoUrl) : null)
+                            as ImageProvider?,
+                    child: _pickedImage == null && widget.photoUrl.isEmpty
+                        ? Text(
+                            getInitials(widget.name),
+                            style: const TextStyle(
+                              fontSize: 26,
+                              fontWeight: FontWeight.bold,
+                              color: kGreen,
+                            ),
+                          )
+                        : null,
+                  ),
+                  Container(
+                    padding: const EdgeInsets.all(6),
+                    decoration: BoxDecoration(
+                      color: kGreen,
+                      shape: BoxShape.circle,
+                      border: Border.all(color: Colors.white, width: 2),
+                    ),
+                    child: const Icon(Icons.camera_alt, color: Colors.white, size: 14),
+                  ),
+                ],
+              ),
+            ),
+          ),
+          const SizedBox(height: 20),
           _buildField('Full Name', _nameCtrl, Icons.person_outline),
           const SizedBox(height: 12),
           _buildField('Phone Number', _phoneCtrl, Icons.phone_outlined),
@@ -819,16 +592,7 @@ class _EditProfileSheetState extends State<_EditProfileSheet> {
           _buildField('Location', _locationCtrl, Icons.location_on_outlined),
           const SizedBox(height: 24),
           ElevatedButton(
-            onPressed: () {
-              Navigator.pop(context);
-              ScaffoldMessenger.of(context).showSnackBar(
-                const SnackBar(
-                  content: Text('Profile updated successfully'),
-                  backgroundColor: kGreen,
-                  behavior: SnackBarBehavior.floating,
-                ),
-              );
-            },
+            onPressed: _isSaving ? null : _save,
             style: ElevatedButton.styleFrom(
               backgroundColor: kGreen,
               minimumSize: const Size(double.infinity, 52),
@@ -837,14 +601,20 @@ class _EditProfileSheetState extends State<_EditProfileSheet> {
               ),
               elevation: 0,
             ),
-            child: const Text(
-              'Save Changes',
-              style: TextStyle(
-                color: Colors.white,
-                fontWeight: FontWeight.w700,
-                fontSize: 15,
-              ),
-            ),
+            child: _isSaving
+                ? const SizedBox(
+                    height: 20,
+                    width: 20,
+                    child: CircularProgressIndicator(strokeWidth: 2, color: Colors.white),
+                  )
+                : const Text(
+                    'Save Changes',
+                    style: TextStyle(
+                      color: Colors.white,
+                      fontWeight: FontWeight.w700,
+                      fontSize: 15,
+                    ),
+                  ),
           ),
         ],
       ),
@@ -883,92 +653,231 @@ class _EditProfileSheetState extends State<_EditProfileSheet> {
 }
 
 // ─────────────────────────────────────────────
-//  LANGUAGE BOTTOM SHEET
+//  CHANGE PASSWORD BOTTOM SHEET
 // ─────────────────────────────────────────────
-class _LanguageSheet extends StatelessWidget {
-  final String current;
-  final ValueChanged<String> onSelected;
+class _ChangePasswordSheet extends StatefulWidget {
+  const _ChangePasswordSheet();
 
-  const _LanguageSheet({required this.current, required this.onSelected});
+  @override
+  State<_ChangePasswordSheet> createState() => _ChangePasswordSheetState();
+}
 
-  static const _languages = [
-    'English',
-    'Luganda',
-    'Swahili',
-    'Runyankore',
-    'Ateso',
-    'Luo',
-  ];
+class _ChangePasswordSheetState extends State<_ChangePasswordSheet> {
+  final _formKey = GlobalKey<FormState>();
+  final _currentCtrl = TextEditingController();
+  final _newCtrl = TextEditingController();
+  final _confirmCtrl = TextEditingController();
+
+  bool _isSaving = false;
+  bool _obscureCurrent = true;
+  bool _obscureNew = true;
+  bool _obscureConfirm = true;
+
+  @override
+  void dispose() {
+    _currentCtrl.dispose();
+    _newCtrl.dispose();
+    _confirmCtrl.dispose();
+    super.dispose();
+  }
+
+  Future<void> _submit() async {
+    if (!_formKey.currentState!.validate()) return;
+
+    setState(() => _isSaving = true);
+    try {
+      final user = FirebaseAuth.instance.currentUser;
+      final email = user?.email;
+      if (user == null || email == null) {
+        throw FirebaseAuthException(code: 'no-current-user');
+      }
+
+      final credential = EmailAuthProvider.credential(
+        email: email,
+        password: _currentCtrl.text,
+      );
+      await user.reauthenticateWithCredential(credential);
+      await user.updatePassword(_newCtrl.text);
+
+      NotificationCenter.instance.add(
+        AppNotification(
+          title: 'Password Changed',
+          description: 'Your account password was changed successfully.',
+          icon: Icons.lock_reset,
+          iconColor: kGreen,
+          iconBackground: kGreenLight,
+          category: NotificationCategory.update,
+          unread: true,
+          highPriority: true,
+        ),
+      );
+      LocalNotificationService.instance.show(
+        title: 'Password Changed',
+        body: 'Your account password was changed successfully.',
+      );
+
+      if (!mounted) return;
+      Navigator.pop(context);
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text('Password updated successfully'),
+          backgroundColor: kGreen,
+          behavior: SnackBarBehavior.floating,
+        ),
+      );
+    } on FirebaseAuthException catch (e) {
+      String message = 'Could not change password. Please try again.';
+      if (e.code == 'wrong-password' || e.code == 'invalid-credential') {
+        message = 'Current password is incorrect.';
+      } else if (e.code == 'weak-password') {
+        message = 'New password is too weak.';
+      } else if (e.code == 'requires-recent-login') {
+        message = 'Please log out and log back in, then try again.';
+      }
+      if (!mounted) return;
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text(message), backgroundColor: kRed, behavior: SnackBarBehavior.floating),
+      );
+    } finally {
+      if (mounted) setState(() => _isSaving = false);
+    }
+  }
 
   @override
   Widget build(BuildContext context) {
     return Padding(
-      padding: const EdgeInsets.fromLTRB(24, 20, 24, 36),
-      child: Column(
-        mainAxisSize: MainAxisSize.min,
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Center(
-            child: Container(
-              width: 40,
-              height: 4,
-              margin: const EdgeInsets.only(bottom: 20),
-              decoration: BoxDecoration(
-                color: Colors.grey[300],
-                borderRadius: BorderRadius.circular(2),
-              ),
-            ),
-          ),
-          const Text(
-            'Select Language',
-            style: TextStyle(
-              fontSize: 20,
-              fontWeight: FontWeight.bold,
-              color: Colors.black87,
-            ),
-          ),
-          const SizedBox(height: 16),
-          ..._languages.map(
-            (lang) => ListTile(
-              contentPadding: EdgeInsets.zero,
-              leading: Container(
-                padding: const EdgeInsets.all(8),
+      padding: EdgeInsets.fromLTRB(
+        24,
+        20,
+        24,
+        MediaQuery.of(context).viewInsets.bottom + 36,
+      ),
+      child: Form(
+        key: _formKey,
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            // handle
+            Center(
+              child: Container(
+                width: 40,
+                height: 4,
+                margin: const EdgeInsets.only(bottom: 20),
                 decoration: BoxDecoration(
-                  color: current == lang ? kGreenLight : kBg,
-                  borderRadius: BorderRadius.circular(10),
-                ),
-                child: Icon(
-                  Icons.language,
-                  color: current == lang ? kGreen : kGrey,
-                  size: 18,
+                  color: Colors.grey[300],
+                  borderRadius: BorderRadius.circular(2),
                 ),
               ),
-              title: Text(
-                lang,
-                style: TextStyle(
-                  fontWeight: current == lang
-                      ? FontWeight.w700
-                      : FontWeight.w500,
-                  color: current == lang ? kGreen : Colors.black87,
-                ),
-              ),
-              trailing: current == lang
-                  ? const Icon(Icons.check_circle, color: kGreen, size: 20)
-                  : null,
-              onTap: () => onSelected(lang),
             ),
-          ),
-        ],
+            const Text(
+              'Change Password',
+              style: TextStyle(
+                fontSize: 20,
+                fontWeight: FontWeight.bold,
+                color: Colors.black87,
+              ),
+            ),
+            const SizedBox(height: 20),
+            _buildPasswordField(
+              'Current Password',
+              _currentCtrl,
+              _obscureCurrent,
+              () => setState(() => _obscureCurrent = !_obscureCurrent),
+              validator: (v) => (v == null || v.isEmpty) ? 'Enter your current password' : null,
+            ),
+            const SizedBox(height: 12),
+            _buildPasswordField(
+              'New Password',
+              _newCtrl,
+              _obscureNew,
+              () => setState(() => _obscureNew = !_obscureNew),
+              validator: (v) =>
+                  (v == null || v.length < 6) ? 'Password must be at least 6 characters' : null,
+            ),
+            const SizedBox(height: 12),
+            _buildPasswordField(
+              'Confirm New Password',
+              _confirmCtrl,
+              _obscureConfirm,
+              () => setState(() => _obscureConfirm = !_obscureConfirm),
+              validator: (v) => v != _newCtrl.text ? 'Passwords do not match' : null,
+            ),
+            const SizedBox(height: 24),
+            ElevatedButton(
+              onPressed: _isSaving ? null : _submit,
+              style: ElevatedButton.styleFrom(
+                backgroundColor: kGreen,
+                minimumSize: const Size(double.infinity, 52),
+                shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(14),
+                ),
+                elevation: 0,
+              ),
+              child: _isSaving
+                  ? const SizedBox(
+                      height: 20,
+                      width: 20,
+                      child: CircularProgressIndicator(strokeWidth: 2, color: Colors.white),
+                    )
+                  : const Text(
+                      'Update Password',
+                      style: TextStyle(
+                        color: Colors.white,
+                        fontWeight: FontWeight.w700,
+                        fontSize: 15,
+                      ),
+                    ),
+            ),
+          ],
+        ),
       ),
     );
   }
-}
 
-// ─────────────────────────────────────────────
-//  ENTRY POINT FOR TESTING
-// ─────────────────────────────────────────────
-void main() {
-  runApp(
-    const MaterialApp(debugShowCheckedModeBanner: false, home: ProfileScreen()),
-  );
+  Widget _buildPasswordField(
+    String label,
+    TextEditingController ctrl,
+    bool obscure,
+    VoidCallback toggleObscure, {
+    required String? Function(String?) validator,
+  }) {
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Text(
+          label,
+          style: const TextStyle(
+            fontSize: 12,
+            fontWeight: FontWeight.w600,
+            color: kGrey,
+          ),
+        ),
+        const SizedBox(height: 6),
+        TextFormField(
+          controller: ctrl,
+          obscureText: obscure,
+          validator: validator,
+          decoration: InputDecoration(
+            prefixIcon: const Icon(Icons.lock_outline, color: kGreen, size: 18),
+            suffixIcon: IconButton(
+              icon: Icon(
+                obscure ? Icons.visibility_off_outlined : Icons.visibility_outlined,
+                size: 18,
+                color: kGrey,
+              ),
+              onPressed: toggleObscure,
+            ),
+            filled: true,
+            fillColor: kBg,
+            border: OutlineInputBorder(
+              borderRadius: BorderRadius.circular(12),
+              borderSide: BorderSide.none,
+            ),
+            contentPadding: const EdgeInsets.symmetric(vertical: 14),
+          ),
+        ),
+      ],
+    );
+  }
 }

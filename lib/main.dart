@@ -11,6 +11,10 @@ import 'package:aflalert/screens/login_screen.dart';
 import 'package:aflalert/screens/analysis_screen.dart';
 import 'package:aflalert/screens/registration_screen.dart';
 import 'package:aflalert/screens/camera_screen.dart';
+import 'package:aflalert/screens/downloaded_reports_screen.dart';
+import 'package:aflalert/screens/settings_screen.dart';
+import 'package:aflalert/screens/result_screen.dart';
+import 'package:aflalert/services/local_notification_service.dart';
 
 Future<void> main() async {
   WidgetsFlutterBinding.ensureInitialized();
@@ -18,6 +22,8 @@ Future<void> main() async {
   await Firebase.initializeApp(
     options: DefaultFirebaseOptions.currentPlatform,
   );
+
+  await LocalNotificationService.instance.init();
 
   runApp(const AflAlert());
 }
@@ -28,9 +34,7 @@ class AflAlert extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return MaterialApp(
-      title: 'AflAlert',
       debugShowCheckedModeBanner: false,
-
       theme: ThemeData(
         useMaterial3: true,
         colorScheme: ColorScheme.fromSeed(
@@ -51,13 +55,13 @@ class AflAlert extends StatelessWidget {
 
         elevatedButtonTheme: ElevatedButtonThemeData(
           style: ElevatedButton.styleFrom(
-            backgroundColor: const Color(0xFF1E3A24),
+            backgroundColor: const Color(0xFF00462D),
             foregroundColor: Colors.white,
+            disabledBackgroundColor: const Color(0xFF00462D).withValues(alpha: 0.4),
             minimumSize: const Size(double.infinity, 56),
             shape: RoundedRectangleBorder(
               borderRadius: BorderRadius.circular(28),
             ),
-            elevation: 0,
             textStyle: const TextStyle(
               fontSize: 18,
               fontWeight: FontWeight.bold,
@@ -107,7 +111,18 @@ class AflAlert extends StatelessWidget {
         '/login': (context) => const LoginScreen(),
         '/home': (context) => HomeScreen(),
         '/analysis': (context) => const AnalysisScreen(),
+        '/results': (context) {
+          final args = ModalRoute.of(context)!.settings.arguments as ResultsScreenArgs;
+          return ResultsScreen(
+            isSafe: args.isSafe,
+            confidence: args.confidence,
+            analysisLabel: args.analysisLabel,
+            imagePath: args.imagePath,
+          );
+        },
         '/register': (context) => const RegistrationScreen(),
+        '/downloadedReports': (context) => const DownloadedReportsScreen(),
+        '/settings': (context) => const SettingsScreen(),
         '/camera': (context) { 
           debugPrint('ROUTE_TRACE: building /camera'); 
           return CameraCaptureScreen(); 

@@ -1,4 +1,29 @@
+import 'dart:io';
+
+import 'package:camera/camera.dart';
 import 'package:flutter/material.dart';
+
+import '../constants/app_colors.dart';
+import '../models/report_model.dart';
+import '../services/location_service.dart';
+import '../services/pdf_service.dart';
+import '../services/report_storage_service.dart';
+import '../widgets/pdf_export_dialog.dart';
+import 'analysis_screen.dart';
+
+class ResultsScreenArgs {
+  final bool isSafe;
+  final double confidence;
+  final String? analysisLabel;
+  final String? imagePath;
+
+  const ResultsScreenArgs({
+    required this.isSafe,
+    required this.confidence,
+    this.analysisLabel,
+    this.imagePath,
+  });
+}
 
 class RecommendationSource {
   final String text;
@@ -17,98 +42,182 @@ class RecommendationSource {
 class ResultsScreen extends StatelessWidget {
   final bool isSafe; // true = Healthy Maize, false = Contaminated
   final double confidence; // 0.0 - 1.0
-  final String? userPhotoUrl;
-  final String userInitial;
+  final String? analysisLabel;
+  final String? imagePath;
 
   const ResultsScreen({
     super.key,
     required this.isSafe,
     required this.confidence,
-    this.userPhotoUrl,
-    this.userInitial = 'U',
+    this.analysisLabel,
+    this.imagePath,
   });
 
-  // ---- Palette matched to the design mockup ----
-  static const bgDark = Color(0xFF17171B);
-  static const cardCream = Color(0xFFF1EEE4);
-  static const textOnDark = Color(0xFFEDE9DE);
-  static const textOnCream = Color(0xFF232320);
-  static const textMuted = Color(0xFF6B6A63);
+  // ---- Palette matched to the shared AppColors theme (registration screen) ----
+  static const pageBg = AppColors.logoCream;
+  static const cardBg = AppColors.surface;
+  static const textPrimary = AppColors.text;
+  static const textMuted = AppColors.grey;
 
   // Safe (green) accents
-  static const safeIconBg = Color(0xFF1F4A2C);
-  static const safeBoxBg = Color(0xFF1F3A28);
-  static const safeCheckColor = Color(0xFF97C459);
-  static const safeTextLight = Color(0xFFE4EFD6);
-  static const safeHeading = Color(0xFFC0DD97);
+  static const safeIconBg = AppColors.primaryContainer;
+  static const safeBoxBg = AppColors.successLight;
+  static const safeCheckColor = AppColors.primaryContainer;
+  static const safeHeading = AppColors.primaryContainer;
 
   // Unsafe (red) accents
-  static const unsafeIconBg = Color(0xFF791F1F);
-  static const unsafeBoxBg = Color(0xFF4A1B0C);
-  static const unsafeCheckColor = Color(0xFFF09595);
-  static const unsafeTextLight = Color(0xFFF7C1C1);
-  static const unsafeHeading = Color(0xFFF0997B);
+  static const unsafeIconBg = AppColors.error;
+  static const unsafeBoxBg = AppColors.errorLight;
+  static const unsafeCheckColor = AppColors.error;
+  static const unsafeHeading = AppColors.error;
 
   Color get iconBg => isSafe ? safeIconBg : unsafeIconBg;
   Color get boxBg => isSafe ? safeBoxBg : unsafeBoxBg;
   Color get checkColor => isSafe ? safeCheckColor : unsafeCheckColor;
-  Color get boxTextColor => isSafe ? safeTextLight : unsafeTextLight;
+  Color get boxTextColor => textPrimary;
   Color get headingColor => isSafe ? safeHeading : unsafeHeading;
 
-  String get title => isSafe ? 'Healthy Maize' : 'Unsafe for Human Consumption';
-  String get subtitle =>
-      isSafe ? 'Diagnosis completed successfully' : 'Contamination detected in this batch';
-  String get riskLevel => isSafe ? 'Very low' : 'High';
-  String get riskTag => isSafe ? 'SAFE · GRADE A' : 'UNSAFE · REJECTED';
+  String get displayAnalysisLabel {
+    final label = analysisLabel?.trim();
+    if (label != null && label.isNotEmpty) {
+      return label;
+    }
+    return isSafe ? 'Healthy Maize' : 'Unsafe for Human Consumption';
+  }
 
-  List<RecommendationSource> get attributedRecommendations => isSafe
-      ? [
-          const RecommendationSource(
-            text: 'Safe for storage and immediate human consumption.',
-            sourceName: 'UNBS',
-            badgeBg: Color(0xFF2D5A3A),
-            badgeText: Color(0xFFE4EFD6),
-          ),
-          const RecommendationSource(
-            text: 'Continue drying properly to keep moisture below 13%.',
-            sourceName: 'MAAIF',
-            badgeBg: Color(0xFF435832),
-            badgeText: Color(0xFFEDE9DE),
-          ),
-          const RecommendationSource(
-            text: 'Store in a cool, dry place away from ground contact on pallets.',
-            sourceName: 'UNBS',
-            badgeBg: Color(0xFF2D5A3A),
-            badgeText: Color(0xFFE4EFD6),
-          ),
-        ]
-      : [
-          const RecommendationSource(
-            text: 'Do not consume, mill, or sell for human food or animal feed.',
-            sourceName: 'UNBS',
-            badgeBg: Color(0xFF611C1C),
-            badgeText: Color(0xFFF7C1C1),
-          ),
-          const RecommendationSource(
-            text: 'Isolate this batch immediately from other stock to prevent cross-spread.',
-            sourceName: 'MAAIF',
-            badgeBg: Color(0xFF592D1F),
-            badgeText: Color(0xFFF0997B),
-          ),
-          const RecommendationSource(
-            text: 'Arrange certified laboratory retesting before any processing.',
-            sourceName: 'UNBS',
-            badgeBg: Color(0xFF611C1C),
-            badgeText: Color(0xFFF7C1C1),
-          ),
-        ];
+  String get title => displayAnalysisLabel;
+  String get subtitle => isSafe
+      ? 'Diagnosis completed successfully'
+      : 'Analysis flagged this sample for review';
+
+  int get confidencePercent => (confidence * 100).round();
+
+  // The model is only ever shown to the user once it clears TfliteService's
+  // 60% floor (lower results get rejected upstream as "not maize"), so the
+  // practical range here is 60-100%. Below 85% is close enough to that floor
+  // that the guidance should nudge toward a retest rather than state the
+  // call as flatly certain.
+  bool get _isHighConfidence => confidence >= 0.85;
+
+  RecommendationSource _fromAflalert(String text) => RecommendationSource(
+        text: text,
+        sourceName: 'AFLALERT AI',
+        badgeBg: isSafe ? AppColors.primaryContainer : AppColors.error,
+        badgeText: Colors.white,
+      );
+
+  RecommendationSource _fromUnbs(String text) => RecommendationSource(
+        text: text,
+        sourceName: 'UNBS',
+        badgeBg: AppColors.error,
+        badgeText: Colors.white,
+      );
+
+  RecommendationSource _fromMaaif(String text) => RecommendationSource(
+        text: text,
+        sourceName: 'MAAIF',
+        badgeBg: isSafe ? AppColors.successLight : AppColors.errorLight,
+        badgeText: Colors.white,
+      );
+
+  List<RecommendationSource> get attributedRecommendations {
+    if (isSafe) {
+      final findingText = _isHighConfidence
+          ? 'No visible mold or aflatoxin indicators were found in this sample ($confidencePercent% confidence).'
+          : 'No mold indicators were found, but confidence is only $confidencePercent%. Rescan in bright, even light to confirm before relying on this result.';
+
+      return [
+        _fromAflalert(findingText),
+        _fromMaaif(
+          'Keep grain moisture below 13% and store in a cool, dry, well-ventilated space raised off '
+          'the ground to prevent mold developing after this scan.',
+        ),
+        _fromMaaif(
+          'Re-check stored batches periodically — aflatoxin risk can develop after storage even '
+          'when the grain started out clean.',
+        ),
+      ];
+    }
+
+    final findingText = _isHighConfidence
+        ? 'Visible mold consistent with aflatoxin contamination was detected ($confidencePercent% confidence).'
+        : 'Possible mold contamination was detected, but confidence is only $confidencePercent%. Treat this '
+            'batch as high-risk and rescan in better light to confirm.';
+
+    return [
+      _fromAflalert(findingText),
+      _fromUnbs(
+        'Do not sell or consume this batch. Isolate it immediately and arrange certified laboratory '
+        'testing before any further use.',
+      ),
+      _fromMaaif(
+        'Do not feed this batch to livestock either — aflatoxins carry over into milk and meat, so '
+        'contaminated feed puts the animals and consumers at risk too.',
+      ),
+    ];
+  }
+
+  // Re-runs the same capture flow used from Home: open the camera, then hand
+  // the photo off to analysis. Replaces this Results screen so the back
+  // stack stays [Home, Results] once the new analysis completes, instead of
+  // stacking another Results screen underneath.
+  Future<void> _scanAnotherBatch(BuildContext context) async {
+    final String? location = await LocationService().getCurrentPlaceName();
+    if (!context.mounted) return;
+
+    final Object? photo = await Navigator.pushNamed(context, '/camera');
+    if (photo is! XFile || !context.mounted) return;
+
+    Navigator.pushReplacementNamed(
+      context,
+      '/analysis',
+      arguments: AnalysisScreenArgs(photo: photo, location: location),
+    );
+  }
+
+  Future<void> _exportPdf(BuildContext context) async {
+    _showActionStatus(
+      context,
+      'Generating PDF report...',
+      Icons.picture_as_pdf_rounded,
+      AppColors.primaryContainer,
+    );
+
+    try {
+      final file = await PdfService().generateReport(
+        isSafe: isSafe,
+        confidence: confidence,
+      );
+
+      await ReportStorageService().saveReport(
+        ReportModel(
+          id: DateTime.now().millisecondsSinceEpoch.toString(),
+          result: displayAnalysisLabel,
+          confidence: confidence,
+          date: DateTime.now(),
+          pdfPath: file.path,
+        ),
+      );
+
+      if (!context.mounted) return;
+      await showPdfExportDialog(context, file);
+    } catch (e) {
+      if (!context.mounted) return;
+      _showActionStatus(
+        context,
+        'Could not save PDF report',
+        Icons.error_outline_rounded,
+        AppColors.error,
+      );
+    }
+  }
 
   // Helper method to display clean snackbar alerts
   void _showActionStatus(BuildContext context, String title, IconData icon, Color color) {
     ScaffoldMessenger.of(context).clearSnackBars();
     ScaffoldMessenger.of(context).showSnackBar(
       SnackBar(
-        backgroundColor: cardCream,
+        backgroundColor: cardBg,
         behavior: SnackBarBehavior.floating,
         shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
         duration: const Duration(seconds: 2),
@@ -118,7 +227,7 @@ class ResultsScreen extends StatelessWidget {
             const SizedBox(width: 10),
             Text(
               title,
-              style: const TextStyle(color: textOnCream, fontWeight: FontWeight.w500, fontSize: 13),
+              style: const TextStyle(color: textPrimary, fontWeight: FontWeight.w500, fontSize: 13),
             ),
           ],
         ),
@@ -126,13 +235,121 @@ class ResultsScreen extends StatelessWidget {
     );
   }
 
+  Widget _buildDiagnosisCard() {
+    final File? photoFile =
+        (imagePath != null && imagePath!.isNotEmpty) ? File(imagePath!) : null;
+    final bool hasPhoto = photoFile != null && photoFile.existsSync();
+
+    return Container(
+      decoration: BoxDecoration(
+        color: cardBg,
+        borderRadius: BorderRadius.circular(16),
+        boxShadow: [
+          BoxShadow(
+            color: Colors.black.withValues(alpha: 0.05),
+            blurRadius: 10,
+            offset: const Offset(0, 4),
+          ),
+        ],
+      ),
+      child: Column(
+        children: [
+          if (hasPhoto)
+            Stack(
+              clipBehavior: Clip.none,
+              alignment: Alignment.bottomCenter,
+              children: [
+                ClipRRect(
+                  borderRadius: const BorderRadius.vertical(top: Radius.circular(16)),
+                  child: Image.file(
+                    photoFile,
+                    height: 180,
+                    width: double.infinity,
+                    fit: BoxFit.cover,
+                  ),
+                ),
+                Positioned(
+                  bottom: -24,
+                  child: Container(
+                    width: 56,
+                    height: 56,
+                    decoration: BoxDecoration(
+                      color: iconBg,
+                      shape: BoxShape.circle,
+                      border: Border.all(color: cardBg, width: 3),
+                    ),
+                    child: Icon(
+                      isSafe ? Icons.check_rounded : Icons.warning_rounded,
+                      color: Colors.white,
+                      size: 26,
+                    ),
+                  ),
+                ),
+              ],
+            )
+          else
+            Padding(
+              padding: const EdgeInsets.only(top: 28),
+              child: Container(
+                width: 64,
+                height: 64,
+                decoration: BoxDecoration(
+                  color: iconBg,
+                  borderRadius: BorderRadius.circular(16),
+                ),
+                child: Icon(
+                  isSafe ? Icons.check_rounded : Icons.warning_rounded,
+                  color: Colors.white,
+                  size: 30,
+                ),
+              ),
+            ),
+          Padding(
+            padding: EdgeInsets.fromLTRB(16, hasPhoto ? 32 : 14, 16, 24),
+            child: Column(
+              children: [
+                Text(
+                  title,
+                  textAlign: TextAlign.center,
+                  style: const TextStyle(
+                    fontSize: 18,
+                    fontWeight: FontWeight.w500,
+                    color: textPrimary,
+                  ),
+                ),
+                const SizedBox(height: 8),
+                _buildConfidenceBadge(),
+                const SizedBox(height: 6),
+                Text(
+                  subtitle,
+                  style: const TextStyle(fontSize: 12, color: textMuted),
+                ),
+              ],
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildConfidenceBadge() {
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
+      decoration: BoxDecoration(
+        color: iconBg.withValues(alpha: 0.12),
+        borderRadius: BorderRadius.circular(20),
+      ),
+      child: Text(
+        '$confidencePercent% confidence',
+        style: TextStyle(fontSize: 11, fontWeight: FontWeight.w600, color: iconBg),
+      ),
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
-    final confidencePercent = (confidence * 100).toStringAsFixed(0);
-    final confidenceLabel = confidence >= 0.85 ? 'high' : confidence >= 0.6 ? 'medium' : 'low';
-
     return Scaffold(
-      backgroundColor: bgDark,
+      backgroundColor: pageBg,
       body: SafeArea(
         child: Padding(
           padding: const EdgeInsets.all(16),
@@ -145,34 +362,15 @@ class ResultsScreen extends StatelessWidget {
                   children: [
                     IconButton(
                       onPressed: () => Navigator.pop(context), // Goes back to Camera screen
-                      icon: const Icon(Icons.arrow_back, color: textOnDark),
+                      icon: const Icon(Icons.arrow_back, color: AppColors.primary),
                     ),
                     const SizedBox(width: 4),
                     const Text(
                       'Aflatoxin Detector',
                       style: TextStyle(
-                        color: textOnDark,
+                        color: AppColors.primary,
                         fontSize: 17,
                         fontWeight: FontWeight.w500,
-                      ),
-                    ),
-                    const Spacer(),
-                    GestureDetector(
-                      onTap: () => Navigator.pushNamed(context, '/profile'),
-                      child: CircleAvatar(
-                        radius: 19,
-                        backgroundColor: const Color(0xFF85B7EB),
-                        backgroundImage:
-                            userPhotoUrl != null ? NetworkImage(userPhotoUrl!) : null,
-                        child: userPhotoUrl == null
-                            ? Text(
-                                userInitial.toUpperCase(),
-                                style: const TextStyle(
-                                  color: Color(0xFF042C53),
-                                  fontWeight: FontWeight.w500,
-                                ),
-                              )
-                            : null,
                       ),
                     ),
                   ],
@@ -180,117 +378,7 @@ class ResultsScreen extends StatelessWidget {
                 const SizedBox(height: 18),
 
                 // Main Diagnosis Card
-                Container(
-                  padding: const EdgeInsets.symmetric(vertical: 28, horizontal: 16),
-                  decoration: BoxDecoration(
-                    color: cardCream,
-                    borderRadius: BorderRadius.circular(16),
-                  ),
-                  child: Column(
-                    children: [
-                      Container(
-                        width: 64,
-                        height: 64,
-                        decoration: BoxDecoration(
-                          color: iconBg,
-                          borderRadius: BorderRadius.circular(16),
-                        ),
-                        child: Icon(
-                          isSafe ? Icons.check_rounded : Icons.warning_rounded,
-                          color: isSafe ? const Color(0xFFEAF3DE) : const Color(0xFFFCEBEB),
-                          size: 30,
-                        ),
-                      ),
-                      const SizedBox(height: 14),
-                      Text(
-                        title,
-                        textAlign: TextAlign.center,
-                        style: const TextStyle(
-                          fontSize: 18,
-                          fontWeight: FontWeight.w500,
-                          color: textOnCream,
-                        ),
-                      ),
-                      const SizedBox(height: 4),
-                      Text(
-                        subtitle,
-                        style: const TextStyle(fontSize: 12, color: textMuted),
-                      ),
-                    ],
-                  ),
-                ),
-                const SizedBox(height: 14),
-
-                // Analytics Metrics Box Row
-                Row(
-                  children: [
-                    Expanded(
-                      child: Container(
-                        padding: const EdgeInsets.all(12),
-                        decoration: BoxDecoration(
-                          color: cardCream,
-                          borderRadius: BorderRadius.circular(12),
-                        ),
-                        child: Column(
-                          crossAxisAlignment: CrossAxisAlignment.start,
-                          children: [
-                            const Text('Confidence score',
-                                style: TextStyle(fontSize: 11, color: textMuted)),
-                            const SizedBox(height: 4),
-                            RichText(
-                              text: TextSpan(
-                                children: [
-                                  TextSpan(
-                                    text: '$confidencePercent% ',
-                                    style: const TextStyle(
-                                      fontSize: 20,
-                                      fontWeight: FontWeight.w500,
-                                      color: textOnCream,
-                                    ),
-                                  ),
-                                  TextSpan(
-                                    text: confidenceLabel,
-                                    style: const TextStyle(fontSize: 12, color: textMuted),
-                                  ),
-                                ],
-                              ),
-                            ),
-                          ],
-                        ),
-                      ),
-                    ),
-                    const SizedBox(width: 10),
-                    Expanded(
-                      child: Container(
-                        padding: const EdgeInsets.all(12),
-                        decoration: BoxDecoration(
-                          color: cardCream,
-                          borderRadius: BorderRadius.circular(12),
-                        ),
-                        child: Column(
-                          crossAxisAlignment: CrossAxisAlignment.start,
-                          children: [
-                            const Text('Risk level',
-                                style: TextStyle(fontSize: 11, color: textMuted)),
-                            const SizedBox(height: 4),
-                            Text(
-                              riskLevel,
-                              style: TextStyle(
-                                fontSize: 16,
-                                fontWeight: FontWeight.w500,
-                                color: iconBg,
-                              ),
-                            ),
-                            Text(
-                              riskTag,
-                              style: const TextStyle(fontSize: 10, color: textMuted),
-                            ),
-                          ],
-                        ),
-                      ),
-                    ),
-                  ],
-                ),
+                _buildDiagnosisCard(),
                 const SizedBox(height: 14),
 
                 // Certified Recommendations Box
@@ -368,70 +456,37 @@ class ResultsScreen extends StatelessWidget {
                 ),
                 const SizedBox(height: 20),
 
-                // Action Button (Toggled dynamic layout)
+                // Export PDF Button
                 ElevatedButton.icon(
-                  onPressed: () {
-                    final statusMessage = isSafe 
-                        ? 'Batch logged as Healthy' 
-                        : 'Batch logged as Contaminated';
-                    _showActionStatus(context, statusMessage, isSafe ? Icons.check_circle : Icons.cancel, iconBg);
-                  },
-                  icon: Icon(isSafe ? Icons.check_circle_rounded : Icons.cancel_rounded, size: 18),
-                  label: Text(isSafe ? 'Approve & Save Batch' : 'Log Contaminated Batch'),
+                  onPressed: () => _exportPdf(context),
+                  icon: const Icon(Icons.save_alt_rounded, size: 16),
+                  label: const Text(
+                    'Export PDF',
+                    style: TextStyle(fontSize: 13, fontWeight: FontWeight.w700),
+                  ),
                   style: ElevatedButton.styleFrom(
-                    backgroundColor: isSafe ? safeIconBg : unsafeIconBg,
-                    foregroundColor: const Color(0xFFEDE9DE),
+                    backgroundColor: AppColors.secondary,
+                    foregroundColor: AppColors.primaryContainer,
                     padding: const EdgeInsets.symmetric(vertical: 14),
                     shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
-                    elevation: 1,
-                  ),
-                ),
-                const SizedBox(height: 10),
-
-                // Save PDF Report Button
-                OutlinedButton.icon(
-                  onPressed: () {
-                    // Triggers download feedback alert hook
-                    _showActionStatus(context, 'Downloading PDF Report to Device...', Icons.file_download_done_rounded, Colors.blue);
-                  },
-                  icon: const Icon(Icons.save_alt_rounded),
-                  label: const Text('Save Report PDF'),
-                  style: OutlinedButton.styleFrom(
-                    foregroundColor: textOnDark,
-                    side: const BorderSide(color: Color(0xFF3A3A35)),
-                    padding: const EdgeInsets.symmetric(vertical: 14),
-                    shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
-                  ),
-                ),
-                const SizedBox(height: 10),
-
-                // Share Results Button
-                OutlinedButton.icon(
-                  onPressed: () {
-                    _showActionStatus(context, 'Opening share options...', Icons.share_rounded, Colors.amber);
-                  },
-                  icon: const Icon(Icons.share_rounded),
-                  label: const Text('Share Results'),
-                  style: OutlinedButton.styleFrom(
-                    foregroundColor: textOnDark,
-                    side: const BorderSide(color: Color(0xFF3A3A35)),
-                    padding: const EdgeInsets.symmetric(vertical: 14),
-                    shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+                    elevation: 0,
                   ),
                 ),
                 const SizedBox(height: 16),
 
-                // Scan Again Button (Pops route out back into Camera viewfinder layout)
+                // Scan Again Button (opens the camera to capture and analyze a new batch)
                 ElevatedButton.icon(
-                  onPressed: () => Navigator.pop(context),
+                  onPressed: () => _scanAnotherBatch(context),
                   icon: const Icon(Icons.camera_alt_outlined),
                   label: const Text('Scan Another Batch'),
                   style: ElevatedButton.styleFrom(
-                    backgroundColor: cardCream,
-                    foregroundColor: textOnCream,
+                    backgroundColor: AppColors.primary,
+                    foregroundColor: Colors.white,
                     elevation: 0,
                     padding: const EdgeInsets.symmetric(vertical: 14),
-                    shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+                    shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(12),
+                    ),
                   ),
                 ),
               ],
