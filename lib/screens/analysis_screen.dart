@@ -159,6 +159,7 @@ class _AnalysisScreenState extends State<AnalysisScreen> {
       isSafe: !analysis.isMoldy,
       confidence: analysis.confidencePercent / 100,
       analysisLabel: analysis.label,
+      imagePath: photoFile.path,
     );
   }
 
