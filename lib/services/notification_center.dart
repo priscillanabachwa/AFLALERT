@@ -1,76 +1,64 @@
+import 'dart:convert';
+
 import 'package:flutter/material.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 
 import '../models/app_notification.dart';
 
-/// In-memory, app-wide list of notifications shown on the Notifications
-/// screen. Seeded with sample data; screens/services that detect real
-/// events (e.g. a heat-risk alert on Home) call [add] to prepend a new one.
+/// App-wide list of notifications shown on the Notifications screen,
+/// persisted locally so it survives app restarts. Notifications only ever
+/// leave this list when the user explicitly deletes them (or marks one
+/// read) — nothing here auto-expires or auto-clears.
 class NotificationCenter extends ChangeNotifier {
-  NotificationCenter._internal();
+  NotificationCenter._internal() {
+    _load();
+  }
   static final NotificationCenter instance = NotificationCenter._internal();
 
-  final List<AppNotification> _notifications = [
-    AppNotification(
-      title: 'Storage Issue Detected',
-      description:
-          'High humidity levels detected in the silo. Risk of fungal '
-          'growth is increasing — immediate ventilation is recommended.',
-      time: '2 hours ago',
-      icon: Icons.warning_amber_rounded,
-      iconColor: const Color(0xFFE0562A),
-      iconBackground: const Color(0xFFFBDCCB),
-      category: NotificationCategory.alert,
-      unread: true,
-      highPriority: true,
-    ),
-    AppNotification(
-      title: 'AI Scan Completed',
-      description:
-          'Your recent batch analysis for Field A is ready. Soil quality '
-          'and nutrient levels were successfully detected.',
-      time: '4 hours ago',
-      icon: Icons.check_circle_rounded,
-      iconColor: const Color(0xFF1B4332),
-      iconBackground: const Color(0xFFCDE7D8),
-      category: NotificationCategory.update,
-      unread: true,
-      actionLabel: 'VIEW',
-    ),
-    AppNotification(
-      title: 'Task Running Slow',
-      description:
-          'Cover-crop irrigation is taking longer than expected. Check '
-          'soil drainage and hose connections in Field C before the '
-          'pre-harvest window closes.',
-      time: '3 hours ago',
-      icon: Icons.hourglass_bottom_rounded,
-      iconColor: const Color(0xFFB07D0A),
-      iconBackground: const Color(0xFFFBE7B8),
-      category: NotificationCategory.alert,
-      unread: true,
-    ),
-    AppNotification(
-      title: 'System Update',
-      description:
-          'Data-sync accuracy improved for real-time content across all '
-          'connected devices.',
-      time: 'Yesterday',
-      icon: Icons.sync_rounded,
-      iconColor: const Color(0xFF6B7280),
-      iconBackground: const Color(0xFFE5E7EB),
-      category: NotificationCategory.update,
-    ),
-  ];
+  static const String _prefsKey = 'notifications';
+
+  final List<AppNotification> _notifications = [];
 
   List<AppNotification> get notifications => List.unmodifiable(_notifications);
+
+  Future<void> _load() async {
+    final SharedPreferences prefs = await SharedPreferences.getInstance();
+    final List<String> stored = prefs.getStringList(_prefsKey) ?? [];
+    final List<AppNotification> loaded = stored
+        .map((raw) => AppNotification.fromJson(jsonDecode(raw) as Map<String, dynamic>))
+        .toList();
+
+    // Merge rather than overwrite, in case add() was called while this
+    // async load was still in flight.
+    final Set<String> existingIds = _notifications.map((n) => n.id).toSet();
+    _notifications.addAll(loaded.where((n) => !existingIds.contains(n.id)));
+    _notifications.sort((a, b) => b.createdAt.compareTo(a.createdAt));
+    notifyListeners();
+  }
+
+  Future<void> _persist() async {
+    final SharedPreferences prefs = await SharedPreferences.getInstance();
+    await prefs.setStringList(
+      _prefsKey,
+      _notifications.map((n) => jsonEncode(n.toJson())).toList(),
+    );
+  }
 
   void add(AppNotification notification) {
     _notifications.insert(0, notification);
     notifyListeners();
+    _persist();
   }
 
   void markRead(AppNotification notification) {
     notification.unread = false;
     notifyListeners();
+    _persist();
+  }
+
+  void remove(AppNotification notification) {
+    _notifications.removeWhere((n) => n.id == notification.id);
+    notifyListeners();
+    _persist();
   }
 }

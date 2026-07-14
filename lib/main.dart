@@ -35,7 +35,6 @@ class AflAlert extends StatelessWidget {
   Widget build(BuildContext context) {
     return MaterialApp(
       debugShowCheckedModeBanner: false,
-
       theme: ThemeData(
         useMaterial3: true,
         colorScheme: ColorScheme.fromSeed(
@@ -118,6 +117,7 @@ class AflAlert extends StatelessWidget {
             isSafe: args.isSafe,
             confidence: args.confidence,
             analysisLabel: args.analysisLabel,
+            imagePath: args.imagePath,
           );
         },
         '/register': (context) => const RegistrationScreen(),

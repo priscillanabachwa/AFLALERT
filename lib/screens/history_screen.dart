@@ -2,8 +2,12 @@ import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:flutter/material.dart';
 
 import '../constants/app_colors.dart';
+import '../models/report_model.dart';
 import '../services/firestore_service.dart';
+import '../services/pdf_service.dart';
+import '../services/report_storage_service.dart';
 import '../widgets/custom_bottom_nav.dart';
+import '../widgets/pdf_export_dialog.dart';
 
 // ─────────────────────────────────────────
 //  DESIGN TOKENS — aliased to the shared AppColors palette
@@ -54,11 +58,20 @@ const List<String> _kMonthAbbrev = [
 String _formatScanDate(DateTime dt) =>
     '${_kMonthAbbrev[dt.month - 1]} ${dt.day}, ${dt.year}';
 
-ScanRecord _scanRecordFromDoc(QueryDocumentSnapshot doc) {
-  final data = doc.data() as Map<String, dynamic>;
+/// Returns null instead of throwing when a document's fields don't match
+/// the expected shape, so one malformed/legacy record can't blank out the
+/// whole list.
+ScanRecord? _scanRecordFromDoc(QueryDocumentSnapshot doc) {
+  final rawData = doc.data();
+  if (rawData is! Map<String, dynamic>) return null;
+  final data = rawData;
 
   final String label = (data['label'] ?? 'Unknown').toString();
-  final num confidenceRaw = (data['confidence'] ?? 0) as num;
+  final num confidenceRaw = switch (data['confidence']) {
+    num n => n,
+    String s => num.tryParse(s) ?? 0,
+    _ => 0,
+  };
   final int matchPercent =
       (confidenceRaw <= 1 ? confidenceRaw * 100 : confidenceRaw).round().clamp(0, 100);
 
@@ -138,8 +151,10 @@ class _HistoryScreenState extends State<HistoryScreen> {
             );
           }
 
-          final allScans =
-              (snapshot.data?.docs ?? []).map(_scanRecordFromDoc).toList();
+          final allScans = (snapshot.data?.docs ?? [])
+              .map(_scanRecordFromDoc)
+              .whereType<ScanRecord>()
+              .toList();
           final results = _filterRecords(allScans);
 
           return Column(
@@ -336,7 +351,7 @@ class _HistoryScreenState extends State<HistoryScreen> {
           const SizedBox(width: 12),
           // Export PDF button
           ElevatedButton.icon(
-            onPressed: _exportPDF,
+            onPressed: () => _exportPDF(results),
             icon: const Icon(Icons.picture_as_pdf, size: 16),
             label: const Text(
               'Export PDF',
@@ -345,6 +360,10 @@ class _HistoryScreenState extends State<HistoryScreen> {
             style: ElevatedButton.styleFrom(
               backgroundColor: kAccentGold,
               foregroundColor: kPrimaryGreen,
+              // Override the app-wide full-width default (Size(double.infinity, 56))
+              // so this button sizes to its content instead of forcing infinite
+              // width onto its Row, which isn't wrapped in Expanded/Flexible.
+              minimumSize: Size.zero,
               padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
               shape: RoundedRectangleBorder(
                 borderRadius: BorderRadius.circular(10),
@@ -513,8 +532,9 @@ class _HistoryScreenState extends State<HistoryScreen> {
     );
   }
 
-  void _exportPDF() {
-    // TODO: implement PDF export using pdf package
+  Future<void> _exportPDF(List<ScanRecord> records) async {
+    if (records.isEmpty) return;
+
     ScaffoldMessenger.of(context).showSnackBar(
       const SnackBar(
         content: Text('Generating PDF report…'),
@@ -522,6 +542,43 @@ class _HistoryScreenState extends State<HistoryScreen> {
         behavior: SnackBarBehavior.floating,
       ),
     );
+
+    try {
+      final entries = records
+          .map((r) => PdfReportEntry(
+                title: r.title,
+                isSafe: r.status == ScanStatus.healthy,
+                confidence: r.matchPercent / 100,
+                date: r.date,
+                location: r.location,
+              ))
+          .toList();
+
+      final file = await PdfService().generateBulkReport(entries);
+
+      final healthyCount = records.where((r) => r.status == ScanStatus.healthy).length;
+      await ReportStorageService().saveReport(
+        ReportModel(
+          id: DateTime.now().millisecondsSinceEpoch.toString(),
+          result: 'Scan history export (${records.length} scans, $healthyCount healthy)',
+          confidence: healthyCount / records.length,
+          date: DateTime.now(),
+          pdfPath: file.path,
+        ),
+      );
+
+      if (!mounted) return;
+      await showPdfExportDialog(context, file);
+    } catch (e) {
+      if (!mounted) return;
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text('Could not generate PDF report'),
+          backgroundColor: kDangerRed,
+          behavior: SnackBarBehavior.floating,
+        ),
+      );
+    }
   }
 
   void _showFilterSheet() {

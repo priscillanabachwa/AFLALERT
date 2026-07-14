@@ -3,8 +3,11 @@ import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
 
 import '../constants/app_colors.dart';
+import '../models/app_notification.dart';
 import '../services/firebase_auth.dart';
 import '../services/firestore_service.dart';
+import '../services/local_notification_service.dart';
+import '../services/notification_center.dart';
 import 'legal_document_screen.dart';
 
 class RegistrationScreen extends StatefulWidget {
@@ -118,6 +121,23 @@ class _RegistrationScreenState extends State<RegistrationScreen> {
     setState(() {
       _isLoading = false;
     });
+
+    final String email = _emailController.text.trim();
+    NotificationCenter.instance.add(
+      AppNotification(
+        title: 'Account Created',
+        description: 'Your AflAlert account was created with $email.',
+        icon: Icons.person_add_alt_1,
+        iconColor: AppColors.primaryContainer,
+        iconBackground: const Color(0xFFE8F5EE),
+        category: NotificationCategory.update,
+        unread: true,
+      ),
+    );
+    LocalNotificationService.instance.show(
+      title: 'Account Created',
+      body: 'Your AflAlert account was created with $email.',
+    );
 
     ScaffoldMessenger.of(context).showSnackBar(
       const SnackBar(

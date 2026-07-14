@@ -18,11 +18,14 @@ class LegalDocumentScreen extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: AppColors.background,
+      backgroundColor: AppColors.t95,
       appBar: AppBar(
-        backgroundColor: AppColors.background,
-        title: Text(title, style: const TextStyle(color: AppColors.text)),
-        iconTheme: const IconThemeData(color: AppColors.text),
+        backgroundColor: AppColors.t95,
+        title: Text(
+          title,
+          style: const TextStyle(color: AppColors.primary, fontWeight: FontWeight.bold),
+        ),
+        iconTheme: const IconThemeData(color: AppColors.primary),
       ),
       body: SafeArea(
         child: SingleChildScrollView(
