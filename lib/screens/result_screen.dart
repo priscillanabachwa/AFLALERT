@@ -1,3 +1,5 @@
+import 'dart:io';
+
 import 'package:camera/camera.dart';
 import 'package:flutter/material.dart';
 
@@ -13,11 +15,13 @@ class ResultsScreenArgs {
   final bool isSafe;
   final double confidence;
   final String? analysisLabel;
+  final String? imagePath;
 
   const ResultsScreenArgs({
     required this.isSafe,
     required this.confidence,
     this.analysisLabel,
+    this.imagePath,
   });
 }
 
@@ -39,12 +43,14 @@ class ResultsScreen extends StatelessWidget {
   final bool isSafe; // true = Healthy Maize, false = Contaminated
   final double confidence; // 0.0 - 1.0
   final String? analysisLabel;
+  final String? imagePath;
 
   const ResultsScreen({
     super.key,
     required this.isSafe,
     required this.confidence,
     this.analysisLabel,
+    this.imagePath,
   });
 
   // ---- Palette matched to the shared AppColors theme (registration screen) ----
@@ -84,26 +90,69 @@ class ResultsScreen extends StatelessWidget {
       ? 'Diagnosis completed successfully'
       : 'Analysis flagged this sample for review';
 
-  List<RecommendationSource> get attributedRecommendations {
-    final primaryText = isSafe
-        ? 'The model classified this sample as $displayAnalysisLabel.'
-        : 'The model flagged this sample as $displayAnalysisLabel and recommends review before use.';
-    final secondaryText = isSafe
-        ? 'Store the batch in a cool, dry place and keep moisture levels controlled.'
-        : 'Separate the batch and arrange confirmatory testing before handling or sale.';
+  int get confidencePercent => (confidence * 100).round();
 
-    return [
-      RecommendationSource(
-        text: primaryText,
-        sourceName: 'AI ANALYSIS',
+  // The model is only ever shown to the user once it clears TfliteService's
+  // 60% floor (lower results get rejected upstream as "not maize"), so the
+  // practical range here is 60-100%. Below 85% is close enough to that floor
+  // that the guidance should nudge toward a retest rather than state the
+  // call as flatly certain.
+  bool get _isHighConfidence => confidence >= 0.85;
+
+  RecommendationSource _fromAflalert(String text) => RecommendationSource(
+        text: text,
+        sourceName: 'AFLALERT AI',
         badgeBg: isSafe ? AppColors.primaryContainer : AppColors.error,
         badgeText: Colors.white,
-      ),
-      RecommendationSource(
-        text: secondaryText,
-        sourceName: 'AFLALERT',
+      );
+
+  RecommendationSource _fromUnbs(String text) => RecommendationSource(
+        text: text,
+        sourceName: 'UNBS',
+        badgeBg: AppColors.error,
+        badgeText: Colors.white,
+      );
+
+  RecommendationSource _fromMaaif(String text) => RecommendationSource(
+        text: text,
+        sourceName: 'MAAIF',
         badgeBg: isSafe ? AppColors.successLight : AppColors.errorLight,
         badgeText: Colors.white,
+      );
+
+  List<RecommendationSource> get attributedRecommendations {
+    if (isSafe) {
+      final findingText = _isHighConfidence
+          ? 'No visible mold or aflatoxin indicators were found in this sample ($confidencePercent% confidence).'
+          : 'No mold indicators were found, but confidence is only $confidencePercent%. Rescan in bright, even light to confirm before relying on this result.';
+
+      return [
+        _fromAflalert(findingText),
+        _fromMaaif(
+          'Keep grain moisture below 13% and store in a cool, dry, well-ventilated space raised off '
+          'the ground to prevent mold developing after this scan.',
+        ),
+        _fromMaaif(
+          'Re-check stored batches periodically — aflatoxin risk can develop after storage even '
+          'when the grain started out clean.',
+        ),
+      ];
+    }
+
+    final findingText = _isHighConfidence
+        ? 'Visible mold consistent with aflatoxin contamination was detected ($confidencePercent% confidence).'
+        : 'Possible mold contamination was detected, but confidence is only $confidencePercent%. Treat this '
+            'batch as high-risk and rescan in better light to confirm.';
+
+    return [
+      _fromAflalert(findingText),
+      _fromUnbs(
+        'Do not sell or consume this batch. Isolate it immediately and arrange certified laboratory '
+        'testing before any further use.',
+      ),
+      _fromMaaif(
+        'Do not feed this batch to livestock either — aflatoxins carry over into milk and meat, so '
+        'contaminated feed puts the animals and consumers at risk too.',
       ),
     ];
   }
@@ -186,6 +235,117 @@ class ResultsScreen extends StatelessWidget {
     );
   }
 
+  Widget _buildDiagnosisCard() {
+    final File? photoFile =
+        (imagePath != null && imagePath!.isNotEmpty) ? File(imagePath!) : null;
+    final bool hasPhoto = photoFile != null && photoFile.existsSync();
+
+    return Container(
+      decoration: BoxDecoration(
+        color: cardBg,
+        borderRadius: BorderRadius.circular(16),
+        boxShadow: [
+          BoxShadow(
+            color: Colors.black.withValues(alpha: 0.05),
+            blurRadius: 10,
+            offset: const Offset(0, 4),
+          ),
+        ],
+      ),
+      child: Column(
+        children: [
+          if (hasPhoto)
+            Stack(
+              clipBehavior: Clip.none,
+              alignment: Alignment.bottomCenter,
+              children: [
+                ClipRRect(
+                  borderRadius: const BorderRadius.vertical(top: Radius.circular(16)),
+                  child: Image.file(
+                    photoFile,
+                    height: 180,
+                    width: double.infinity,
+                    fit: BoxFit.cover,
+                  ),
+                ),
+                Positioned(
+                  bottom: -24,
+                  child: Container(
+                    width: 56,
+                    height: 56,
+                    decoration: BoxDecoration(
+                      color: iconBg,
+                      shape: BoxShape.circle,
+                      border: Border.all(color: cardBg, width: 3),
+                    ),
+                    child: Icon(
+                      isSafe ? Icons.check_rounded : Icons.warning_rounded,
+                      color: Colors.white,
+                      size: 26,
+                    ),
+                  ),
+                ),
+              ],
+            )
+          else
+            Padding(
+              padding: const EdgeInsets.only(top: 28),
+              child: Container(
+                width: 64,
+                height: 64,
+                decoration: BoxDecoration(
+                  color: iconBg,
+                  borderRadius: BorderRadius.circular(16),
+                ),
+                child: Icon(
+                  isSafe ? Icons.check_rounded : Icons.warning_rounded,
+                  color: Colors.white,
+                  size: 30,
+                ),
+              ),
+            ),
+          Padding(
+            padding: EdgeInsets.fromLTRB(16, hasPhoto ? 32 : 14, 16, 24),
+            child: Column(
+              children: [
+                Text(
+                  title,
+                  textAlign: TextAlign.center,
+                  style: const TextStyle(
+                    fontSize: 18,
+                    fontWeight: FontWeight.w500,
+                    color: textPrimary,
+                  ),
+                ),
+                const SizedBox(height: 8),
+                _buildConfidenceBadge(),
+                const SizedBox(height: 6),
+                Text(
+                  subtitle,
+                  style: const TextStyle(fontSize: 12, color: textMuted),
+                ),
+              ],
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildConfidenceBadge() {
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
+      decoration: BoxDecoration(
+        color: iconBg.withValues(alpha: 0.12),
+        borderRadius: BorderRadius.circular(20),
+      ),
+      child: Text(
+        '$confidencePercent% confidence',
+        style: TextStyle(fontSize: 11, fontWeight: FontWeight.w600, color: iconBg),
+      ),
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -218,52 +378,7 @@ class ResultsScreen extends StatelessWidget {
                 const SizedBox(height: 18),
 
                 // Main Diagnosis Card
-                Container(
-                  padding: const EdgeInsets.symmetric(vertical: 28, horizontal: 16),
-                  decoration: BoxDecoration(
-                    color: cardBg,
-                    borderRadius: BorderRadius.circular(16),
-                    boxShadow: [
-                      BoxShadow(
-                        color: Colors.black.withValues(alpha: 0.05),
-                        blurRadius: 10,
-                        offset: const Offset(0, 4),
-                      ),
-                    ],
-                  ),
-                  child: Column(
-                    children: [
-                      Container(
-                        width: 64,
-                        height: 64,
-                        decoration: BoxDecoration(
-                          color: iconBg,
-                          borderRadius: BorderRadius.circular(16),
-                        ),
-                        child: Icon(
-                          isSafe ? Icons.check_rounded : Icons.warning_rounded,
-                          color: Colors.white,
-                          size: 30,
-                        ),
-                      ),
-                      const SizedBox(height: 14),
-                      Text(
-                        title,
-                        textAlign: TextAlign.center,
-                        style: const TextStyle(
-                          fontSize: 18,
-                          fontWeight: FontWeight.w500,
-                          color: textPrimary,
-                        ),
-                      ),
-                      const SizedBox(height: 4),
-                      Text(
-                        subtitle,
-                        style: const TextStyle(fontSize: 12, color: textMuted),
-                      ),
-                    ],
-                  ),
-                ),
+                _buildDiagnosisCard(),
                 const SizedBox(height: 14),
 
                 // Certified Recommendations Box
