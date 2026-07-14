@@ -703,7 +703,6 @@ class _ChangePasswordSheetState extends State<_ChangePasswordSheet> {
         AppNotification(
           title: 'Password Changed',
           description: 'Your account password was changed successfully.',
-          time: 'Just now',
           icon: Icons.lock_reset,
           iconColor: kGreen,
           iconBackground: kGreenLight,

@@ -113,9 +113,16 @@ class _NotificationsScreenState extends State<NotificationsScreen> {
                         itemCount: filtered.length,
                         itemBuilder: (context, index) {
                           final notification = filtered[index];
-                          return _NotificationCard(
-                            notification: notification,
-                            onTap: () => NotificationCenter.instance.markRead(notification),
+                          return Dismissible(
+                            key: ValueKey(notification.id),
+                            direction: DismissDirection.endToStart,
+                            background: _DeleteBackground(),
+                            onDismissed: (_) =>
+                                NotificationCenter.instance.remove(notification),
+                            child: _NotificationCard(
+                              notification: notification,
+                              onTap: () => NotificationCenter.instance.markRead(notification),
+                            ),
                           );
                         },
                       ),
@@ -177,6 +184,26 @@ class _FilterRow extends StatelessWidget {
         borderRadius: BorderRadius.circular(24),
       ),
       padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+    );
+  }
+}
+
+// ---------------------------------------------------------------------------
+// Swipe-to-delete background
+// ---------------------------------------------------------------------------
+
+class _DeleteBackground extends StatelessWidget {
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      margin: const EdgeInsets.only(bottom: 14),
+      padding: const EdgeInsets.symmetric(horizontal: 20),
+      alignment: Alignment.centerRight,
+      decoration: BoxDecoration(
+        color: Colors.red.shade400,
+        borderRadius: BorderRadius.circular(18),
+      ),
+      child: const Icon(Icons.delete_outline, color: Colors.white),
     );
   }
 }
@@ -369,7 +396,7 @@ class _CardBody extends StatelessWidget {
         ],
         const SizedBox(height: 10),
         Text(
-          notification.time,
+          notification.relativeTime,
           style: TextStyle(color: Colors.grey.shade400, fontSize: 12),
         ),
       ],

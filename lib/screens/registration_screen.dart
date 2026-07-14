@@ -127,7 +127,6 @@ class _RegistrationScreenState extends State<RegistrationScreen> {
       AppNotification(
         title: 'Account Created',
         description: 'Your AflAlert account was created with $email.',
-        time: 'Just now',
         icon: Icons.person_add_alt_1,
         iconColor: AppColors.primaryContainer,
         iconBackground: const Color(0xFFE8F5EE),

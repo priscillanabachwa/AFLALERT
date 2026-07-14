@@ -109,7 +109,6 @@ class _HomeScreenState extends State<HomeScreen> {
       AppNotification(
         title: 'Heat Alert',
         description: tip,
-        time: 'Just now',
         icon: Icons.whatshot,
         iconColor: const Color(0xFFE0562A),
         iconBackground: const Color(0xFFFBDCCB),
