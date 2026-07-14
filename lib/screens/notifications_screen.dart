@@ -55,15 +55,13 @@ class NotificationsScreen extends StatefulWidget {
 }
 
 class _NotificationsScreenState extends State<NotificationsScreen> {
-  static const List<String> _filters = ['All', 'Alerts', 'Tips', 'Updates'];
+  static const List<String> _filters = ['All', 'Alerts', 'Updates'];
   String _selectedFilter = 'All';
 
   List<AppNotification> _filteredNotifications(List<AppNotification> notifications) {
     switch (_selectedFilter) {
       case 'Alerts':
         return notifications.where((n) => n.category == NotificationCategory.alert).toList();
-      case 'Tips':
-        return notifications.where((n) => n.category == NotificationCategory.tip).toList();
       case 'Updates':
         return notifications.where((n) => n.category == NotificationCategory.update).toList();
       case 'All':
@@ -147,35 +145,37 @@ class _FilterRow extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return SizedBox(
-      height: 44,
-      child: ListView.separated(
-        scrollDirection: Axis.horizontal,
-        padding: const EdgeInsets.symmetric(horizontal: 16),
-        itemCount: filters.length,
-        separatorBuilder: (_, _) => const SizedBox(width: 10),
-        itemBuilder: (context, index) {
-          final filter = filters[index];
-          final isSelected = filter == selected;
-          return ChoiceChip(
-            label: Text(filter),
-            selected: isSelected,
-            showCheckmark: false,
-            onSelected: (_) => onSelected(filter),
-            labelStyle: TextStyle(
-              color: isSelected ? Colors.white : Colors.black87,
-              fontWeight: FontWeight.w600,
-            ),
-            selectedColor: kDarkGreen,
-            backgroundColor: const Color(0xFFE7E3DA),
-            side: BorderSide.none,
-            shape: RoundedRectangleBorder(
-              borderRadius: BorderRadius.circular(24),
-            ),
-            padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
-          );
-        },
+    return Padding(
+      padding: const EdgeInsets.symmetric(horizontal: 16),
+      child: Row(
+        children: [
+          for (int i = 0; i < filters.length; i++) ...[
+            if (i > 0) const SizedBox(width: 10),
+            Expanded(child: _buildChip(filters[i])),
+          ],
+        ],
       ),
+    );
+  }
+
+  Widget _buildChip(String filter) {
+    final bool isSelected = filter == selected;
+    return ChoiceChip(
+      label: Center(child: Text(filter)),
+      selected: isSelected,
+      showCheckmark: false,
+      onSelected: (_) => onSelected(filter),
+      labelStyle: TextStyle(
+        color: isSelected ? Colors.white : Colors.black87,
+        fontWeight: FontWeight.w600,
+      ),
+      selectedColor: kDarkGreen,
+      backgroundColor: const Color(0xFFE7E3DA),
+      side: BorderSide.none,
+      shape: RoundedRectangleBorder(
+        borderRadius: BorderRadius.circular(24),
+      ),
+      padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
     );
   }
 }

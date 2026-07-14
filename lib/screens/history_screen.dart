@@ -54,11 +54,20 @@ const List<String> _kMonthAbbrev = [
 String _formatScanDate(DateTime dt) =>
     '${_kMonthAbbrev[dt.month - 1]} ${dt.day}, ${dt.year}';
 
-ScanRecord _scanRecordFromDoc(QueryDocumentSnapshot doc) {
-  final data = doc.data() as Map<String, dynamic>;
+/// Returns null instead of throwing when a document's fields don't match
+/// the expected shape, so one malformed/legacy record can't blank out the
+/// whole list.
+ScanRecord? _scanRecordFromDoc(QueryDocumentSnapshot doc) {
+  final rawData = doc.data();
+  if (rawData is! Map<String, dynamic>) return null;
+  final data = rawData;
 
   final String label = (data['label'] ?? 'Unknown').toString();
-  final num confidenceRaw = (data['confidence'] ?? 0) as num;
+  final num confidenceRaw = switch (data['confidence']) {
+    num n => n,
+    String s => num.tryParse(s) ?? 0,
+    _ => 0,
+  };
   final int matchPercent =
       (confidenceRaw <= 1 ? confidenceRaw * 100 : confidenceRaw).round().clamp(0, 100);
 
@@ -138,8 +147,10 @@ class _HistoryScreenState extends State<HistoryScreen> {
             );
           }
 
-          final allScans =
-              (snapshot.data?.docs ?? []).map(_scanRecordFromDoc).toList();
+          final allScans = (snapshot.data?.docs ?? [])
+              .map(_scanRecordFromDoc)
+              .whereType<ScanRecord>()
+              .toList();
           final results = _filterRecords(allScans);
 
           return Column(
@@ -345,6 +356,10 @@ class _HistoryScreenState extends State<HistoryScreen> {
             style: ElevatedButton.styleFrom(
               backgroundColor: kAccentGold,
               foregroundColor: kPrimaryGreen,
+              // Override the app-wide full-width default (Size(double.infinity, 56))
+              // so this button sizes to its content instead of forcing infinite
+              // width onto its Row, which isn't wrapped in Expanded/Flexible.
+              minimumSize: Size.zero,
               padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
               shape: RoundedRectangleBorder(
                 borderRadius: BorderRadius.circular(10),

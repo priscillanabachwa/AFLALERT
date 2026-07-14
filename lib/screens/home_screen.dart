@@ -7,6 +7,7 @@ import 'package:flutter/material.dart';
 
 import '../constants/app_colors.dart';
 import '../constants/daily_tips.dart';
+import '../constants/seasonal_guidelines.dart';
 import '../models/app_notification.dart';
 import '../services/firestore_service.dart';
 import '../services/local_notification_service.dart';
@@ -33,6 +34,7 @@ class _HomeScreenState extends State<HomeScreen> {
 
   LocationResult? _location;
   WeatherInfo? _weather;
+  RainfallSummary? _rainfall;
   bool _weatherLoading = true;
   Timer? _weatherRefreshTimer;
 
@@ -47,7 +49,10 @@ class _HomeScreenState extends State<HomeScreen> {
   void initState() {
     super.initState();
     _loadWeather();
-    _weatherRefreshTimer = Timer.periodic(_refreshInterval, (_) => _loadWeather());
+    _weatherRefreshTimer = Timer.periodic(
+      _refreshInterval,
+      (_) => _loadWeather(),
+    );
     _profileSub = FirestoreService().getUserProfile().listen((doc) {
       final String userType = doc.data()?['userType'] as String? ?? '';
       if (userType == _userType) return;
@@ -65,19 +70,24 @@ class _HomeScreenState extends State<HomeScreen> {
   Future<void> _loadWeather() async {
     // Always request a fresh GPS fix rather than reusing a cached one, so a
     // move to a new location is reflected immediately.
-    final LocationResult? location = await LocationService().getCurrentLocation();
+    final LocationResult? location = await LocationService()
+        .getCurrentLocation();
     if (location == null) {
       if (mounted) setState(() => _weatherLoading = false);
       return;
     }
 
-    final WeatherInfo? weather =
-        await WeatherService().getCurrentWeather(location.latitude, location.longitude);
+    final WeatherService weatherService = WeatherService();
+    final List<Object?> results = await Future.wait([
+      weatherService.getCurrentWeather(location.latitude, location.longitude),
+      weatherService.getRecentRainfall(location.latitude, location.longitude),
+    ]);
 
     if (!mounted) return;
     setState(() {
       _location = location;
-      _weather = weather;
+      _weather = results[0] as WeatherInfo?;
+      _rainfall = results[1] as RainfallSummary?;
       _weatherLoading = false;
     });
     _checkHeatAlert();
@@ -137,10 +147,12 @@ class _HomeScreenState extends State<HomeScreen> {
                   builder: (context, snapshot) {
                     final Map<String, dynamic>? profile = snapshot.data?.data();
                     final String? fullName = profile?['fullName'] as String?;
-                    final String firstName = (fullName != null && fullName.trim().isNotEmpty)
+                    final String firstName =
+                        (fullName != null && fullName.trim().isNotEmpty)
                         ? fullName.trim().split(' ').first
                         : 'there';
-                    final String userType = profile?['userType'] as String? ?? '';
+                    final String userType =
+                        profile?['userType'] as String? ?? '';
                     return Column(
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
@@ -154,16 +166,31 @@ class _HomeScreenState extends State<HomeScreen> {
                     );
                   },
                 ),
+                const SizedBox(height: 28),
+                const Text(
+                  'Guidelines',
+                  style: TextStyle(
+                    fontSize: 18,
+                    fontWeight: FontWeight.bold,
+                    color: AppColors.primary,
+                  ),
+                ),
+                const SizedBox(height: 16),
+                StreamBuilder<DocumentSnapshot<Map<String, dynamic>>>(
+                  stream: FirestoreService().getUserProfile(),
+                  builder: (context, snapshot) {
+                    final String userType =
+                        snapshot.data?.data()?['userType'] as String? ?? '';
+                    return _buildSeasonalGuidelineCard(userType);
+                  },
+                ),
                 const SizedBox(height: 32),
                 _buildScanButton(context),
                 const SizedBox(height: 12),
                 const Center(
                   child: Text(
                     'Tap to scan crops',
-                    style: TextStyle(
-                      fontSize: 14,
-                      color: Colors.grey,
-                    ),
+                    style: TextStyle(fontSize: 14, color: Colors.grey),
                   ),
                 ),
                 const SizedBox(height: 28),
@@ -184,7 +211,9 @@ class _HomeScreenState extends State<HomeScreen> {
                         else
                           for (int i = 0; i < recentDocs.length; i++)
                             Padding(
-                              padding: EdgeInsets.only(bottom: i == recentDocs.length - 1 ? 0 : 12),
+                              padding: EdgeInsets.only(
+                                bottom: i == recentDocs.length - 1 ? 0 : 12,
+                              ),
                               child: _buildScanTileFromDoc(recentDocs[i]),
                             ),
                       ],
@@ -208,8 +237,8 @@ class _HomeScreenState extends State<HomeScreen> {
           borderRadius: BorderRadius.circular(10),
           child: Image.asset(
             'lib/assets/images/aflalert_logo.png',
-            width: 36,
-            height: 36,
+            width: 50,
+            height: 50,
             fit: BoxFit.cover,
             errorBuilder: (context, error, stackTrace) => Container(
               padding: const EdgeInsets.all(8),
@@ -230,7 +259,7 @@ class _HomeScreenState extends State<HomeScreen> {
           child: Text(
             'AflAlert',
             style: TextStyle(
-              fontSize: 18,
+              fontSize: 24,
               fontWeight: FontWeight.bold,
               color: AppColors.primary,
             ),
@@ -241,8 +270,10 @@ class _HomeScreenState extends State<HomeScreen> {
           builder: (context, snapshot) {
             final user = FirebaseAuth.instance.currentUser;
             final profile = snapshot.data?.data();
-            final String name = profile?['fullName'] as String? ?? user?.displayName ?? '';
-            final String photoUrl = profile?['photoUrl'] as String? ?? user?.photoURL ?? '';
+            final String name =
+                profile?['fullName'] as String? ?? user?.displayName ?? '';
+            final String photoUrl =
+                profile?['photoUrl'] as String? ?? user?.photoURL ?? '';
 
             return InkWell(
               borderRadius: BorderRadius.circular(20),
@@ -260,10 +291,14 @@ class _HomeScreenState extends State<HomeScreen> {
                 child: CircleAvatar(
                   radius: 18,
                   backgroundColor: AppColors.primaryContainer,
-                  backgroundImage: photoUrl.isNotEmpty ? NetworkImage(photoUrl) : null,
+                  backgroundImage: photoUrl.isNotEmpty
+                      ? NetworkImage(photoUrl)
+                      : null,
                   child: photoUrl.isEmpty
                       ? Text(
-                          getInitials(name).isNotEmpty ? getInitials(name) : '?',
+                          getInitials(name).isNotEmpty
+                              ? getInitials(name)
+                              : '?',
                           style: const TextStyle(
                             fontSize: 13,
                             fontWeight: FontWeight.bold,
@@ -310,108 +345,217 @@ class _HomeScreenState extends State<HomeScreen> {
         const SizedBox(height: 6),
         const Text(
           'Ready to secure your harvest today?',
-          style: TextStyle(
-            fontSize: 14,
-            color: Colors.grey,
-          ),
+          style: TextStyle(fontSize: 14, color: Colors.grey),
         ),
       ],
     );
   }
 
   Widget _buildInfoCards(String dailyTip, bool heatAlert) {
-    return Row(
-      children: [
-        Expanded(
-          child: Container(
-            padding: const EdgeInsets.all(16),
-            decoration: BoxDecoration(
-              color: Colors.white,
-              borderRadius: BorderRadius.circular(16),
-              boxShadow: [
-                BoxShadow(
-                  color: Colors.black.withValues(alpha: 0.05),
-                  blurRadius: 10,
-                  offset: const Offset(0, 4),
-                ),
-              ],
+    return IntrinsicHeight(
+      child: Row(
+        crossAxisAlignment: CrossAxisAlignment.stretch,
+        children: [
+          Expanded(
+            child: Container(
+              padding: const EdgeInsets.all(16),
+              decoration: BoxDecoration(
+                color: Colors.white,
+                borderRadius: BorderRadius.circular(16),
+                boxShadow: [
+                  BoxShadow(
+                    color: Colors.black.withValues(alpha: 0.05),
+                    blurRadius: 10,
+                    offset: const Offset(0, 4),
+                  ),
+                ],
+              ),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text(
+                    (_location?.placeName?.toUpperCase()) ??
+                        (_weatherLoading
+                            ? 'LOCATING...'
+                            : 'LOCATION UNAVAILABLE'),
+                    style: const TextStyle(
+                      fontSize: 10,
+                      fontWeight: FontWeight.w600,
+                      color: Colors.grey,
+                      letterSpacing: 0.5,
+                    ),
+                  ),
+                  const SizedBox(height: 8),
+                  Text(
+                    _weather != null
+                        ? '${_weather!.temperatureC.round()}°C'
+                        : '--°C',
+                    style: const TextStyle(
+                      fontSize: 24,
+                      fontWeight: FontWeight.bold,
+                      color: AppColors.primary,
+                    ),
+                  ),
+                  const SizedBox(height: 4),
+                  Text(
+                    _weather?.condition ??
+                        (_weatherLoading
+                            ? 'Fetching weather...'
+                            : 'Unavailable'),
+                    style: const TextStyle(fontSize: 13, color: Colors.grey),
+                  ),
+                  const SizedBox(height: 12),
+                  Icon(
+                    _weather?.icon ?? Icons.cloud_off,
+                    color: AppColors.secondary,
+                    size: 28,
+                  ),
+                ],
+              ),
             ),
+          ),
+          const SizedBox(width: 14),
+          Expanded(
+            child: Container(
+              padding: const EdgeInsets.all(16),
+              decoration: BoxDecoration(
+                color: AppColors.primaryContainer,
+                borderRadius: BorderRadius.circular(16),
+              ),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Icon(
+                    heatAlert ? Icons.whatshot : Icons.lightbulb_outline,
+                    color: AppColors.secondary,
+                    size: 20,
+                  ),
+                  const SizedBox(height: 8),
+                  Text(
+                    heatAlert ? 'HEAT ALERT' : 'DAILY TIP',
+                    style: const TextStyle(
+                      fontSize: 10,
+                      fontWeight: FontWeight.w700,
+                      color: AppColors.secondary,
+                      letterSpacing: 0.5,
+                    ),
+                  ),
+                  const SizedBox(height: 8),
+                  Text(
+                    dailyTip,
+                    style: const TextStyle(
+                      fontSize: 12,
+                      color: Colors.white,
+                      height: 1.4,
+                    ),
+                  ),
+                ],
+              ),
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildSeasonalGuidelineCard(String userType) {
+    final double? recentRainfallMm = _rainfall?.totalMm;
+    final SeasonalGuideline guideline = currentSeasonalGuideline(
+      recentRainfallMm: recentRainfallMm,
+    );
+    final String advice = seasonalAdviceFor(guideline, userType);
+    final String? caution = weatherCautionFor(
+      guideline.stage,
+      recentRainfallMm,
+    );
+
+    return Container(
+      width: double.infinity,
+      padding: const EdgeInsets.all(16),
+      decoration: BoxDecoration(
+        color: AppColors.secondary,
+        borderRadius: BorderRadius.circular(16),
+        boxShadow: [
+          BoxShadow(
+            color: Colors.black.withValues(alpha: 0.05),
+            blurRadius: 10,
+            offset: const Offset(0, 4),
+          ),
+        ],
+      ),
+      child: Row(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Container(
+            padding: const EdgeInsets.all(10),
+            decoration: BoxDecoration(
+              color: Colors.white.withValues(alpha: 0.35),
+              borderRadius: BorderRadius.circular(12),
+            ),
+            child: Icon(guideline.icon, color: AppColors.primary, size: 24),
+          ),
+          const SizedBox(width: 12),
+          Expanded(
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
                 Text(
-                  (_location?.placeName?.toUpperCase()) ??
-                      (_weatherLoading ? 'LOCATING...' : 'LOCATION UNAVAILABLE'),
+                  guideline.seasonLabel.toUpperCase(),
                   style: const TextStyle(
                     fontSize: 10,
-                    fontWeight: FontWeight.w600,
-                    color: Colors.grey,
-                    letterSpacing: 0.5,
-                  ),
-                ),
-                const SizedBox(height: 8),
-                Text(
-                  _weather != null ? '${_weather!.temperatureC.round()}°C' : '--°C',
-                  style: const TextStyle(
-                    fontSize: 24,
-                    fontWeight: FontWeight.bold,
+                    fontWeight: FontWeight.w700,
                     color: AppColors.primary,
+                    letterSpacing: 0.5,
                   ),
                 ),
                 const SizedBox(height: 4),
                 Text(
-                  _weather?.condition ?? (_weatherLoading ? 'Fetching weather...' : 'Unavailable'),
+                  guideline.title,
                   style: const TextStyle(
-                    fontSize: 13,
-                    color: Colors.grey,
+                    fontSize: 15,
+                    fontWeight: FontWeight.bold,
+                    color: AppColors.primary,
                   ),
                 ),
-                const SizedBox(height: 12),
-                Icon(_weather?.icon ?? Icons.cloud_off, color: AppColors.secondary, size: 28),
-              ],
-            ),
-          ),
-        ),
-        const SizedBox(width: 14),
-        Expanded(
-          child: Container(
-            padding: const EdgeInsets.all(16),
-            decoration: BoxDecoration(
-              color: AppColors.primaryContainer,
-              borderRadius: BorderRadius.circular(16),
-            ),
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Icon(
-                  heatAlert ? Icons.whatshot : Icons.lightbulb_outline,
-                  color: AppColors.secondary,
-                  size: 20,
-                ),
-                const SizedBox(height: 8),
+                const SizedBox(height: 6),
                 Text(
-                  heatAlert ? 'HEAT ALERT' : 'DAILY TIP',
-                  style: const TextStyle(
-                    fontSize: 10,
-                    fontWeight: FontWeight.w700,
-                    color: AppColors.secondary,
-                    letterSpacing: 0.5,
-                  ),
-                ),
-                const SizedBox(height: 8),
-                Text(
-                  dailyTip,
-                  style: const TextStyle(
+                  advice,
+                  style: TextStyle(
                     fontSize: 12,
-                    color: Colors.white,
+                    color: AppColors.primary.withValues(alpha: 0.85),
                     height: 1.4,
                   ),
                 ),
+                if (caution != null) ...[
+                  const SizedBox(height: 8),
+                  Row(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      const Icon(
+                        Icons.water_drop,
+                        color: AppColors.error,
+                        size: 14,
+                      ),
+                      const SizedBox(width: 6),
+                      Expanded(
+                        child: Text(
+                          caution,
+                          style: const TextStyle(
+                            fontSize: 12,
+                            color: AppColors.error,
+                            height: 1.4,
+                            fontWeight: FontWeight.w500,
+                          ),
+                        ),
+                      ),
+                    ],
+                  ),
+                ],
               ],
             ),
           ),
-        ),
-      ],
+        ],
+      ),
     );
   }
 
@@ -476,16 +620,33 @@ class _HomeScreenState extends State<HomeScreen> {
   }
 
   static const List<String> _monthAbbrev = [
-    'Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun',
-    'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec',
+    'Jan',
+    'Feb',
+    'Mar',
+    'Apr',
+    'May',
+    'Jun',
+    'Jul',
+    'Aug',
+    'Sep',
+    'Oct',
+    'Nov',
+    'Dec',
   ];
 
   static bool _isMoldyLabel(String label) {
-    return RegExp(r'mold|aflatox|contamin|infect|positive', caseSensitive: false).hasMatch(label) &&
-        !RegExp(r'no mold|healthy|clean|safe|negative', caseSensitive: false).hasMatch(label);
+    return RegExp(
+          r'mold|aflatox|contamin|infect|positive',
+          caseSensitive: false,
+        ).hasMatch(label) &&
+        !RegExp(
+          r'no mold|healthy|clean|safe|negative',
+          caseSensitive: false,
+        ).hasMatch(label);
   }
 
-  static String _formatScanDate(DateTime dt) => '${_monthAbbrev[dt.month - 1]} ${dt.day}';
+  static String _formatScanDate(DateTime dt) =>
+      '${_monthAbbrev[dt.month - 1]} ${dt.day}';
 
   static String _formatTime(DateTime dt) {
     final int hour = dt.hour % 12 == 0 ? 12 : dt.hour % 12;
@@ -498,7 +659,8 @@ class _HomeScreenState extends State<HomeScreen> {
     final Duration diff = DateTime.now().difference(dt);
     if (diff.inMinutes < 1) return 'Just now';
     if (diff.inMinutes < 60) return '${diff.inMinutes} min ago';
-    if (diff.inHours < 24) return '${diff.inHours} hour${diff.inHours == 1 ? '' : 's'} ago';
+    if (diff.inHours < 24)
+      return '${diff.inHours} hour${diff.inHours == 1 ? '' : 's'} ago';
     if (diff.inDays == 1) return 'Yesterday, ${_formatTime(dt)}';
     if (diff.inDays < 7) return '${diff.inDays} days ago';
     return _formatScanDate(dt);
@@ -518,7 +680,9 @@ class _HomeScreenState extends State<HomeScreen> {
           healthy++;
         }
       }
-      final Timestamp? latest = (docs.first.data() as Map<String, dynamic>)['timestamp'] as Timestamp?;
+      final Timestamp? latest =
+          (docs.first.data() as Map<String, dynamic>)['timestamp']
+              as Timestamp?;
       if (latest != null) lastScanLabel = _formatScanDate(latest.toDate());
     }
 
@@ -565,12 +729,20 @@ class _HomeScreenState extends State<HomeScreen> {
     final String location = (data['location'] ?? '').toString();
     final num confidenceRaw = (data['confidence'] ?? 0) as num;
     final int matchPercent =
-        (confidenceRaw <= 1 ? confidenceRaw * 100 : confidenceRaw).round().clamp(0, 100);
+        (confidenceRaw <= 1 ? confidenceRaw * 100 : confidenceRaw)
+            .round()
+            .clamp(0, 100);
     final bool isMoldy = _isMoldyLabel(label);
     final Timestamp? timestamp = data['timestamp'] as Timestamp?;
-    final String timeText = timestamp != null ? _relativeTime(timestamp.toDate()) : 'Just now';
-    final String subtitle = location.isNotEmpty ? '$location · $timeText' : timeText;
-    final Color statusColor = isMoldy ? AppColors.error : AppColors.primaryContainer;
+    final String timeText = timestamp != null
+        ? _relativeTime(timestamp.toDate())
+        : 'Just now';
+    final String subtitle = location.isNotEmpty
+        ? '$location · $timeText'
+        : timeText;
+    final Color statusColor = isMoldy
+        ? AppColors.error
+        : AppColors.primaryContainer;
 
     return _buildScanTile(
       icon: isMoldy ? Icons.warning_amber_rounded : Icons.eco,
@@ -613,11 +785,7 @@ class _HomeScreenState extends State<HomeScreen> {
   }
 
   Widget _buildDivider() {
-    return Container(
-      width: 1,
-      height: 32,
-      color: Colors.grey.shade200,
-    );
+    return Container(width: 1, height: 32, color: Colors.grey.shade200);
   }
 
   Widget _buildRecentScansHeader() {
@@ -700,10 +868,7 @@ class _HomeScreenState extends State<HomeScreen> {
                 const SizedBox(height: 4),
                 Text(
                   subtitle,
-                  style: const TextStyle(
-                    fontSize: 12,
-                    color: Colors.grey,
-                  ),
+                  style: const TextStyle(fontSize: 12, color: Colors.grey),
                 ),
               ],
             ),
@@ -712,8 +877,10 @@ class _HomeScreenState extends State<HomeScreen> {
             crossAxisAlignment: CrossAxisAlignment.end,
             children: [
               Container(
-                padding:
-                    const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
+                padding: const EdgeInsets.symmetric(
+                  horizontal: 10,
+                  vertical: 4,
+                ),
                 decoration: BoxDecoration(
                   color: badgeColor,
                   borderRadius: BorderRadius.circular(20),
@@ -742,5 +909,4 @@ class _HomeScreenState extends State<HomeScreen> {
       ),
     );
   }
-
 }
