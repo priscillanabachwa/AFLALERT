@@ -1,3 +1,4 @@
+import 'dart:io';
 import 'dart:typed_data';
 
 import 'package:image/image.dart' as img;
@@ -25,6 +26,10 @@ class TfliteService {
 
   Future<void> _ensureLoaded() async {
     _interpreter ??= await Interpreter.fromAsset(_modelAsset);
+  }
+
+  Future<Map<String, dynamic>?> classifyMaize(File imageFile) async {
+    return classifyMaizeFromBytes(await imageFile.readAsBytes());
   }
 
   Future<Map<String, dynamic>?> classifyMaizeFromBytes(Uint8List bytes) async {

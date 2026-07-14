@@ -6,10 +6,12 @@ import 'package:flutter/material.dart';
 import 'package:image_picker/image_picker.dart';
 
 import '../constants/app_colors.dart';
+import '../models/app_notification.dart';
 import '../services/firebase_storage.dart';
 import '../services/firestore_service.dart';
+import '../services/local_notification_service.dart';
+import '../services/notification_center.dart';
 import '../utils/user_initials.dart';
-import '../widgets/custom_bottom_nav.dart';
 import 'settings_screen.dart';
 
 // ─────────────────────────────────────────────
@@ -95,7 +97,6 @@ class _ProfileScreenState extends State<ProfileScreen> {
           ),
         ],
       ),
-      bottomNavigationBar: const CustomBottomNav(currentIndex: -1),
     );
   }
 
@@ -108,13 +109,13 @@ class _ProfileScreenState extends State<ProfileScreen> {
       backgroundColor: kCard,
       elevation: 0,
       leading: IconButton(
-        icon: const Icon(Icons.arrow_back, color: Colors.black87),
+        icon: const Icon(Icons.arrow_back, color: kGreen),
         onPressed: () => Navigator.maybePop(context),
       ),
       title: const Text(
         'Profile',
         style: TextStyle(
-          color: Colors.black87,
+          color: kGreen,
           fontWeight: FontWeight.bold,
           fontSize: 18,
         ),
@@ -697,6 +698,23 @@ class _ChangePasswordSheetState extends State<_ChangePasswordSheet> {
       );
       await user.reauthenticateWithCredential(credential);
       await user.updatePassword(_newCtrl.text);
+
+      NotificationCenter.instance.add(
+        AppNotification(
+          title: 'Password Changed',
+          description: 'Your account password was changed successfully.',
+          icon: Icons.lock_reset,
+          iconColor: kGreen,
+          iconBackground: kGreenLight,
+          category: NotificationCategory.update,
+          unread: true,
+          highPriority: true,
+        ),
+      );
+      LocalNotificationService.instance.show(
+        title: 'Password Changed',
+        body: 'Your account password was changed successfully.',
+      );
 
       if (!mounted) return;
       Navigator.pop(context);
