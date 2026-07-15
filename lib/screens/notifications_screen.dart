@@ -89,9 +89,9 @@ class _NotificationsScreenState extends State<NotificationsScreen> {
               icon: const Icon(Icons.arrow_back, color: AppColors.primaryContainer),
               onPressed: () => Navigator.maybePop(context),
             ),
-            title: const Text(
-              'Notifications',
-              style: TextStyle(
+            title: Text(
+              AppLocalizations.of(context)!.notifications,
+              style: const TextStyle(
                 color: AppColors.primaryContainer,
                 fontWeight: FontWeight.w700,
                 fontSize: 22,
@@ -160,17 +160,28 @@ class _FilterRow extends StatelessWidget {
         children: [
           for (int i = 0; i < filters.length; i++) ...[
             if (i > 0) const SizedBox(width: 10),
-            Expanded(child: _buildChip(filters[i])),
+            Expanded(child: _buildChip(context, filters[i])),
           ],
         ],
       ),
     );
   }
 
-  Widget _buildChip(String filter) {
+  String _filterLabel(AppLocalizations l10n, String filter) {
+    switch (filter) {
+      case 'Alerts':
+        return l10n.alertsFilter;
+      case 'Updates':
+        return l10n.updatesFilter;
+      default:
+        return l10n.allFilter;
+    }
+  }
+
+  Widget _buildChip(BuildContext context, String filter) {
     final bool isSelected = filter == selected;
     return ChoiceChip(
-      label: Center(child: Text(filter)),
+      label: Center(child: Text(_filterLabel(AppLocalizations.of(context)!, filter))),
       selected: isSelected,
       showCheckmark: false,
       onSelected: (_) => onSelected(filter),
@@ -231,7 +242,7 @@ class _EmptyState extends StatelessWidget {
             ),
             const SizedBox(height: 12),
             Text(
-              "You're all caught up",
+              AppLocalizations.of(context)!.allCaughtUp,
               style: TextStyle(
                 color: Colors.grey.shade600,
                 fontWeight: FontWeight.w600,

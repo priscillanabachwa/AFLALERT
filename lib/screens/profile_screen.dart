@@ -6,6 +6,7 @@ import 'package:flutter/material.dart';
 import 'package:image_picker/image_picker.dart';
 
 import '../constants/app_colors.dart';
+import '../l10n/app_localizations.dart';
 import '../models/app_notification.dart';
 import '../services/firebase_storage.dart';
 import '../services/firestore_service.dart';
