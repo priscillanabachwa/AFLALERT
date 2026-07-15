@@ -288,7 +288,7 @@ class _HomeScreenState extends State<HomeScreen> {
                   ),
                 ),
                 child: CircleAvatar(
-                  radius: 22,
+                  radius: 26,
                   backgroundColor: AppColors.primaryContainer,
                   backgroundImage: photoUrl.isNotEmpty
                       ? NetworkImage(photoUrl)
@@ -299,7 +299,7 @@ class _HomeScreenState extends State<HomeScreen> {
                               ? getInitials(name)
                               : '?',
                           style: const TextStyle(
-                            fontSize: 15,
+                            fontSize: 17,
                             fontWeight: FontWeight.bold,
                             color: Colors.white,
                           ),
