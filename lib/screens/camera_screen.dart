@@ -28,6 +28,7 @@ import 'package:image/image.dart' as img;
 import 'package:image_picker/image_picker.dart';
 
 import '../constants/app_colors.dart';
+import '../l10n/app_localizations.dart';
 
 
 class _AflColors {
