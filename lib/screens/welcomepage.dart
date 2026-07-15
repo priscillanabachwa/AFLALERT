@@ -44,6 +44,10 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
 
   @override
   Widget build(BuildContext context) {
+    final AppLocalizations l10n = AppLocalizations.of(context)!;
+    final List<OnboardingData> pages = _pages(context);
+    final bool isLastPage = _isLastPage(pages.length);
+
     return Scaffold(
       backgroundColor: Colors.black,
       body: Stack(
@@ -133,9 +137,9 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
                       curve: Curves.easeInOut,
                     );
                   },
-                  child: const Text(
-                    "Skip",
-                    style: TextStyle(
+                  child: Text(
+                    l10n.skip,
+                    style: const TextStyle(
                       color: Colors.white,
                       fontWeight: FontWeight.bold,
                       fontSize: 16,
@@ -191,9 +195,9 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
                         onPressed: () {
                           Navigator.pushNamed(context, '/register');
                         },
-                        child: const Text(
-                          "Create Account",
-                          style: TextStyle(fontWeight: FontWeight.bold),
+                        child: Text(
+                          l10n.register,
+                          style: const TextStyle(fontWeight: FontWeight.bold),
                         ),
                       ),
                     ),
@@ -208,9 +212,9 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
                         onPressed: () {
                           Navigator.pushNamed(context, '/login');
                         },
-                        child: const Text(
-                          "Login",
-                          style: TextStyle(fontWeight: FontWeight.bold),
+                        child: Text(
+                          l10n.login,
+                          style: const TextStyle(fontWeight: FontWeight.bold),
                         ),
                       ),
                     ),

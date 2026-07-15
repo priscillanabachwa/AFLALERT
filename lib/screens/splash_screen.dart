@@ -3,6 +3,7 @@ import 'package:flutter/material.dart';
 import 'package:aflalert/screens/welcomepage.dart';
 import 'package:aflalert/screens/home_screen.dart';
 import 'package:aflalert/services/firebase_auth.dart';
+import '../l10n/app_localizations.dart';
 
 class SplashScreen extends StatefulWidget {
   const SplashScreen({super.key});
@@ -64,6 +65,7 @@ class _SplashScreenState extends State<SplashScreen>
 
   @override
   Widget build(BuildContext context) {
+    final AppLocalizations l10n = AppLocalizations.of(context)!;
     return Scaffold(
       body: Container(
         width: double.infinity,
