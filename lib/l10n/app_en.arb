@@ -238,6 +238,13 @@
   "couldNotGeneratePdfReport": "Could not generate PDF report",
   "filterByLocation": "Filter by Location",
   "allLocations": "All Locations",
+  "scanHistoryExportLabel": "Scan history export ({count} scans, {healthy} healthy)",
+  "@scanHistoryExportLabel": {
+    "placeholders": {
+      "count": { "type": "int" },
+      "healthy": { "type": "int" }
+    }
+  },
 
   "alertsFilter": "Alerts",
   "updatesFilter": "Updates",

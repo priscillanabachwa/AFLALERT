@@ -196,6 +196,7 @@
   "couldNotGeneratePdfReport": "Tetusobodde kukola Report ya PDF",
   "filterByLocation": "Sengejja n'Ekifo",
   "allLocations": "Ebifo Byonna",
+  "scanHistoryExportLabel": "Report ya byafaayo bya scan ({count} scans, {healthy} birungi)",
 
   "alertsFilter": "Okulabula",
   "updatesFilter": "Amawulire",
