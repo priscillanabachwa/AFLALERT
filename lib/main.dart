@@ -16,6 +16,7 @@ import 'package:aflalert/screens/settings_screen.dart';
 import 'package:aflalert/screens/result_screen.dart';
 import 'package:aflalert/services/local_notification_service.dart';
 import 'package:shared_preferences/shared_preferences.dart';
+import 'l10n/app_localizations.dart';
 
 Future<void> main() async {
   WidgetsFlutterBinding.ensureInitialized();
@@ -32,16 +33,23 @@ Future<void> main() async {
 class AflAlert extends StatefulWidget {
   const AflAlert({super.key});
 
+  static void setLocale(BuildContext context, Locale locale) {
+    context.findAncestorStateOfType<_AflAlertState>()?.setLocale(locale);
+  }
+
   @override
   State<AflAlert> createState() => _AflAlertState();
 }
 
 class _AflAlertState extends State<AflAlert> {
   ThemeMode _themeMode = ThemeMode.light;
+  Locale _locale = const Locale('en');
+
   @override
   void initState() {
     super.initState();
     _loadTheme();
+    _loadLocale();
   }
   Future<void> _loadTheme() async {
     final prefs = await SharedPreferences.getInstance();
@@ -52,12 +60,27 @@ class _AflAlertState extends State<AflAlert> {
           : ThemeMode.light;
     });
   }
-  
+
+  Future<void> _loadLocale() async {
+    final prefs = await SharedPreferences.getInstance();
+    final String languageCode = prefs.getString('languageCode') ?? 'en';
+    setState(() => _locale = Locale(languageCode));
+  }
+
+  Future<void> setLocale(Locale locale) async {
+    final prefs = await SharedPreferences.getInstance();
+    await prefs.setString('languageCode', locale.languageCode);
+    setState(() => _locale = locale);
+  }
+
   @override
   Widget build(BuildContext context) {
     return MaterialApp(
       debugShowCheckedModeBanner: false,
       themeMode: _themeMode,
+      locale: _locale,
+      localizationsDelegates: AppLocalizations.localizationsDelegates,
+      supportedLocales: AppLocalizations.supportedLocales,
 
   
        theme: ThemeData(
