@@ -4,6 +4,7 @@ import 'forgot_password_screen.dart';
 import '../constants/app_colors.dart';
 import '../services/firebase_auth.dart';
 import '../services/remembered_accounts_service.dart';
+import '../l10n/app_localizations.dart';
 
 class LoginScreen extends StatefulWidget {
   const LoginScreen({super.key});
@@ -132,6 +133,7 @@ class _LoginScreenState extends State<LoginScreen> {
 
   @override
   Widget build(BuildContext context) {
+    final AppLocalizations l10n = AppLocalizations.of(context)!;
     return Scaffold(
       backgroundColor: AppColors.logoCream,
       body: SafeArea(
@@ -176,8 +178,8 @@ class _LoginScreenState extends State<LoginScreen> {
 
               const SizedBox(height: 8),
 
-              const Text(
-                'Precision diagnostics for a safer harvest.',
+              Text(
+                l10n.loginTagline,
                 textAlign: TextAlign.center,
                 style: TextStyle(
                   fontSize: 16,

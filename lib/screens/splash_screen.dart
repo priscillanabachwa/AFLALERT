@@ -114,10 +114,10 @@ class _SplashScreenState extends State<SplashScreen>
 
               const SizedBox(height: 10),
 
-              const Text(
-                "AI Powered Aflatoxin Detection",
+              Text(
+                l10n.splashTagline,
                 textAlign: TextAlign.center,
-                style: TextStyle(
+                style: const TextStyle(
                   color: Color(0xFFB0F1CD),
                   fontSize: 18,
                   fontWeight: FontWeight.w300,
@@ -139,9 +139,9 @@ class _SplashScreenState extends State<SplashScreen>
 
               const SizedBox(height: 30),
 
-              const Text(
-                "VIGILANT • INTELLIGENT • NURTURING",
-                style: TextStyle(
+              Text(
+                l10n.splashMotto,
+                style: const TextStyle(
                   color: Colors.white54,
                   fontSize: 11,
                   letterSpacing: 3,
