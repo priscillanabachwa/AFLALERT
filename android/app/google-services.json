@@ -12,7 +12,20 @@
           "package_name": "com.aflalert.aflalert"
         }
       },
-      "oauth_client": [],
+      "oauth_client": [
+        {
+          "client_id": "530780315531-ktj30hs7bgu568vqjtqc7gokfm2cuvmv.apps.googleusercontent.com",
+          "client_type": 1,
+          "android_info": {
+            "package_name": "com.aflalert.aflalert",
+            "certificate_hash": "f4ce7ce54142f584e2a4b6b18d654d2c6bd2768f"
+          }
+        },
+        {
+          "client_id": "530780315531-bcrm1qeodme9h9kmcagpm1t01gqs3fo2.apps.googleusercontent.com",
+          "client_type": 3
+        }
+      ],
       "api_key": [
         {
           "current_key": "AIzaSyAUquvPfpCkHplnUvPcN08AQLIIrAkb5UU"
@@ -20,7 +33,19 @@
       ],
       "services": {
         "appinvite_service": {
-          "other_platform_oauth_client": []
+          "other_platform_oauth_client": [
+            {
+              "client_id": "530780315531-bcrm1qeodme9h9kmcagpm1t01gqs3fo2.apps.googleusercontent.com",
+              "client_type": 3
+            },
+            {
+              "client_id": "530780315531-m91kuo3qak4r6jc6odi419ot9j1230kh.apps.googleusercontent.com",
+              "client_type": 2,
+              "ios_info": {
+                "bundle_id": "com.aflalert.aflalert"
+              }
+            }
+          ]
         }
       }
     }

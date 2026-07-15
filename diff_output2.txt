@@ -1,0 +1,42 @@
+diff --git a/lib/screens/login_screen.dart b/lib/screens/login_screen.dart
+index 9e7ce8f..ef27518 100644
+--- a/lib/screens/login_screen.dart
++++ b/lib/screens/login_screen.dart
+@@ -74,28 +74,6 @@ class _LoginScreenState extends State<LoginScreen> {
+ 
+     Navigator.pushReplacementNamed(context, '/home');
+   }
+-  Future<void> _loginWithGoogle() async {
+-    setState(() => _isLoading = true);
+-
+-    final result = await _authService.signInWithGoogle();
+-
+-    if (!mounted) return;
+-    setState(() => _isLoading = false);
+-
+-    if (result == null) return;
+-
+-    if (result is String) {
+-      ScaffoldMessenger.of(context).showSnackBar(
+-        SnackBar(
+-          content: Text(result),
+-          backgroundColor: const Color(0xFFDC2626),
+-        ),
+-      );
+-      return;
+-    }
+-
+-    Navigator.pushReplacementNamed(context, '/home');
+-  }
+ 
+   @override
+   void dispose() {
+@@ -355,7 +333,7 @@ class _LoginScreenState extends State<LoginScreen> {
+                     const SizedBox(height: 24),
+ 
+                     OutlinedButton(
+-                      onPressed: _isLoading ? null : _loginWithGoogle,
++                      onPressed: () {},
+                       style: OutlinedButton.styleFrom(
+                         minimumSize: const Size(double.infinity, 56),
+                         side: const BorderSide(color: Color(0xFFE5E7EB)),
