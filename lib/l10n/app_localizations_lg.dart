@@ -608,6 +608,11 @@ class AppLocalizationsLg extends AppLocalizations {
   String get allLocations => 'Ebifo Byonna';
 
   @override
+  String scanHistoryExportLabel(int count, int healthy) {
+    return 'Report ya byafaayo bya scan ($count scans, $healthy birungi)';
+  }
+
+  @override
   String get alertsFilter => 'Okulabula';
 
   @override

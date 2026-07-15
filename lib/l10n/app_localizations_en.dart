@@ -605,6 +605,11 @@ class AppLocalizationsEn extends AppLocalizations {
   String get allLocations => 'All Locations';
 
   @override
+  String scanHistoryExportLabel(int count, int healthy) {
+    return 'Scan history export ($count scans, $healthy healthy)';
+  }
+
+  @override
   String get alertsFilter => 'Alerts';
 
   @override

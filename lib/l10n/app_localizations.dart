@@ -1208,6 +1208,12 @@ abstract class AppLocalizations {
   /// **'All Locations'**
   String get allLocations;
 
+  /// No description provided for @scanHistoryExportLabel.
+  ///
+  /// In en, this message translates to:
+  /// **'Scan history export ({count} scans, {healthy} healthy)'**
+  String scanHistoryExportLabel(int count, int healthy);
+
   /// No description provided for @alertsFilter.
   ///
   /// In en, this message translates to:
