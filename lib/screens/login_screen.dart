@@ -74,6 +74,28 @@ class _LoginScreenState extends State<LoginScreen> {
 
     Navigator.pushReplacementNamed(context, '/home');
   }
+  Future<void> _loginWithGoogle() async {
+    setState(() => _isLoading = true);
+
+    final result = await _authService.signInWithGoogle();
+
+    if (!mounted) return;
+    setState(() => _isLoading = false);
+
+    if (result == null) return;
+
+    if (result is String) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text(result),
+          backgroundColor: const Color(0xFFDC2626),
+        ),
+      );
+      return;
+    }
+
+    Navigator.pushReplacementNamed(context, '/home');
+  }
 
   @override
   void dispose() {
@@ -333,7 +355,7 @@ class _LoginScreenState extends State<LoginScreen> {
                     const SizedBox(height: 24),
 
                     OutlinedButton(
-                      onPressed: () {},
+                      onPressed: _isLoading ? null : _loginWithGoogle,
                       style: OutlinedButton.styleFrom(
                         minimumSize: const Size(double.infinity, 56),
                         side: const BorderSide(color: Color(0xFFE5E7EB)),
