@@ -8,6 +8,7 @@ import '../services/firebase_auth.dart';
 import '../services/firestore_service.dart';
 import '../services/local_notification_service.dart';
 import '../services/notification_center.dart';
+import '../l10n/app_localizations.dart';
 import 'legal_document_screen.dart';
 
 class RegistrationScreen extends StatefulWidget {
