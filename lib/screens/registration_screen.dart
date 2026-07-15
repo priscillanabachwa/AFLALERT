@@ -171,7 +171,7 @@ class _RegistrationScreenState extends State<RegistrationScreen> {
                 ),
               ),
 
-              const SizedBox(height: 32),
+              const SizedBox(height: 9),
 
               Text(
                 'Join',
