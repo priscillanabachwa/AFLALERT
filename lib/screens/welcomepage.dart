@@ -1,5 +1,7 @@
 import 'package:flutter/material.dart';
 
+import '../l10n/app_localizations.dart';
+
 class OnboardingScreen extends StatefulWidget {
   const OnboardingScreen({super.key});
 
@@ -11,28 +13,28 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
   final PageController _controller = PageController();
   int currentPage = 0;
 
-  final List<OnboardingData> pages = [
-    OnboardingData(
-      image: 'lib/assets/images/farmer1.png',
-      title: 'Protect Your Harvest',
-      description:
-          'Detect aflatoxin risks in maize using AI-powered image analysis.',
-    ),
-    OnboardingData(
-      image: 'lib/assets/images/farmer2.png',
-      title: 'Instant Results',
-      description:
-          'Scan maize samples and receive fast, reliable assessments.',
-    ),
-    OnboardingData(
-      image: 'lib/assets/images/farmer3.png',
-      title: 'Stay Safe & Informed',
-      description:
-          'Get recommendations and improve food safety for your harvest.',
-    ),
-  ];
+  List<OnboardingData> _pages(BuildContext context) {
+    final AppLocalizations l10n = AppLocalizations.of(context)!;
+    return [
+      OnboardingData(
+        image: 'lib/assets/images/farmer1.png',
+        title: l10n.onboardTitle1,
+        description: l10n.onboardDesc1,
+      ),
+      OnboardingData(
+        image: 'lib/assets/images/farmer2.png',
+        title: l10n.onboardTitle2,
+        description: l10n.onboardDesc2,
+      ),
+      OnboardingData(
+        image: 'lib/assets/images/farmer3.png',
+        title: l10n.onboardTitle3,
+        description: l10n.onboardDesc3,
+      ),
+    ];
+  }
 
-  bool get isLastPage => currentPage == pages.length - 1;
+  bool _isLastPage(int pageCount) => currentPage == pageCount - 1;
 
   @override
   void dispose() {
