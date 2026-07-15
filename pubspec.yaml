@@ -89,7 +89,8 @@ dependency_overrides:
 flutter:
   generate: true
   assets:
-    - assets/images/
+    - lib/assets/best.tflite
+    - lib/assets/images/
 
   # existing content stays here
 
@@ -124,10 +125,6 @@ flutter:
   #     fonts:
   #       - asset: fonts/TrajanPro.ttf
   #       - asset: fonts/TrajanPro_Bold.ttf
-
-  assets:
-    - lib/assets/best.tflite
-    - lib/assets/images/
 
 flutter_launcher_icons:
     android: true
