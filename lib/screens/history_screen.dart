@@ -2,6 +2,7 @@ import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:flutter/material.dart';
 
 import '../constants/app_colors.dart';
+import '../l10n/app_localizations.dart';
 import '../models/report_model.dart';
 import '../services/firestore_service.dart';
 import '../services/pdf_service.dart';
@@ -186,9 +187,9 @@ class _HistoryScreenState extends State<HistoryScreen> {
         icon: const Icon(Icons.arrow_back, color: kPrimaryGreen),
         onPressed: () => Navigator.maybePop(context),
       ),
-      title: const Text(
-        'History',
-        style: TextStyle(
+      title: Text(
+        AppLocalizations.of(context)!.history,
+        style: const TextStyle(
           color: kPrimaryGreen,
           fontSize: 20,
           fontWeight: FontWeight.w700,
@@ -205,6 +206,7 @@ class _HistoryScreenState extends State<HistoryScreen> {
 
   // ── FILTER CHIPS ─────────────────────────
   Widget _buildFilterChips(List<ScanRecord> records) {
+    final AppLocalizations l10n = AppLocalizations.of(context)!;
     // Extract unique locations from records
     final locations = records
         .map((r) => r.location)
@@ -219,11 +221,11 @@ class _HistoryScreenState extends State<HistoryScreen> {
         scrollDirection: Axis.horizontal,
         padding: const EdgeInsets.symmetric(horizontal: 16),
         children: [
-          _chip('All', null),
+          _chip(l10n.allFilter, null),
           const SizedBox(width: 8),
-          _chip('Healthy', ScanStatus.healthy),
+          _chip(l10n.healthy, ScanStatus.healthy),
           const SizedBox(width: 8),
-          _chip('Mold Detected', ScanStatus.moldDetected),
+          _chip(l10n.moldDetected, ScanStatus.moldDetected),
           const SizedBox(width: 8),
           _locationFilterChip(locations),
         ],
@@ -260,7 +262,7 @@ class _HistoryScreenState extends State<HistoryScreen> {
 
   Widget _locationFilterChip(List<String> locations) {
     final bool isActive = _selectedLocation != null;
-    final String displayText = _selectedLocation ?? 'Location';
+    final String displayText = _selectedLocation ?? AppLocalizations.of(context)!.locationFilterLabel;
 
     return GestureDetector(
       onTap: locations.isEmpty ? null : () => _showLocationPicker(locations),
@@ -329,9 +331,10 @@ class _HistoryScreenState extends State<HistoryScreen> {
   // ── BOTTOM INFO BAR ──────────────────────
   Widget _buildBottomBar(List<ScanRecord> results) {
     if (results.isEmpty) return const SizedBox.shrink();
-    
+
+    final AppLocalizations l10n = AppLocalizations.of(context)!;
     final bool hasActiveFilters = _activeFilter != null || _selectedLocation != null || _query.isNotEmpty;
-    
+
     return Container(
       color: kCardBg,
       padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
@@ -343,16 +346,16 @@ class _HistoryScreenState extends State<HistoryScreen> {
               mainAxisSize: MainAxisSize.min,
               children: [
                 Text(
-                  'Showing ${results.length} result${results.length == 1 ? '' : 's'}'
-                  '${hasActiveFilters ? ' for current filters' : ''}.',
+                  '${l10n.showingResultsCount(results.length)}'
+                  '${hasActiveFilters ? l10n.forCurrentFilters : ''}.',
                   style: const TextStyle(fontSize: 12, color: kSubtitle),
                 ),
                 if (hasActiveFilters)
                   GestureDetector(
                     onTap: _clearFilters,
-                    child: const Text(
-                      'Clear all filters ×',
-                      style: TextStyle(
+                    child: Text(
+                      l10n.clearAllFiltersX,
+                      style: const TextStyle(
                         fontSize: 12,
                         color: kDangerRed,
                         fontWeight: FontWeight.w600,
@@ -366,9 +369,9 @@ class _HistoryScreenState extends State<HistoryScreen> {
           ElevatedButton.icon(
             onPressed: () => _exportPDF(results),
             icon: const Icon(Icons.picture_as_pdf, size: 16),
-            label: const Text(
-              'Export PDF',
-              style: TextStyle(fontSize: 13, fontWeight: FontWeight.w700),
+            label: Text(
+              l10n.exportPdf,
+              style: const TextStyle(fontSize: 13, fontWeight: FontWeight.w700),
             ),
             style: ElevatedButton.styleFrom(
               backgroundColor: kAccentGold,
@@ -388,6 +391,7 @@ class _HistoryScreenState extends State<HistoryScreen> {
 
   // ── EMPTY STATE ──────────────────────────
   Widget _buildEmptyState() {
+    final AppLocalizations l10n = AppLocalizations.of(context)!;
     return Center(
       child: Column(
         mainAxisSize: MainAxisSize.min,
@@ -398,9 +402,9 @@ class _HistoryScreenState extends State<HistoryScreen> {
             color: kPrimaryGreen.withAlpha((0.25 * 255).round()),
           ),
           const SizedBox(height: 16),
-          const Text(
-            'No scans found',
-            style: TextStyle(
+          Text(
+            l10n.noScansFound,
+            style: const TextStyle(
               fontSize: 16,
               fontWeight: FontWeight.w700,
               color: kPrimaryGreen,
@@ -408,16 +412,16 @@ class _HistoryScreenState extends State<HistoryScreen> {
           ),
           const SizedBox(height: 6),
           Text(
-            'Try adjusting your filters\nor scan a new maize sample.',
+            l10n.tryAdjustingFilters,
             textAlign: TextAlign.center,
             style: TextStyle(fontSize: 13, color: kSubtitle, height: 1.5),
           ),
           const SizedBox(height: 20),
           TextButton(
             onPressed: _clearFilters,
-            child: const Text(
-              'Clear filters',
-              style: TextStyle(
+            child: Text(
+              l10n.clearFilters,
+              style: const TextStyle(
                 color: kPrimaryGreen,
                 fontWeight: FontWeight.w600,
               ),
@@ -430,6 +434,7 @@ class _HistoryScreenState extends State<HistoryScreen> {
 
   // ── ERROR STATE ──────────────────────────
   Widget _buildErrorState() {
+    final AppLocalizations l10n = AppLocalizations.of(context)!;
     return Center(
       child: Column(
         mainAxisSize: MainAxisSize.min,
@@ -440,19 +445,19 @@ class _HistoryScreenState extends State<HistoryScreen> {
             color: kDangerRed.withAlpha((0.4 * 255).round()),
           ),
           const SizedBox(height: 16),
-          const Text(
-            "Couldn't load scan history",
-            style: TextStyle(
+          Text(
+            l10n.couldNotLoadScanHistory,
+            style: const TextStyle(
               fontSize: 16,
               fontWeight: FontWeight.w700,
               color: kPrimaryGreen,
             ),
           ),
           const SizedBox(height: 6),
-          const Text(
-            'Check your connection and try again.',
+          Text(
+            l10n.checkConnectionTryAgain,
             textAlign: TextAlign.center,
-            style: TextStyle(fontSize: 13, color: kSubtitle, height: 1.5),
+            style: const TextStyle(fontSize: 13, color: kSubtitle, height: 1.5),
           ),
         ],
       ),
@@ -461,6 +466,7 @@ class _HistoryScreenState extends State<HistoryScreen> {
 
   // ── ACTIONS ──────────────────────────────
   void _openDetail(ScanRecord record) {
+    final AppLocalizations l10n = AppLocalizations.of(context)!;
     showModalBottomSheet(
       context: context,
       isScrollControlled: true,
@@ -495,17 +501,17 @@ class _HistoryScreenState extends State<HistoryScreen> {
               ),
               const SizedBox(height: 8),
               Text(
-                'Location: ${record.location.isNotEmpty ? record.location : 'Not recorded'}',
+                l10n.locationLabel(record.location.isNotEmpty ? record.location : l10n.notRecorded),
                 style: const TextStyle(fontSize: 14, color: Color(0xFF263238)),
               ),
               const SizedBox(height: 4),
               Text(
-                'Date: ${record.date}',
+                l10n.dateLabel(record.date),
                 style: const TextStyle(fontSize: 14, color: Color(0xFF263238)),
               ),
               const SizedBox(height: 12),
               Text(
-                'Status: ${record.status == ScanStatus.moldDetected ? 'Mold Detected' : 'Healthy'}',
+                l10n.statusLabel(record.status == ScanStatus.moldDetected ? l10n.moldDetected : l10n.healthy),
                 style: TextStyle(
                   fontSize: 14,
                   fontWeight: FontWeight.w700,
@@ -516,7 +522,7 @@ class _HistoryScreenState extends State<HistoryScreen> {
               ),
               const SizedBox(height: 12),
               Text(
-                'Match confidence: ${record.matchPercent}%',
+                l10n.matchConfidenceLabel(record.matchPercent),
                 style: const TextStyle(fontSize: 14, color: Color(0xFF263238)),
               ),
               const SizedBox(height: 20),
@@ -532,7 +538,7 @@ class _HistoryScreenState extends State<HistoryScreen> {
                       borderRadius: BorderRadius.circular(12),
                     ),
                   ),
-                  child: const Text('Close'),
+                  child: Text(l10n.close),
                 ),
               ),
             ],
@@ -544,10 +550,11 @@ class _HistoryScreenState extends State<HistoryScreen> {
 
   Future<void> _exportPDF(List<ScanRecord> records) async {
     if (records.isEmpty) return;
+    final AppLocalizations l10n = AppLocalizations.of(context)!;
 
     ScaffoldMessenger.of(context).showSnackBar(
-      const SnackBar(
-        content: Text('Generating PDF report…'),
+      SnackBar(
+        content: Text(l10n.generatingPdfReport),
         backgroundColor: kPrimaryGreen,
         behavior: SnackBarBehavior.floating,
       ),
@@ -570,7 +577,7 @@ class _HistoryScreenState extends State<HistoryScreen> {
       await ReportStorageService().saveReport(
         ReportModel(
           id: DateTime.now().millisecondsSinceEpoch.toString(),
-          result: 'Scan history export (${records.length} scans, $healthyCount healthy)',
+          result: l10n.scanHistoryExportLabel(records.length, healthyCount),
           confidence: healthyCount / records.length,
           date: DateTime.now(),
           pdfPath: file.path,
@@ -582,8 +589,8 @@ class _HistoryScreenState extends State<HistoryScreen> {
     } catch (e) {
       if (!mounted) return;
       ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(
-          content: Text('Could not generate PDF report'),
+        SnackBar(
+          content: Text(l10n.couldNotGeneratePdfReport),
           backgroundColor: kDangerRed,
           behavior: SnackBarBehavior.floating,
         ),
@@ -604,9 +611,10 @@ class _ScanCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final AppLocalizations l10n = AppLocalizations.of(context)!;
     final isMoldy = record.status == ScanStatus.moldDetected;
     final statusColor = isMoldy ? kDangerRed : kSafeGreen;
-    final statusLabel = isMoldy ? 'Mold Detected' : 'Healthy';
+    final statusLabel = isMoldy ? l10n.moldDetected : l10n.healthy;
     final statusIcon = isMoldy
         ? Icons.warning_amber_rounded
         : Icons.check_circle;
@@ -796,6 +804,7 @@ class _LocationPickerSheet extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final AppLocalizations l10n = AppLocalizations.of(context)!;
     return Container(
       constraints: BoxConstraints(
         maxHeight: MediaQuery.of(context).size.height * 0.6,
@@ -817,16 +826,16 @@ class _LocationPickerSheet extends StatelessWidget {
                 ),
               ),
             ),
-            const Text(
-              'Filter by Location',
-              style: TextStyle(
+            Text(
+              l10n.filterByLocation,
+              style: const TextStyle(
                 fontSize: 18,
                 fontWeight: FontWeight.w800,
                 color: kPrimaryGreen,
               ),
             ),
             const SizedBox(height: 16),
-            _locationTile('All Locations', null),
+            _locationTile(l10n.allLocations, null),
             const Divider(height: 1),
             Flexible(
               child: ListView.builder(

@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 
 import '../constants/app_colors.dart';
+import '../l10n/app_localizations.dart';
 import '../models/app_notification.dart';
 import '../services/notification_center.dart';
 import '../widgets/custom_bottom_nav.dart';
