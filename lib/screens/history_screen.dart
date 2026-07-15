@@ -159,7 +159,7 @@ class _HistoryScreenState extends State<HistoryScreen> {
 
           return Column(
             children: [
-              _buildSearchBar(),
+             
               _buildFilterChips(),
               const SizedBox(height: 4),
               Expanded(
@@ -202,62 +202,7 @@ class _HistoryScreenState extends State<HistoryScreen> {
     );
   }
 
-  // ── SEARCH BAR ───────────────────────────
-  Widget _buildSearchBar() {
-    return Padding(
-      padding: const EdgeInsets.fromLTRB(16, 16, 16, 8),
-      child: Container(
-        height: 48,
-        decoration: BoxDecoration(
-          color: kCardBg,
-          borderRadius: BorderRadius.circular(12),
-          border: Border.all(color: kDivider, width: 1.2),
-          boxShadow: [
-            BoxShadow(
-              color: Colors.black.withAlpha((0.04 * 255).round()),
-              blurRadius: 6,
-              offset: const Offset(0, 2),
-            ),
-          ],
-        ),
-        child: Row(
-          children: [
-            const SizedBox(width: 14),
-            const Icon(Icons.search, color: kSubtitle, size: 20),
-            const SizedBox(width: 10),
-            Expanded(
-              child: TextField(
-                controller: _searchCtrl,
-                onChanged: (v) => setState(() => _query = v),
-                style: const TextStyle(fontSize: 14, color: Color(0xFF263238)),
-                decoration: const InputDecoration(
-                  hintText: 'Search by crop, location...',
-                  hintStyle: TextStyle(color: kSubtitle, fontSize: 14),
-                  border: InputBorder.none,
-                  isDense: true,
-                  contentPadding: EdgeInsets.zero,
-                ),
-              ),
-            ),
-            // Filter icon button
-            InkWell(
-              borderRadius: BorderRadius.circular(8),
-              onTap: _showFilterSheet,
-              child: Container(
-                margin: const EdgeInsets.all(6),
-                padding: const EdgeInsets.all(6),
-                decoration: BoxDecoration(
-                  color: kPrimaryGreen.withAlpha((0.08 * 255).round()),
-                  borderRadius: BorderRadius.circular(8),
-                ),
-                child: const Icon(Icons.tune, color: kPrimaryGreen, size: 18),
-              ),
-            ),
-          ],
-        ),
-      ),
-    );
-  }
+
 
   // ── FILTER CHIPS ─────────────────────────
   Widget _buildFilterChips() {
