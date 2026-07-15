@@ -115,7 +115,7 @@ class _LoginScreenState extends State<LoginScreen> {
               ),
               
 
-              const SizedBox(height: 32),
+              const SizedBox(height: 12),
 
               Text(
                 'AflAlert',
