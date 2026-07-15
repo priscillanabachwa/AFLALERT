@@ -124,8 +124,8 @@ class _LoginScreenState extends State<LoginScreen> {
 
               // Logo — background matches the cream baked into the artwork, so no square backing shows.
               SizedBox(
-                width: 160,
-                height: 160,
+                width: 200,
+                height: 200,
                 child: Image.asset(
                   "lib/assets/images/aflalert_logo.png",
                   fit: BoxFit.cover,
