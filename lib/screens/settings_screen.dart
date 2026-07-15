@@ -2,6 +2,8 @@ import 'package:flutter/material.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
 import '../constants/app_colors.dart';
+import '../l10n/app_localizations.dart';
+import '../main.dart';
 import 'legal_screen.dart';
 
 class SettingsScreen extends StatefulWidget {
