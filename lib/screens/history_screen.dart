@@ -34,7 +34,7 @@ class ScanRecord {
   final String date;
   final ScanStatus status;
   final int matchPercent;
-  final String imagePath; // use AssetImage or NetworkImage in production
+  final String imagePath;
 
   const ScanRecord({
     required this.id,
@@ -58,9 +58,6 @@ const List<String> _kMonthAbbrev = [
 String _formatScanDate(DateTime dt) =>
     '${_kMonthAbbrev[dt.month - 1]} ${dt.day}, ${dt.year}';
 
-/// Returns null instead of throwing when a document's fields don't match
-/// the expected shape, so one malformed/legacy record can't blank out the
-/// whole list.
 ScanRecord? _scanRecordFromDoc(QueryDocumentSnapshot doc) {
   final rawData = doc.data();
   if (rawData is! Map<String, dynamic>) return null;
@@ -106,8 +103,11 @@ class _HistoryScreenState extends State<HistoryScreen> {
   final TextEditingController _searchCtrl = TextEditingController();
   final FirestoreService _firestoreService = FirestoreService();
   late final Stream<QuerySnapshot> _scanHistoryStream = _firestoreService.getUserScanHistory();
-  ScanStatus? _activeFilter; // null = show all
+  
+  // State variables - ALL INSIDE THE CLASS
+  ScanStatus? _activeFilter;
   String _query = '';
+  String? _selectedLocation;
 
   List<ScanRecord> _filterRecords(List<ScanRecord> source) {
     return source.where((s) {
@@ -116,13 +116,15 @@ class _HistoryScreenState extends State<HistoryScreen> {
           s.title.toLowerCase().contains(_query.toLowerCase()) ||
           s.location.toLowerCase().contains(_query.toLowerCase());
       final matchesFilter = _activeFilter == null || s.status == _activeFilter;
-      return matchesQuery && matchesFilter;
+      final matchesLocation = _selectedLocation == null || s.location == _selectedLocation;
+      return matchesQuery && matchesFilter && matchesLocation;
     }).toList();
   }
 
   void _clearFilters() {
     setState(() {
       _activeFilter = null;
+      _selectedLocation = null;
       _query = '';
       _searchCtrl.clear();
     });
@@ -159,8 +161,7 @@ class _HistoryScreenState extends State<HistoryScreen> {
 
           return Column(
             children: [
-             
-              _buildFilterChips(),
+              _buildFilterChips(allScans),
               const SizedBox(height: 4),
               Expanded(
                 child: results.isEmpty
@@ -202,10 +203,16 @@ class _HistoryScreenState extends State<HistoryScreen> {
     );
   }
 
-
-
   // ── FILTER CHIPS ─────────────────────────
-  Widget _buildFilterChips() {
+  Widget _buildFilterChips(List<ScanRecord> records) {
+    // Extract unique locations from records
+    final locations = records
+        .map((r) => r.location)
+        .where((l) => l.isNotEmpty)
+        .toSet()
+        .toList()
+      ..sort();
+
     return SizedBox(
       height: 36,
       child: ListView(
@@ -217,6 +224,8 @@ class _HistoryScreenState extends State<HistoryScreen> {
           _chip('Healthy', ScanStatus.healthy),
           const SizedBox(width: 8),
           _chip('Mold Detected', ScanStatus.moldDetected),
+          const SizedBox(width: 8),
+          _locationFilterChip(locations),
         ],
       ),
     );
@@ -249,6 +258,63 @@ class _HistoryScreenState extends State<HistoryScreen> {
     );
   }
 
+  Widget _locationFilterChip(List<String> locations) {
+    final bool isActive = _selectedLocation != null;
+    final String displayText = _selectedLocation ?? 'Location';
+
+    return GestureDetector(
+      onTap: locations.isEmpty ? null : () => _showLocationPicker(locations),
+      child: AnimatedContainer(
+        duration: const Duration(milliseconds: 200),
+        padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+        decoration: BoxDecoration(
+          color: isActive ? kPrimaryGreen : kCardBg,
+          borderRadius: BorderRadius.circular(20),
+          border: Border.all(
+            color: isActive ? kPrimaryGreen : kDivider,
+            width: 1.2,
+          ),
+        ),
+        child: Row(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            Text(
+              displayText,
+              style: TextStyle(
+                fontSize: 12,
+                fontWeight: FontWeight.w600,
+                color: isActive ? Colors.white : kSubtitle,
+              ),
+            ),
+            const SizedBox(width: 2),
+            Icon(
+              isActive ? Icons.close : Icons.keyboard_arrow_down,
+              size: 16,
+              color: isActive ? Colors.white : kSubtitle,
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
+  void _showLocationPicker(List<String> locations) {
+    showModalBottomSheet(
+      context: context,
+      shape: const RoundedRectangleBorder(
+        borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
+      ),
+      builder: (_) => _LocationPickerSheet(
+        locations: locations,
+        selectedLocation: _selectedLocation,
+        onSelect: (location) {
+          setState(() => _selectedLocation = location);
+          Navigator.pop(context);
+        },
+      ),
+    );
+  }
+
   // ── SCAN LIST ────────────────────────────
   Widget _buildScanList(List<ScanRecord> records) {
     return ListView.separated(
@@ -263,6 +329,9 @@ class _HistoryScreenState extends State<HistoryScreen> {
   // ── BOTTOM INFO BAR ──────────────────────
   Widget _buildBottomBar(List<ScanRecord> results) {
     if (results.isEmpty) return const SizedBox.shrink();
+    
+    final bool hasActiveFilters = _activeFilter != null || _selectedLocation != null || _query.isNotEmpty;
+    
     return Container(
       color: kCardBg,
       padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
@@ -275,10 +344,10 @@ class _HistoryScreenState extends State<HistoryScreen> {
               children: [
                 Text(
                   'Showing ${results.length} result${results.length == 1 ? '' : 's'}'
-                  '${_activeFilter != null || _query.isNotEmpty ? ' for current filters' : ''}.',
+                  '${hasActiveFilters ? ' for current filters' : ''}.',
                   style: const TextStyle(fontSize: 12, color: kSubtitle),
                 ),
-                if (_activeFilter != null || _query.isNotEmpty)
+                if (hasActiveFilters)
                   GestureDetector(
                     onTap: _clearFilters,
                     child: const Text(
@@ -294,7 +363,6 @@ class _HistoryScreenState extends State<HistoryScreen> {
             ),
           ),
           const SizedBox(width: 12),
-          // Export PDF button
           ElevatedButton.icon(
             onPressed: () => _exportPDF(results),
             icon: const Icon(Icons.picture_as_pdf, size: 16),
@@ -305,9 +373,6 @@ class _HistoryScreenState extends State<HistoryScreen> {
             style: ElevatedButton.styleFrom(
               backgroundColor: kAccentGold,
               foregroundColor: kPrimaryGreen,
-              // Override the app-wide full-width default (Size(double.infinity, 56))
-              // so this button sizes to its content instead of forcing infinite
-              // width onto its Row, which isn't wrapped in Expanded/Flexible.
               minimumSize: Size.zero,
               padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
               shape: RoundedRectangleBorder(
@@ -578,7 +643,6 @@ class _ScanCard extends StatelessWidget {
         ),
         child: Row(
           children: [
-            // ── Thumbnail ──
             ClipRRect(
               borderRadius: const BorderRadius.horizontal(
                 left: Radius.circular(14),
@@ -598,8 +662,6 @@ class _ScanCard extends StatelessWidget {
                         : Image.asset(record.imagePath, fit: BoxFit.cover)),
               ),
             ),
-
-            // ── Content ──
             Expanded(
               child: Padding(
                 padding: const EdgeInsets.symmetric(
@@ -609,7 +671,6 @@ class _ScanCard extends StatelessWidget {
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    // Title + match badge
                     Row(
                       children: [
                         Expanded(
@@ -625,7 +686,6 @@ class _ScanCard extends StatelessWidget {
                           ),
                         ),
                         const SizedBox(width: 8),
-                        // Match % badge
                         Container(
                           padding: const EdgeInsets.symmetric(
                             horizontal: 8,
@@ -646,10 +706,7 @@ class _ScanCard extends StatelessWidget {
                         ),
                       ],
                     ),
-
                     const SizedBox(height: 5),
-
-                    // Date (+ location, when known)
                     Row(
                       children: [
                         Icon(
@@ -687,10 +744,7 @@ class _ScanCard extends StatelessWidget {
                         ],
                       ],
                     ),
-
                     const SizedBox(height: 8),
-
-                    // Status badge
                     Row(
                       children: [
                         Container(
@@ -771,7 +825,6 @@ class _FilterSheetState extends State<_FilterSheet> {
         mainAxisSize: MainAxisSize.min,
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          // Handle
           Center(
             child: Container(
               width: 40,
@@ -853,6 +906,89 @@ class _FilterSheetState extends State<_FilterSheet> {
           ],
         ),
       ),
+    );
+  }
+}
+
+// ─────────────────────────────────────────
+//  LOCATION PICKER SHEET
+// ─────────────────────────────────────────
+class _LocationPickerSheet extends StatelessWidget {
+  final List<String> locations;
+  final String? selectedLocation;
+  final ValueChanged<String?> onSelect;
+
+  const _LocationPickerSheet({
+    required this.locations,
+    required this.selectedLocation,
+    required this.onSelect,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      constraints: BoxConstraints(
+        maxHeight: MediaQuery.of(context).size.height * 0.6,
+      ),
+      child: Padding(
+        padding: const EdgeInsets.fromLTRB(20, 16, 20, 32),
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Center(
+              child: Container(
+                width: 40,
+                height: 4,
+                margin: const EdgeInsets.only(bottom: 20),
+                decoration: BoxDecoration(
+                  color: kDivider,
+                  borderRadius: BorderRadius.circular(2),
+                ),
+              ),
+            ),
+            const Text(
+              'Filter by Location',
+              style: TextStyle(
+                fontSize: 18,
+                fontWeight: FontWeight.w800,
+                color: kPrimaryGreen,
+              ),
+            ),
+            const SizedBox(height: 16),
+            _locationTile('All Locations', null),
+            const Divider(height: 1),
+            Flexible(
+              child: ListView.builder(
+                shrinkWrap: true,
+                itemCount: locations.length,
+                itemBuilder: (context, index) {
+                  return _locationTile(locations[index], locations[index]);
+                },
+              ),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
+  Widget _locationTile(String label, String? value) {
+    final bool isSelected = selectedLocation == value;
+    return ListTile(
+      onTap: () => onSelect(value),
+      title: Text(
+        label,
+        style: TextStyle(
+          fontSize: 14,
+          fontWeight: FontWeight.w600,
+          color: isSelected ? kPrimaryGreen : const Color(0xFF263238),
+        ),
+      ),
+      trailing: isSelected 
+          ? const Icon(Icons.check_circle, color: kPrimaryGreen, size: 20) 
+          : null,
+      contentPadding: const EdgeInsets.symmetric(horizontal: 0),
     );
   }
 }
