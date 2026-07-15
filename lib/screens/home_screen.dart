@@ -288,7 +288,7 @@ class _HomeScreenState extends State<HomeScreen> {
                   ),
                 ),
                 child: CircleAvatar(
-                  radius: 18,
+                  radius: 22,
                   backgroundColor: AppColors.primaryContainer,
                   backgroundImage: photoUrl.isNotEmpty
                       ? NetworkImage(photoUrl)
@@ -299,7 +299,7 @@ class _HomeScreenState extends State<HomeScreen> {
                               ? getInitials(name)
                               : '?',
                           style: const TextStyle(
-                            fontSize: 13,
+                            fontSize: 15,
                             fontWeight: FontWeight.bold,
                             color: Colors.white,
                           ),
@@ -658,8 +658,9 @@ class _HomeScreenState extends State<HomeScreen> {
     final Duration diff = DateTime.now().difference(dt);
     if (diff.inMinutes < 1) return 'Just now';
     if (diff.inMinutes < 60) return '${diff.inMinutes} min ago';
-    if (diff.inHours < 24)
+    if (diff.inHours < 24) {
       return '${diff.inHours} hour${diff.inHours == 1 ? '' : 's'} ago';
+    }
     if (diff.inDays == 1) return 'Yesterday, ${_formatTime(dt)}';
     if (diff.inDays < 7) return '${diff.inDays} days ago';
     return _formatScanDate(dt);
