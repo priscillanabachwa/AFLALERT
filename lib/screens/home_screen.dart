@@ -8,6 +8,7 @@ import 'package:flutter/material.dart';
 import '../constants/app_colors.dart';
 import '../constants/daily_tips.dart';
 import '../constants/seasonal_guidelines.dart';
+import '../l10n/app_localizations.dart';
 import '../models/app_notification.dart';
 import '../services/firestore_service.dart';
 import '../services/local_notification_service.dart';
