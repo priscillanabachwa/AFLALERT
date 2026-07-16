@@ -741,28 +741,62 @@ class AppLocalizationsLg extends AppLocalizations {
   String get pleaseLogOutAndBackIn => 'Fuluma oyingire nate, ate ogezeeko.';
 
   @override
-  String get passwordResetLinkSent =>
-      'Link ey\'okuzza ekigambo ky\'ekyama etumiddwa! Kebera email yo.';
-
-  @override
   String get errorOccurredTryAgain => 'Wabaddewo ekisobyo. Ddamu ogezeeko.';
-
-  @override
-  String get noAccountFoundEmail => 'Tewali akaunti eyazuulibwa ku email eno.';
 
   @override
   String get resetPassword => 'Zza Ekigambo ky\'ekyama';
 
   @override
   String get resetPasswordInstructions =>
-      'Yingiza endagiriro yo eya email eyewandiisibbwa waggulu. Tujja kukuweereza link ey\'obukuumi okuzza ekigambo kyo eky\'ekyama era n\'okukuuma akaunti yo obulungi.';
+      'Yingiza endagiriro yo eya email eyewandiisibbwa waggulu. Tujja kukuweereza nampeya ya nnamba mukaaga okuzza ekigambo kyo eky\'ekyama era n\'okukuuma akaunti yo obulungi.';
 
   @override
   String get pleaseEnterValidEmailAddress =>
       'Yingiza endagiriro ya email entuufu';
 
   @override
-  String get sendResetLink => 'Weereza Link Ey\'okuzza';
+  String get sendResetLink => 'Weereza Nampeya';
+
+  @override
+  String get otpScreenTitle => 'Yingiza Nampeya';
+
+  @override
+  String otpInstructions(String email) {
+    return 'Yingiza nampeya ya nnamba mukaaga gye twaweereza ku $email.';
+  }
+
+  @override
+  String get otpLabel => 'Nampeya y\'Okukakasa';
+
+  @override
+  String get pleaseEnterOtp => 'Yingiza nampeya';
+
+  @override
+  String get otpInvalidLength => 'Yingiza nampeya ya nnamba mukaaga';
+
+  @override
+  String get verifyAndReset => 'Kakasa & Zza Ekigambo ky\'ekyama';
+
+  @override
+  String get resendCode => 'Weereza Nampeya Nate';
+
+  @override
+  String resendCodeIn(int seconds) {
+    return 'Weereza nampeya nate mu ${seconds}s';
+  }
+
+  @override
+  String get pleaseWaitBeforeResend => 'Linda okumala okusaba nampeya endala.';
+
+  @override
+  String get codeExpired => 'Nampeya eno ewedde ekiseera. Saba endala.';
+
+  @override
+  String get tooManyAttempts =>
+      'Ogezezzaako emirundi mingi ne kiremererwa. Saba nampeya empya.';
+
+  @override
+  String get incorrectCode => 'Nampeya si ntuufu. Ddamu ogezeeko.';
 
   @override
   String get downloadedReports => 'Report Ezawanguddwa';
