@@ -2,12 +2,21 @@
   "@@locale": "lg",
   "appName": "AflAlert",
   "login": "Yingira",
+<<<<<<< HEAD
+  "register": "Wandiisa Akawunti",
+  "email": "Yimeyiro",
+  "password": "Ekigambo ekiggulawo",
+  "forgotPassword": "Werabidde ekigambo ekiggulawo?",
+  "continueWithGoogle":  "weyongereyo ne Google",
+  "home": "Ewaka",
+=======
   "register": "Tandika Akaunti",
   "email": "Endagiriro ya Email",
   "password": "Ekigambo ky'ekyama",
   "forgotPassword": "Weerabidde Ekigambo ky'ekyama?",
   "continueWithGoogle": "Weeyongereyo ne Google",
   "home": "Awaka",
+>>>>>>> 8010d4b2a515a54b90f729dfb876168529b11cc5
   "history": "Ebyafaayo",
   "notifications": "Obubaka",
   "profile": "Profayiro",
@@ -31,9 +40,15 @@
   "logout": "Fuluma",
   "logoutConfirm": "Oli mukakafu nti oyagala okufuluma ku AflAlert?",
   "cancel": "Sazaamu",
+<<<<<<< HEAD
+  "totalScans": "Ebisikanidwa Byonna",
+  "healthyScans": "Ebikebeddwa ebilamu",
+  "detectedScans": "Ebikebeddwa ebirimu obuvuvu",
+=======
   "totalScans": "Scan Zonna",
   "healthyScans": "Scan Ezirungi",
   "detectedScans": "Scan Ezalabika",
+>>>>>>> 8010d4b2a515a54b90f729dfb876168529b11cc5
   "selectLanguage": "Londa Olulimi",
   "searchCrop": "Noonya ekirime, ekifo...",
   "analysingImage": "Twekenneenya ekyokulabirako kyo...",
