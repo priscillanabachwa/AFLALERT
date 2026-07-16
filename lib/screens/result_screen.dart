@@ -237,11 +237,30 @@ class ResultsScreen extends StatelessWidget {
     );
   }
 
+  Widget _buildPhoto() {
+    if (imagePath != null && imagePath!.startsWith('http')) {
+      return Image.network(
+        imagePath!,
+        height: 180,
+        width: double.infinity,
+        fit: BoxFit.cover,
+        errorBuilder: (_, _, _) => const SizedBox(height: 180),
+      );
+    }
+    return Image.file(
+      File(imagePath!),
+      height: 180,
+      width: double.infinity,
+      fit: BoxFit.cover,
+    );
+  }
+
   Widget _buildDiagnosisCard(BuildContext context) {
     final AppLocalizations l10n = AppLocalizations.of(context)!;
+    final bool isNetworkImage = imagePath != null && imagePath!.startsWith('http');
     final File? photoFile =
-        (imagePath != null && imagePath!.isNotEmpty) ? File(imagePath!) : null;
-    final bool hasPhoto = photoFile != null && photoFile.existsSync();
+        (!isNetworkImage && imagePath != null && imagePath!.isNotEmpty) ? File(imagePath!) : null;
+    final bool hasPhoto = isNetworkImage || (photoFile != null && photoFile.existsSync());
 
     return Container(
       decoration: BoxDecoration(
@@ -264,12 +283,7 @@ class ResultsScreen extends StatelessWidget {
               children: [
                 ClipRRect(
                   borderRadius: const BorderRadius.vertical(top: Radius.circular(16)),
-                  child: Image.file(
-                    photoFile,
-                    height: 180,
-                    width: double.infinity,
-                    fit: BoxFit.cover,
-                  ),
+                  child: _buildPhoto(),
                 ),
                 Positioned(
                   bottom: -24,

@@ -11,6 +11,7 @@ import '../services/pdf_service.dart';
 import '../services/report_storage_service.dart';
 import '../widgets/custom_bottom_nav.dart';
 import '../widgets/pdf_export_dialog.dart';
+import 'result_screen.dart';
 
 // ─────────────────────────────────────────
 //  DESIGN TOKENS — aliased to the shared AppColors palette
@@ -468,85 +469,15 @@ class _HistoryScreenState extends State<HistoryScreen> {
 
   // ── ACTIONS ──────────────────────────────
   void _openDetail(ScanRecord record) {
-    final AppLocalizations l10n = AppLocalizations.of(context)!;
-    showModalBottomSheet(
-      context: context,
-      isScrollControlled: true,
-      shape: const RoundedRectangleBorder(
-        borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
+    Navigator.pushNamed(
+      context,
+      '/results',
+      arguments: ResultsScreenArgs(
+        isSafe: record.status == ScanStatus.healthy,
+        confidence: record.matchPercent / 100,
+        analysisLabel: record.title,
+        imagePath: record.imagePath.isNotEmpty ? record.imagePath : null,
       ),
-      builder: (_) {
-        return Padding(
-          padding: const EdgeInsets.fromLTRB(20, 20, 20, 32),
-          child: Column(
-            mainAxisSize: MainAxisSize.min,
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              Center(
-                child: Container(
-                  width: 40,
-                  height: 4,
-                  margin: const EdgeInsets.only(bottom: 16),
-                  decoration: BoxDecoration(
-                    color: kDivider,
-                    borderRadius: BorderRadius.circular(2),
-                  ),
-                ),
-              ),
-              Text(
-                record.title,
-                style: const TextStyle(
-                  fontSize: 20,
-                  fontWeight: FontWeight.w800,
-                  color: kPrimaryGreen,
-                ),
-              ),
-              const SizedBox(height: 8),
-              Text(
-                l10n.locationLabel(record.location.isNotEmpty ? record.location : l10n.notRecorded),
-                style: const TextStyle(fontSize: 14, color: Color(0xFF263238)),
-              ),
-              const SizedBox(height: 4),
-              Text(
-                l10n.dateLabel(record.date),
-                style: const TextStyle(fontSize: 14, color: Color(0xFF263238)),
-              ),
-              const SizedBox(height: 12),
-              Text(
-                l10n.statusLabel(record.status == ScanStatus.moldDetected ? l10n.moldDetected : l10n.healthy),
-                style: TextStyle(
-                  fontSize: 14,
-                  fontWeight: FontWeight.w700,
-                  color: record.status == ScanStatus.moldDetected
-                      ? kDangerRed
-                      : kSafeGreen,
-                ),
-              ),
-              const SizedBox(height: 12),
-              Text(
-                l10n.matchConfidenceLabel(record.matchPercent),
-                style: const TextStyle(fontSize: 14, color: Color(0xFF263238)),
-              ),
-              const SizedBox(height: 20),
-              SizedBox(
-                width: double.infinity,
-                child: ElevatedButton(
-                  onPressed: () => Navigator.pop(context),
-                  style: ElevatedButton.styleFrom(
-                    backgroundColor: kPrimaryGreen,
-                    foregroundColor: Colors.white,
-                    padding: const EdgeInsets.symmetric(vertical: 14),
-                    shape: RoundedRectangleBorder(
-                      borderRadius: BorderRadius.circular(12),
-                    ),
-                  ),
-                  child: Text(l10n.close),
-                ),
-              ),
-            ],
-          ),
-        );
-      },
     );
   }
 
