@@ -878,11 +878,23 @@ abstract class AppLocalizations {
   /// **'Could not analyze this photo. Please try again.'**
   String get couldNotAnalyzePhoto;
 
-  /// No description provided for @notMaizePhoto.
+  /// No description provided for @notMaizeColorMismatch.
   ///
   /// In en, this message translates to:
-  /// **'This doesn\'t look like a photo of maize. Please retake a clear photo of maize kernels.'**
-  String get notMaizePhoto;
+  /// **'We couldn\'t recognize this as raw maize. This can happen if the maize is roasted or cooked, if the photo isn\'t of maize at all, or if the lighting made the colors hard to read. Please retake a clear photo of raw maize kernels in good light.'**
+  String get notMaizeColorMismatch;
+
+  /// No description provided for @notMaizeModelRejected.
+  ///
+  /// In en, this message translates to:
+  /// **'Our AI doesn\'t recognize this as maize kernels. If this is roasted or cooked maize, we can only assess raw kernels — please retake a photo of raw, unprocessed maize.'**
+  String get notMaizeModelRejected;
+
+  /// No description provided for @notMaizeLowConfidence.
+  ///
+  /// In en, this message translates to:
+  /// **'We couldn\'t get a clear enough reading from this photo. Try retaking in brighter, even lighting and hold the camera steady.'**
+  String get notMaizeLowConfidence;
 
   /// No description provided for @analyzingImageTitle.
   ///
