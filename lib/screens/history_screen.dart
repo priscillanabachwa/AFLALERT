@@ -342,7 +342,11 @@ class _HistoryScreenState extends State<HistoryScreen> {
           ),
           confirmDismiss: (_) => _confirmDeleteScan(record),
           onDismissed: (_) => _deleteScan(record),
-          child: _ScanCard(record: record, onTap: () => _openDetail(record)),
+          child: _ScanCard(
+            record: record,
+            onTap: () => _openDetail(record),
+            onDelete: () => _confirmAndDeleteScan(record),
+          ),
         );
       },
     );
@@ -520,6 +524,12 @@ class _HistoryScreenState extends State<HistoryScreen> {
     return confirmed ?? false;
   }
 
+  Future<void> _confirmAndDeleteScan(ScanRecord record) async {
+    final bool confirmed = await _confirmDeleteScan(record);
+    if (!confirmed || !mounted) return;
+    await _deleteScan(record);
+  }
+
   Future<void> _deleteScan(ScanRecord record) async {
     final AppLocalizations l10n = AppLocalizations.of(context)!;
     final bool success = await _firestoreService.deleteScanRecord(record.id);
@@ -592,8 +602,9 @@ class _HistoryScreenState extends State<HistoryScreen> {
 class _ScanCard extends StatelessWidget {
   final ScanRecord record;
   final VoidCallback onTap;
+  final VoidCallback onDelete;
 
-  const _ScanCard({required this.record, required this.onTap});
+  const _ScanCard({required this.record, required this.onTap, required this.onDelete});
 
   @override
   Widget build(BuildContext context) {
@@ -772,6 +783,16 @@ class _ScanCard extends StatelessWidget {
                           ),
                         ),
                         const Spacer(),
+                        IconButton(
+                          onPressed: onDelete,
+                          icon: const Icon(Icons.delete_outline),
+                          iconSize: 18,
+                          color: kDangerRed.withAlpha((0.7 * 255).round()),
+                          padding: EdgeInsets.zero,
+                          constraints: const BoxConstraints(minWidth: 32, minHeight: 32),
+                          splashRadius: 18,
+                          tooltip: AppLocalizations.of(context)!.delete,
+                        ),
                         Icon(
                           Icons.chevron_right,
                           color: kSubtitle.withAlpha((0.5 * 255).round()),
