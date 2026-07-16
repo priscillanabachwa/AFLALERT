@@ -29,6 +29,12 @@ class HomeScreen extends StatefulWidget {
 }
 
 class _HomeScreenState extends State<HomeScreen> {
+  // Applied to text that sits directly on the background photo (rather than
+  // inside an opaque card) so it stays legible regardless of image content.
+  static const List<Shadow> _onImageShadow = [
+    Shadow(color: Colors.black87, blurRadius: 8, offset: Offset(0, 1)),
+  ];
+
   // Weather can change quickly, so keep it fresh instead of only fetching
   // once when the screen first mounts.
   static const Duration _refreshInterval = Duration(minutes: 5);
@@ -146,6 +152,21 @@ class _HomeScreenState extends State<HomeScreen> {
               fit: BoxFit.cover,
             ),
           ),
+          Positioned.fill(
+            child: DecoratedBox(
+              decoration: BoxDecoration(
+                gradient: LinearGradient(
+                  begin: Alignment.topCenter,
+                  end: Alignment.bottomCenter,
+                  colors: [
+                    Colors.black.withValues(alpha: 0.55),
+                    Colors.black.withValues(alpha: 0.35),
+                    Colors.black.withValues(alpha: 0.45),
+                  ],
+                ),
+              ),
+            ),
+          ),
           SafeArea(
             child: RefreshIndicator(
               color: AppColors.primary,
@@ -194,7 +215,8 @@ class _HomeScreenState extends State<HomeScreen> {
                       style: const TextStyle(
                         fontSize: 18,
                         fontWeight: FontWeight.bold,
-                        color: AppColors.primary,
+                        color: Colors.white,
+                        shadows: _onImageShadow,
                       ),
                     ),
                     const SizedBox(height: 16),
@@ -214,7 +236,8 @@ class _HomeScreenState extends State<HomeScreen> {
                         l10n.tapToScan,
                         style: const TextStyle(
                           fontSize: 14,
-                          color: Colors.grey,
+                          color: Colors.white70,
+                          shadows: _onImageShadow,
                         ),
                       ),
                     ),
@@ -288,7 +311,8 @@ class _HomeScreenState extends State<HomeScreen> {
             style: TextStyle(
               fontSize: 24,
               fontWeight: FontWeight.bold,
-              color: AppColors.primary,
+              color: Colors.white,
+              shadows: _onImageShadow,
             ),
           ),
         ),
@@ -359,7 +383,8 @@ class _HomeScreenState extends State<HomeScreen> {
           style: const TextStyle(
             fontSize: 28,
             fontWeight: FontWeight.w400,
-            color: AppColors.primary,
+            color: Colors.white,
+            shadows: _onImageShadow,
           ),
         ),
         Text(
@@ -367,13 +392,18 @@ class _HomeScreenState extends State<HomeScreen> {
           style: const TextStyle(
             fontSize: 32,
             fontWeight: FontWeight.bold,
-            color: AppColors.primary,
+            color: Colors.white,
+            shadows: _onImageShadow,
           ),
         ),
         const SizedBox(height: 6),
         Text(
           l10n.homeSubGreeting,
-          style: const TextStyle(fontSize: 14, color: Colors.grey),
+          style: const TextStyle(
+            fontSize: 14,
+            color: Colors.white70,
+            shadows: _onImageShadow,
+          ),
         ),
       ],
     );
@@ -749,8 +779,20 @@ class _HomeScreenState extends State<HomeScreen> {
 
   Widget _buildNoScansYet() {
     return Container(
+      width: double.infinity,
       padding: const EdgeInsets.symmetric(vertical: 28),
       alignment: Alignment.center,
+      decoration: BoxDecoration(
+        color: Colors.white,
+        borderRadius: BorderRadius.circular(16),
+        boxShadow: [
+          BoxShadow(
+            color: Colors.black.withValues(alpha: 0.05),
+            blurRadius: 10,
+            offset: const Offset(0, 4),
+          ),
+        ],
+      ),
       child: Text(
         AppLocalizations.of(context)!.noScansYetHome,
         textAlign: TextAlign.center,
@@ -835,7 +877,8 @@ class _HomeScreenState extends State<HomeScreen> {
           style: const TextStyle(
             fontSize: 18,
             fontWeight: FontWeight.bold,
-            color: AppColors.primary,
+            color: Colors.white,
+            shadows: _onImageShadow,
           ),
         ),
         TextButton(
@@ -849,6 +892,7 @@ class _HomeScreenState extends State<HomeScreen> {
               fontSize: 13,
               color: AppColors.secondary,
               fontWeight: FontWeight.w600,
+              shadows: _onImageShadow,
             ),
           ),
         ),
