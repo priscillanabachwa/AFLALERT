@@ -49,12 +49,23 @@ class StripAnalysisService {
   static const double maxDetectionPpb = 100;
   static const double _ppbCurveGamma = 1.6;
 
-  // A line band must be at least this much darker than the local
+  // A strip cassette + nitrocellulose membrane reads as a mostly bright,
+  // low-saturation ("pale") surface. Photos of unrelated subjects (faces,
+  // rooms, produce, ...) rarely clear this bar, so it's used as an early,
+  // cheap rejection before spending time on line detection.
+  static const double _paleBrightnessFloor = 0.55;
+  static const double _paleSaturationCeiling = 0.28;
+  static const double _minPaleRatio = 0.45;
+
+  // A line band must be at least this much darker than its local
   // background to count as a real line rather than sensor/paper noise.
-  static const double _minLineProminence = 0.06;
+  static const double _minLineProminence = 0.10;
+  // Candidate bands wider than this fraction of the strip are treated as
+  // shadows/edges/objects rather than a printed line.
+  static const double _maxBandWidthFraction = 0.22;
   // The control line must clear this absolute darkness (as a fraction of
-  // background luminance lost) to count as a valid, developed line — a
-  // faint/missing C line means the strip run itself failed (standard
+  // local background luminance lost) to count as a valid, developed line —
+  // a faint/missing C line means the strip run itself failed (standard
   // lateral-flow QC), not a low ppb reading.
   static const double _minControlDarkness = 0.12;
 
@@ -73,31 +84,40 @@ class StripAnalysisService {
       throw const InvalidStripException(InvalidStripReason.stripNotDetected);
     }
 
+    if (!_looksLikeStrip(decoded)) {
+      throw const InvalidStripException(InvalidStripReason.stripNotDetected);
+    }
+
     // The capture screen constrains the photo to a fixed portrait
     // orientation with the strip filling the frame top-to-bottom, so the
     // T/C lines run horizontally — average luminance row by row, sampling
     // only the central column band to avoid strip-edge glare/shadow.
     final List<double> profile = _rowLuminanceProfile(decoded);
-    if (profile.isEmpty) {
+    if (profile.length < 20) {
       throw const InvalidStripException(InvalidStripReason.stripNotDetected);
     }
 
-    final double background = _estimateBackground(profile);
-    final List<_LineBand> bands = _findLineBands(profile, background);
+    // A rolling-max envelope tracks the local background brightness even
+    // where a line dips below it, so line strength is judged against the
+    // membrane right around it rather than a single strip-wide value —
+    // this keeps detection reliable under uneven lighting (a torch held to
+    // one side, a shadow across part of the frame, etc.).
+    final List<double> baseline = _localBaseline(profile);
+    final List<_LineBand> bands = _findLineBands(profile, baseline);
 
     if (bands.length < 2) {
       throw const InvalidStripException(InvalidStripReason.stripNotDetected);
     }
 
-    // Flow-direction convention: the capture guide fixes the strip so the
-    // sample end (and therefore the Test line) is encountered first,
-    // followed by the Control line closer to the wicking/absorbent end.
+    // Flow-direction convention: the capture guide places the Control (C)
+    // line label near the top of the frame and Test (T) near the bottom,
+    // so scanning top-to-bottom the first line encountered is Control.
     bands.sort((a, b) => a.rowIndex.compareTo(b.rowIndex));
-    final _LineBand tBand = bands.first;
-    final _LineBand cBand = bands[1];
+    final _LineBand cBand = bands.first;
+    final _LineBand tBand = bands[1];
 
-    final double tLineOD = _opticalDensity(tBand.luminance, background);
-    final double cLineOD = _opticalDensity(cBand.luminance, background);
+    final double cLineOD = _opticalDensity(cBand.luminance, cBand.baseline);
+    final double tLineOD = _opticalDensity(tBand.luminance, tBand.baseline);
 
     if (cLineOD < _minControlDarkness) {
       throw const InvalidStripException(
@@ -133,6 +153,37 @@ class StripAnalysisService {
     return math.max(0, -math.log(ratio) / math.ln10);
   }
 
+  // Cheap plausibility gate run before line detection: a strip cassette and
+  // its membrane are predominantly bright and low-saturation, so a photo
+  // that's mostly dark and/or richly colored throughout is very unlikely
+  // to actually be a test strip.
+  bool _looksLikeStrip(img.Image image) {
+    final int stepX = (image.width / 40).ceil().clamp(1, 200);
+    final int stepY = (image.height / 80).ceil().clamp(1, 200);
+
+    int sampled = 0;
+    int paleCount = 0;
+    for (int y = 0; y < image.height; y += stepY) {
+      for (int x = 0; x < image.width; x += stepX) {
+        final pixel = image.getPixel(x, y);
+        final double r = pixel.r / 255.0;
+        final double g = pixel.g / 255.0;
+        final double b = pixel.b / 255.0;
+        final double maxC = math.max(r, math.max(g, b));
+        final double minC = math.min(r, math.min(g, b));
+        final double saturation = maxC == 0 ? 0.0 : (maxC - minC) / maxC;
+
+        sampled++;
+        if (maxC >= _paleBrightnessFloor && saturation <= _paleSaturationCeiling) {
+          paleCount++;
+        }
+      }
+    }
+
+    if (sampled == 0) return false;
+    return (paleCount / sampled) >= _minPaleRatio;
+  }
+
   List<double> _rowLuminanceProfile(img.Image image) {
     final int centerX = image.width ~/ 2;
     final int bandHalfWidth = (image.width * 0.15).round().clamp(1, centerX);
@@ -154,54 +205,97 @@ class StripAnalysisService {
     return profile;
   }
 
-  // Background = the brightest typical region of the strip (the plain
-  // membrane, not a line), approximated as a high percentile of the
-  // luminance profile so a couple of dark line rows don't drag it down.
-  double _estimateBackground(List<double> profile) {
-    final List<double> sorted = List<double>.from(profile)..sort();
-    final int index = (sorted.length * 0.85).floor().clamp(
-      0,
-      sorted.length - 1,
+  // Rolling-max envelope: within each window, the brightest sample is what
+  // the membrane would read at that position if no line dipped into it —
+  // lines are always local minima, so as long as the window is wider than
+  // any single line, the max recovers the surrounding background even
+  // directly over a line. This is what lets detection tolerate a lighting
+  // gradient across the strip instead of relying on one global background
+  // value.
+  List<double> _localBaseline(List<double> profile) {
+    final int window = (profile.length * 0.18).round().clamp(
+      5,
+      profile.length,
     );
-    return sorted[index];
+    final int half = window ~/ 2;
+    final List<double> baseline = List<double>.filled(profile.length, 0);
+    for (int y = 0; y < profile.length; y++) {
+      final int start = (y - half).clamp(0, profile.length - 1);
+      final int end = (y + half).clamp(0, profile.length - 1);
+      double maxV = 0;
+      for (int k = start; k <= end; k++) {
+        if (profile[k] > maxV) maxV = profile[k];
+      }
+      baseline[y] = maxV;
+    }
+    return baseline;
   }
 
-  List<_LineBand> _findLineBands(List<double> profile, double background) {
-    if (background <= 0) return [];
-    final double threshold = background * (1 - _minLineProminence);
+  List<_LineBand> _findLineBands(List<double> profile, List<double> baseline) {
+    final int n = profile.length;
+    final int maxBandWidth = (n * _maxBandWidthFraction).round().clamp(2, n);
+    // Rows right at the crop edge are prone to border/vignette artifacts
+    // from the capture frame itself, not real strip content.
+    final int edgeMargin = (n * 0.03).round();
+    final int end = (n - edgeMargin).clamp(edgeMargin, n);
 
-    final List<_LineBand> bands = [];
-    int i = 0;
-    while (i < profile.length) {
-      if (profile[i] <= threshold) {
-        int start = i;
+    final List<_LineBand> candidates = [];
+    int i = edgeMargin;
+    while (i < end) {
+      final double localBg = baseline[i];
+      final double threshold = localBg * (1 - _minLineProminence);
+      if (localBg > 0 && profile[i] <= threshold) {
+        final int start = i;
         double minLuminance = profile[i];
         int minIndex = i;
-        while (i < profile.length && profile[i] <= threshold) {
+        double minBaseline = localBg;
+        while (i < end && profile[i] <= baseline[i] * (1 - _minLineProminence)) {
           if (profile[i] < minLuminance) {
             minLuminance = profile[i];
             minIndex = i;
+            minBaseline = baseline[i];
           }
           i++;
         }
-        // Ignore hairline noise spikes narrower than a couple of rows.
-        if (i - start >= 2) {
-          bands.add(_LineBand(rowIndex: minIndex, luminance: minLuminance));
+        final int width = i - start;
+        // Ignore hairline noise spikes and overly broad dark regions
+        // (shadows, cassette edges, foreign objects).
+        if (width >= 2 && width <= maxBandWidth) {
+          candidates.add(
+            _LineBand(rowIndex: minIndex, luminance: minLuminance, baseline: minBaseline),
+          );
         }
       } else {
         i++;
       }
     }
-    // Strongest (darkest) bands first, then keep at most a handful of
-    // candidates before re-sorting by position for flow-direction order.
-    bands.sort((a, b) => a.luminance.compareTo(b.luminance));
-    return bands.take(4).toList();
+
+    // Strongest (darkest relative to local background) first, then drop
+    // any candidate that sits within one band-width of an already-kept,
+    // stronger candidate — guards against the same physical line being
+    // split into two nearby detections by a momentary noise blip.
+    candidates.sort(
+      (a, b) => (a.luminance / a.baseline).compareTo(b.luminance / b.baseline),
+    );
+    final List<_LineBand> kept = [];
+    for (final candidate in candidates) {
+      final bool tooClose = kept.any(
+        (b) => (b.rowIndex - candidate.rowIndex).abs() < maxBandWidth,
+      );
+      if (!tooClose) kept.add(candidate);
+    }
+    return kept.take(4).toList();
   }
 }
 
 class _LineBand {
   final int rowIndex;
   final double luminance;
+  final double baseline;
 
-  const _LineBand({required this.rowIndex, required this.luminance});
+  const _LineBand({
+    required this.rowIndex,
+    required this.luminance,
+    required this.baseline,
+  });
 }

@@ -555,7 +555,7 @@ class _StripCameraScreenState extends State<StripCameraScreen> {
                     right: 0,
                     child: Center(
                       child: Text(
-                        'T',
+                        'C',
                         style: TextStyle(
                           color: bracketColor.withValues(alpha: 0.7),
                           fontSize: 11,
@@ -570,7 +570,7 @@ class _StripCameraScreenState extends State<StripCameraScreen> {
                     right: 0,
                     child: Center(
                       child: Text(
-                        'C',
+                        'T',
                         style: TextStyle(
                           color: bracketColor.withValues(alpha: 0.7),
                           fontSize: 11,
