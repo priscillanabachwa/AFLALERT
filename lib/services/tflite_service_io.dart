@@ -91,7 +91,7 @@ class TfliteService {
       return {
         'label': isMoldy
             ? 'Aflatoxin contamination detected'
-            : 'Healthy — no mold detected',
+            : 'Healthy ',
         'confidence': confidence,
         'mold_detected': isMoldy,
       };
