@@ -565,6 +565,13 @@ class _HistoryScreenState extends State<HistoryScreen> {
     _pendingDeleteTimers[record.id]?.cancel();
     _pendingDeleteTimers[record.id] = Timer(_undoWindow, () {
       _pendingDeleteTimers.remove(record.id);
+      // SnackBar's built-in auto-dismiss timer is disabled by Flutter
+      // whenever accessible navigation (e.g. a screen reader) is active, so
+      // the undo window's own timer is what actually closes it, in step
+      // with the delete becoming irreversible.
+      if (mounted) {
+        ScaffoldMessenger.of(context).hideCurrentSnackBar();
+      }
       _commitDelete(record.id);
     });
   }
