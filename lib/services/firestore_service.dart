@@ -75,6 +75,7 @@ class FirestoreService {
     required String phone,
     required String district,
     String? photoUrl,
+    bool removePhoto = false,
   }) async {
     try {
       final User? currentUser = _auth.currentUser;
@@ -87,13 +88,15 @@ class FirestoreService {
         'fullName': fullName,
         'phone': phone,
         'district': district,
-        'photoUrl': ?photoUrl,
+        if (removePhoto) 'photoUrl': FieldValue.delete() else 'photoUrl': ?photoUrl,
       });
 
       if (fullName.isNotEmpty && currentUser.displayName != fullName) {
         await currentUser.updateDisplayName(fullName);
       }
-      if (photoUrl != null) {
+      if (removePhoto) {
+        await currentUser.updatePhotoURL(null);
+      } else if (photoUrl != null) {
         await currentUser.updatePhotoURL(photoUrl);
       }
 
