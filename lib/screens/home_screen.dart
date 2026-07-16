@@ -137,102 +137,121 @@ class _HomeScreenState extends State<HomeScreen> {
     final AppLocalizations l10n = AppLocalizations.of(context)!;
     return Scaffold(
       backgroundColor: AppColors.t95,
-      body: SafeArea(
-        child: RefreshIndicator(
-          color: AppColors.primary,
-          onRefresh: _loadWeather,
-          child: SingleChildScrollView(
-            physics: const AlwaysScrollableScrollPhysics(),
-            padding: const EdgeInsets.symmetric(horizontal: 20),
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                const SizedBox(height: 12),
-                _buildHeader(context),
-                const SizedBox(height: 24),
-                StreamBuilder<DocumentSnapshot<Map<String, dynamic>>>(
-                  stream: _profileStream,
-                  builder: (context, snapshot) {
-                    final Map<String, dynamic>? profile = snapshot.data?.data();
-                    final String? fullName = profile?['fullName'] as String?;
-                    final String firstName =
-                        (fullName != null && fullName.trim().isNotEmpty)
-                        ? fullName.trim().split(' ').first
-                        : l10n.defaultGreetingName;
-                    final String userType =
-                        profile?['userType'] as String? ?? '';
-                    return Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        _buildGreeting(firstName),
-                        const SizedBox(height: 20),
-                        _buildInfoCards(
-                          tipForConditions(userType, _weather?.temperatureC),
-                          isHeatAlert(_weather?.temperatureC),
-                        ),
-                      ],
-                    );
-                  },
-                ),
-                const SizedBox(height: 28),
-                Text(
-                  l10n.guidelines,
-                  style: const TextStyle(
-                    fontSize: 18,
-                    fontWeight: FontWeight.bold,
-                    color: AppColors.primary,
-                  ),
-                ),
-                const SizedBox(height: 16),
-                StreamBuilder<DocumentSnapshot<Map<String, dynamic>>>(
-                  stream: _profileStream,
-                  builder: (context, snapshot) {
-                    final String userType =
-                        snapshot.data?.data()?['userType'] as String? ?? '';
-                    return _buildSeasonalGuidelineCard(userType);
-                  },
-                ),
-                const SizedBox(height: 32),
-                _buildScanButton(context),
-                const SizedBox(height: 12),
-                Center(
-                  child: Text(
-                    l10n.tapToScan,
-                    style: const TextStyle(fontSize: 14, color: Colors.grey),
-                  ),
-                ),
-                const SizedBox(height: 28),
-                StreamBuilder<QuerySnapshot>(
-                  stream: FirestoreService().getUserScanHistory(),
-                  builder: (context, snapshot) {
-                    final docs = snapshot.data?.docs ?? [];
-                    final recentDocs = docs.take(2).toList();
-                    return Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        _buildStatsRow(docs),
-                        const SizedBox(height: 28),
-                        _buildRecentScansHeader(),
-                        const SizedBox(height: 16),
-                        if (recentDocs.isEmpty)
-                          _buildNoScansYet()
-                        else
-                          for (int i = 0; i < recentDocs.length; i++)
-                            Padding(
-                              padding: EdgeInsets.only(
-                                bottom: i == recentDocs.length - 1 ? 0 : 12,
-                              ),
-                              child: _buildScanTileFromDoc(recentDocs[i]),
-                            ),
-                      ],
-                    );
-                  },
-                ),
-                const SizedBox(height: 88),
-              ],
+      extendBody: true,
+      body: Stack(
+        children: [
+          Positioned.fill(
+            child: Image.asset(
+              'lib/assets/images/homescreen.jpeg',
+              fit: BoxFit.cover,
             ),
           ),
-        ),
+          SafeArea(
+            child: RefreshIndicator(
+              color: AppColors.primary,
+              onRefresh: _loadWeather,
+              child: SingleChildScrollView(
+                physics: const AlwaysScrollableScrollPhysics(),
+                padding: const EdgeInsets.symmetric(horizontal: 20),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    const SizedBox(height: 12),
+                    _buildHeader(context),
+                    const SizedBox(height: 24),
+                    StreamBuilder<DocumentSnapshot<Map<String, dynamic>>>(
+                      stream: _profileStream,
+                      builder: (context, snapshot) {
+                        final Map<String, dynamic>? profile = snapshot.data
+                            ?.data();
+                        final String? fullName =
+                            profile?['fullName'] as String?;
+                        final String firstName =
+                            (fullName != null && fullName.trim().isNotEmpty)
+                            ? fullName.trim().split(' ').first
+                            : l10n.defaultGreetingName;
+                        final String userType =
+                            profile?['userType'] as String? ?? '';
+                        return Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            _buildGreeting(firstName),
+                            const SizedBox(height: 20),
+                            _buildInfoCards(
+                              tipForConditions(
+                                userType,
+                                _weather?.temperatureC,
+                              ),
+                              isHeatAlert(_weather?.temperatureC),
+                            ),
+                          ],
+                        );
+                      },
+                    ),
+                    const SizedBox(height: 28),
+                    Text(
+                      l10n.guidelines,
+                      style: const TextStyle(
+                        fontSize: 18,
+                        fontWeight: FontWeight.bold,
+                        color: AppColors.primary,
+                      ),
+                    ),
+                    const SizedBox(height: 16),
+                    StreamBuilder<DocumentSnapshot<Map<String, dynamic>>>(
+                      stream: _profileStream,
+                      builder: (context, snapshot) {
+                        final String userType =
+                            snapshot.data?.data()?['userType'] as String? ?? '';
+                        return _buildSeasonalGuidelineCard(userType);
+                      },
+                    ),
+                    const SizedBox(height: 32),
+                    _buildScanButton(context),
+                    const SizedBox(height: 12),
+                    Center(
+                      child: Text(
+                        l10n.tapToScan,
+                        style: const TextStyle(
+                          fontSize: 14,
+                          color: Colors.grey,
+                        ),
+                      ),
+                    ),
+                    const SizedBox(height: 28),
+                    StreamBuilder<QuerySnapshot>(
+                      stream: FirestoreService().getUserScanHistory(),
+                      builder: (context, snapshot) {
+                        final docs = snapshot.data?.docs ?? [];
+                        final recentDocs = docs.take(2).toList();
+                        return Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            _buildStatsRow(docs),
+                            const SizedBox(height: 28),
+                            _buildRecentScansHeader(),
+                            const SizedBox(height: 16),
+                            if (recentDocs.isEmpty)
+                              _buildNoScansYet()
+                            else
+                              for (int i = 0; i < recentDocs.length; i++)
+                                Padding(
+                                  padding: EdgeInsets.only(
+                                    bottom: i == recentDocs.length - 1 ? 0 : 12,
+                                  ),
+                                  child: _buildScanTileFromDoc(recentDocs[i]),
+                                ),
+                          ],
+                        );
+                      },
+                    ),
+                    const SizedBox(height: 88),
+                  ],
+                ),
+              ),
+            ),
+          ),
+        ],
       ),
       bottomNavigationBar: const CustomBottomNav(currentIndex: 0),
     );
@@ -714,7 +733,11 @@ class _HomeScreenState extends State<HomeScreen> {
       ),
       child: Row(
         children: [
-          _buildStatItem('$healthy', l10n.healthyCaps, AppColors.primaryContainer),
+          _buildStatItem(
+            '$healthy',
+            l10n.healthyCaps,
+            AppColors.primaryContainer,
+          ),
           _buildDivider(),
           _buildStatItem('$risky', l10n.riskyCaps, AppColors.error),
           _buildDivider(),
