@@ -138,7 +138,9 @@
   "daysAgo": "ennaku {count} eziyise",
 
   "couldNotAnalyzePhoto": "Tetusobodde kwekenneenya kifananyi kino. Ddamu ogezeeko.",
-  "notMaizePhoto": "Kino tekirabika ng'ekifananyi kya kasooli. Ddamu okwate ekifananyi ekirongoofu eky'empeke za kasooli.",
+  "notMaizeColorMismatch": "Tetusobodde kukizuula nga kasooli mubisi. Kino kiyinza kubaawo kasooli ng'ayokeddwa oba afumbiddwa, ekifananyi nga si kya kasooli, oba omusana nga tegumanyiddwa bulungi. Ddamu okwate ekifananyi ekirongoofu eky'empeke za kasooli mubisi mu musana omulungi.",
+  "notMaizeModelRejected": "AI yaffe tekizuula nga mpeke za kasooli. Bwe kiba kasooli ayokeddwa oba afumbiddwa, tusobola kwekenneenya mpeke za kasooli mubisi zokka — ddamu okwate ekifananyi kya kasooli mubisi.",
+  "notMaizeLowConfidence": "Tetufunye kizuula kirongoofu okuva mu kifananyi kino. Gezaako okukwata nate mu musana omulungi era onyweeze ssimu bulungi.",
   "analyzingImageTitle": "Twekenneenya Ekifananyi...",
   "aiDetectingMold": "AI yaffe eronda obukuku obulabika obukwatagana ne Aflatoxin.",
   "analysisFailed": "Okwekenneenya Kulemye",

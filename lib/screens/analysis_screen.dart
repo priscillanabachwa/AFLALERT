@@ -121,11 +121,16 @@ class _AnalysisScreenState extends State<AnalysisScreen> {
         return;
       }
       Navigator.pushReplacementNamed(context, '/results', arguments: resultsArgs);
-    } on NotMaizeException {
+    } on NotMaizeException catch (e) {
       if (!mounted) return;
+      final AppLocalizations l10n = AppLocalizations.of(context)!;
       setState(() {
         _isProcessing = false;
-        _errorMessage = AppLocalizations.of(context)!.notMaizePhoto;
+        _errorMessage = switch (e.reason) {
+          NotMaizeReason.colorMismatch => l10n.notMaizeColorMismatch,
+          NotMaizeReason.modelRejected => l10n.notMaizeModelRejected,
+          NotMaizeReason.lowConfidence => l10n.notMaizeLowConfidence,
+        };
       });
     } catch (e) {
       if (!mounted) return;

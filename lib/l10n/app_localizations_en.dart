@@ -419,8 +419,16 @@ class AppLocalizationsEn extends AppLocalizations {
       'Could not analyze this photo. Please try again.';
 
   @override
-  String get notMaizePhoto =>
-      'This doesn\'t look like a photo of maize. Please retake a clear photo of maize kernels.';
+  String get notMaizeColorMismatch =>
+      'We couldn\'t recognize this as raw maize. This can happen if the maize is roasted or cooked, if the photo isn\'t of maize at all, or if the lighting made the colors hard to read. Please retake a clear photo of raw maize kernels in good light.';
+
+  @override
+  String get notMaizeModelRejected =>
+      'Our AI doesn\'t recognize this as maize kernels. If this is roasted or cooked maize, we can only assess raw kernels — please retake a photo of raw, unprocessed maize.';
+
+  @override
+  String get notMaizeLowConfidence =>
+      'We couldn\'t get a clear enough reading from this photo. Try retaking in brighter, even lighting and hold the camera steady.';
 
   @override
   String get analyzingImageTitle => 'Analyzing Image...';
