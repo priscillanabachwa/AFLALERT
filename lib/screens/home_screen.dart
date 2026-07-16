@@ -650,7 +650,7 @@ class _HomeScreenState extends State<HomeScreen> {
           caseSensitive: false,
         ).hasMatch(label) &&
         !RegExp(
-          r'no mold|healthy|clean|safe|negative',
+          r'ld|healthy|clean|safe|negative',
           caseSensitive: false,
         ).hasMatch(label);
   }
