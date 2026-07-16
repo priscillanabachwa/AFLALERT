@@ -4,6 +4,7 @@ import 'forgot_password_screen.dart';
 import '../constants/app_colors.dart';
 import '../services/firebase_auth.dart';
 import '../services/remembered_accounts_service.dart';
+import '../l10n/app_localizations.dart';
 
 class LoginScreen extends StatefulWidget {
   const LoginScreen({super.key});
@@ -132,6 +133,7 @@ class _LoginScreenState extends State<LoginScreen> {
 
   @override
   Widget build(BuildContext context) {
+    final AppLocalizations l10n = AppLocalizations.of(context)!;
     return Scaffold(
       backgroundColor: AppColors.logoCream,
       body: SafeArea(
@@ -176,8 +178,8 @@ class _LoginScreenState extends State<LoginScreen> {
 
               const SizedBox(height: 8),
 
-              const Text(
-                'Precision diagnostics for a safer harvest.',
+              Text(
+                l10n.loginTagline,
                 textAlign: TextAlign.center,
                 style: TextStyle(
                   fontSize: 16,
@@ -199,8 +201,8 @@ class _LoginScreenState extends State<LoginScreen> {
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
                     if (_rememberedAccounts.isNotEmpty) ...[
-                      const Text(
-                        'Saved accounts',
+                      Text(
+                        l10n.savedAccounts,
                         style: TextStyle(
                           fontWeight: FontWeight.w600,
                           color: AppColors.primaryContainer,
@@ -235,9 +237,9 @@ class _LoginScreenState extends State<LoginScreen> {
                       ),
                       const SizedBox(height: 20),
                     ],
-                    const Text(
-                      'Email Address',
-                      style: TextStyle(
+                    Text(
+                      l10n.email,
+                      style: const TextStyle(
                         fontWeight: FontWeight.w600,
                         color: AppColors.primaryContainer,
                       ),
@@ -247,7 +249,7 @@ class _LoginScreenState extends State<LoginScreen> {
                       controller: _emailController,
                       keyboardType: TextInputType.emailAddress,
                       decoration: InputDecoration(
-                        hintText: 'example@gmail.com',
+                        hintText: l10n.emailHint,
                         hintStyle: TextStyle(color: Colors.grey.shade500),
                         prefixIcon: Icon(Icons.email_outlined),
                         filled: true,
@@ -257,13 +259,13 @@ class _LoginScreenState extends State<LoginScreen> {
                           borderSide: BorderSide.none,
                           ),
                         ),
-                      
+
                        validator: (value) {
 
 
                         if (value == null || value.trim().isEmpty) {
 
-                          return 'Please enter your email';
+                          return l10n.pleaseEnterEmail;
                         }
                         return null;
                       },
@@ -272,9 +274,9 @@ class _LoginScreenState extends State<LoginScreen> {
 
                     const SizedBox(height: 24),
 
-                    const Text(
-                      'Password',
-                      style: TextStyle(
+                    Text(
+                      l10n.password,
+                      style: const TextStyle(
                         fontWeight: FontWeight.w600,
                         color: AppColors.primaryContainer,
                       ),
@@ -284,7 +286,7 @@ class _LoginScreenState extends State<LoginScreen> {
                       controller: _passwordController,
                       obscureText: _obscurePassword,
                       decoration:  InputDecoration(
-                        hintText: '••••••••',
+                        hintText: l10n.passwordHint,
                         hintStyle: TextStyle(color: Colors.grey.shade500),
                         prefixIcon: Icon(Icons.lock_outline),
                         filled: true,
@@ -308,7 +310,7 @@ class _LoginScreenState extends State<LoginScreen> {
 
                       validator: (value) {
                         if (value == null || value.trim().isEmpty) {
-                          return 'Please enter your password';
+                          return l10n.pleaseEnterPassword;
                         }
                         return null;
                       },
@@ -339,8 +341,8 @@ class _LoginScreenState extends State<LoginScreen> {
                               onTap: () {
                                 setState(() => _rememberMe = !_rememberMe);
                               },
-                              child: const Text(
-                                'Remember me',
+                              child: Text(
+                                l10n.rememberMe,
                                 style: TextStyle(color: AppColors.primaryContainer),
                               ),
                             ),
@@ -361,8 +363,8 @@ class _LoginScreenState extends State<LoginScreen> {
                               ),
                             );
                           },
-                          child: const Text(
-                            'Forgot Password?',
+                          child: Text(
+                            l10n.forgotPassword,
                             style: TextStyle(
                               color: AppColors.primaryContainer,
                               fontWeight: FontWeight.bold,
@@ -384,12 +386,12 @@ class _LoginScreenState extends State<LoginScreen> {
                       child:  _isLoading
                        ? const CircularProgressIndicator()
 
-                       : const Row(
+                       : Row(
                         mainAxisAlignment: MainAxisAlignment.center,
                         children: [
-                          Text('Login'),
-                          SizedBox(width: 8),
-                          Icon(Icons.arrow_forward, size: 20),
+                          Text(l10n.login),
+                          const SizedBox(width: 8),
+                          const Icon(Icons.arrow_forward, size: 20),
                         ],
                       ),
                     ),
@@ -402,7 +404,7 @@ class _LoginScreenState extends State<LoginScreen> {
                         Padding(
                           padding: const EdgeInsets.symmetric(horizontal: 16),
                           child: Text(
-                            'OR CONTINUE WITH',
+                            l10n.orContinueWith,
                             style: TextStyle(
                               fontSize: 12,
                               fontWeight: FontWeight.bold,
@@ -432,7 +434,7 @@ class _LoginScreenState extends State<LoginScreen> {
                           Image.asset('lib/assets/images/google_logo.png', height: 26, width: 26),
                           const SizedBox(width: 8),
                           Text(
-                            'Google',
+                            l10n.googleButton,
                             style: GoogleFonts.inter(
                               fontSize: 18,
                               fontWeight: FontWeight.bold,
@@ -451,16 +453,16 @@ class _LoginScreenState extends State<LoginScreen> {
               Row(
                 mainAxisAlignment: MainAxisAlignment.center,
                 children: [
-                  const Text(
-                    'New to AflAlert? ',
-                    style: TextStyle(color: AppColors.primaryContainer),
+                  Text(
+                    l10n.newToAflalert,
+                    style: const TextStyle(color: AppColors.primaryContainer),
                   ),
                   GestureDetector(
                     onTap: () {
                       Navigator.pushNamed(context, '/register');
                     },
                     child: Text(
-                      'Register here',
+                      l10n.registerHere,
                       style: TextStyle(
                         color: AppColors.primaryContainer,
                         fontWeight: FontWeight.bold,

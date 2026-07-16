@@ -8,6 +8,7 @@ import '../services/firebase_auth.dart';
 import '../services/firestore_service.dart';
 import '../services/local_notification_service.dart';
 import '../services/notification_center.dart';
+import '../l10n/app_localizations.dart';
 import 'legal_document_screen.dart';
 
 class RegistrationScreen extends StatefulWidget {
@@ -76,12 +77,13 @@ class _RegistrationScreenState extends State<RegistrationScreen> {
 
   Future<void> _registerUser() async {
     if (!_formKey.currentState!.validate()) return;
+    final AppLocalizations l10n = AppLocalizations.of(context)!;
 
     if (!_agreedToTerms) {
       ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(
-          content: Text('Please agree to the Terms of Service'),
-          backgroundColor: Color(0xFFDC2626),
+        SnackBar(
+          content: Text(l10n.pleaseAgreeToTerms),
+          backgroundColor: const Color(0xFFDC2626),
         ),
       );
       return;
@@ -123,10 +125,11 @@ class _RegistrationScreenState extends State<RegistrationScreen> {
     });
 
     final String email = _emailController.text.trim();
+    final String accountCreatedBody = l10n.accountCreatedBody(email);
     NotificationCenter.instance.add(
       AppNotification(
-        title: 'Account Created',
-        description: 'Your AflAlert account was created with $email.',
+        title: l10n.accountCreatedTitle,
+        description: accountCreatedBody,
         icon: Icons.person_add_alt_1,
         iconColor: AppColors.primaryContainer,
         iconBackground: const Color(0xFFE8F5EE),
@@ -135,22 +138,26 @@ class _RegistrationScreenState extends State<RegistrationScreen> {
       ),
     );
     LocalNotificationService.instance.show(
-      title: 'Account Created',
-      body: 'Your AflAlert account was created with $email.',
+      title: l10n.accountCreatedTitle,
+      body: accountCreatedBody,
     );
 
     ScaffoldMessenger.of(context).showSnackBar(
-      const SnackBar(
-        content: Text('Registration successful!'),
-        backgroundColor: Color(0xFF059669),
+      SnackBar(
+        content: Text(l10n.registrationSuccessful),
+        backgroundColor: const Color(0xFF059669),
       ),
     );
 
     Navigator.pushReplacementNamed(context, '/home');
   }
 
+  String _userTypeLabel(AppLocalizations l10n, String value) =>
+      value == 'Farmer' ? l10n.farmer : l10n.trader;
+
   @override
   Widget build(BuildContext context) {
+    final AppLocalizations l10n = AppLocalizations.of(context)!;
     return Scaffold(
       backgroundColor: AppColors.logoCream,
       body: SafeArea(
@@ -174,7 +181,7 @@ class _RegistrationScreenState extends State<RegistrationScreen> {
               const SizedBox(height: 9),
 
               Text(
-                'Join',
+                l10n.join,
                 style: GoogleFonts.inter(
                   fontSize: 20,
                   fontWeight: FontWeight.normal,
@@ -192,8 +199,8 @@ class _RegistrationScreenState extends State<RegistrationScreen> {
 
               const SizedBox(height: 8),
 
-              const Text(
-                'Empowering agriculture with intelligent analysis.',
+              Text(
+                l10n.registerTagline,
                 textAlign: TextAlign.center,
                 style: TextStyle(
                   fontSize: 16,
@@ -217,9 +224,9 @@ class _RegistrationScreenState extends State<RegistrationScreen> {
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
                       // Full Name Field
-                      const Text(
-                        'Full Name',
-                        style: TextStyle(
+                      Text(
+                        l10n.fullName,
+                        style: const TextStyle(
                           fontWeight: FontWeight.w600,
                           color: AppColors.primaryContainer,
                         ),
@@ -227,13 +234,13 @@ class _RegistrationScreenState extends State<RegistrationScreen> {
                       const SizedBox(height: 8),
                       TextFormField(
                         controller: _fullNameController,
-                        decoration: const InputDecoration(
-                          hintText: 'John Doe',
-                          prefixIcon: Icon(Icons.person_outline),
+                        decoration: InputDecoration(
+                          hintText: l10n.fullNameHint,
+                          prefixIcon: const Icon(Icons.person_outline),
                         ),
                         validator: (value) {
                           if (value == null || value.isEmpty) {
-                            return 'Please enter your full name';
+                            return l10n.pleaseEnterFullName;
                           }
                           return null;
                         },
@@ -242,9 +249,9 @@ class _RegistrationScreenState extends State<RegistrationScreen> {
                       const SizedBox(height: 20),
 
                       // Email Field
-                      const Text(
-                        'Email Address',
-                        style: TextStyle(
+                      Text(
+                        l10n.email,
+                        style: const TextStyle(
                           fontWeight: FontWeight.w600,
                           color: AppColors.primaryContainer,
                         ),
@@ -253,17 +260,17 @@ class _RegistrationScreenState extends State<RegistrationScreen> {
                       TextFormField(
                         controller: _emailController,
                         keyboardType: TextInputType.emailAddress,
-                        decoration: const InputDecoration(
-                          hintText: 'example@gmail.com',
-                          prefixIcon: Icon(Icons.email_outlined),
+                        decoration: InputDecoration(
+                          hintText: l10n.emailHint,
+                          prefixIcon: const Icon(Icons.email_outlined),
                         ),
                         validator: (value) {
                           if (value == null || value.isEmpty) {
-                            return 'Please enter your email';
+                            return l10n.pleaseEnterEmail;
                           }
                           if (!RegExp(r'^[^@]+@[^@]+\.[^@]+')
                               .hasMatch(value)) {
-                            return 'Please enter a valid email';
+                            return l10n.pleaseEnterValidEmail;
                           }
                           return null;
                         },
@@ -272,9 +279,9 @@ class _RegistrationScreenState extends State<RegistrationScreen> {
                       const SizedBox(height: 20),
 
                       // Phone Number Field
-                      const Text(
-                        'Phone Number',
-                        style: TextStyle(
+                      Text(
+                        l10n.phoneNumber,
+                        style: const TextStyle(
                           fontWeight: FontWeight.w600,
                           color: AppColors.primaryContainer,
                         ),
@@ -283,16 +290,16 @@ class _RegistrationScreenState extends State<RegistrationScreen> {
                       TextFormField(
                         controller: _phoneController,
                         keyboardType: TextInputType.phone,
-                        decoration: const InputDecoration(
-                          hintText: '+256 700 000 000',
-                          prefixIcon: Icon(Icons.phone_outlined),
+                        decoration: InputDecoration(
+                          hintText: l10n.phoneHint,
+                          prefixIcon: const Icon(Icons.phone_outlined),
                         ),
                         validator: (value) {
                           if (value == null || value.isEmpty) {
-                            return 'Please enter your phone number';
+                            return l10n.pleaseEnterPhone;
                           }
                           if (value.length < 9) {
-                            return 'Please enter a valid phone number';
+                            return l10n.pleaseEnterValidPhone;
                           }
                           return null;
                         },
@@ -301,9 +308,9 @@ class _RegistrationScreenState extends State<RegistrationScreen> {
                       const SizedBox(height: 20),
 
                       // User Type Dropdown
-                      const Text(
-                        'User Type',
-                        style: TextStyle(
+                      Text(
+                        l10n.userType,
+                        style: const TextStyle(
                           fontWeight: FontWeight.w600,
                           color: AppColors.primaryContainer,
                         ),
@@ -311,8 +318,8 @@ class _RegistrationScreenState extends State<RegistrationScreen> {
                       const SizedBox(height: 8),
                       DropdownButtonFormField<String>(
                         initialValue: _selectedUserType,
-                        decoration: const InputDecoration(
-                          hintText: 'Select your role',
+                        decoration: InputDecoration(
+                          hintText: l10n.selectYourRole,
                           prefixIcon: Icon(Icons.work_outline),
                           border: OutlineInputBorder(
                             borderRadius: BorderRadius.all(Radius.circular(12)),
@@ -335,7 +342,7 @@ class _RegistrationScreenState extends State<RegistrationScreen> {
                         items: userTypes.map((String value) {
                           return DropdownMenuItem<String>(
                             value: value,
-                            child: Text(value),
+                            child: Text(_userTypeLabel(l10n, value)),
                           );
                         }).toList(),
                         onChanged: (newValue) {
@@ -345,7 +352,7 @@ class _RegistrationScreenState extends State<RegistrationScreen> {
                         },
                         validator: (value) {
                           if (value == null || value.isEmpty) {
-                            return 'Please select a user type';
+                            return l10n.pleaseSelectUserType;
                           }
                           return null;
                         },
@@ -354,9 +361,9 @@ class _RegistrationScreenState extends State<RegistrationScreen> {
                       const SizedBox(height: 20),
 
                       // District Dropdown
-                      const Text(
-                        'District',
-                        style: TextStyle(
+                      Text(
+                        l10n.district,
+                        style: const TextStyle(
                           fontWeight: FontWeight.w600,
                           color: AppColors.primaryContainer,
                         ),
@@ -364,9 +371,9 @@ class _RegistrationScreenState extends State<RegistrationScreen> {
                       const SizedBox(height: 8),
                       DropdownButtonFormField<String>(
                         initialValue: _selectedDistrict,
-                        decoration: const InputDecoration(
-                          hintText: 'Select your district',
-                          prefixIcon: Icon(Icons.location_on_outlined),
+                        decoration: InputDecoration(
+                          hintText: l10n.selectYourDistrict,
+                          prefixIcon: const Icon(Icons.location_on_outlined),
                           border: OutlineInputBorder(
                             borderRadius: BorderRadius.all(Radius.circular(12)),
                             borderSide:
@@ -398,7 +405,7 @@ class _RegistrationScreenState extends State<RegistrationScreen> {
                         },
                         validator: (value) {
                           if (value == null || value.isEmpty) {
-                            return 'Please select a district';
+                            return l10n.pleaseSelectDistrict;
                           }
                           return null;
                         },
@@ -407,9 +414,9 @@ class _RegistrationScreenState extends State<RegistrationScreen> {
                       const SizedBox(height: 20),
 
                       // Password Field
-                      const Text(
-                        'Password',
-                        style: TextStyle(
+                      Text(
+                        l10n.password,
+                        style: const TextStyle(
                           fontWeight: FontWeight.w600,
                           color: AppColors.primaryContainer,
                         ),
@@ -419,7 +426,7 @@ class _RegistrationScreenState extends State<RegistrationScreen> {
                         controller: _passwordController,
                         obscureText: _obscurePassword,
                         decoration: InputDecoration(
-                          hintText: '••••••••',
+                          hintText: l10n.passwordHint,
                           prefixIcon: const Icon(Icons.lock_outline),
                           suffixIcon: IconButton(
                             icon: Icon(
@@ -436,10 +443,10 @@ class _RegistrationScreenState extends State<RegistrationScreen> {
                         ),
                         validator: (value) {
                           if (value == null || value.isEmpty) {
-                            return 'Please enter a password';
+                            return l10n.pleaseEnterPassword;
                           }
                           if (value.length < 8) {
-                            return 'Password must be at least 8 characters';
+                            return l10n.passwordMinLength;
                           }
                           return null;
                         },
@@ -448,9 +455,9 @@ class _RegistrationScreenState extends State<RegistrationScreen> {
                       const SizedBox(height: 20),
 
                       // Confirm Password Field
-                      const Text(
-                        'Confirm Password',
-                        style: TextStyle(
+                      Text(
+                        l10n.confirmPassword,
+                        style: const TextStyle(
                           fontWeight: FontWeight.w600,
                           color: AppColors.primaryContainer,
                         ),
@@ -460,7 +467,7 @@ class _RegistrationScreenState extends State<RegistrationScreen> {
                         controller: _confirmPasswordController,
                         obscureText: _obscureConfirmPassword,
                         decoration: InputDecoration(
-                          hintText: '••••••••',
+                          hintText: l10n.passwordHint,
                           prefixIcon: const Icon(Icons.lock_outline),
                           suffixIcon: IconButton(
                             icon: Icon(
@@ -478,10 +485,10 @@ class _RegistrationScreenState extends State<RegistrationScreen> {
                         ),
                         validator: (value) {
                           if (value == null || value.isEmpty) {
-                            return 'Please confirm your password';
+                            return l10n.pleaseConfirmPassword;
                           }
                           if (value != _passwordController.text) {
-                            return 'Passwords do not match';
+                            return l10n.passwordsDoNotMatch;
                           }
                           return null;
                         },
@@ -512,15 +519,15 @@ class _RegistrationScreenState extends State<RegistrationScreen> {
                             child: RichText(
                               text: TextSpan(
                                 children: [
-                                  const TextSpan(
-                                    text: 'By signing up, you agree to our ',
-                                    style: TextStyle(
+                                  TextSpan(
+                                    text: l10n.agreeToOurPrefix,
+                                    style: const TextStyle(
                                       color: AppColors.primaryContainer,
                                       fontSize: 14,
                                     ),
                                   ),
                                   TextSpan(
-                                    text: 'Terms of Service',
+                                    text: l10n.termsOfService,
                                     style: GoogleFonts.inter(
                                       color: AppColors.primaryContainer,
                                       fontWeight: FontWeight.bold,
@@ -540,15 +547,15 @@ class _RegistrationScreenState extends State<RegistrationScreen> {
                                         );
                                       },
                                   ),
-                                  const TextSpan(
-                                    text: ' and ',
-                                    style: TextStyle(
+                                  TextSpan(
+                                    text: l10n.andWord,
+                                    style: const TextStyle(
                                       color: AppColors.primaryContainer,
                                       fontSize: 14,
                                     ),
                                   ),
                                   TextSpan(
-                                    text: 'Privacy Policy',
+                                    text: l10n.privacyPolicy,
                                     style: GoogleFonts.inter(
                                       color: AppColors.primaryContainer,
                                       fontWeight: FontWeight.bold,
@@ -611,7 +618,7 @@ class _RegistrationScreenState extends State<RegistrationScreen> {
                                 mainAxisAlignment: MainAxisAlignment.center,
                                 children: [
                                   Text(
-                                    'Create Account',
+                                    l10n.register,
                                     style: GoogleFonts.inter(
                                       fontSize: 16,
                                       fontWeight: FontWeight.bold,
@@ -634,16 +641,16 @@ class _RegistrationScreenState extends State<RegistrationScreen> {
               Row(
                 mainAxisAlignment: MainAxisAlignment.center,
                 children: [
-                  const Text(
-                    'Already have an account? ',
-                    style: TextStyle(color: AppColors.primaryContainer),
+                  Text(
+                    l10n.alreadyHaveAccount,
+                    style: const TextStyle(color: AppColors.primaryContainer),
                   ),
                   GestureDetector(
                     onTap: () {
                       Navigator.pushReplacementNamed(context, '/login');
                     },
-                    child: const Text(
-                      'Login here',
+                    child: Text(
+                      l10n.loginHere,
                       style: TextStyle(
                         color: AppColors.primaryContainer,
                         fontWeight: FontWeight.bold,

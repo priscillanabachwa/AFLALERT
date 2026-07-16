@@ -44,5 +44,269 @@
   "whatIsAflatoxin": "What is Aflatoxin?",
   "healthRisks": "Health Risks of Exposure",
   "storageGuide": "Safe Storage Practices",
-  "seekHelp": "When to Seek Medical Help"
+  "seekHelp": "When to Seek Medical Help",
+
+  "englishLanguageName": "English",
+  "lugandaLanguageName": "Luganda",
+
+  "close": "Close",
+  "tryAgain": "Try again",
+
+  "onboardTitle1": "Protect Your Harvest",
+  "onboardDesc1": "Detect aflatoxin risks in maize using AI-powered image analysis.",
+  "onboardTitle2": "Instant Results",
+  "onboardDesc2": "Scan maize samples and receive fast, reliable assessments.",
+  "onboardTitle3": "Stay Safe & Informed",
+  "onboardDesc3": "Get recommendations and improve food safety for your harvest.",
+  "skip": "Skip",
+
+  "splashTagline": "AI Powered Aflatoxin Detection",
+  "splashMotto": "VIGILANT • INTELLIGENT • NURTURING",
+
+  "loginTagline": "Precision diagnostics for a safer harvest.",
+  "savedAccounts": "Saved accounts",
+  "emailHint": "example@gmail.com",
+  "pleaseEnterEmail": "Please enter your email",
+  "passwordHint": "••••••••",
+  "pleaseEnterPassword": "Please enter your password",
+  "rememberMe": "Remember me",
+  "orContinueWith": "OR CONTINUE WITH",
+  "googleButton": "Google",
+  "newToAflalert": "New to AflAlert? ",
+  "registerHere": "Register here",
+
+  "pleaseAgreeToTerms": "Please agree to the Terms of Service",
+  "accountCreatedTitle": "Account Created",
+  "accountCreatedBody": "Your AflAlert account was created with {email}.",
+  "@accountCreatedBody": {
+    "placeholders": { "email": { "type": "String" } }
+  },
+  "registrationSuccessful": "Registration successful!",
+  "join": "Join",
+  "registerTagline": "Empowering agriculture with intelligent analysis.",
+  "fullName": "Full Name",
+  "fullNameHint": "John Doe",
+  "pleaseEnterFullName": "Please enter your full name",
+  "pleaseEnterValidEmail": "Please enter a valid email",
+  "phoneNumber": "Phone Number",
+  "phoneHint": "+256 700 000 000",
+  "pleaseEnterPhone": "Please enter your phone number",
+  "pleaseEnterValidPhone": "Please enter a valid phone number",
+  "userType": "User Type",
+  "selectYourRole": "Select your role",
+  "farmer": "Farmer",
+  "trader": "Trader",
+  "pleaseSelectUserType": "Please select a user type",
+  "district": "District",
+  "selectYourDistrict": "Select your district",
+  "pleaseSelectDistrict": "Please select a district",
+  "passwordMinLength": "Password must be at least 8 characters",
+  "confirmPassword": "Confirm Password",
+  "pleaseConfirmPassword": "Please confirm your password",
+  "passwordsDoNotMatch": "Passwords do not match",
+  "agreeToOurPrefix": "By signing up, you agree to our ",
+  "termsOfService": "Terms of Service",
+  "andWord": " and ",
+  "privacyPolicy": "Privacy Policy",
+  "alreadyHaveAccount": "Already have an account? ",
+  "loginHere": "Login here",
+
+  "heatAlertTitle": "Heat Alert",
+  "heatAlertNotifTitle": "Heat Alert — {temp}°C",
+  "@heatAlertNotifTitle": {
+    "placeholders": { "temp": { "type": "int" } }
+  },
+  "guidelines": "Guidelines",
+  "homeSubGreeting": "Ready to secure your harvest today?",
+  "goodMorning": "Good Morning",
+  "goodAfternoon": "Good Afternoon",
+  "goodEvening": "Good Evening",
+  "goodNight": "Good Night",
+  "defaultGreetingName": "there",
+  "locating": "LOCATING...",
+  "locationUnavailable": "LOCATION UNAVAILABLE",
+  "fetchingWeather": "Fetching weather...",
+  "unavailable": "Unavailable",
+  "heatAlertBadge": "HEAT ALERT",
+  "dailyTip": "DAILY TIP",
+  "seeAll": "See All",
+  "noScansYetHome": "No scans yet — tap \"AI Scan\" above to check your first batch.",
+  "healthyCaps": "HEALTHY",
+  "riskyCaps": "RISKY",
+  "lastScanCaps": "LAST SCAN",
+  "atRiskBadge": "AT RISK",
+  "safeBadge": "SAFE",
+  "matchPercentLabel": "{percent}% Match",
+  "@matchPercentLabel": {
+    "placeholders": { "percent": { "type": "int" } }
+  },
+  "justNow": "Just now",
+  "minAgo": "{count} min ago",
+  "@minAgo": {
+    "placeholders": { "count": { "type": "int" } }
+  },
+  "hoursAgo": "{count}h ago",
+  "@hoursAgo": {
+    "placeholders": { "count": { "type": "int" } }
+  },
+  "yesterdayAt": "Yesterday, {time}",
+  "@yesterdayAt": {
+    "placeholders": { "time": { "type": "String" } }
+  },
+  "daysAgo": "{count} days ago",
+  "@daysAgo": {
+    "placeholders": { "count": { "type": "int" } }
+  },
+
+  "couldNotAnalyzePhoto": "Could not analyze this photo. Please try again.",
+  "notMaizeColorMismatch": "We couldn't recognize this as raw maize. This can happen if the maize is roasted or cooked, if the photo isn't of maize at all, or if the lighting made the colors hard to read. Please retake a clear photo of raw maize kernels in good light.",
+  "notMaizeModelRejected": "Our AI doesn't recognize this as maize kernels. If this is roasted or cooked maize, we can only assess raw kernels — please retake a photo of raw, unprocessed maize.",
+  "notMaizeLowConfidence": "We couldn't get a clear enough reading from this photo. Try retaking in brighter, even lighting and hold the camera steady.",
+  "analyzingImageTitle": "Analyzing Image...",
+  "aiDetectingMold": "Our AI model is detecting visible mold associated with aflatoxin contamination.",
+  "analysisFailed": "Analysis failed",
+  "noScanResultFound": "No scan result found",
+  "scanMaizeSampleHint": "Scan a maize sample to see its diagnosis here.",
+  "scanASample": "Scan a sample",
+
+  "couldNotCapturePhoto": "Could not capture photo: {error}",
+  "@couldNotCapturePhoto": {
+    "placeholders": { "error": { "type": "String" } }
+  },
+  "scanMaize": "Scan maize",
+  "flashOn": "Flash on",
+  "flashOff": "Flash off",
+  "lightingGood": "Lighting good",
+  "tooDark": "Too dark",
+  "adjustingFocus": "Adjusting focus",
+  "focusSharp": "Focus sharp",
+  "blurryHoldSteady": "Blurry, hold steady",
+  "moveToBrighterArea": "Move to a brighter, well-lit area",
+  "holdPhoneSteady": "Hold the phone steady before capturing",
+  "holdPhone20cm": "Hold phone about 20cm above the sample",
+  "adjustFrameWillTurnWhite": "Adjust and the frame will turn white when ready",
+  "gallery": "Gallery",
+  "reviewPhoto": "Review photo",
+  "sharpAndWellLit": "Sharp and well lit",
+  "photoMayBeTooDark": "Photo may be too dark",
+  "photoMayBeBlurry": "Photo may be blurry",
+  "retake": "Retake",
+  "usePhoto": "Use photo",
+
+  "aflatoxinDetector": "Aflatoxin Detector",
+  "healthyMaize": "Healthy Maize",
+  "unsafeForConsumption": "Unsafe for Human Consumption",
+  "diagnosisCompletedSuccessfully": "Diagnosis completed successfully",
+  "analysisFlaggedForReview": "Analysis flagged this sample for review",
+  "generatingPdfReport": "Generating PDF report...",
+  "couldNotSavePdfReport": "Could not save PDF report",
+  "recommendationsAndDirectives": "Recommendations & Directives",
+  "confidencePercentLabel": "{percent}% confidence",
+  "@confidencePercentLabel": {
+    "placeholders": { "percent": { "type": "int" } }
+  },
+  "scanAnotherBatch": "Scan Another Batch",
+
+  "allFilter": "All",
+  "locationFilterLabel": "Location",
+  "showingResultsCount": "Showing {count} results",
+  "@showingResultsCount": {
+    "placeholders": { "count": { "type": "int" } }
+  },
+  "forCurrentFilters": " for current filters",
+  "clearAllFiltersX": "Clear all filters ×",
+  "noScansFound": "No scans found",
+  "tryAdjustingFilters": "Try adjusting your filters\nor scan a new maize sample.",
+  "clearFilters": "Clear filters",
+  "couldNotLoadScanHistory": "Couldn't load scan history",
+  "checkConnectionTryAgain": "Check your connection and try again.",
+  "locationLabel": "Location: {location}",
+  "@locationLabel": {
+    "placeholders": { "location": { "type": "String" } }
+  },
+  "notRecorded": "Not recorded",
+  "dateLabel": "Date: {date}",
+  "@dateLabel": {
+    "placeholders": { "date": { "type": "String" } }
+  },
+  "statusLabel": "Status: {status}",
+  "@statusLabel": {
+    "placeholders": { "status": { "type": "String" } }
+  },
+  "matchConfidenceLabel": "Match confidence: {percent}%",
+  "@matchConfidenceLabel": {
+    "placeholders": { "percent": { "type": "int" } }
+  },
+  "couldNotGeneratePdfReport": "Could not generate PDF report",
+  "filterByLocation": "Filter by Location",
+  "allLocations": "All Locations",
+  "scanHistoryExportLabel": "Scan history export ({count} scans, {healthy} healthy)",
+  "@scanHistoryExportLabel": {
+    "placeholders": {
+      "count": { "type": "int" },
+      "healthy": { "type": "int" }
+    }
+  },
+
+  "alertsFilter": "Alerts",
+  "updatesFilter": "Updates",
+  "allCaughtUp": "You're all caught up",
+
+  "changePassword": "Change password",
+  "takeAPhoto": "Take a photo",
+  "chooseFromGallery": "Choose from gallery",
+  "cameraAccessDenied": "Camera access was denied. Enable it in Settings to take a photo.",
+  "photoLibraryAccessDenied": "Photo library access was denied. Enable it in Settings to choose a photo.",
+  "fullNameCannotBeEmpty": "Full name cannot be empty",
+  "couldNotUploadProfilePicture": "Could not upload profile picture. Please try again.",
+  "profileUpdatedSuccessfully": "Profile updated successfully",
+  "couldNotUpdateProfile": "Could not update profile. Please try again.",
+  "editProfile": "Edit Profile",
+  "locationField": "Location",
+  "saveChanges": "Save Changes",
+  "changePasswordTitle": "Change Password",
+  "currentPassword": "Current Password",
+  "enterCurrentPassword": "Enter your current password",
+  "newPassword": "New Password",
+  "passwordMin6Chars": "Password must be at least 6 characters",
+  "confirmNewPassword": "Confirm New Password",
+  "updatePassword": "Update Password",
+  "passwordChangedTitle": "Password Changed",
+  "passwordChangedBody": "Your account password was changed successfully.",
+  "passwordUpdatedSuccessfully": "Password updated successfully",
+  "couldNotChangePassword": "Could not change password. Please try again.",
+  "currentPasswordIncorrect": "Current password is incorrect.",
+  "newPasswordTooWeak": "New password is too weak.",
+  "pleaseLogOutAndBackIn": "Please log out and log back in, then try again.",
+
+  "passwordResetLinkSent": "Password reset link sent! Check your email.",
+  "errorOccurredTryAgain": "An error occurred. Please try again.",
+  "noAccountFoundEmail": "No account found with this email address.",
+  "resetPassword": "Reset Password",
+  "resetPasswordInstructions": "Enter your registered email address below. We will send you a secure link to reset your password and keep your tracking account secure.",
+  "pleaseEnterValidEmailAddress": "Please enter a valid email address",
+  "sendResetLink": "Send Reset Link",
+
+  "downloadedReports": "Downloaded Reports",
+  "noDownloadedReports": "No downloaded reports",
+
+  "legal": "Legal",
+
+  "reportSaved": "Report saved",
+  "pdfSavedMessage": "Your PDF report has been saved to this device. You can open it now or find it later in Downloaded Reports.",
+  "viewAllReports": "View All Reports",
+  "openPdf": "Open PDF",
+
+  "processingPipeline": "Processing Pipeline",
+  "estimatedWait": "Estimated wait: 3–5 seconds",
+  "neuralEngineActive": "Neural Engine Active",
+  "scanningAspergillus": "Scanning for Aspergillus flavus patterns.",
+
+  "settingsTitle": "Settings",
+  "appPreferences": "App preferences",
+  "notificationsSubtitle": "Alerts about scan results and batch status",
+  "helpSupportSection": "Help & support",
+  "contactSupport": "Contact support",
+  "aboutAflAlert": "About AflAlert",
+  "recommendationsSourced": "Recommendations sourced from UNBS and MAAIF guidance."
 }

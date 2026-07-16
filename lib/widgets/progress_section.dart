@@ -1,6 +1,7 @@
 import 'dart:async';
 import 'package:flutter/material.dart';
 import '../constants/app_colors.dart';
+import '../l10n/app_localizations.dart';
 
 class ProgressSection extends StatefulWidget {
   const ProgressSection({super.key});
@@ -38,6 +39,7 @@ class _ProgressSectionState extends State<ProgressSection> {
 
   @override
   Widget build(BuildContext context) {
+    final AppLocalizations l10n = AppLocalizations.of(context)!;
 
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
@@ -47,9 +49,9 @@ class _ProgressSectionState extends State<ProgressSection> {
           mainAxisAlignment: MainAxisAlignment.spaceBetween,
           children: [
 
-            const Text(
-              "Processing Pipeline",
-              style: TextStyle(
+            Text(
+              l10n.processingPipeline,
+              style: const TextStyle(
                 fontWeight: FontWeight.bold,
                 fontSize: 16,
                 color: AppColors.primary,
@@ -85,9 +87,9 @@ class _ProgressSectionState extends State<ProgressSection> {
 
         Row(
           mainAxisAlignment: MainAxisAlignment.center,
-          children: const [
+          children: [
 
-            SizedBox(
+            const SizedBox(
               width: 18,
               height: 18,
               child: CircularProgressIndicator(
@@ -96,11 +98,11 @@ class _ProgressSectionState extends State<ProgressSection> {
               ),
             ),
 
-            SizedBox(width: 10),
+            const SizedBox(width: 10),
 
             Text(
-              "Estimated wait: 3–5 seconds",
-              style: TextStyle(
+              l10n.estimatedWait,
+              style: const TextStyle(
                 color: AppColors.grey,
                 fontStyle: FontStyle.italic,
               ),
@@ -144,24 +146,24 @@ class _ProgressSectionState extends State<ProgressSection> {
 
               const SizedBox(width: 15),
 
-              const Expanded(
+              Expanded(
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
 
                     Text(
-                      "Neural Engine Active",
-                      style: TextStyle(
+                      l10n.neuralEngineActive,
+                      style: const TextStyle(
                         fontWeight: FontWeight.bold,
                         fontSize: 16,
                       ),
                     ),
 
-                    SizedBox(height: 6),
+                    const SizedBox(height: 6),
 
                     Text(
-                      "Scanning for Aspergillus flavus patterns.",
-                      style: TextStyle(
+                      l10n.scanningAspergillus,
+                      style: const TextStyle(
                         color: Colors.black54,
                       ),
                     ),

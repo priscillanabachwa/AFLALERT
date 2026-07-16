@@ -4,6 +4,7 @@ import 'package:flutter/material.dart';
 import 'package:open_filex/open_filex.dart';
 
 import '../constants/app_colors.dart';
+import '../l10n/app_localizations.dart';
 import '../screens/downloaded_reports_screen.dart';
 
 // Shown after a PDF report has been generated and saved, offering a way to
@@ -11,26 +12,24 @@ import '../screens/downloaded_reports_screen.dart';
 // "Export PDF" button uses this so the confirmation flow looks the same
 // wherever it's triggered from.
 Future<void> showPdfExportDialog(BuildContext context, File pdfFile) {
+  final AppLocalizations l10n = AppLocalizations.of(context)!;
   return showDialog<void>(
     context: context,
     builder: (dialogContext) => AlertDialog(
       backgroundColor: AppColors.surface,
       shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
-      title: const Row(
+      title: Row(
         children: [
-          Icon(Icons.check_circle, color: AppColors.primaryContainer),
-          SizedBox(width: 8),
-          Text('Report saved'),
+          const Icon(Icons.check_circle, color: AppColors.primaryContainer),
+          const SizedBox(width: 8),
+          Text(l10n.reportSaved),
         ],
       ),
-      content: const Text(
-        'Your PDF report has been saved to this device. You can open it now '
-        'or find it later in Downloaded Reports.',
-      ),
+      content: Text(l10n.pdfSavedMessage),
       actions: [
         TextButton(
           onPressed: () => Navigator.pop(dialogContext),
-          child: const Text('Close', style: TextStyle(color: AppColors.grey)),
+          child: Text(l10n.close, style: const TextStyle(color: AppColors.grey)),
         ),
         TextButton(
           onPressed: () {
@@ -40,7 +39,7 @@ Future<void> showPdfExportDialog(BuildContext context, File pdfFile) {
               MaterialPageRoute(builder: (_) => const DownloadedReportsScreen()),
             );
           },
-          child: const Text('View All Reports'),
+          child: Text(l10n.viewAllReports),
         ),
         ElevatedButton(
           onPressed: () {
@@ -51,7 +50,7 @@ Future<void> showPdfExportDialog(BuildContext context, File pdfFile) {
             backgroundColor: AppColors.primaryContainer,
             foregroundColor: Colors.white,
           ),
-          child: const Text('Open PDF'),
+          child: Text(l10n.openPdf),
         ),
       ],
     ),
