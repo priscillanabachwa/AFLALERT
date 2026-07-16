@@ -421,8 +421,16 @@ class AppLocalizationsLg extends AppLocalizations {
       'Tetusobodde kwekenneenya kifananyi kino. Ddamu ogezeeko.';
 
   @override
-  String get notMaizePhoto =>
-      'Kino tekirabika ng\'ekifananyi kya kasooli. Ddamu okwate ekifananyi ekirongoofu eky\'empeke za kasooli.';
+  String get notMaizeColorMismatch =>
+      'Tetusobodde kukizuula nga kasooli mubisi. Kino kiyinza kubaawo kasooli ng\'ayokeddwa oba afumbiddwa, ekifananyi nga si kya kasooli, oba omusana nga tegumanyiddwa bulungi. Ddamu okwate ekifananyi ekirongoofu eky\'empeke za kasooli mubisi mu musana omulungi.';
+
+  @override
+  String get notMaizeModelRejected =>
+      'AI yaffe tekizuula nga mpeke za kasooli. Bwe kiba kasooli ayokeddwa oba afumbiddwa, tusobola kwekenneenya mpeke za kasooli mubisi zokka — ddamu okwate ekifananyi kya kasooli mubisi.';
+
+  @override
+  String get notMaizeLowConfidence =>
+      'Tetufunye kizuula kirongoofu okuva mu kifananyi kino. Gezaako okukwata nate mu musana omulungi era onyweeze ssimu bulungi.';
 
   @override
   String get analyzingImageTitle => 'Twekenneenya Ekifananyi...';
