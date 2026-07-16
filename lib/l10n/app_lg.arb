@@ -5,7 +5,7 @@
 
   "register": "Wandiisa Akawunti",
 
-  "register": "Tandika Akaunti",
+ 
   "email": "Endagiriro ya Email",
   "password": "Ekigambo ky'ekyama",
   "forgotPassword": "Weerabidde Ekigambo ky'ekyama?",
@@ -14,9 +14,9 @@
 
   "history": "Ebyafaayo",
   "notifications": "Obubaka",
-  "profile": "Profayiro",
+  "profile": "Ebinkwatako",
   "aiScan": "SCAN ya AI",
-  "tapToScan": "Nyiga oscan ebirime",
+  "tapToScan": "Nyiga scan yebirime",
   "recentScans": "Scan Ezaakakoleddwa",
   "healthy": "Bulungi",
   "moldDetected": "Obukuku Bulabiddwa",
