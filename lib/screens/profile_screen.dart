@@ -498,6 +498,22 @@ class _EditProfileSheetState extends State<_EditProfileSheet> {
     if (!mounted) return;
 
     if (success) {
+      NotificationCenter.instance.add(
+        AppNotification(
+          title: 'Profile Updated',
+          description: 'Your account details were updated successfully.',
+          icon: Icons.person_add_alt_1,
+          iconColor: kGreen,
+          iconBackground: kGreenLight,
+          category: NotificationCategory.update,
+          unread: true,
+        ),
+      );
+      LocalNotificationService.instance.show(
+        title: 'Profile Updated',
+        body: 'Your account details were updated successfully.',
+      );
+
       Navigator.pop(context);
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
