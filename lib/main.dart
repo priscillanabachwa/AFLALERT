@@ -16,6 +16,56 @@ import 'package:aflalert/screens/settings_screen.dart';
 import 'package:aflalert/screens/result_screen.dart';
 import 'package:aflalert/services/local_notification_service.dart';
 import 'package:shared_preferences/shared_preferences.dart';
+import 'package:flutter/material.dart';
+import 'package:flutter_localizations/flutter_localizations.dart';
+import 'package:flutter_gen/gen_l10n/app_localizations.dart';
+
+void main() {
+  runApp(const AflAlertApp());
+}
+
+// Language state — holds current locale
+class AflAlertApp extends StatefulWidget {
+  const AflAlertApp({super.key});
+
+  // Static method to change language from anywhere
+  static void setLocale(BuildContext context, Locale newLocale) {
+    _AflAlertAppState? state =
+        context.findAncestorStateOfType<_AflAlertAppState>();
+    state?.setLocale(newLocale);
+  }
+
+  @override
+  State<AflAlertApp> createState() => _AflAlertAppState();
+}
+
+class _AflAlertAppState extends State<AflAlertApp> {
+  Locale _locale = const Locale('en'); // default English
+
+  void setLocale(Locale locale) {
+    setState(() => _locale = locale);
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return MaterialApp(
+      debugShowCheckedModeBanner: false,
+      title: 'AflAlert',
+      locale: _locale,
+      supportedLocales: const [
+        Locale('en'), // English
+        Locale('lg'), // Luganda
+      ],
+      localizationsDelegates: const [
+        AppLocalizations.delegate,
+        GlobalMaterialLocalizations.delegate,
+        GlobalWidgetsLocalizations.delegate,
+        GlobalCupertinoLocalizations.delegate,
+      ],
+      // your routes here
+    );
+  }
+}
 
 Future<void> main() async {
   WidgetsFlutterBinding.ensureInitialized();
@@ -28,6 +78,30 @@ Future<void> main() async {
 
   runApp(const AflAlert());
 }
+
+void main() async {
+  WidgetsFlutterBinding.ensureInitialized();
+  
+  // Load saved language preference
+  final prefs = await SharedPreferences.getInstance();
+  final String savedLang = prefs.getString('language') ?? 'en';
+  
+  runApp(AflAlertApp(initialLocale: Locale(savedLang)));
+}
+
+onSelected: (lang) async {
+  final prefs = await SharedPreferences.getInstance();
+  
+  if (lang == 'Luganda') {
+    await prefs.setString('language', 'lg');
+    AflAlertApp.setLocale(context, const Locale('lg'));
+  } else {
+    await prefs.setString('language', 'en');
+    AflAlertApp.setLocale(context, const Locale('en'));
+  }
+  Navigator.pop(context);
+},
+
 
 class AflAlert extends StatefulWidget {
   const AflAlert({super.key});

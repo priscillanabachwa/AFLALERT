@@ -91,7 +91,8 @@ flutter:
   generate: true
   assets:
     - assets/images/
-
+    - lib/assets/best.tflite
+    - lib/assets/images/
   # existing content stays here
 
   # The following line ensures that the Material Icons font is
@@ -126,10 +127,7 @@ flutter:
   #       - asset: fonts/TrajanPro.ttf
   #       - asset: fonts/TrajanPro_Bold.ttf
 
-  assets:
-    - lib/assets/best.tflite
-    - lib/assets/images/
-
+  
 flutter_launcher_icons:
     android: true
     ios: true
