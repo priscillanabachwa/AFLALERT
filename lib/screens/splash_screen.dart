@@ -3,6 +3,7 @@ import 'package:flutter/material.dart';
 import 'package:aflalert/screens/welcomepage.dart';
 import 'package:aflalert/screens/home_screen.dart';
 import 'package:aflalert/services/firebase_auth.dart';
+import '../l10n/app_localizations.dart';
 
 class SplashScreen extends StatefulWidget {
   const SplashScreen({super.key});
@@ -64,6 +65,7 @@ class _SplashScreenState extends State<SplashScreen>
 
   @override
   Widget build(BuildContext context) {
+    final AppLocalizations l10n = AppLocalizations.of(context)!;
     return Scaffold(
       body: Container(
         width: double.infinity,
@@ -112,10 +114,10 @@ class _SplashScreenState extends State<SplashScreen>
 
               const SizedBox(height: 10),
 
-              const Text(
-                "AI Powered Aflatoxin Detection",
+              Text(
+                l10n.splashTagline,
                 textAlign: TextAlign.center,
-                style: TextStyle(
+                style: const TextStyle(
                   color: Color(0xFFB0F1CD),
                   fontSize: 18,
                   fontWeight: FontWeight.w300,
@@ -137,9 +139,9 @@ class _SplashScreenState extends State<SplashScreen>
 
               const SizedBox(height: 30),
 
-              const Text(
-                "VIGILANT • INTELLIGENT • NURTURING",
-                style: TextStyle(
+              Text(
+                l10n.splashMotto,
+                style: const TextStyle(
                   color: Colors.white54,
                   fontSize: 11,
                   letterSpacing: 3,

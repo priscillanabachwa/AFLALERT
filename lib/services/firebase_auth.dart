@@ -73,8 +73,15 @@ class AuthService {
       // google_sign_in v7+ requires an explicit initialize() call before
       // any sign-in attempt. It's safe to call more than once, but we only
       // need to do it the first time this service is used.
+      //
+      // serverClientId is the Web client (client_type 3) from
+      // android/app/google-services.json — Android doesn't read it from
+      // that file automatically, so it has to be passed here explicitly.
       if (!_googleSignInInitialized) {
-        await _googleSignIn.initialize();
+        await _googleSignIn.initialize(
+          serverClientId:
+              '530780315531-bcrm1qeodme9h9kmcagpm1t01gqs3fo2.apps.googleusercontent.com',
+        );
         _googleSignInInitialized = true;
       }
 

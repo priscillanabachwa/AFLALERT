@@ -3,6 +3,7 @@ import 'dart:io';
 import 'package:flutter/material.dart';
 import 'package:open_filex/open_filex.dart';
 
+import '../l10n/app_localizations.dart';
 import '../models/report_model.dart';
 import '../services/report_storage_service.dart';
 
@@ -48,15 +49,16 @@ class _DownloadedReportsScreenState
 
   @override
   Widget build(BuildContext context) {
+    final AppLocalizations l10n = AppLocalizations.of(context)!;
     return Scaffold(
       appBar: AppBar(
-        title: const Text("Downloaded Reports"),
+        title: Text(l10n.downloadedReports),
       ),
       body: reports.isEmpty
-          ? const Center(
+          ? Center(
               child: Text(
-                "No downloaded reports",
-                style: TextStyle(fontSize: 18),
+                l10n.noDownloadedReports,
+                style: const TextStyle(fontSize: 18),
               ),
             )
           : ListView.builder(

@@ -1,7 +1,10 @@
 import 'dart:typed_data';
 
+enum NotMaizeReason { colorMismatch, modelRejected, lowConfidence }
+
 class NotMaizeException implements Exception {
-  const NotMaizeException();
+  final NotMaizeReason reason;
+  const NotMaizeException(this.reason);
 }
 
 /// Web stub: tflite_flutter and dart:ffi are not available on the web, so
