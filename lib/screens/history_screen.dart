@@ -38,6 +38,8 @@ class ScanRecord {
   final ScanStatus status;
   final int matchPercent;
   final String imagePath;
+  final bool isChemical;
+  final double ppbValue;
 
   const ScanRecord({
     required this.id,
@@ -47,7 +49,14 @@ class ScanRecord {
     required this.status,
     required this.matchPercent,
     required this.imagePath,
+    this.isChemical = false,
+    this.ppbValue = 0,
   });
+
+  // Tier 1 rows show a confidence %; Tier 2 (chemical strip) rows show the
+  // ppb reading instead — a % match doesn't apply to a quantitative result.
+  String get badgeLabel =>
+      isChemical ? '${ppbValue.toStringAsFixed(1)} ppb' : '$matchPercent%';
 }
 
 // ─────────────────────────────────────────
@@ -66,6 +75,31 @@ ScanRecord? _scanRecordFromDoc(QueryDocumentSnapshot doc) {
   if (rawData is! Map<String, dynamic>) return null;
   final data = rawData;
 
+  final Timestamp? timestamp = data['timestamp'] as Timestamp?;
+  final String date = timestamp != null ? _formatScanDate(timestamp.toDate()) : 'Just now';
+  final String location = (data['location'] ?? '').toString();
+
+  if (data['testType'] == 'chemical') {
+    final num ppb = (data['ppbValue'] ?? 0) as num;
+    final num limit = (data['safeLimitPpb'] ?? 0) as num;
+    final String cropType = (data['cropType'] ?? '').toString();
+    final String cropLabel = cropType.isNotEmpty
+        ? '${cropType[0].toUpperCase()}${cropType.substring(1)}'
+        : 'Crop';
+
+    return ScanRecord(
+      id: doc.id,
+      title: 'Chemical Strip · $cropLabel',
+      location: location,
+      date: date,
+      status: ppb > limit ? ScanStatus.moldDetected : ScanStatus.healthy,
+      matchPercent: 0,
+      imagePath: (data['imageUrl'] ?? '').toString(),
+      isChemical: true,
+      ppbValue: ppb.toDouble(),
+    );
+  }
+
   final String label = (data['label'] ?? 'Unknown').toString();
   final num confidenceRaw = switch (data['confidence']) {
     num n => n,
@@ -79,13 +113,11 @@ ScanRecord? _scanRecordFromDoc(QueryDocumentSnapshot doc) {
           .hasMatch(label) &&
       !RegExp(r'no mold|healthy|clean|safe|negative', caseSensitive: false).hasMatch(label);
 
-  final Timestamp? timestamp = data['timestamp'] as Timestamp?;
-
   return ScanRecord(
     id: doc.id,
     title: label,
-    location: (data['location'] ?? '').toString(),
-    date: timestamp != null ? _formatScanDate(timestamp.toDate()) : 'Just now',
+    location: location,
+    date: date,
     status: isMoldy ? ScanStatus.moldDetected : ScanStatus.healthy,
     matchPercent: matchPercent,
     imagePath: (data['imageUrl'] ?? '').toString(),
@@ -524,7 +556,9 @@ class _HistoryScreenState extends State<HistoryScreen> {
               ),
               const SizedBox(height: 12),
               Text(
-                l10n.matchConfidenceLabel(record.matchPercent),
+                record.isChemical
+                    ? l10n.chemicalLevelValueLabel(record.ppbValue.toStringAsFixed(1))
+                    : l10n.matchConfidenceLabel(record.matchPercent),
                 style: const TextStyle(fontSize: 14, color: Color(0xFF263238)),
               ),
               const SizedBox(height: 20),
@@ -567,7 +601,7 @@ class _HistoryScreenState extends State<HistoryScreen> {
           .map((r) => PdfReportEntry(
                 title: r.title,
                 isSafe: r.status == ScanStatus.healthy,
-                confidence: r.matchPercent / 100,
+                confidence: r.isChemical ? (r.ppbValue / 100).clamp(0, 1) : r.matchPercent / 100,
                 date: r.date,
                 location: r.location,
               ))
@@ -707,7 +741,7 @@ class _ScanCard extends StatelessWidget {
                             borderRadius: BorderRadius.circular(20),
                           ),
                           child: Text(
-                            '${record.matchPercent}%',
+                            record.badgeLabel,
                             style: TextStyle(
                               fontSize: 11,
                               fontWeight: FontWeight.w800,

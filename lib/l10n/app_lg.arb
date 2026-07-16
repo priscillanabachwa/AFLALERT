@@ -272,5 +272,55 @@
   "helpSupportSection": "Obuyambi n'obuwagizi",
   "contactSupport": "Tukwatagane n'Obuyambi",
   "aboutAflAlert": "Ebikwata ku AflAlert",
-  "recommendationsSourced": "Ebiteesebwa biva mu buwabuzi bwa UNBS ne MAAIF."
+  "recommendationsSourced": "Ebiteesebwa biva mu buwabuzi bwa UNBS ne MAAIF.",
+
+  "searchCrop": "Noonya nga okozesa ekirime, ekifo...",
+
+  "startNewTest": "Tandika Ekigezo Ekipya",
+  "tier1Title": "Tier 1 · Okukebera kwa AI (Amaaso)",
+  "tier1Subtitle": "Kebera kasooli oba binyeebwa oba biriko obukuku",
+  "tier2Title": "Tier 2 · Chemical Strip Scan",
+  "tier2Subtitle": "Soma test strip okufuna ppb ntuufu",
+  "chemicalStripScanTitle": "Chemical Strip Scan",
+  "scanTestStrip": "Kebera Test Strip",
+  "cropTypeMaize": "Kasooli",
+  "cropTypeGroundnut": "Binyeebwa",
+  "positionStripInFrame": "Teeka strip mu bbokisi oluvannyuma lw'eddakiika kkumi ez'okulinda",
+  "scanAnotherStrip": "Kebera Strip Endala",
+  "scanTestStripHint": "Kebera test strip okumanya obungi bw'obutwa mu bulimi",
+
+  "analyzingStripTitle": "Nkebera Strip...",
+  "readingTestControlLines": "Nsoma emiggo gya Test ne Control",
+  "stripNotDetectedMessage": "Tetuzudde strip mu kifaananyi kino. Kakasa nti strip yonna eri mu bbokisi era nga waliwo ekitangaala ekimala, oluvannyuma ddamu ogezeeko.",
+  "controlLineNotDetectedMessage": "Omuggo gwa Control tegulabise — ekigezo kino kiyinza obutaba kituufu. Ddamu okole ekigezo ne strip empya.",
+
+  "testBatchLabel": "EKIBINJA KY'EKIGEZO",
+  "toxicLoadLabel": "OBUNGI BW'OBUTWA",
+  "regulatoryScaleLabel": "EMITENDERO GY'AMATEEKA",
+  "actionRequiredLabel": "EKIKOLWA KYETAAGISA",
+  "diagnosticBreakdownLabel": "EBIKWATA KU KIGEZO",
+  "chemicalLevelLabel": "Ekigero ky'obutwa",
+  "testLineOdLabel": "Ekizimba ky'omuggo gwa Test (T)",
+  "controlLineOdLabel": "Ekizimba ky'omuggo gwa Control (C)",
+  "odRatioLabel": "Enkigero ya T/C",
+  "scanLocationLabel": "Ekifo ekyakeberebwa",
+  "withinSafeLimit": "Kiri mu Ekigero Ekikkirizibwa",
+  "exceedsSafeLimit": "Kisukiddeko Ekigero Ekikkirizibwa",
+
+  "safeLimitTick": "Ekigero kya {limit} ppb",
+  "@safeLimitTick": {
+    "placeholders": { "limit": { "type": "String" } }
+  },
+  "exceedsSafeLimitMessage": "Ekyokulabirako kino kisukiddeko ekigero ky'amateeka ekya {limit} ppb mu mmere y'abantu.",
+  "@exceedsSafeLimitMessage": {
+    "placeholders": { "limit": { "type": "String" } }
+  },
+  "ppbValueLabel": "{value} ppb",
+  "@ppbValueLabel": {
+    "placeholders": { "value": { "type": "String" } }
+  },
+  "chemicalLevelValueLabel": "Ekigero ky'obutwa: {value} ppb",
+  "@chemicalLevelValueLabel": {
+    "placeholders": { "value": { "type": "String" } }
+  }
 }

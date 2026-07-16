@@ -69,6 +69,53 @@ class FirestoreService {
     }
   }
 
+  /// Saves a Tier 2 chemical strip diagnostic record to the user's scan
+  /// history collection. Shares the same collection as [saveScanRecord] so
+  /// Home/History keep reading from one stream; `testType` distinguishes
+  /// chemical entries from Tier 1's visual scans (which predate this field).
+  Future<bool> saveStripScanRecord({
+    required String imageUrl,
+    required String cropType,
+    required double ppbValue,
+    required double tLineOD,
+    required double cLineOD,
+    required double odRatio,
+    required double safeLimitPpb,
+    String? location,
+  }) async {
+    try {
+      final User? currentUser = _auth.currentUser;
+      if (currentUser == null) {
+        debugPrint('FirestoreService: Cannot save record, no authenticated user found.');
+        return false;
+      }
+
+      final CollectionReference userScans = _db
+          .collection('users')
+          .doc(currentUser.uid)
+          .collection('scans');
+
+      await userScans.add({
+        'testType': 'chemical',
+        'imageUrl': imageUrl,
+        'cropType': cropType,
+        'ppbValue': ppbValue,
+        'tLineOD': tLineOD,
+        'cLineOD': cLineOD,
+        'odRatio': odRatio,
+        'safeLimitPpb': safeLimitPpb,
+        'location': location,
+        'timestamp': FieldValue.serverTimestamp(),
+      });
+
+      debugPrint('FirestoreService: Strip scan successfully logged.');
+      return true;
+    } catch (e) {
+      debugPrint('FirestoreService Error saving strip scan log: $e');
+      return false;
+    }
+  }
+
   /// Updates the active logged-in user's editable profile fields.
   Future<bool> updateUserProfile({
     required String fullName,

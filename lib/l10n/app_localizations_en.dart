@@ -826,4 +826,112 @@ class AppLocalizationsEn extends AppLocalizations {
   @override
   String get recommendationsSourced =>
       'Recommendations sourced from UNBS and MAAIF guidance.';
+
+  @override
+  String get startNewTest => 'Start a New Test';
+
+  @override
+  String get tier1Title => 'Tier 1 · Visual AI Scan';
+
+  @override
+  String get tier1Subtitle => 'Check loose maize or groundnuts for mold';
+
+  @override
+  String get tier2Title => 'Tier 2 · Chemical Strip Scan';
+
+  @override
+  String get tier2Subtitle => 'Read a test strip for an exact ppb level';
+
+  @override
+  String get chemicalStripScanTitle => 'Chemical Strip Scan';
+
+  @override
+  String get scanTestStrip => 'Scan Test Strip';
+
+  @override
+  String get cropTypeMaize => 'Maize';
+
+  @override
+  String get cropTypeGroundnut => 'Groundnut';
+
+  @override
+  String get positionStripInFrame =>
+      'Position strip in frame after the 10-minute reaction time';
+
+  @override
+  String get scanAnotherStrip => 'Scan Another Strip';
+
+  @override
+  String get scanTestStripHint =>
+      'Scan a reacted test strip to check aflatoxin levels';
+
+  @override
+  String get analyzingStripTitle => 'Analyzing Strip...';
+
+  @override
+  String get readingTestControlLines => 'Reading the test and control lines';
+
+  @override
+  String get stripNotDetectedMessage =>
+      'Couldn\'t detect a test strip in this photo. Make sure the whole strip is inside the frame and well lit, then try again.';
+
+  @override
+  String get controlLineNotDetectedMessage =>
+      'Control line not detected — this test may be invalid. Repeat the test with a new strip.';
+
+  @override
+  String get testBatchLabel => 'TEST BATCH';
+
+  @override
+  String get toxicLoadLabel => 'TOXIC LOAD';
+
+  @override
+  String get regulatoryScaleLabel => 'REGULATORY SCALE';
+
+  @override
+  String get actionRequiredLabel => 'ACTION REQUIRED';
+
+  @override
+  String get diagnosticBreakdownLabel => 'DIAGNOSTIC BREAKDOWN';
+
+  @override
+  String get chemicalLevelLabel => 'Chemical level';
+
+  @override
+  String get testLineOdLabel => 'Test line (T) optical density';
+
+  @override
+  String get controlLineOdLabel => 'Control line (C) optical density';
+
+  @override
+  String get odRatioLabel => 'T/C ratio';
+
+  @override
+  String get scanLocationLabel => 'Scan location';
+
+  @override
+  String get withinSafeLimit => 'Within Safe Limit';
+
+  @override
+  String get exceedsSafeLimit => 'Exceeds Safe Limit';
+
+  @override
+  String safeLimitTick(String limit) {
+    return '$limit ppb limit';
+  }
+
+  @override
+  String exceedsSafeLimitMessage(String limit) {
+    return 'This sample exceeds the regulatory safe limit of $limit ppb for human food.';
+  }
+
+  @override
+  String ppbValueLabel(String value) {
+    return '$value ppb';
+  }
+
+  @override
+  String chemicalLevelValueLabel(String value) {
+    return 'Chemical level: $value ppb';
+  }
 }

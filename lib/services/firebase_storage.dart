@@ -61,6 +61,36 @@ class StorageService {
     }
   }
 
+  /// Uploads a photographed lateral-flow test strip to Firebase Storage.
+  ///
+  /// Returns the secure, permanent [String] download URL if successful.
+  /// Returns [null] if the upload fails or is canceled.
+  Future<String?> uploadStripImage(File file) async {
+    if (!await file.exists()) {
+      debugPrint('StorageService Error: The local file does not exist.');
+      return null;
+    }
+
+    try {
+      String uniqueFileName = 'strip_${DateTime.now().millisecondsSinceEpoch}.jpg';
+      Reference destinationRef = _storage.ref().child('strip_images/$uniqueFileName');
+      SettableMetadata metadata = SettableMetadata(contentType: 'image/jpeg');
+
+      UploadTask uploadTask = destinationRef.putFile(file, metadata);
+      TaskSnapshot snapshot = await uploadTask;
+      String downloadUrl = await snapshot.ref.getDownloadURL();
+
+      debugPrint('StorageService Success: File uploaded to path: ${snapshot.ref.fullPath}');
+      return downloadUrl;
+    } on FirebaseException catch (firebaseError) {
+      debugPrint('Firebase Storage specific error occurred: ${firebaseError.code} - ${firebaseError.message}');
+      return null;
+    } catch (genericError) {
+      debugPrint('An unexpected error occurred during strip image upload: $genericError');
+      return null;
+    }
+  }
+
   /// Uploads a user's profile picture, keyed by [uid] so re-uploading
   /// replaces the previous picture instead of leaving orphaned files behind.
   ///

@@ -114,7 +114,7 @@ class AppLocalizationsLg extends AppLocalizations {
   String get selectLanguage => 'Londa Olulimi';
 
   @override
-  String get searchCrop => 'Search by crop, location...';
+  String get searchCrop => 'Noonya nga okozesa ekirime, ekifo...';
 
   @override
   String get analysingImage => 'Twekenneenya ekifananyi kyekilime kyo...';
@@ -831,4 +831,112 @@ class AppLocalizationsLg extends AppLocalizations {
   @override
   String get recommendationsSourced =>
       'Ebiteesebwa biva mu buwabuzi bwa UNBS ne MAAIF.';
+
+  @override
+  String get startNewTest => 'Tandika Ekigezo Ekipya';
+
+  @override
+  String get tier1Title => 'Tier 1 · Okukebera kwa AI (Amaaso)';
+
+  @override
+  String get tier1Subtitle => 'Kebera kasooli oba binyeebwa oba biriko obukuku';
+
+  @override
+  String get tier2Title => 'Tier 2 · Chemical Strip Scan';
+
+  @override
+  String get tier2Subtitle => 'Soma test strip okufuna ppb ntuufu';
+
+  @override
+  String get chemicalStripScanTitle => 'Chemical Strip Scan';
+
+  @override
+  String get scanTestStrip => 'Kebera Test Strip';
+
+  @override
+  String get cropTypeMaize => 'Kasooli';
+
+  @override
+  String get cropTypeGroundnut => 'Binyeebwa';
+
+  @override
+  String get positionStripInFrame =>
+      'Teeka strip mu bbokisi oluvannyuma lw\'eddakiika kkumi ez\'okulinda';
+
+  @override
+  String get scanAnotherStrip => 'Kebera Strip Endala';
+
+  @override
+  String get scanTestStripHint =>
+      'Kebera test strip okumanya obungi bw\'obutwa mu bulimi';
+
+  @override
+  String get analyzingStripTitle => 'Nkebera Strip...';
+
+  @override
+  String get readingTestControlLines => 'Nsoma emiggo gya Test ne Control';
+
+  @override
+  String get stripNotDetectedMessage =>
+      'Tetuzudde strip mu kifaananyi kino. Kakasa nti strip yonna eri mu bbokisi era nga waliwo ekitangaala ekimala, oluvannyuma ddamu ogezeeko.';
+
+  @override
+  String get controlLineNotDetectedMessage =>
+      'Omuggo gwa Control tegulabise — ekigezo kino kiyinza obutaba kituufu. Ddamu okole ekigezo ne strip empya.';
+
+  @override
+  String get testBatchLabel => 'EKIBINJA KY\'EKIGEZO';
+
+  @override
+  String get toxicLoadLabel => 'OBUNGI BW\'OBUTWA';
+
+  @override
+  String get regulatoryScaleLabel => 'EMITENDERO GY\'AMATEEKA';
+
+  @override
+  String get actionRequiredLabel => 'EKIKOLWA KYETAAGISA';
+
+  @override
+  String get diagnosticBreakdownLabel => 'EBIKWATA KU KIGEZO';
+
+  @override
+  String get chemicalLevelLabel => 'Ekigero ky\'obutwa';
+
+  @override
+  String get testLineOdLabel => 'Ekizimba ky\'omuggo gwa Test (T)';
+
+  @override
+  String get controlLineOdLabel => 'Ekizimba ky\'omuggo gwa Control (C)';
+
+  @override
+  String get odRatioLabel => 'Enkigero ya T/C';
+
+  @override
+  String get scanLocationLabel => 'Ekifo ekyakeberebwa';
+
+  @override
+  String get withinSafeLimit => 'Kiri mu Ekigero Ekikkirizibwa';
+
+  @override
+  String get exceedsSafeLimit => 'Kisukiddeko Ekigero Ekikkirizibwa';
+
+  @override
+  String safeLimitTick(String limit) {
+    return 'Ekigero kya $limit ppb';
+  }
+
+  @override
+  String exceedsSafeLimitMessage(String limit) {
+    return 'Ekyokulabirako kino kisukiddeko ekigero ky\'amateeka ekya $limit ppb mu mmere y\'abantu.';
+  }
+
+  @override
+  String ppbValueLabel(String value) {
+    return '$value ppb';
+  }
+
+  @override
+  String chemicalLevelValueLabel(String value) {
+    return 'Ekigero ky\'obutwa: $value ppb';
+  }
 }
