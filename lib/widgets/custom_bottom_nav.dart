@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import '../constants/app_colors.dart';
+import '../l10n/app_localizations.dart';
 import '../screens/home_screen.dart';
 import '../screens/history_screen.dart';
 import '../screens/notifications_screen.dart';
@@ -65,6 +66,7 @@ class CustomBottomNav extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final AppLocalizations l10n = AppLocalizations.of(context)!;
     return SafeArea(
       child: Container(
         height: 72,
@@ -83,9 +85,9 @@ class CustomBottomNav extends StatelessWidget {
         ),
         child: Row(
           children: [
-            _navItem(context, Icons.home_outlined, "Home", 0),
-            _navItem(context, Icons.history, "History", 1),
-            _navItem(context, Icons.notifications_none, "Notifications", 2),
+            _navItem(context, Icons.home_outlined, l10n.home, 0),
+            _navItem(context, Icons.history, l10n.history, 1),
+            _navItem(context, Icons.notifications_none, l10n.notifications, 2),
           ],
         ),
       ),

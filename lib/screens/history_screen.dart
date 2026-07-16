@@ -1,7 +1,10 @@
+import 'dart:io';
+
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:flutter/material.dart';
 
 import '../constants/app_colors.dart';
+import '../l10n/app_localizations.dart';
 import '../models/report_model.dart';
 import '../services/firestore_service.dart';
 import '../services/pdf_service.dart';
@@ -34,7 +37,7 @@ class ScanRecord {
   final String date;
   final ScanStatus status;
   final int matchPercent;
-  final String imagePath; // use AssetImage or NetworkImage in production
+  final String imagePath;
 
   const ScanRecord({
     required this.id,
@@ -58,9 +61,6 @@ const List<String> _kMonthAbbrev = [
 String _formatScanDate(DateTime dt) =>
     '${_kMonthAbbrev[dt.month - 1]} ${dt.day}, ${dt.year}';
 
-/// Returns null instead of throwing when a document's fields don't match
-/// the expected shape, so one malformed/legacy record can't blank out the
-/// whole list.
 ScanRecord? _scanRecordFromDoc(QueryDocumentSnapshot doc) {
   final rawData = doc.data();
   if (rawData is! Map<String, dynamic>) return null;
@@ -106,8 +106,11 @@ class _HistoryScreenState extends State<HistoryScreen> {
   final TextEditingController _searchCtrl = TextEditingController();
   final FirestoreService _firestoreService = FirestoreService();
   late final Stream<QuerySnapshot> _scanHistoryStream = _firestoreService.getUserScanHistory();
-  ScanStatus? _activeFilter; // null = show all
+  
+  // State variables - ALL INSIDE THE CLASS
+  ScanStatus? _activeFilter;
   String _query = '';
+  String? _selectedLocation;
 
   List<ScanRecord> _filterRecords(List<ScanRecord> source) {
     return source.where((s) {
@@ -116,13 +119,15 @@ class _HistoryScreenState extends State<HistoryScreen> {
           s.title.toLowerCase().contains(_query.toLowerCase()) ||
           s.location.toLowerCase().contains(_query.toLowerCase());
       final matchesFilter = _activeFilter == null || s.status == _activeFilter;
-      return matchesQuery && matchesFilter;
+      final matchesLocation = _selectedLocation == null || s.location == _selectedLocation;
+      return matchesQuery && matchesFilter && matchesLocation;
     }).toList();
   }
 
   void _clearFilters() {
     setState(() {
       _activeFilter = null;
+      _selectedLocation = null;
       _query = '';
       _searchCtrl.clear();
     });
@@ -159,8 +164,7 @@ class _HistoryScreenState extends State<HistoryScreen> {
 
           return Column(
             children: [
-              _buildSearchBar(),
-              _buildFilterChips(),
+              _buildFilterChips(allScans),
               const SizedBox(height: 4),
               Expanded(
                 child: results.isEmpty
@@ -185,9 +189,9 @@ class _HistoryScreenState extends State<HistoryScreen> {
         icon: const Icon(Icons.arrow_back, color: kPrimaryGreen),
         onPressed: () => Navigator.maybePop(context),
       ),
-      title: const Text(
-        'History',
-        style: TextStyle(
+      title: Text(
+        AppLocalizations.of(context)!.history,
+        style: const TextStyle(
           color: kPrimaryGreen,
           fontSize: 20,
           fontWeight: FontWeight.w700,
@@ -202,76 +206,30 @@ class _HistoryScreenState extends State<HistoryScreen> {
     );
   }
 
-  // ── SEARCH BAR ───────────────────────────
-  Widget _buildSearchBar() {
-    return Padding(
-      padding: const EdgeInsets.fromLTRB(16, 16, 16, 8),
-      child: Container(
-        height: 48,
-        decoration: BoxDecoration(
-          color: kCardBg,
-          borderRadius: BorderRadius.circular(12),
-          border: Border.all(color: kDivider, width: 1.2),
-          boxShadow: [
-            BoxShadow(
-              color: Colors.black.withAlpha((0.04 * 255).round()),
-              blurRadius: 6,
-              offset: const Offset(0, 2),
-            ),
-          ],
-        ),
-        child: Row(
-          children: [
-            const SizedBox(width: 14),
-            const Icon(Icons.search, color: kSubtitle, size: 20),
-            const SizedBox(width: 10),
-            Expanded(
-              child: TextField(
-                controller: _searchCtrl,
-                onChanged: (v) => setState(() => _query = v),
-                style: const TextStyle(fontSize: 14, color: Color(0xFF263238)),
-                decoration: const InputDecoration(
-                  hintText: 'Search by crop, location...',
-                  hintStyle: TextStyle(color: kSubtitle, fontSize: 14),
-                  border: InputBorder.none,
-                  isDense: true,
-                  contentPadding: EdgeInsets.zero,
-                ),
-              ),
-            ),
-            // Filter icon button
-            InkWell(
-              borderRadius: BorderRadius.circular(8),
-              onTap: _showFilterSheet,
-              child: Container(
-                margin: const EdgeInsets.all(6),
-                padding: const EdgeInsets.all(6),
-                decoration: BoxDecoration(
-                  color: kPrimaryGreen.withAlpha((0.08 * 255).round()),
-                  borderRadius: BorderRadius.circular(8),
-                ),
-                child: const Icon(Icons.tune, color: kPrimaryGreen, size: 18),
-              ),
-            ),
-          ],
-        ),
-      ),
-    );
-  }
-
   // ── FILTER CHIPS ─────────────────────────
-  Widget _buildFilterChips() {
+  Widget _buildFilterChips(List<ScanRecord> records) {
+    final AppLocalizations l10n = AppLocalizations.of(context)!;
+    // Extract unique locations from records
+    final locations = records
+        .map((r) => r.location)
+        .where((l) => l.isNotEmpty)
+        .toSet()
+        .toList()
+      ..sort();
+
     return SizedBox(
       height: 36,
       child: ListView(
         scrollDirection: Axis.horizontal,
         padding: const EdgeInsets.symmetric(horizontal: 16),
         children: [
-          _chip('All', null),
+          _chip(l10n.allFilter, null),
           const SizedBox(width: 8),
-          _chip('Healthy', ScanStatus.healthy),
+          _chip(l10n.healthy, ScanStatus.healthy),
           const SizedBox(width: 8),
-          _chip('Mold Detected', ScanStatus.moldDetected),
+          _chip(l10n.moldDetected, ScanStatus.moldDetected),
+          const SizedBox(width: 8),
+          _locationFilterChip(locations),
         ],
       ),
     );
@@ -304,6 +262,63 @@ class _HistoryScreenState extends State<HistoryScreen> {
     );
   }
 
+  Widget _locationFilterChip(List<String> locations) {
+    final bool isActive = _selectedLocation != null;
+    final String displayText = _selectedLocation ?? AppLocalizations.of(context)!.locationFilterLabel;
+
+    return GestureDetector(
+      onTap: locations.isEmpty ? null : () => _showLocationPicker(locations),
+      child: AnimatedContainer(
+        duration: const Duration(milliseconds: 200),
+        padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+        decoration: BoxDecoration(
+          color: isActive ? kPrimaryGreen : kCardBg,
+          borderRadius: BorderRadius.circular(20),
+          border: Border.all(
+            color: isActive ? kPrimaryGreen : kDivider,
+            width: 1.2,
+          ),
+        ),
+        child: Row(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            Text(
+              displayText,
+              style: TextStyle(
+                fontSize: 12,
+                fontWeight: FontWeight.w600,
+                color: isActive ? Colors.white : kSubtitle,
+              ),
+            ),
+            const SizedBox(width: 2),
+            Icon(
+              isActive ? Icons.close : Icons.keyboard_arrow_down,
+              size: 16,
+              color: isActive ? Colors.white : kSubtitle,
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
+  void _showLocationPicker(List<String> locations) {
+    showModalBottomSheet(
+      context: context,
+      shape: const RoundedRectangleBorder(
+        borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
+      ),
+      builder: (_) => _LocationPickerSheet(
+        locations: locations,
+        selectedLocation: _selectedLocation,
+        onSelect: (location) {
+          setState(() => _selectedLocation = location);
+          Navigator.pop(context);
+        },
+      ),
+    );
+  }
+
   // ── SCAN LIST ────────────────────────────
   Widget _buildScanList(List<ScanRecord> records) {
     return ListView.separated(
@@ -318,6 +333,10 @@ class _HistoryScreenState extends State<HistoryScreen> {
   // ── BOTTOM INFO BAR ──────────────────────
   Widget _buildBottomBar(List<ScanRecord> results) {
     if (results.isEmpty) return const SizedBox.shrink();
+
+    final AppLocalizations l10n = AppLocalizations.of(context)!;
+    final bool hasActiveFilters = _activeFilter != null || _selectedLocation != null || _query.isNotEmpty;
+
     return Container(
       color: kCardBg,
       padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
@@ -329,16 +348,16 @@ class _HistoryScreenState extends State<HistoryScreen> {
               mainAxisSize: MainAxisSize.min,
               children: [
                 Text(
-                  'Showing ${results.length} result${results.length == 1 ? '' : 's'}'
-                  '${_activeFilter != null || _query.isNotEmpty ? ' for current filters' : ''}.',
+                  '${l10n.showingResultsCount(results.length)}'
+                  '${hasActiveFilters ? l10n.forCurrentFilters : ''}.',
                   style: const TextStyle(fontSize: 12, color: kSubtitle),
                 ),
-                if (_activeFilter != null || _query.isNotEmpty)
+                if (hasActiveFilters)
                   GestureDetector(
                     onTap: _clearFilters,
-                    child: const Text(
-                      'Clear all filters ×',
-                      style: TextStyle(
+                    child: Text(
+                      l10n.clearAllFiltersX,
+                      style: const TextStyle(
                         fontSize: 12,
                         color: kDangerRed,
                         fontWeight: FontWeight.w600,
@@ -349,20 +368,16 @@ class _HistoryScreenState extends State<HistoryScreen> {
             ),
           ),
           const SizedBox(width: 12),
-          // Export PDF button
           ElevatedButton.icon(
             onPressed: () => _exportPDF(results),
             icon: const Icon(Icons.picture_as_pdf, size: 16),
-            label: const Text(
-              'Export PDF',
-              style: TextStyle(fontSize: 13, fontWeight: FontWeight.w700),
+            label: Text(
+              l10n.exportPdf,
+              style: const TextStyle(fontSize: 13, fontWeight: FontWeight.w700),
             ),
             style: ElevatedButton.styleFrom(
               backgroundColor: kAccentGold,
               foregroundColor: kPrimaryGreen,
-              // Override the app-wide full-width default (Size(double.infinity, 56))
-              // so this button sizes to its content instead of forcing infinite
-              // width onto its Row, which isn't wrapped in Expanded/Flexible.
               minimumSize: Size.zero,
               padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
               shape: RoundedRectangleBorder(
@@ -378,6 +393,7 @@ class _HistoryScreenState extends State<HistoryScreen> {
 
   // ── EMPTY STATE ──────────────────────────
   Widget _buildEmptyState() {
+    final AppLocalizations l10n = AppLocalizations.of(context)!;
     return Center(
       child: Column(
         mainAxisSize: MainAxisSize.min,
@@ -388,9 +404,9 @@ class _HistoryScreenState extends State<HistoryScreen> {
             color: kPrimaryGreen.withAlpha((0.25 * 255).round()),
           ),
           const SizedBox(height: 16),
-          const Text(
-            'No scans found',
-            style: TextStyle(
+          Text(
+            l10n.noScansFound,
+            style: const TextStyle(
               fontSize: 16,
               fontWeight: FontWeight.w700,
               color: kPrimaryGreen,
@@ -398,16 +414,16 @@ class _HistoryScreenState extends State<HistoryScreen> {
           ),
           const SizedBox(height: 6),
           Text(
-            'Try adjusting your filters\nor scan a new maize sample.',
+            l10n.tryAdjustingFilters,
             textAlign: TextAlign.center,
             style: TextStyle(fontSize: 13, color: kSubtitle, height: 1.5),
           ),
           const SizedBox(height: 20),
           TextButton(
             onPressed: _clearFilters,
-            child: const Text(
-              'Clear filters',
-              style: TextStyle(
+            child: Text(
+              l10n.clearFilters,
+              style: const TextStyle(
                 color: kPrimaryGreen,
                 fontWeight: FontWeight.w600,
               ),
@@ -420,6 +436,7 @@ class _HistoryScreenState extends State<HistoryScreen> {
 
   // ── ERROR STATE ──────────────────────────
   Widget _buildErrorState() {
+    final AppLocalizations l10n = AppLocalizations.of(context)!;
     return Center(
       child: Column(
         mainAxisSize: MainAxisSize.min,
@@ -430,19 +447,19 @@ class _HistoryScreenState extends State<HistoryScreen> {
             color: kDangerRed.withAlpha((0.4 * 255).round()),
           ),
           const SizedBox(height: 16),
-          const Text(
-            "Couldn't load scan history",
-            style: TextStyle(
+          Text(
+            l10n.couldNotLoadScanHistory,
+            style: const TextStyle(
               fontSize: 16,
               fontWeight: FontWeight.w700,
               color: kPrimaryGreen,
             ),
           ),
           const SizedBox(height: 6),
-          const Text(
-            'Check your connection and try again.',
+          Text(
+            l10n.checkConnectionTryAgain,
             textAlign: TextAlign.center,
-            style: TextStyle(fontSize: 13, color: kSubtitle, height: 1.5),
+            style: const TextStyle(fontSize: 13, color: kSubtitle, height: 1.5),
           ),
         ],
       ),
@@ -451,6 +468,7 @@ class _HistoryScreenState extends State<HistoryScreen> {
 
   // ── ACTIONS ──────────────────────────────
   void _openDetail(ScanRecord record) {
+    final AppLocalizations l10n = AppLocalizations.of(context)!;
     showModalBottomSheet(
       context: context,
       isScrollControlled: true,
@@ -485,17 +503,17 @@ class _HistoryScreenState extends State<HistoryScreen> {
               ),
               const SizedBox(height: 8),
               Text(
-                'Location: ${record.location.isNotEmpty ? record.location : 'Not recorded'}',
+                l10n.locationLabel(record.location.isNotEmpty ? record.location : l10n.notRecorded),
                 style: const TextStyle(fontSize: 14, color: Color(0xFF263238)),
               ),
               const SizedBox(height: 4),
               Text(
-                'Date: ${record.date}',
+                l10n.dateLabel(record.date),
                 style: const TextStyle(fontSize: 14, color: Color(0xFF263238)),
               ),
               const SizedBox(height: 12),
               Text(
-                'Status: ${record.status == ScanStatus.moldDetected ? 'Mold Detected' : 'Healthy'}',
+                l10n.statusLabel(record.status == ScanStatus.moldDetected ? l10n.moldDetected : l10n.healthy),
                 style: TextStyle(
                   fontSize: 14,
                   fontWeight: FontWeight.w700,
@@ -506,7 +524,7 @@ class _HistoryScreenState extends State<HistoryScreen> {
               ),
               const SizedBox(height: 12),
               Text(
-                'Match confidence: ${record.matchPercent}%',
+                l10n.matchConfidenceLabel(record.matchPercent),
                 style: const TextStyle(fontSize: 14, color: Color(0xFF263238)),
               ),
               const SizedBox(height: 20),
@@ -522,7 +540,7 @@ class _HistoryScreenState extends State<HistoryScreen> {
                       borderRadius: BorderRadius.circular(12),
                     ),
                   ),
-                  child: const Text('Close'),
+                  child: Text(l10n.close),
                 ),
               ),
             ],
@@ -534,10 +552,11 @@ class _HistoryScreenState extends State<HistoryScreen> {
 
   Future<void> _exportPDF(List<ScanRecord> records) async {
     if (records.isEmpty) return;
+    final AppLocalizations l10n = AppLocalizations.of(context)!;
 
     ScaffoldMessenger.of(context).showSnackBar(
-      const SnackBar(
-        content: Text('Generating PDF report…'),
+      SnackBar(
+        content: Text(l10n.generatingPdfReport),
         backgroundColor: kPrimaryGreen,
         behavior: SnackBarBehavior.floating,
       ),
@@ -560,7 +579,7 @@ class _HistoryScreenState extends State<HistoryScreen> {
       await ReportStorageService().saveReport(
         ReportModel(
           id: DateTime.now().millisecondsSinceEpoch.toString(),
-          result: 'Scan history export (${records.length} scans, $healthyCount healthy)',
+          result: l10n.scanHistoryExportLabel(records.length, healthyCount),
           confidence: healthyCount / records.length,
           date: DateTime.now(),
           pdfPath: file.path,
@@ -572,8 +591,8 @@ class _HistoryScreenState extends State<HistoryScreen> {
     } catch (e) {
       if (!mounted) return;
       ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(
-          content: Text('Could not generate PDF report'),
+        SnackBar(
+          content: Text(l10n.couldNotGeneratePdfReport),
           backgroundColor: kDangerRed,
           behavior: SnackBarBehavior.floating,
         ),
@@ -581,21 +600,6 @@ class _HistoryScreenState extends State<HistoryScreen> {
     }
   }
 
-  void _showFilterSheet() {
-    showModalBottomSheet(
-      context: context,
-      shape: const RoundedRectangleBorder(
-        borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
-      ),
-      builder: (_) => _FilterSheet(
-        current: _activeFilter,
-        onApply: (f) {
-          setState(() => _activeFilter = f);
-          Navigator.pop(context);
-        },
-      ),
-    );
-  }
 }
 
 // ─────────────────────────────────────────
@@ -609,9 +613,10 @@ class _ScanCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final AppLocalizations l10n = AppLocalizations.of(context)!;
     final isMoldy = record.status == ScanStatus.moldDetected;
     final statusColor = isMoldy ? kDangerRed : kSafeGreen;
-    final statusLabel = isMoldy ? 'Mold Detected' : 'Healthy';
+    final statusLabel = isMoldy ? l10n.moldDetected : l10n.healthy;
     final statusIcon = isMoldy
         ? Icons.warning_amber_rounded
         : Icons.check_circle;
@@ -633,7 +638,6 @@ class _ScanCard extends StatelessWidget {
         ),
         child: Row(
           children: [
-            // ── Thumbnail ──
             ClipRRect(
               borderRadius: const BorderRadius.horizontal(
                 left: Radius.circular(14),
@@ -649,12 +653,26 @@ class _ScanCard extends StatelessWidget {
                         color: kPrimaryGreen.withAlpha((0.3 * 255).round()),
                       )
                     : (record.imagePath.startsWith('http')
-                        ? Image.network(record.imagePath, fit: BoxFit.cover)
-                        : Image.asset(record.imagePath, fit: BoxFit.cover)),
+                        ? Image.network(
+                            record.imagePath,
+                            fit: BoxFit.cover,
+                            errorBuilder: (_, _, _) => Icon(
+                              Icons.grain,
+                              size: 36,
+                              color: kPrimaryGreen.withAlpha((0.3 * 255).round()),
+                            ),
+                          )
+                        : Image.file(
+                            File(record.imagePath),
+                            fit: BoxFit.cover,
+                            errorBuilder: (_, _, _) => Icon(
+                              Icons.grain,
+                              size: 36,
+                              color: kPrimaryGreen.withAlpha((0.3 * 255).round()),
+                            ),
+                          )),
               ),
             ),
-
-            // ── Content ──
             Expanded(
               child: Padding(
                 padding: const EdgeInsets.symmetric(
@@ -664,7 +682,6 @@ class _ScanCard extends StatelessWidget {
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    // Title + match badge
                     Row(
                       children: [
                         Expanded(
@@ -680,7 +697,6 @@ class _ScanCard extends StatelessWidget {
                           ),
                         ),
                         const SizedBox(width: 8),
-                        // Match % badge
                         Container(
                           padding: const EdgeInsets.symmetric(
                             horizontal: 8,
@@ -701,10 +717,7 @@ class _ScanCard extends StatelessWidget {
                         ),
                       ],
                     ),
-
                     const SizedBox(height: 5),
-
-                    // Date (+ location, when known)
                     Row(
                       children: [
                         Icon(
@@ -742,10 +755,7 @@ class _ScanCard extends StatelessWidget {
                         ],
                       ],
                     ),
-
                     const SizedBox(height: 8),
-
-                    // Status badge
                     Row(
                       children: [
                         Container(
@@ -797,117 +807,85 @@ class _ScanCard extends StatelessWidget {
 }
 
 // ─────────────────────────────────────────
-//  FILTER BOTTOM SHEET
+//  LOCATION PICKER SHEET
 // ─────────────────────────────────────────
-class _FilterSheet extends StatefulWidget {
-  final ScanStatus? current;
-  final ValueChanged<ScanStatus?> onApply;
+class _LocationPickerSheet extends StatelessWidget {
+  final List<String> locations;
+  final String? selectedLocation;
+  final ValueChanged<String?> onSelect;
 
-  const _FilterSheet({required this.current, required this.onApply});
-
-  @override
-  State<_FilterSheet> createState() => _FilterSheetState();
-}
-
-class _FilterSheetState extends State<_FilterSheet> {
-  ScanStatus? _selected;
-
-  @override
-  void initState() {
-    super.initState();
-    _selected = widget.current;
-  }
+  const _LocationPickerSheet({
+    required this.locations,
+    required this.selectedLocation,
+    required this.onSelect,
+  });
 
   @override
   Widget build(BuildContext context) {
-    return Padding(
-      padding: const EdgeInsets.fromLTRB(20, 16, 20, 32),
-      child: Column(
-        mainAxisSize: MainAxisSize.min,
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          // Handle
-          Center(
-            child: Container(
-              width: 40,
-              height: 4,
-              margin: const EdgeInsets.only(bottom: 20),
-              decoration: BoxDecoration(
-                color: kDivider,
-                borderRadius: BorderRadius.circular(2),
-              ),
-            ),
-          ),
-          const Text(
-            'Filter Scans',
-            style: TextStyle(
-              fontSize: 18,
-              fontWeight: FontWeight.w800,
-              color: kPrimaryGreen,
-            ),
-          ),
-          const SizedBox(height: 16),
-          _filterTile('All Scans', null),
-          _filterTile('Healthy Only', ScanStatus.healthy),
-          _filterTile('Mold Detected Only', ScanStatus.moldDetected),
-          const SizedBox(height: 20),
-          SizedBox(
-            width: double.infinity,
-            child: ElevatedButton(
-              onPressed: () => widget.onApply(_selected),
-              style: ElevatedButton.styleFrom(
-                backgroundColor: kPrimaryGreen,
-                foregroundColor: Colors.white,
-                padding: const EdgeInsets.symmetric(vertical: 14),
-                shape: RoundedRectangleBorder(
-                  borderRadius: BorderRadius.circular(12),
+    final AppLocalizations l10n = AppLocalizations.of(context)!;
+    return Container(
+      constraints: BoxConstraints(
+        maxHeight: MediaQuery.of(context).size.height * 0.6,
+      ),
+      child: Padding(
+        padding: const EdgeInsets.fromLTRB(20, 16, 20, 32),
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Center(
+              child: Container(
+                width: 40,
+                height: 4,
+                margin: const EdgeInsets.only(bottom: 20),
+                decoration: BoxDecoration(
+                  color: kDivider,
+                  borderRadius: BorderRadius.circular(2),
                 ),
               ),
-              child: const Text(
-                'Apply Filter',
-                style: TextStyle(fontWeight: FontWeight.w700, fontSize: 15),
+            ),
+            Text(
+              l10n.filterByLocation,
+              style: const TextStyle(
+                fontSize: 18,
+                fontWeight: FontWeight.w800,
+                color: kPrimaryGreen,
               ),
             ),
-          ),
-        ],
+            const SizedBox(height: 16),
+            _locationTile(l10n.allLocations, null),
+            const Divider(height: 1),
+            Flexible(
+              child: ListView.builder(
+                shrinkWrap: true,
+                itemCount: locations.length,
+                itemBuilder: (context, index) {
+                  return _locationTile(locations[index], locations[index]);
+                },
+              ),
+            ),
+          ],
+        ),
       ),
     );
   }
 
-  Widget _filterTile(String label, ScanStatus? value) {
-    final selected = _selected == value;
-    return GestureDetector(
-      onTap: () => setState(() => _selected = value),
-      child: Container(
-        margin: const EdgeInsets.only(bottom: 10),
-        padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
-        decoration: BoxDecoration(
-          color: selected
-              ? kPrimaryGreen.withAlpha((0.08 * 255).round())
-              : kCardBg,
-          borderRadius: BorderRadius.circular(10),
-          border: Border.all(
-            color: selected ? kPrimaryGreen : kDivider,
-            width: 1.2,
-          ),
-        ),
-        child: Row(
-          children: [
-            Expanded(
-              child: Text(
-                label,
-                style: TextStyle(
-                  fontSize: 14,
-                  fontWeight: FontWeight.w600,
-                  color: selected ? kPrimaryGreen : const Color(0xFF263238),
-                ),
-              ),
-            ),
-            if (selected)
-              const Icon(Icons.check_circle, color: kPrimaryGreen, size: 20),
-          ],
+  Widget _locationTile(String label, String? value) {
+    final bool isSelected = selectedLocation == value;
+    return ListTile(
+      onTap: () => onSelect(value),
+      title: Text(
+        label,
+        style: TextStyle(
+          fontSize: 14,
+          fontWeight: FontWeight.w600,
+          color: isSelected ? kPrimaryGreen : const Color(0xFF263238),
         ),
       ),
+      trailing: isSelected 
+          ? const Icon(Icons.check_circle, color: kPrimaryGreen, size: 20) 
+          : null,
+      contentPadding: const EdgeInsets.symmetric(horizontal: 0),
     );
   }
 }

@@ -1,9 +1,15 @@
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/foundation.dart';
+import 'package:google_sign_in/google_sign_in.dart';
 
 class AuthService {
   // 1. Instantiate the single shared reference to Firebase Auth
   final FirebaseAuth _auth = FirebaseAuth.instance;
+
+  // google_sign_in v7+ uses a singleton instance rather than creating a
+  // new GoogleSignIn() object yourself.
+  final GoogleSignIn _googleSignIn = GoogleSignIn.instance;
+  bool _googleSignInInitialized = false;
 
   // 2. Real-time broadcast stream tracking if a user session is active, expired, or logged out
   Stream<User?> get userStream => _auth.authStateChanges();
@@ -56,10 +62,73 @@ class AuthService {
     }
   }
 
+  /// Signs a user in using their Google account, letting them pick any
+  /// Google account currently on their device via the native account picker.
+  ///
+  /// Returns a [User] object upon success, [null] if the user closed the
+  /// picker without choosing an account, or a descriptive [String] error
+  /// message if it fails.
+  Future<dynamic> signInWithGoogle() async {
+    try {
+      // google_sign_in v7+ requires an explicit initialize() call before
+      // any sign-in attempt. It's safe to call more than once, but we only
+      // need to do it the first time this service is used.
+      //
+      // serverClientId is the Web client (client_type 3) from
+      // android/app/google-services.json — Android doesn't read it from
+      // that file automatically, so it has to be passed here explicitly.
+      if (!_googleSignInInitialized) {
+        await _googleSignIn.initialize(
+          serverClientId:
+              '530780315531-bcrm1qeodme9h9kmcagpm1t01gqs3fo2.apps.googleusercontent.com',
+        );
+        _googleSignInInitialized = true;
+      }
+
+      // authenticate() replaces the old signIn() call and opens the native
+      // Google account picker, letting the user choose any account on
+      // their device.
+      final GoogleSignInAccount googleUser = await _googleSignIn.authenticate();
+
+      // v7+ only issues an idToken through this flow (accessToken now
+      // lives behind a separate authorization step), which is all
+      // Firebase actually needs for GoogleAuthProvider.credential.
+      final GoogleSignInAuthentication googleAuth = googleUser.authentication;
+
+      final credential = GoogleAuthProvider.credential(
+        idToken: googleAuth.idToken,
+      );
+
+      final userCredential = await _auth.signInWithCredential(credential);
+      return userCredential.user;
+    } on GoogleSignInException catch (e) {
+      if (e.code == GoogleSignInExceptionCode.canceled) {
+        // User closed the account picker without selecting anything.
+        return null;
+      }
+      debugPrint('AuthService Error during Google sign-in: ${e.code} - ${e.description}');
+      return 'Could not sign in with Google. Please try again.';
+    } on FirebaseAuthException catch (e) {
+      if (e.code == 'account-exists-with-different-credential') {
+        return 'An account already exists with this email using a different sign-in method.';
+      } else if (e.code == 'invalid-credential') {
+        return 'Could not verify your Google account. Please try again.';
+      }
+      return e.message ?? 'An unknown Google sign-in error occurred.';
+    } catch (genericError) {
+      debugPrint('AuthService Error during Google sign-in: $genericError');
+      return 'Network connection failed. Please try again.';
+    }
+  }
+
   /// Completely clears out the local security session token data cache
   Future<void> signOut() async {
     try {
       await _auth.signOut();
+      // Sign out from Google as well to ensure the user is fully logged out.
+      // This prevents automatic re-sign-in with the last used Google account,
+      // which matters for apps that allow multiple Google accounts to be used.
+      await _googleSignIn.signOut();
       debugPrint('AuthService: User successfully logged out.');
     } catch (e) {
       debugPrint('AuthService Error during logout: $e');

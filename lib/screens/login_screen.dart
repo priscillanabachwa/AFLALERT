@@ -1,9 +1,10 @@
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
-import 'package:shared_preferences/shared_preferences.dart';
 import 'forgot_password_screen.dart';
 import '../constants/app_colors.dart';
 import '../services/firebase_auth.dart';
+import '../services/remembered_accounts_service.dart';
+import '../l10n/app_localizations.dart';
 
 class LoginScreen extends StatefulWidget {
   const LoginScreen({super.key});
@@ -13,8 +14,6 @@ class LoginScreen extends StatefulWidget {
 }
 
 class _LoginScreenState extends State<LoginScreen> {
-  static const String _rememberedEmailKey = 'remembered_email';
-
   // Added these controllers and variables right inside the State class
   final _formKey = GlobalKey<FormState>();
   final TextEditingController _emailController = TextEditingController();
@@ -24,19 +23,48 @@ class _LoginScreenState extends State<LoginScreen> {
   bool _obscurePassword = true;
   bool _rememberMe = false;
 
+  // email -> password, for accounts saved via "Remember me" on a previous login.
+  Map<String, String> _rememberedAccounts = {};
+
   @override
   void initState() {
     super.initState();
-    _loadRememberedEmail();
+    _loadRememberedAccounts();
   }
 
-  Future<void> _loadRememberedEmail() async {
-    final prefs = await SharedPreferences.getInstance();
-    final String? savedEmail = prefs.getString(_rememberedEmailKey);
-    if (savedEmail == null || !mounted) return;
+  Future<void> _loadRememberedAccounts() async {
+    final accounts = await RememberedAccountsService.instance.getAccounts();
+    if (!mounted) return;
     setState(() {
-      _emailController.text = savedEmail;
+      _rememberedAccounts = accounts;
+      if (accounts.isNotEmpty) {
+        final lastEmail = accounts.keys.last;
+        _emailController.text = lastEmail;
+        _passwordController.text = accounts[lastEmail]!;
+        _rememberMe = true;
+      }
+    });
+  }
+
+  // Fills the form with a previously saved account so the user can just hit Login.
+  void _selectRememberedAccount(String email) {
+    final password = _rememberedAccounts[email];
+    if (password == null) return;
+    setState(() {
+      _emailController.text = email;
+      _passwordController.text = password;
       _rememberMe = true;
+    });
+  }
+
+  Future<void> _forgetAccount(String email) async {
+    await RememberedAccountsService.instance.removeAccount(email);
+    if (!mounted) return;
+    setState(() {
+      _rememberedAccounts.remove(email);
+      if (_emailController.text.trim() == email) {
+        _passwordController.clear();
+      }
     });
   }
 
@@ -46,10 +74,10 @@ class _LoginScreenState extends State<LoginScreen> {
 
     setState(() => _isLoading = true);
 
-    final result = await _authService.loginWithEmailAndPassword(
-      _emailController.text.trim(),
-      _passwordController.text.trim(),
-    );
+    final email = _emailController.text.trim();
+    final password = _passwordController.text.trim();
+
+    final result = await _authService.loginWithEmailAndPassword(email, password);
 
     if (!mounted) return;
     setState(() => _isLoading = false);
@@ -64,13 +92,34 @@ class _LoginScreenState extends State<LoginScreen> {
       return;
     }
 
-    final prefs = await SharedPreferences.getInstance();
     if (_rememberMe) {
-      await prefs.setString(_rememberedEmailKey, _emailController.text.trim());
+      await RememberedAccountsService.instance.saveAccount(email, password);
     } else {
-      await prefs.remove(_rememberedEmailKey);
+      await RememberedAccountsService.instance.removeAccount(email);
     }
     if (!mounted) return;
+
+    Navigator.pushReplacementNamed(context, '/home');
+  }
+  Future<void> _loginWithGoogle() async {
+    setState(() => _isLoading = true);
+
+    final result = await _authService.signInWithGoogle();
+
+    if (!mounted) return;
+    setState(() => _isLoading = false);
+
+    if (result == null) return;
+
+    if (result is String) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text(result),
+          backgroundColor: const Color(0xFFDC2626),
+        ),
+      );
+      return;
+    }
 
     Navigator.pushReplacementNamed(context, '/home');
   }
@@ -84,6 +133,7 @@ class _LoginScreenState extends State<LoginScreen> {
 
   @override
   Widget build(BuildContext context) {
+    final AppLocalizations l10n = AppLocalizations.of(context)!;
     return Scaffold(
       backgroundColor: AppColors.logoCream,
       body: SafeArea(
@@ -102,8 +152,8 @@ class _LoginScreenState extends State<LoginScreen> {
 
               // Logo — background matches the cream baked into the artwork, so no square backing shows.
               SizedBox(
-                width: 160,
-                height: 160,
+                width: 200,
+                height: 200,
                 child: Image.asset(
                   "lib/assets/images/aflalert_logo.png",
                   fit: BoxFit.cover,
@@ -115,7 +165,7 @@ class _LoginScreenState extends State<LoginScreen> {
               ),
               
 
-              const SizedBox(height: 32),
+              const SizedBox(height: 9),
 
               Text(
                 'AflAlert',
@@ -128,8 +178,8 @@ class _LoginScreenState extends State<LoginScreen> {
 
               const SizedBox(height: 8),
 
-              const Text(
-                'Precision diagnostics for a safer harvest.',
+              Text(
+                l10n.loginTagline,
                 textAlign: TextAlign.center,
                 style: TextStyle(
                   fontSize: 16,
@@ -150,9 +200,46 @@ class _LoginScreenState extends State<LoginScreen> {
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    const Text(
-                      'Email Address',
-                      style: TextStyle(
+                    if (_rememberedAccounts.isNotEmpty) ...[
+                      Text(
+                        l10n.savedAccounts,
+                        style: TextStyle(
+                          fontWeight: FontWeight.w600,
+                          color: AppColors.primaryContainer,
+                        ),
+                      ),
+                      const SizedBox(height: 8),
+                      Wrap(
+                        spacing: 8,
+                        runSpacing: 8,
+                        children: _rememberedAccounts.keys.map((email) {
+                          final isSelected = _emailController.text.trim() == email;
+                          return InputChip(
+                            avatar: Icon(
+                              Icons.person_outline,
+                              size: 18,
+                              color: isSelected ? AppColors.primaryContainer : Colors.grey.shade600,
+                            ),
+                            label: Text(email, overflow: TextOverflow.ellipsis),
+                            selected: isSelected,
+                            onPressed: () => _selectRememberedAccount(email),
+                            onDeleted: () => _forgetAccount(email),
+                            deleteIconColor: Colors.grey.shade600,
+                            backgroundColor: const Color(0xFFF3F4F6),
+                            selectedColor: AppColors.successLight,
+                            labelStyle: const TextStyle(color: AppColors.primaryContainer),
+                            shape: RoundedRectangleBorder(
+                              borderRadius: BorderRadius.circular(20),
+                              side: BorderSide.none,
+                            ),
+                          );
+                        }).toList(),
+                      ),
+                      const SizedBox(height: 20),
+                    ],
+                    Text(
+                      l10n.email,
+                      style: const TextStyle(
                         fontWeight: FontWeight.w600,
                         color: AppColors.primaryContainer,
                       ),
@@ -162,7 +249,7 @@ class _LoginScreenState extends State<LoginScreen> {
                       controller: _emailController,
                       keyboardType: TextInputType.emailAddress,
                       decoration: InputDecoration(
-                        hintText: 'example@gmail.com',
+                        hintText: l10n.emailHint,
                         hintStyle: TextStyle(color: Colors.grey.shade500),
                         prefixIcon: Icon(Icons.email_outlined),
                         filled: true,
@@ -172,13 +259,13 @@ class _LoginScreenState extends State<LoginScreen> {
                           borderSide: BorderSide.none,
                           ),
                         ),
-                      
+
                        validator: (value) {
 
 
                         if (value == null || value.trim().isEmpty) {
 
-                          return 'Please enter your email';
+                          return l10n.pleaseEnterEmail;
                         }
                         return null;
                       },
@@ -187,9 +274,9 @@ class _LoginScreenState extends State<LoginScreen> {
 
                     const SizedBox(height: 24),
 
-                    const Text(
-                      'Password',
-                      style: TextStyle(
+                    Text(
+                      l10n.password,
+                      style: const TextStyle(
                         fontWeight: FontWeight.w600,
                         color: AppColors.primaryContainer,
                       ),
@@ -199,7 +286,7 @@ class _LoginScreenState extends State<LoginScreen> {
                       controller: _passwordController,
                       obscureText: _obscurePassword,
                       decoration:  InputDecoration(
-                        hintText: '••••••••',
+                        hintText: l10n.passwordHint,
                         hintStyle: TextStyle(color: Colors.grey.shade500),
                         prefixIcon: Icon(Icons.lock_outline),
                         filled: true,
@@ -223,7 +310,7 @@ class _LoginScreenState extends State<LoginScreen> {
 
                       validator: (value) {
                         if (value == null || value.trim().isEmpty) {
-                          return 'Please enter your password';
+                          return l10n.pleaseEnterPassword;
                         }
                         return null;
                       },
@@ -254,8 +341,8 @@ class _LoginScreenState extends State<LoginScreen> {
                               onTap: () {
                                 setState(() => _rememberMe = !_rememberMe);
                               },
-                              child: const Text(
-                                'Remember me',
+                              child: Text(
+                                l10n.rememberMe,
                                 style: TextStyle(color: AppColors.primaryContainer),
                               ),
                             ),
@@ -276,8 +363,8 @@ class _LoginScreenState extends State<LoginScreen> {
                               ),
                             );
                           },
-                          child: const Text(
-                            'Forgot Password?',
+                          child: Text(
+                            l10n.forgotPassword,
                             style: TextStyle(
                               color: AppColors.primaryContainer,
                               fontWeight: FontWeight.bold,
@@ -299,12 +386,12 @@ class _LoginScreenState extends State<LoginScreen> {
                       child:  _isLoading
                        ? const CircularProgressIndicator()
 
-                       : const Row(
+                       : Row(
                         mainAxisAlignment: MainAxisAlignment.center,
                         children: [
-                          Text('Login'),
-                          SizedBox(width: 8),
-                          Icon(Icons.arrow_forward, size: 20),
+                          Text(l10n.login),
+                          const SizedBox(width: 8),
+                          const Icon(Icons.arrow_forward, size: 20),
                         ],
                       ),
                     ),
@@ -317,7 +404,7 @@ class _LoginScreenState extends State<LoginScreen> {
                         Padding(
                           padding: const EdgeInsets.symmetric(horizontal: 16),
                           child: Text(
-                            'OR CONTINUE WITH',
+                            l10n.orContinueWith,
                             style: TextStyle(
                               fontSize: 12,
                               fontWeight: FontWeight.bold,
@@ -333,7 +420,7 @@ class _LoginScreenState extends State<LoginScreen> {
                     const SizedBox(height: 24),
 
                     OutlinedButton(
-                      onPressed: () {},
+                      onPressed: _isLoading ? null : _loginWithGoogle,
                       style: OutlinedButton.styleFrom(
                         minimumSize: const Size(double.infinity, 56),
                         side: const BorderSide(color: Color(0xFFE5E7EB)),
@@ -344,10 +431,10 @@ class _LoginScreenState extends State<LoginScreen> {
                       child: Row(
                         mainAxisAlignment: MainAxisAlignment.center,
                         children: [
-                          Image.asset('lib/assets/images/google_logo.png', height: 20, width: 20),
+                          Image.asset('lib/assets/images/google_logo.png', height: 26, width: 26),
                           const SizedBox(width: 8),
                           Text(
-                            'Google',
+                            l10n.googleButton,
                             style: GoogleFonts.inter(
                               fontSize: 18,
                               fontWeight: FontWeight.bold,
@@ -366,16 +453,16 @@ class _LoginScreenState extends State<LoginScreen> {
               Row(
                 mainAxisAlignment: MainAxisAlignment.center,
                 children: [
-                  const Text(
-                    'New to AflAlert? ',
-                    style: TextStyle(color: AppColors.primaryContainer),
+                  Text(
+                    l10n.newToAflalert,
+                    style: const TextStyle(color: AppColors.primaryContainer),
                   ),
                   GestureDetector(
                     onTap: () {
                       Navigator.pushNamed(context, '/register');
                     },
                     child: Text(
-                      'Register here',
+                      l10n.registerHere,
                       style: TextStyle(
                         color: AppColors.primaryContainer,
                         fontWeight: FontWeight.bold,
