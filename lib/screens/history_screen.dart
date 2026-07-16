@@ -1,3 +1,5 @@
+import 'dart:io';
+
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:flutter/material.dart';
 
@@ -651,8 +653,24 @@ class _ScanCard extends StatelessWidget {
                         color: kPrimaryGreen.withAlpha((0.3 * 255).round()),
                       )
                     : (record.imagePath.startsWith('http')
-                        ? Image.network(record.imagePath, fit: BoxFit.cover)
-                        : Image.asset(record.imagePath, fit: BoxFit.cover)),
+                        ? Image.network(
+                            record.imagePath,
+                            fit: BoxFit.cover,
+                            errorBuilder: (_, _, _) => Icon(
+                              Icons.grain,
+                              size: 36,
+                              color: kPrimaryGreen.withAlpha((0.3 * 255).round()),
+                            ),
+                          )
+                        : Image.file(
+                            File(record.imagePath),
+                            fit: BoxFit.cover,
+                            errorBuilder: (_, _, _) => Icon(
+                              Icons.grain,
+                              size: 36,
+                              color: kPrimaryGreen.withAlpha((0.3 * 255).round()),
+                            ),
+                          )),
               ),
             ),
             Expanded(
