@@ -509,6 +509,7 @@ class _HistoryScreenState extends State<HistoryScreen> {
         confidence: record.matchPercent / 100,
         analysisLabel: record.title,
         imagePath: record.imagePath.isNotEmpty ? record.imagePath : null,
+        fromHistory: true,
       ),
     );
   }

@@ -320,6 +320,12 @@ abstract class AppLocalizations {
   /// **'Undo'**
   String get undo;
 
+  /// No description provided for @scanDetails.
+  ///
+  /// In en, this message translates to:
+  /// **'Scan Details'**
+  String get scanDetails;
+
   /// No description provided for @totalScans.
   ///
   /// In en, this message translates to:

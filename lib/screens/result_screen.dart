@@ -17,12 +17,14 @@ class ResultsScreenArgs {
   final double confidence;
   final String? analysisLabel;
   final String? imagePath;
+  final bool fromHistory;
 
   const ResultsScreenArgs({
     required this.isSafe,
     required this.confidence,
     this.analysisLabel,
     this.imagePath,
+    this.fromHistory = false,
   });
 }
 
@@ -45,6 +47,7 @@ class ResultsScreen extends StatelessWidget {
   final double confidence; // 0.0 - 1.0
   final String? analysisLabel;
   final String? imagePath;
+  final bool fromHistory;
 
   const ResultsScreen({
     super.key,
@@ -52,6 +55,7 @@ class ResultsScreen extends StatelessWidget {
     required this.confidence,
     this.analysisLabel,
     this.imagePath,
+    this.fromHistory = false,
   });
 
   // ---- Palette matched to the shared AppColors theme (registration screen) ----
@@ -384,7 +388,7 @@ class ResultsScreen extends StatelessWidget {
                     ),
                     const SizedBox(width: 4),
                     Text(
-                      l10n.aflatoxinDetector,
+                      fromHistory ? l10n.scanDetails : l10n.aflatoxinDetector,
                       style: const TextStyle(
                         color: AppColors.primary,
                         fontSize: 17,
@@ -490,23 +494,25 @@ class ResultsScreen extends StatelessWidget {
                     elevation: 0,
                   ),
                 ),
-                const SizedBox(height: 16),
+                if (!fromHistory) ...[
+                  const SizedBox(height: 16),
 
-                // Scan Again Button (opens the camera to capture and analyze a new batch)
-                ElevatedButton.icon(
-                  onPressed: () => _scanAnotherBatch(context),
-                  icon: const Icon(Icons.camera_alt_outlined),
-                  label: Text(l10n.scanAnotherBatch),
-                  style: ElevatedButton.styleFrom(
-                    backgroundColor: AppColors.primary,
-                    foregroundColor: Colors.white,
-                    elevation: 0,
-                    padding: const EdgeInsets.symmetric(vertical: 14),
-                    shape: RoundedRectangleBorder(
-                      borderRadius: BorderRadius.circular(12),
+                  // Scan Again Button (opens the camera to capture and analyze a new batch)
+                  ElevatedButton.icon(
+                    onPressed: () => _scanAnotherBatch(context),
+                    icon: const Icon(Icons.camera_alt_outlined),
+                    label: Text(l10n.scanAnotherBatch),
+                    style: ElevatedButton.styleFrom(
+                      backgroundColor: AppColors.primary,
+                      foregroundColor: Colors.white,
+                      elevation: 0,
+                      padding: const EdgeInsets.symmetric(vertical: 14),
+                      shape: RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(12),
+                      ),
                     ),
                   ),
-                ),
+                ],
               ],
             ),
           ),

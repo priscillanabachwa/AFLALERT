@@ -121,6 +121,9 @@ class AppLocalizationsEn extends AppLocalizations {
   String get undo => 'Undo';
 
   @override
+  String get scanDetails => 'Scan Details';
+
+  @override
   String get totalScans => 'Total Scans';
 
   @override

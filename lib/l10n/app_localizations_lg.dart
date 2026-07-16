@@ -122,6 +122,9 @@ class AppLocalizationsLg extends AppLocalizations {
   String get undo => 'Zzaawo';
 
   @override
+  String get scanDetails => 'Ebikwata ku Scan';
+
+  @override
   String get totalScans => 'Scan Zonna';
 
   @override
