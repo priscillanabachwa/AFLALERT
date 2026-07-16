@@ -1400,23 +1400,11 @@ abstract class AppLocalizations {
   /// **'Please log out and log back in, then try again.'**
   String get pleaseLogOutAndBackIn;
 
-  /// No description provided for @passwordResetLinkSent.
-  ///
-  /// In en, this message translates to:
-  /// **'Password reset link sent! Check your email.'**
-  String get passwordResetLinkSent;
-
   /// No description provided for @errorOccurredTryAgain.
   ///
   /// In en, this message translates to:
   /// **'An error occurred. Please try again.'**
   String get errorOccurredTryAgain;
-
-  /// No description provided for @noAccountFoundEmail.
-  ///
-  /// In en, this message translates to:
-  /// **'No account found with this email address.'**
-  String get noAccountFoundEmail;
 
   /// No description provided for @resetPassword.
   ///
@@ -1427,7 +1415,7 @@ abstract class AppLocalizations {
   /// No description provided for @resetPasswordInstructions.
   ///
   /// In en, this message translates to:
-  /// **'Enter your registered email address below. We will send you a secure link to reset your password and keep your tracking account secure.'**
+  /// **'Enter your registered email address below. We will send you a 6-digit code to reset your password and keep your account secure.'**
   String get resetPasswordInstructions;
 
   /// No description provided for @pleaseEnterValidEmailAddress.
@@ -1439,8 +1427,80 @@ abstract class AppLocalizations {
   /// No description provided for @sendResetLink.
   ///
   /// In en, this message translates to:
-  /// **'Send Reset Link'**
+  /// **'Send Code'**
   String get sendResetLink;
+
+  /// No description provided for @otpScreenTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Enter Code'**
+  String get otpScreenTitle;
+
+  /// No description provided for @otpInstructions.
+  ///
+  /// In en, this message translates to:
+  /// **'Enter the 6-digit code we sent to {email}.'**
+  String otpInstructions(String email);
+
+  /// No description provided for @otpLabel.
+  ///
+  /// In en, this message translates to:
+  /// **'Verification Code'**
+  String get otpLabel;
+
+  /// No description provided for @pleaseEnterOtp.
+  ///
+  /// In en, this message translates to:
+  /// **'Please enter the code'**
+  String get pleaseEnterOtp;
+
+  /// No description provided for @otpInvalidLength.
+  ///
+  /// In en, this message translates to:
+  /// **'Enter the 6-digit code'**
+  String get otpInvalidLength;
+
+  /// No description provided for @verifyAndReset.
+  ///
+  /// In en, this message translates to:
+  /// **'Verify & Reset Password'**
+  String get verifyAndReset;
+
+  /// No description provided for @resendCode.
+  ///
+  /// In en, this message translates to:
+  /// **'Resend Code'**
+  String get resendCode;
+
+  /// No description provided for @resendCodeIn.
+  ///
+  /// In en, this message translates to:
+  /// **'Resend code in {seconds}s'**
+  String resendCodeIn(int seconds);
+
+  /// No description provided for @pleaseWaitBeforeResend.
+  ///
+  /// In en, this message translates to:
+  /// **'Please wait before requesting another code.'**
+  String get pleaseWaitBeforeResend;
+
+  /// No description provided for @codeExpired.
+  ///
+  /// In en, this message translates to:
+  /// **'This code has expired. Please request a new one.'**
+  String get codeExpired;
+
+  /// No description provided for @tooManyAttempts.
+  ///
+  /// In en, this message translates to:
+  /// **'Too many incorrect attempts. Please request a new code.'**
+  String get tooManyAttempts;
+
+  /// No description provided for @incorrectCode.
+  ///
+  /// In en, this message translates to:
+  /// **'Incorrect code. Please try again.'**
+  String get incorrectCode;
 
   /// No description provided for @downloadedReports.
   ///

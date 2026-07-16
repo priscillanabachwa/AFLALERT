@@ -136,8 +136,9 @@ class _CameraCaptureScreenState extends State<CameraCaptureScreen> {
   _FocusQuality _focus = _FocusQuality.adjusting;
 
   Timer? _focusSettleTimer;
-  bool _isStreamingForBrightness = false;
-  DateTime _lastBrightnessSampleAt = DateTime.fromMillisecondsSinceEpoch(0);
+  bool _brightnessMonitoringEnabled = false;
+  bool _imageStreamOpen = false;
+  Timer? _brightnessCycleTimer;
 
   @override
   void initState() {
@@ -169,21 +170,40 @@ class _CameraCaptureScreenState extends State<CameraCaptureScreen> {
 
   // Basic real-time lighting check: samples average luma from the camera's
   // Y-plane. Swap this out for a more sophisticated check if you have one.
+  //
+  // This deliberately keeps the image stream closed most of the time. Early
+  // versions left startImageStream running continuously for as long as the
+  // camera screen was open — the plugin marshals every full-resolution frame
+  // (~30/s) across the platform channel regardless of whether the Dart side
+  // does anything with it, so the longer the screen stayed open before a
+  // capture, the more GC pressure built up and the janker the UI got. Instead
+  // we open the stream just long enough to grab a single frame, close it
+  // immediately, then wait before sampling again.
   void _startBrightnessMonitoring() {
-    if (_controller == null || _isStreamingForBrightness) return;
-    _isStreamingForBrightness = true;
+    if (_controller == null || _brightnessMonitoringEnabled) return;
+    _brightnessMonitoringEnabled = true;
+    _sampleBrightnessOnce();
+  }
 
-    _controller!.startImageStream((CameraImage image) {
-      // Sampling every frame (~30/s) did the luma scan and a potential
-      // setState on every single frame, which was a steady source of GC
-      // churn and contributed to the camera screen's intermittent jank.
-      // The lighting pill doesn't need to update faster than a few times
-      // a second, so throttle how often we actually process a frame.
-      final now = DateTime.now();
-      if (now.difference(_lastBrightnessSampleAt) < const Duration(milliseconds: 400)) {
-        return;
-      }
-      _lastBrightnessSampleAt = now;
+  void _stopBrightnessMonitoring() {
+    _brightnessMonitoringEnabled = false;
+    _brightnessCycleTimer?.cancel();
+    _brightnessCycleTimer = null;
+    if (_imageStreamOpen) {
+      _imageStreamOpen = false;
+      _controller?.stopImageStream();
+    }
+  }
+
+  void _sampleBrightnessOnce() {
+    if (_controller == null || !mounted || !_brightnessMonitoringEnabled) {
+      return;
+    }
+
+    _imageStreamOpen = true;
+    _controller!.startImageStream((CameraImage image) async {
+      _imageStreamOpen = false;
+      await _controller?.stopImageStream();
 
       try {
         final yPlane = image.planes[0].bytes;
@@ -203,6 +223,11 @@ class _CameraCaptureScreenState extends State<CameraCaptureScreen> {
         }
       } catch (_) {
         // Ignore malformed frames.
+      }
+
+      if (mounted && _brightnessMonitoringEnabled) {
+        _brightnessCycleTimer =
+            Timer(const Duration(milliseconds: 400), _sampleBrightnessOnce);
       }
     });
   }
@@ -266,10 +291,7 @@ class _CameraCaptureScreenState extends State<CameraCaptureScreen> {
     if (_controller!.value.isTakingPicture) return;
 
     try {
-      if (_isStreamingForBrightness) {
-        await _controller!.stopImageStream();
-        _isStreamingForBrightness = false;
-      }
+      _stopBrightnessMonitoring();
       final XFile file = await _controller!.takePicture();
       if (!mounted) return;
 
@@ -315,6 +337,7 @@ class _CameraCaptureScreenState extends State<CameraCaptureScreen> {
   @override
   void dispose() {
     _focusSettleTimer?.cancel();
+    _stopBrightnessMonitoring();
     _controller?.dispose();
     super.dispose();
   }
