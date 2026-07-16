@@ -2,12 +2,16 @@
   "@@locale": "lg",
   "appName": "AflAlert",
   "login": "Yingira",
+
   "register": "Wandiisa Akawunti",
+
+  "register": "Tandika Akaunti",
   "email": "Endagiriro ya Email",
   "password": "Ekigambo ky'ekyama",
   "forgotPassword": "Weerabidde Ekigambo ky'ekyama?",
   "continueWithGoogle": "Weeyongereyo ne Google",
   "home": "Awaka",
+
   "history": "Ebyafaayo",
   "notifications": "Obubaka",
   "profile": "Profayiro",
