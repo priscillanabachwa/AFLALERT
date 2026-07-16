@@ -1,3 +1,4 @@
+import 'package:shared_preferences/shared_preferences.dart';
 import 'dart:async';
 import 'dart:io';
 
@@ -35,7 +36,25 @@ class ProfileScreen extends StatefulWidget {
   @override
   State<ProfileScreen> createState() => _ProfileScreenState();
 }
+class _ProfileScreenState extends State<ProfileScreen> {
+  bool _darkMode = false;
+  String _selectedLanguage = 'English';
 
+  @override
+  void initState() {
+    super.initState();
+    _loadSavedLanguage();
+  }
+
+  // Load the saved language when screen opens
+  Future<void> _loadSavedLanguage() async {
+    final prefs = await SharedPreferences.getInstance();
+    final String savedLang = prefs.getString('language') ?? 'en';
+    setState(() {
+      _selectedLanguage = savedLang == 'lg' ? 'Luganda' : 'English';
+    });
+  }
+  
 class _ProfileScreenState extends State<ProfileScreen> {
   final FirestoreService _firestoreService = FirestoreService();
   StreamSubscription<dynamic>? _profileSub;
@@ -64,7 +83,37 @@ class _ProfileScreenState extends State<ProfileScreen> {
       });
     });
   }
+  void _showLanguageSheet() {
+  showModalBottomSheet(
+    context: context,
+    shape: const RoundedRectangleBorder(
+      borderRadius: BorderRadius.vertical(top: Radius.circular(24)),
+    ),
+    builder: (_) => _LanguageSheet(
+      current: _selectedLanguage,
+      onSelected: (lang) async {
+        // Save language preference locally
+        final prefs = await SharedPreferences.getInstance();
 
+        if (lang == 'Luganda') {
+          await prefs.setString('language', 'lg');
+          if (mounted) {
+            AflAlertApp.setLocale(context, const Locale('lg'));
+          }
+        } else {
+          await prefs.setString('language', 'en');
+          if (mounted) {
+            AflAlertApp.setLocale(context, const Locale('en'));
+          }
+        }
+
+        setState(() => _selectedLanguage = lang);
+
+        if (mounted) Navigator.pop(context);
+      },
+    ),
+  );
+}
   @override
   void dispose() {
     _profileSub?.cancel();
