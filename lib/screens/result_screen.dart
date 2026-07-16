@@ -4,6 +4,7 @@ import 'package:camera/camera.dart';
 import 'package:flutter/material.dart';
 
 import '../constants/app_colors.dart';
+import '../l10n/app_localizations.dart';
 import '../models/report_model.dart';
 import '../services/location_service.dart';
 import '../services/pdf_service.dart';
@@ -77,18 +78,18 @@ class ResultsScreen extends StatelessWidget {
   Color get boxTextColor => textPrimary;
   Color get headingColor => isSafe ? safeHeading : unsafeHeading;
 
-  String get displayAnalysisLabel {
+  String displayAnalysisLabel(AppLocalizations l10n) {
     final label = analysisLabel?.trim();
     if (label != null && label.isNotEmpty) {
       return label;
     }
-    return isSafe ? 'Healthy Maize' : 'Unsafe for Human Consumption';
+    return isSafe ? l10n.healthyMaize : l10n.unsafeForConsumption;
   }
 
-  String get title => displayAnalysisLabel;
-  String get subtitle => isSafe
-      ? 'Diagnosis completed successfully'
-      : 'Analysis flagged this sample for review';
+  String title(AppLocalizations l10n) => displayAnalysisLabel(l10n);
+  String subtitle(AppLocalizations l10n) => isSafe
+      ? l10n.diagnosisCompletedSuccessfully
+      : l10n.analysisFlaggedForReview;
 
   int get confidencePercent => (confidence * 100).round();
 
@@ -176,9 +177,10 @@ class ResultsScreen extends StatelessWidget {
   }
 
   Future<void> _exportPdf(BuildContext context) async {
+    final AppLocalizations l10n = AppLocalizations.of(context)!;
     _showActionStatus(
       context,
-      'Generating PDF report...',
+      l10n.generatingPdfReport,
       Icons.picture_as_pdf_rounded,
       AppColors.primaryContainer,
     );
@@ -192,7 +194,7 @@ class ResultsScreen extends StatelessWidget {
       await ReportStorageService().saveReport(
         ReportModel(
           id: DateTime.now().millisecondsSinceEpoch.toString(),
-          result: displayAnalysisLabel,
+          result: displayAnalysisLabel(l10n),
           confidence: confidence,
           date: DateTime.now(),
           pdfPath: file.path,
@@ -205,7 +207,7 @@ class ResultsScreen extends StatelessWidget {
       if (!context.mounted) return;
       _showActionStatus(
         context,
-        'Could not save PDF report',
+        l10n.couldNotSavePdfReport,
         Icons.error_outline_rounded,
         AppColors.error,
       );
@@ -235,7 +237,8 @@ class ResultsScreen extends StatelessWidget {
     );
   }
 
-  Widget _buildDiagnosisCard() {
+  Widget _buildDiagnosisCard(BuildContext context) {
+    final AppLocalizations l10n = AppLocalizations.of(context)!;
     final File? photoFile =
         (imagePath != null && imagePath!.isNotEmpty) ? File(imagePath!) : null;
     final bool hasPhoto = photoFile != null && photoFile.existsSync();
@@ -309,7 +312,7 @@ class ResultsScreen extends StatelessWidget {
             child: Column(
               children: [
                 Text(
-                  title,
+                  title(l10n),
                   textAlign: TextAlign.center,
                   style: const TextStyle(
                     fontSize: 18,
@@ -318,10 +321,10 @@ class ResultsScreen extends StatelessWidget {
                   ),
                 ),
                 const SizedBox(height: 8),
-                _buildConfidenceBadge(),
+                _buildConfidenceBadge(l10n),
                 const SizedBox(height: 6),
                 Text(
-                  subtitle,
+                  subtitle(l10n),
                   style: const TextStyle(fontSize: 12, color: textMuted),
                 ),
               ],
@@ -332,7 +335,7 @@ class ResultsScreen extends StatelessWidget {
     );
   }
 
-  Widget _buildConfidenceBadge() {
+  Widget _buildConfidenceBadge(AppLocalizations l10n) {
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
       decoration: BoxDecoration(
@@ -340,7 +343,7 @@ class ResultsScreen extends StatelessWidget {
         borderRadius: BorderRadius.circular(20),
       ),
       child: Text(
-        '$confidencePercent% confidence',
+        l10n.confidencePercentLabel(confidencePercent),
         style: TextStyle(fontSize: 11, fontWeight: FontWeight.w600, color: iconBg),
       ),
     );
@@ -348,6 +351,7 @@ class ResultsScreen extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final AppLocalizations l10n = AppLocalizations.of(context)!;
     return Scaffold(
       backgroundColor: pageBg,
       body: SafeArea(
@@ -365,9 +369,9 @@ class ResultsScreen extends StatelessWidget {
                       icon: const Icon(Icons.arrow_back, color: AppColors.primary),
                     ),
                     const SizedBox(width: 4),
-                    const Text(
-                      'Aflatoxin Detector',
-                      style: TextStyle(
+                    Text(
+                      l10n.aflatoxinDetector,
+                      style: const TextStyle(
                         color: AppColors.primary,
                         fontSize: 17,
                         fontWeight: FontWeight.w500,
@@ -378,7 +382,7 @@ class ResultsScreen extends StatelessWidget {
                 const SizedBox(height: 18),
 
                 // Main Diagnosis Card
-                _buildDiagnosisCard(),
+                _buildDiagnosisCard(context),
                 const SizedBox(height: 14),
 
                 // Certified Recommendations Box
@@ -396,7 +400,7 @@ class ResultsScreen extends StatelessWidget {
                           Icon(Icons.fact_check_outlined, size: 16, color: headingColor),
                           const SizedBox(width: 6),
                           Text(
-                            'Recommendations & Directives',
+                            l10n.recommendationsAndDirectives,
                             style: TextStyle(
                               fontSize: 13,
                               fontWeight: FontWeight.w500,
@@ -460,9 +464,9 @@ class ResultsScreen extends StatelessWidget {
                 ElevatedButton.icon(
                   onPressed: () => _exportPdf(context),
                   icon: const Icon(Icons.save_alt_rounded, size: 16),
-                  label: const Text(
-                    'Export PDF',
-                    style: TextStyle(fontSize: 13, fontWeight: FontWeight.w700),
+                  label: Text(
+                    l10n.exportPdf,
+                    style: const TextStyle(fontSize: 13, fontWeight: FontWeight.w700),
                   ),
                   style: ElevatedButton.styleFrom(
                     backgroundColor: AppColors.secondary,
@@ -478,7 +482,7 @@ class ResultsScreen extends StatelessWidget {
                 ElevatedButton.icon(
                   onPressed: () => _scanAnotherBatch(context),
                   icon: const Icon(Icons.camera_alt_outlined),
-                  label: const Text('Scan Another Batch'),
+                  label: Text(l10n.scanAnotherBatch),
                   style: ElevatedButton.styleFrom(
                     backgroundColor: AppColors.primary,
                     foregroundColor: Colors.white,

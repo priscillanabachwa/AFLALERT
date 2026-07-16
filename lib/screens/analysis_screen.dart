@@ -4,6 +4,7 @@ import 'package:camera/camera.dart';
 import 'package:flutter/material.dart';
 
 import '../constants/app_colors.dart';
+import '../l10n/app_localizations.dart';
 
 import '../widgets/custom_app_bar.dart';
 import '../widgets/ai_animation.dart';
@@ -111,10 +112,11 @@ class _AnalysisScreenState extends State<AnalysisScreen> {
       final resultsArgs = results[0] as ResultsScreenArgs?;
 
       if (!mounted) return;
+      final AppLocalizations l10n = AppLocalizations.of(context)!;
       if (resultsArgs == null) {
         setState(() {
           _isProcessing = false;
-          _errorMessage = 'Could not analyze this photo. Please try again.';
+          _errorMessage = l10n.couldNotAnalyzePhoto;
         });
         return;
       }
@@ -123,14 +125,13 @@ class _AnalysisScreenState extends State<AnalysisScreen> {
       if (!mounted) return;
       setState(() {
         _isProcessing = false;
-        _errorMessage =
-            'This doesn\'t look like a photo of maize. Please retake a clear photo of maize kernels.';
+        _errorMessage = AppLocalizations.of(context)!.notMaizePhoto;
       });
     } catch (e) {
       if (!mounted) return;
       setState(() {
         _isProcessing = false;
-        _errorMessage = 'Could not analyze this photo. Please try again.';
+        _errorMessage = AppLocalizations.of(context)!.couldNotAnalyzePhoto;
       });
     }
   }
@@ -215,7 +216,7 @@ class _AnalysisScreenState extends State<AnalysisScreen> {
               child: SingleChildScrollView(
                 padding: const EdgeInsets.all(20),
                 child: _isProcessing
-                    ? _buildLoading()
+                    ? _buildLoading(context)
                     : _buildFallback(context),
               ),
             ),
@@ -225,32 +226,34 @@ class _AnalysisScreenState extends State<AnalysisScreen> {
     );
   }
 
-  Widget _buildLoading() {
+  Widget _buildLoading(BuildContext context) {
+    final AppLocalizations l10n = AppLocalizations.of(context)!;
     return Column(
-      children: const [
-        SizedBox(height: 20),
-        AIAnimation(),
-        SizedBox(height: 40),
+      children: [
+        const SizedBox(height: 20),
+        const AIAnimation(),
+        const SizedBox(height: 40),
         Text(
-          "Analyzing Image...",
-          style: TextStyle(
+          l10n.analyzingImageTitle,
+          style: const TextStyle(
             fontSize: 30,
             fontWeight: FontWeight.bold,
             color: AppColors.primary,
           ),
         ),
-        SizedBox(height: 12),
+        const SizedBox(height: 12),
         Text(
-          "Our AI model is detecting visible mold associated with aflatoxin contamination.",
+          l10n.aiDetectingMold,
           textAlign: TextAlign.center,
         ),
-        SizedBox(height: 40),
-        ProgressSection(),
+        const SizedBox(height: 40),
+        const ProgressSection(),
       ],
     );
   }
 
   Widget _buildFallback(BuildContext context) {
+    final AppLocalizations l10n = AppLocalizations.of(context)!;
     final bool isError = _errorMessage != null;
 
     return Column(
@@ -263,7 +266,7 @@ class _AnalysisScreenState extends State<AnalysisScreen> {
         ),
         const SizedBox(height: 20),
         Text(
-          isError ? "Analysis failed" : "No scan result found",
+          isError ? l10n.analysisFailed : l10n.noScanResultFound,
           style: const TextStyle(
             fontSize: 22,
             fontWeight: FontWeight.bold,
@@ -272,14 +275,14 @@ class _AnalysisScreenState extends State<AnalysisScreen> {
         ),
         const SizedBox(height: 8),
         Text(
-          _errorMessage ?? "Scan a maize sample to see its diagnosis here.",
+          _errorMessage ?? l10n.scanMaizeSampleHint,
           textAlign: TextAlign.center,
           style: const TextStyle(color: AppColors.grey),
         ),
         const SizedBox(height: 28),
         ElevatedButton(
           onPressed: _retakeAndAnalyze,
-          child: Text(isError ? 'Try again' : 'Scan a sample'),
+          child: Text(isError ? l10n.tryAgain : l10n.scanASample),
         ),
       ],
     );

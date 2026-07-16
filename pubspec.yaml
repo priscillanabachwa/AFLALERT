@@ -4,7 +4,6 @@ description: "A new Flutter project."
 # pub.dev using `flutter pub publish`. This is preferred for private packages.
 publish_to: 'none' # Remove this line if you wish to publish to pub.dev
 
-shared_preferences: ^2.3.2
 # The following defines the version and build number for your application.
 # A version number is three numbers separated by dots, like 1.2.43
 # followed by an optional build number separated by a +.
@@ -90,9 +89,9 @@ dependency_overrides:
 flutter:
   generate: true
   assets:
-    - assets/images/
     - lib/assets/best.tflite
     - lib/assets/images/
+
   # existing content stays here
 
   # The following line ensures that the Material Icons font is
@@ -126,8 +125,6 @@ flutter:
   #     fonts:
   #       - asset: fonts/TrajanPro.ttf
   #       - asset: fonts/TrajanPro_Bold.ttf
-
-  
 flutter_launcher_icons:
     android: true
     ios: true

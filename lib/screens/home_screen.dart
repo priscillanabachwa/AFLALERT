@@ -8,6 +8,7 @@ import 'package:flutter/material.dart';
 import '../constants/app_colors.dart';
 import '../constants/daily_tips.dart';
 import '../constants/seasonal_guidelines.dart';
+import '../l10n/app_localizations.dart';
 import '../models/app_notification.dart';
 import '../services/firestore_service.dart';
 import '../services/local_notification_service.dart';
@@ -102,12 +103,13 @@ class _HomeScreenState extends State<HomeScreen> {
     if (_heatAlertNotified) return;
     _heatAlertNotified = true;
 
+    final AppLocalizations l10n = AppLocalizations.of(context)!;
     final String tip = tipForConditions(_userType, _weather?.temperatureC);
     final int tempRounded = _weather!.temperatureC.round();
 
     NotificationCenter.instance.add(
       AppNotification(
-        title: 'Heat Alert',
+        title: l10n.heatAlertTitle,
         description: tip,
         icon: Icons.whatshot,
         iconColor: const Color(0xFFE0562A),
@@ -119,13 +121,14 @@ class _HomeScreenState extends State<HomeScreen> {
     );
 
     LocalNotificationService.instance.show(
-      title: 'Heat Alert — $tempRounded°C',
+      title: l10n.heatAlertNotifTitle(tempRounded),
       body: tip,
     );
   }
 
   @override
   Widget build(BuildContext context) {
+    final AppLocalizations l10n = AppLocalizations.of(context)!;
     return Scaffold(
       backgroundColor: AppColors.t95,
       body: SafeArea(
@@ -149,7 +152,7 @@ class _HomeScreenState extends State<HomeScreen> {
                     final String firstName =
                         (fullName != null && fullName.trim().isNotEmpty)
                         ? fullName.trim().split(' ').first
-                        : 'there';
+                        : l10n.defaultGreetingName;
                     final String userType =
                         profile?['userType'] as String? ?? '';
                     return Column(
@@ -166,9 +169,9 @@ class _HomeScreenState extends State<HomeScreen> {
                   },
                 ),
                 const SizedBox(height: 28),
-                const Text(
-                  'Guidelines',
-                  style: TextStyle(
+                Text(
+                  l10n.guidelines,
+                  style: const TextStyle(
                     fontSize: 18,
                     fontWeight: FontWeight.bold,
                     color: AppColors.primary,
@@ -186,10 +189,10 @@ class _HomeScreenState extends State<HomeScreen> {
                 const SizedBox(height: 32),
                 _buildScanButton(context),
                 const SizedBox(height: 12),
-                const Center(
+                Center(
                   child: Text(
-                    'Tap to scan crops',
-                    style: TextStyle(fontSize: 14, color: Colors.grey),
+                    l10n.tapToScan,
+                    style: const TextStyle(fontSize: 14, color: Colors.grey),
                   ),
                 ),
                 const SizedBox(height: 28),
@@ -314,19 +317,20 @@ class _HomeScreenState extends State<HomeScreen> {
     );
   }
 
-  static String _greetingForHour(int hour) {
-    if (hour >= 5 && hour < 12) return 'Good Morning';
-    if (hour >= 12 && hour < 17) return 'Good Afternoon';
-    if (hour >= 17 && hour < 21) return 'Good Evening';
-    return 'Good Night';
+  String _greetingForHour(AppLocalizations l10n, int hour) {
+    if (hour >= 5 && hour < 12) return l10n.goodMorning;
+    if (hour >= 12 && hour < 17) return l10n.goodAfternoon;
+    if (hour >= 17 && hour < 21) return l10n.goodEvening;
+    return l10n.goodNight;
   }
 
   Widget _buildGreeting(String name) {
+    final AppLocalizations l10n = AppLocalizations.of(context)!;
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
         Text(
-          '${_greetingForHour(DateTime.now().hour)},',
+          '${_greetingForHour(l10n, DateTime.now().hour)},',
           style: const TextStyle(
             fontSize: 28,
             fontWeight: FontWeight.w400,
@@ -342,15 +346,16 @@ class _HomeScreenState extends State<HomeScreen> {
           ),
         ),
         const SizedBox(height: 6),
-        const Text(
-          'Ready to secure your harvest today?',
-          style: TextStyle(fontSize: 14, color: Colors.grey),
+        Text(
+          l10n.homeSubGreeting,
+          style: const TextStyle(fontSize: 14, color: Colors.grey),
         ),
       ],
     );
   }
 
   Widget _buildInfoCards(String dailyTip, bool heatAlert) {
+    final AppLocalizations l10n = AppLocalizations.of(context)!;
     return IntrinsicHeight(
       child: Row(
         crossAxisAlignment: CrossAxisAlignment.stretch,
@@ -375,8 +380,8 @@ class _HomeScreenState extends State<HomeScreen> {
                   Text(
                     (_location?.placeName?.toUpperCase()) ??
                         (_weatherLoading
-                            ? 'LOCATING...'
-                            : 'LOCATION UNAVAILABLE'),
+                            ? l10n.locating
+                            : l10n.locationUnavailable),
                     style: const TextStyle(
                       fontSize: 10,
                       fontWeight: FontWeight.w600,
@@ -399,8 +404,8 @@ class _HomeScreenState extends State<HomeScreen> {
                   Text(
                     _weather?.condition ??
                         (_weatherLoading
-                            ? 'Fetching weather...'
-                            : 'Unavailable'),
+                            ? l10n.fetchingWeather
+                            : l10n.unavailable),
                     style: const TextStyle(fontSize: 13, color: Colors.grey),
                   ),
                   const SizedBox(height: 12),
@@ -431,7 +436,7 @@ class _HomeScreenState extends State<HomeScreen> {
                   ),
                   const SizedBox(height: 8),
                   Text(
-                    heatAlert ? 'HEAT ALERT' : 'DAILY TIP',
+                    heatAlert ? l10n.heatAlertBadge : l10n.dailyTip,
                     style: const TextStyle(
                       fontSize: 10,
                       fontWeight: FontWeight.w700,
@@ -597,12 +602,12 @@ class _HomeScreenState extends State<HomeScreen> {
               onTap: () => _onScanTap(context),
               child: Column(
                 mainAxisAlignment: MainAxisAlignment.center,
-                children: const [
-                  Icon(Icons.camera_alt, color: Colors.white, size: 36),
-                  SizedBox(height: 8),
+                children: [
+                  const Icon(Icons.camera_alt, color: Colors.white, size: 36),
+                  const SizedBox(height: 8),
                   Text(
-                    'AI SCAN',
-                    style: TextStyle(
+                    AppLocalizations.of(context)!.aiScan,
+                    style: const TextStyle(
                       color: Colors.white,
                       fontSize: 14,
                       fontWeight: FontWeight.bold,
@@ -654,19 +659,21 @@ class _HomeScreenState extends State<HomeScreen> {
     return '$hour:$minute $period';
   }
 
-  static String _relativeTime(DateTime dt) {
+  String _relativeTime(DateTime dt) {
+    final AppLocalizations l10n = AppLocalizations.of(context)!;
     final Duration diff = DateTime.now().difference(dt);
-    if (diff.inMinutes < 1) return 'Just now';
-    if (diff.inMinutes < 60) return '${diff.inMinutes} min ago';
+    if (diff.inMinutes < 1) return l10n.justNow;
+    if (diff.inMinutes < 60) return l10n.minAgo(diff.inMinutes);
     if (diff.inHours < 24) {
-      return '${diff.inHours} hour${diff.inHours == 1 ? '' : 's'} ago';
+      return l10n.hoursAgo(diff.inHours);
     }
-    if (diff.inDays == 1) return 'Yesterday, ${_formatTime(dt)}';
-    if (diff.inDays < 7) return '${diff.inDays} days ago';
+    if (diff.inDays == 1) return l10n.yesterdayAt(_formatTime(dt));
+    if (diff.inDays < 7) return l10n.daysAgo(diff.inDays);
     return _formatScanDate(dt);
   }
 
   Widget _buildStatsRow(List<QueryDocumentSnapshot> docs) {
+    final AppLocalizations l10n = AppLocalizations.of(context)!;
     int healthy = 0;
     int risky = 0;
     String lastScanLabel = '--';
@@ -701,11 +708,11 @@ class _HomeScreenState extends State<HomeScreen> {
       ),
       child: Row(
         children: [
-          _buildStatItem('$healthy', 'HEALTHY', AppColors.primaryContainer),
+          _buildStatItem('$healthy', l10n.healthyCaps, AppColors.primaryContainer),
           _buildDivider(),
-          _buildStatItem('$risky', 'RISKY', AppColors.error),
+          _buildStatItem('$risky', l10n.riskyCaps, AppColors.error),
           _buildDivider(),
-          _buildStatItem(lastScanLabel, 'LAST SCAN', AppColors.primary),
+          _buildStatItem(lastScanLabel, l10n.lastScanCaps, AppColors.primary),
         ],
       ),
     );
@@ -715,15 +722,16 @@ class _HomeScreenState extends State<HomeScreen> {
     return Container(
       padding: const EdgeInsets.symmetric(vertical: 28),
       alignment: Alignment.center,
-      child: const Text(
-        'No scans yet — tap "AI Scan" above to check your first batch.',
+      child: Text(
+        AppLocalizations.of(context)!.noScansYetHome,
         textAlign: TextAlign.center,
-        style: TextStyle(color: Colors.grey, fontSize: 13),
+        style: const TextStyle(color: Colors.grey, fontSize: 13),
       ),
     );
   }
 
   Widget _buildScanTileFromDoc(QueryDocumentSnapshot doc) {
+    final AppLocalizations l10n = AppLocalizations.of(context)!;
     final data = doc.data() as Map<String, dynamic>;
     final String label = (data['label'] ?? 'Unknown').toString();
     final String location = (data['location'] ?? '').toString();
@@ -736,7 +744,7 @@ class _HomeScreenState extends State<HomeScreen> {
     final Timestamp? timestamp = data['timestamp'] as Timestamp?;
     final String timeText = timestamp != null
         ? _relativeTime(timestamp.toDate())
-        : 'Just now';
+        : l10n.justNow;
     final String subtitle = location.isNotEmpty
         ? '$location · $timeText'
         : timeText;
@@ -749,10 +757,10 @@ class _HomeScreenState extends State<HomeScreen> {
       iconColor: statusColor,
       title: label,
       subtitle: subtitle,
-      badgeText: isMoldy ? 'AT RISK' : 'SAFE',
+      badgeText: isMoldy ? l10n.atRiskBadge : l10n.safeBadge,
       badgeColor: isMoldy ? AppColors.errorLight : const Color(0xFFE8F5E9),
       badgeTextColor: statusColor,
-      trailingText: '$matchPercent% Match',
+      trailingText: l10n.matchPercentLabel(matchPercent),
       trailingColor: statusColor,
     );
   }
@@ -789,12 +797,13 @@ class _HomeScreenState extends State<HomeScreen> {
   }
 
   Widget _buildRecentScansHeader() {
+    final AppLocalizations l10n = AppLocalizations.of(context)!;
     return Row(
       mainAxisAlignment: MainAxisAlignment.spaceBetween,
       children: [
-        const Text(
-          'Recent Scans',
-          style: TextStyle(
+        Text(
+          l10n.recentScans,
+          style: const TextStyle(
             fontSize: 18,
             fontWeight: FontWeight.bold,
             color: AppColors.primary,
@@ -805,9 +814,9 @@ class _HomeScreenState extends State<HomeScreen> {
             context,
             MaterialPageRoute(builder: (_) => const HistoryScreen()),
           ),
-          child: const Text(
-            'See All',
-            style: TextStyle(
+          child: Text(
+            l10n.seeAll,
+            style: const TextStyle(
               fontSize: 13,
               color: AppColors.secondary,
               fontWeight: FontWeight.w600,
