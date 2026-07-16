@@ -91,13 +91,25 @@ class FirestoreService {
         if (removePhoto) 'photoUrl': FieldValue.delete() else 'photoUrl': ?photoUrl,
       });
 
+      bool authProfileChanged = false;
       if (fullName.isNotEmpty && currentUser.displayName != fullName) {
         await currentUser.updateDisplayName(fullName);
+        authProfileChanged = true;
       }
       if (removePhoto) {
         await currentUser.updatePhotoURL(null);
+        authProfileChanged = true;
       } else if (photoUrl != null) {
         await currentUser.updatePhotoURL(photoUrl);
+        authProfileChanged = true;
+      }
+      // updateDisplayName/updatePhotoURL don't refresh the locally cached
+      // currentUser object on their own — without this, any code reading
+      // FirebaseAuth.instance.currentUser.photoURL/displayName right after
+      // this call (e.g. as a fallback when the Firestore field is absent)
+      // would still see the old value until the app restarted.
+      if (authProfileChanged) {
+        await currentUser.reload();
       }
 
       debugPrint('FirestoreService: User profile updated for ${currentUser.uid}.');
