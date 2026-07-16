@@ -39,6 +39,7 @@
   "delete": "Sazaamu",
   "scanDeleted": "Scan esaziddwamu.",
   "couldNotDeleteScan": "Tetusobodde kusazaamu scan. Ddamu ogezeeko.",
+  "undo": "Zzaawo",
   "totalScans": "Scan Zonna",
   "healthyScans": "Scan ezebilamu",
   "detectedScans": "Scan ezalabwamu obukuku",

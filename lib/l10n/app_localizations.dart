@@ -314,6 +314,12 @@ abstract class AppLocalizations {
   /// **'Could not delete scan. Please try again.'**
   String get couldNotDeleteScan;
 
+  /// No description provided for @undo.
+  ///
+  /// In en, this message translates to:
+  /// **'Undo'**
+  String get undo;
+
   /// No description provided for @totalScans.
   ///
   /// In en, this message translates to:

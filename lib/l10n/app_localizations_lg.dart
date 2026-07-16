@@ -119,6 +119,9 @@ class AppLocalizationsLg extends AppLocalizations {
       'Tetusobodde kusazaamu scan. Ddamu ogezeeko.';
 
   @override
+  String get undo => 'Zzaawo';
+
+  @override
   String get totalScans => 'Scan Zonna';
 
   @override

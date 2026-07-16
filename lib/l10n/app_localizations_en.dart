@@ -118,6 +118,9 @@ class AppLocalizationsEn extends AppLocalizations {
   String get couldNotDeleteScan => 'Could not delete scan. Please try again.';
 
   @override
+  String get undo => 'Undo';
+
+  @override
   String get totalScans => 'Total Scans';
 
   @override

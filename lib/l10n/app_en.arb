@@ -36,6 +36,7 @@
   "delete": "Delete",
   "scanDeleted": "Scan deleted.",
   "couldNotDeleteScan": "Could not delete scan. Please try again.",
+  "undo": "Undo",
   "totalScans": "Total Scans",
   "healthyScans": "Healthy Scans",
   "detectedScans": "Detected Scans",

@@ -1,3 +1,4 @@
+import 'dart:async';
 import 'dart:io';
 
 import 'package:cloud_firestore/cloud_firestore.dart';
@@ -113,6 +114,12 @@ class _HistoryScreenState extends State<HistoryScreen> {
   String _query = '';
   String? _selectedLocation;
 
+  // Scans hidden immediately on delete, with the actual Firestore delete
+  // deferred until the undo window (below) expires without being cancelled.
+  static const Duration _undoWindow = Duration(seconds: 4);
+  final Set<String> _pendingDeleteIds = {};
+  final Map<String, Timer> _pendingDeleteTimers = {};
+
   List<ScanRecord> _filterRecords(List<ScanRecord> source) {
     return source.where((s) {
       final matchesQuery =
@@ -137,6 +144,9 @@ class _HistoryScreenState extends State<HistoryScreen> {
   @override
   void dispose() {
     _searchCtrl.dispose();
+    for (final timer in _pendingDeleteTimers.values) {
+      timer.cancel();
+    }
     super.dispose();
   }
 
@@ -160,6 +170,7 @@ class _HistoryScreenState extends State<HistoryScreen> {
           final allScans = (snapshot.data?.docs ?? [])
               .map(_scanRecordFromDoc)
               .whereType<ScanRecord>()
+              .where((s) => !_pendingDeleteIds.contains(s.id))
               .toList();
           final results = _filterRecords(allScans);
 
@@ -341,7 +352,7 @@ class _HistoryScreenState extends State<HistoryScreen> {
             child: const Icon(Icons.delete_outline, color: Colors.white),
           ),
           confirmDismiss: (_) => _confirmDeleteScan(record),
-          onDismissed: (_) => _deleteScan(record),
+          onDismissed: (_) => _scheduleDelete(record),
           child: _ScanCard(
             record: record,
             onTap: () => _openDetail(record),
@@ -527,21 +538,57 @@ class _HistoryScreenState extends State<HistoryScreen> {
   Future<void> _confirmAndDeleteScan(ScanRecord record) async {
     final bool confirmed = await _confirmDeleteScan(record);
     if (!confirmed || !mounted) return;
-    await _deleteScan(record);
+    _scheduleDelete(record);
   }
 
-  Future<void> _deleteScan(ScanRecord record) async {
+  // Hides the scan immediately and shows an Undo snackbar; the Firestore
+  // delete only actually happens once the undo window elapses uncancelled.
+  void _scheduleDelete(ScanRecord record) {
     final AppLocalizations l10n = AppLocalizations.of(context)!;
-    final bool success = await _firestoreService.deleteScanRecord(record.id);
-    if (!mounted) return;
+    setState(() => _pendingDeleteIds.add(record.id));
 
+    ScaffoldMessenger.of(context).hideCurrentSnackBar();
     ScaffoldMessenger.of(context).showSnackBar(
       SnackBar(
-        content: Text(success ? l10n.scanDeleted : l10n.couldNotDeleteScan),
-        backgroundColor: success ? kPrimaryGreen : kDangerRed,
+        content: Text(l10n.scanDeleted),
+        backgroundColor: kPrimaryGreen,
         behavior: SnackBarBehavior.floating,
+        duration: _undoWindow,
+        action: SnackBarAction(
+          label: l10n.undo,
+          textColor: Colors.white,
+          onPressed: () => _undoDelete(record.id),
+        ),
       ),
     );
+
+    _pendingDeleteTimers[record.id]?.cancel();
+    _pendingDeleteTimers[record.id] = Timer(_undoWindow, () {
+      _pendingDeleteTimers.remove(record.id);
+      _commitDelete(record.id);
+    });
+  }
+
+  void _undoDelete(String id) {
+    _pendingDeleteTimers.remove(id)?.cancel();
+    if (!mounted) return;
+    setState(() => _pendingDeleteIds.remove(id));
+  }
+
+  Future<void> _commitDelete(String id) async {
+    final bool success = await _firestoreService.deleteScanRecord(id);
+    if (!mounted) return;
+    if (!success) {
+      final AppLocalizations l10n = AppLocalizations.of(context)!;
+      setState(() => _pendingDeleteIds.remove(id));
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text(l10n.couldNotDeleteScan),
+          backgroundColor: kDangerRed,
+          behavior: SnackBarBehavior.floating,
+        ),
+      );
+    }
   }
 
   Future<void> _exportPDF(List<ScanRecord> records) async {
