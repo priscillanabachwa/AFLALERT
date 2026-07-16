@@ -102,6 +102,28 @@ class AppLocalizationsEn extends AppLocalizations {
   String get cancel => 'Cancel';
 
   @override
+  String get deleteScan => 'Delete Scan';
+
+  @override
+  String get deleteScanConfirm =>
+      'Are you sure you want to delete this scan record? This cannot be undone.';
+
+  @override
+  String get delete => 'Delete';
+
+  @override
+  String get scanDeleted => 'Scan deleted.';
+
+  @override
+  String get couldNotDeleteScan => 'Could not delete scan. Please try again.';
+
+  @override
+  String get undo => 'Undo';
+
+  @override
+  String get scanDetails => 'Scan Details';
+
+  @override
   String get totalScans => 'Total Scans';
 
   @override

@@ -37,7 +37,7 @@ class _HomeScreenState extends State<HomeScreen> {
 
   // Weather can change quickly, so keep it fresh instead of only fetching
   // once when the screen first mounts.
-  static const Duration _refreshInterval = Duration(minutes: 5);
+  static const Duration _refreshInterval = Duration(minutes: 2);
 
   LocationResult? _location;
   WeatherInfo? _weather;
