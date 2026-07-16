@@ -1,3 +1,4 @@
+import 'dart:async';
 import 'dart:io';
 
 import 'package:cloud_firestore/cloud_firestore.dart';
@@ -11,6 +12,7 @@ import '../services/pdf_service.dart';
 import '../services/report_storage_service.dart';
 import '../widgets/custom_bottom_nav.dart';
 import '../widgets/pdf_export_dialog.dart';
+import 'result_screen.dart';
 
 // ─────────────────────────────────────────
 //  DESIGN TOKENS — aliased to the shared AppColors palette
@@ -144,6 +146,12 @@ class _HistoryScreenState extends State<HistoryScreen> {
   String _query = '';
   String? _selectedLocation;
 
+  // Scans hidden immediately on delete, with the actual Firestore delete
+  // deferred until the undo window (below) expires without being cancelled.
+  static const Duration _undoWindow = Duration(seconds: 4);
+  final Set<String> _pendingDeleteIds = {};
+  final Map<String, Timer> _pendingDeleteTimers = {};
+
   List<ScanRecord> _filterRecords(List<ScanRecord> source) {
     return source.where((s) {
       final matchesQuery =
@@ -168,6 +176,9 @@ class _HistoryScreenState extends State<HistoryScreen> {
   @override
   void dispose() {
     _searchCtrl.dispose();
+    for (final timer in _pendingDeleteTimers.values) {
+      timer.cancel();
+    }
     super.dispose();
   }
 
@@ -191,6 +202,7 @@ class _HistoryScreenState extends State<HistoryScreen> {
           final allScans = (snapshot.data?.docs ?? [])
               .map(_scanRecordFromDoc)
               .whereType<ScanRecord>()
+              .where((s) => !_pendingDeleteIds.contains(s.id))
               .toList();
           final results = _filterRecords(allScans);
 
@@ -357,8 +369,29 @@ class _HistoryScreenState extends State<HistoryScreen> {
       padding: const EdgeInsets.fromLTRB(16, 8, 16, 0),
       itemCount: records.length,
       separatorBuilder: (context, index) => const SizedBox(height: 10),
-      itemBuilder: (context, i) =>
-          _ScanCard(record: records[i], onTap: () => _openDetail(records[i])),
+      itemBuilder: (context, i) {
+        final record = records[i];
+        return Dismissible(
+          key: ValueKey(record.id),
+          direction: DismissDirection.endToStart,
+          background: Container(
+            alignment: Alignment.centerRight,
+            padding: const EdgeInsets.only(right: 20),
+            decoration: BoxDecoration(
+              color: kDangerRed,
+              borderRadius: BorderRadius.circular(14),
+            ),
+            child: const Icon(Icons.delete_outline, color: Colors.white),
+          ),
+          confirmDismiss: (_) => _confirmDeleteScan(record),
+          onDismissed: (_) => _scheduleDelete(record),
+          child: _ScanCard(
+            record: record,
+            onTap: () => _openDetail(record),
+            onDelete: () => _confirmAndDeleteScan(record),
+          ),
+        );
+      },
     );
   }
 
@@ -499,11 +532,33 @@ class _HistoryScreenState extends State<HistoryScreen> {
   }
 
   // ── ACTIONS ──────────────────────────────
+  // Chemical (Tier 2) rows show their own bottom sheet — ResultsScreen only
+  // understands Tier 1's isSafe/confidence shape, so a ppb reading has
+  // nowhere to render if routed through it. Tier 1 rows reuse the shared
+  // ResultsScreen in fromHistory mode instead of duplicating that UI here.
   void _openDetail(ScanRecord record) {
+    if (record.isChemical) {
+      _openChemicalDetail(record);
+      return;
+    }
+
+    Navigator.pushNamed(
+      context,
+      '/results',
+      arguments: ResultsScreenArgs(
+        isSafe: record.status == ScanStatus.healthy,
+        confidence: record.matchPercent / 100,
+        analysisLabel: record.title,
+        imagePath: record.imagePath.isNotEmpty ? record.imagePath : null,
+        fromHistory: true,
+      ),
+    );
+  }
+
+  void _openChemicalDetail(ScanRecord record) {
     final AppLocalizations l10n = AppLocalizations.of(context)!;
     showModalBottomSheet(
       context: context,
-      isScrollControlled: true,
       shape: const RoundedRectangleBorder(
         borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
       ),
@@ -556,9 +611,7 @@ class _HistoryScreenState extends State<HistoryScreen> {
               ),
               const SizedBox(height: 12),
               Text(
-                record.isChemical
-                    ? l10n.chemicalLevelValueLabel(record.ppbValue.toStringAsFixed(1))
-                    : l10n.matchConfidenceLabel(record.matchPercent),
+                l10n.chemicalLevelValueLabel(record.ppbValue.toStringAsFixed(1)),
                 style: const TextStyle(fontSize: 14, color: Color(0xFF263238)),
               ),
               const SizedBox(height: 20),
@@ -582,6 +635,91 @@ class _HistoryScreenState extends State<HistoryScreen> {
         );
       },
     );
+  }
+
+  Future<bool> _confirmDeleteScan(ScanRecord record) async {
+    final AppLocalizations l10n = AppLocalizations.of(context)!;
+    final bool? confirmed = await showDialog<bool>(
+      context: context,
+      builder: (dialogContext) => AlertDialog(
+        title: Text(l10n.deleteScan),
+        content: Text(l10n.deleteScanConfirm),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(dialogContext, false),
+            child: Text(l10n.cancel),
+          ),
+          TextButton(
+            onPressed: () => Navigator.pop(dialogContext, true),
+            child: Text(l10n.delete, style: const TextStyle(color: kDangerRed)),
+          ),
+        ],
+      ),
+    );
+    return confirmed ?? false;
+  }
+
+  Future<void> _confirmAndDeleteScan(ScanRecord record) async {
+    final bool confirmed = await _confirmDeleteScan(record);
+    if (!confirmed || !mounted) return;
+    _scheduleDelete(record);
+  }
+
+  // Hides the scan immediately and shows an Undo snackbar; the Firestore
+  // delete only actually happens once the undo window elapses uncancelled.
+  void _scheduleDelete(ScanRecord record) {
+    final AppLocalizations l10n = AppLocalizations.of(context)!;
+    setState(() => _pendingDeleteIds.add(record.id));
+
+    ScaffoldMessenger.of(context).hideCurrentSnackBar();
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(
+        content: Text(l10n.scanDeleted),
+        backgroundColor: kPrimaryGreen,
+        behavior: SnackBarBehavior.floating,
+        duration: _undoWindow,
+        action: SnackBarAction(
+          label: l10n.undo,
+          textColor: Colors.white,
+          onPressed: () => _undoDelete(record.id),
+        ),
+      ),
+    );
+
+    _pendingDeleteTimers[record.id]?.cancel();
+    _pendingDeleteTimers[record.id] = Timer(_undoWindow, () {
+      _pendingDeleteTimers.remove(record.id);
+      // SnackBar's built-in auto-dismiss timer is disabled by Flutter
+      // whenever accessible navigation (e.g. a screen reader) is active, so
+      // the undo window's own timer is what actually closes it, in step
+      // with the delete becoming irreversible.
+      if (mounted) {
+        ScaffoldMessenger.of(context).hideCurrentSnackBar();
+      }
+      _commitDelete(record.id);
+    });
+  }
+
+  void _undoDelete(String id) {
+    _pendingDeleteTimers.remove(id)?.cancel();
+    if (!mounted) return;
+    setState(() => _pendingDeleteIds.remove(id));
+  }
+
+  Future<void> _commitDelete(String id) async {
+    final bool success = await _firestoreService.deleteScanRecord(id);
+    if (!mounted) return;
+    if (!success) {
+      final AppLocalizations l10n = AppLocalizations.of(context)!;
+      setState(() => _pendingDeleteIds.remove(id));
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text(l10n.couldNotDeleteScan),
+          backgroundColor: kDangerRed,
+          behavior: SnackBarBehavior.floating,
+        ),
+      );
+    }
   }
 
   Future<void> _exportPDF(List<ScanRecord> records) async {
@@ -642,8 +780,9 @@ class _HistoryScreenState extends State<HistoryScreen> {
 class _ScanCard extends StatelessWidget {
   final ScanRecord record;
   final VoidCallback onTap;
+  final VoidCallback onDelete;
 
-  const _ScanCard({required this.record, required this.onTap});
+  const _ScanCard({required this.record, required this.onTap, required this.onDelete});
 
   @override
   Widget build(BuildContext context) {
@@ -822,6 +961,16 @@ class _ScanCard extends StatelessWidget {
                           ),
                         ),
                         const Spacer(),
+                        IconButton(
+                          onPressed: onDelete,
+                          icon: const Icon(Icons.delete_outline),
+                          iconSize: 18,
+                          color: kDangerRed.withAlpha((0.7 * 255).round()),
+                          padding: EdgeInsets.zero,
+                          constraints: const BoxConstraints(minWidth: 32, minHeight: 32),
+                          splashRadius: 18,
+                          tooltip: AppLocalizations.of(context)!.delete,
+                        ),
                         Icon(
                           Icons.chevron_right,
                           color: kSubtitle.withAlpha((0.5 * 255).round()),

@@ -116,6 +116,30 @@ class FirestoreService {
     }
   }
 
+  /// Deletes a single scan record from the active logged-in user's scan history.
+  Future<bool> deleteScanRecord(String scanId) async {
+    try {
+      final User? currentUser = _auth.currentUser;
+      if (currentUser == null) {
+        debugPrint('FirestoreService: Cannot delete record, no authenticated user found.');
+        return false;
+      }
+
+      await _db
+          .collection('users')
+          .doc(currentUser.uid)
+          .collection('scans')
+          .doc(scanId)
+          .delete();
+
+      debugPrint('FirestoreService: Scan $scanId deleted.');
+      return true;
+    } catch (e) {
+      debugPrint('FirestoreService Error deleting scan: $e');
+      return false;
+    }
+  }
+
   /// Updates the active logged-in user's editable profile fields.
   Future<bool> updateUserProfile({
     required String fullName,
