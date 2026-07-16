@@ -12,6 +12,7 @@ import '../services/firebase_storage.dart';
 import '../services/firestore_service.dart';
 import '../services/local_notification_service.dart';
 import '../services/notification_center.dart';
+import '../services/remembered_accounts_service.dart';
 import '../utils/user_initials.dart';
 import 'settings_screen.dart';
 
@@ -379,6 +380,7 @@ class _EditProfileSheetState extends State<_EditProfileSheet> {
   late TextEditingController _phoneCtrl;
   late TextEditingController _locationCtrl;
   File? _pickedImage;
+  bool _removePhoto = false;
   bool _isSaving = false;
 
   @override
@@ -397,7 +399,11 @@ class _EditProfileSheetState extends State<_EditProfileSheet> {
     super.dispose();
   }
 
+  bool get _hasPhotoToRemove =>
+      _pickedImage != null || (widget.photoUrl.isNotEmpty && !_removePhoto);
+
   Future<void> _pickImage() async {
+    final bool hasPhoto = _hasPhotoToRemove;
     final picked = await showModalBottomSheet<XFile?>(
       context: context,
       shape: const RoundedRectangleBorder(
@@ -417,14 +423,33 @@ class _EditProfileSheetState extends State<_EditProfileSheet> {
               title: Text(AppLocalizations.of(context)!.chooseFromGallery),
               onTap: () => _pickFrom(sheetContext, ImageSource.gallery),
             ),
+            if (hasPhoto)
+              ListTile(
+                leading: const Icon(Icons.delete_outline, color: kRed),
+                title: const Text('Remove Photo', style: TextStyle(color: kRed)),
+                onTap: () {
+                  _clearPhoto();
+                  Navigator.pop(sheetContext);
+                },
+              ),
           ],
         ),
       ),
     );
 
     if (picked != null) {
-      setState(() => _pickedImage = File(picked.path));
+      setState(() {
+        _pickedImage = File(picked.path);
+        _removePhoto = false;
+      });
     }
+  }
+
+  void _clearPhoto() {
+    setState(() {
+      _pickedImage = null;
+      _removePhoto = true;
+    });
   }
 
   // Picking can throw (e.g. camera/gallery permission denied) — without a
@@ -489,15 +514,37 @@ class _EditProfileSheetState extends State<_EditProfileSheet> {
       }
     }
 
+    if (_removePhoto) {
+      final user = FirebaseAuth.instance.currentUser;
+      if (user != null) await _storageService.deleteProfileImage(user.uid);
+    }
+
     final success = await _firestoreService.updateUserProfile(
       fullName: name,
       phone: _phoneCtrl.text.trim(),
       district: _locationCtrl.text.trim(),
+      removePhoto: _removePhoto,
       photoUrl: photoUrl,
     );
     if (!mounted) return;
 
     if (success) {
+      NotificationCenter.instance.add(
+        AppNotification(
+          title: 'Profile Updated',
+          description: 'Your account details were updated successfully.',
+          icon: Icons.person_add_alt_1,
+          iconColor: kGreen,
+          iconBackground: kGreenLight,
+          category: NotificationCategory.update,
+          unread: true,
+        ),
+      );
+      LocalNotificationService.instance.show(
+        title: 'Profile Updated',
+        body: 'Your account details were updated successfully.',
+      );
+
       Navigator.pop(context);
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
@@ -564,9 +611,10 @@ class _EditProfileSheetState extends State<_EditProfileSheet> {
                     backgroundColor: kGreenLight,
                     backgroundImage: _pickedImage != null
                         ? FileImage(_pickedImage!)
-                        : (widget.photoUrl.isNotEmpty ? NetworkImage(widget.photoUrl) : null)
-                            as ImageProvider?,
-                    child: _pickedImage == null && widget.photoUrl.isEmpty
+                        : (!_removePhoto && widget.photoUrl.isNotEmpty)
+                            ? NetworkImage(widget.photoUrl)
+                            : null as ImageProvider?,
+                    child: _pickedImage == null && (_removePhoto || widget.photoUrl.isEmpty)
                         ? Text(
                             getInitials(widget.name),
                             style: const TextStyle(
@@ -705,6 +753,15 @@ class _ChangePasswordSheetState extends State<_ChangePasswordSheet> {
       );
       await user.reauthenticateWithCredential(credential);
       await user.updatePassword(_newCtrl.text);
+
+      // Keep "Remember me" in sync — otherwise the login screen would keep
+      // auto-filling the now-stale old password and every future login
+      // attempt would silently fail until the user noticed and retyped it.
+      final Map<String, String> rememberedAccounts =
+          await RememberedAccountsService.instance.getAccounts();
+      if (rememberedAccounts.containsKey(email)) {
+        await RememberedAccountsService.instance.saveAccount(email, _newCtrl.text);
+      }
 
       NotificationCenter.instance.add(
         AppNotification(

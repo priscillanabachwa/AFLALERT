@@ -42,6 +42,12 @@ class _HomeScreenState extends State<HomeScreen> {
   String _userType = '';
   StreamSubscription<DocumentSnapshot<Map<String, dynamic>>>? _profileSub;
 
+  // Hoisted so every StreamBuilder below shares one live subscription
+  // instead of each creating (and re-creating on every rebuild) its own
+  // separate Firestore listener on the same document.
+  final Stream<DocumentSnapshot<Map<String, dynamic>>> _profileStream =
+      FirestoreService().getUserProfile();
+
   // Edge-triggered so the alert fires once when it becomes hot, not on
   // every 5-minute refresh while it stays hot.
   bool _heatAlertNotified = false;
@@ -54,7 +60,7 @@ class _HomeScreenState extends State<HomeScreen> {
       _refreshInterval,
       (_) => _loadWeather(),
     );
-    _profileSub = FirestoreService().getUserProfile().listen((doc) {
+    _profileSub = _profileStream.listen((doc) {
       final String userType = doc.data()?['userType'] as String? ?? '';
       if (userType == _userType) return;
       setState(() => _userType = userType);
@@ -145,7 +151,7 @@ class _HomeScreenState extends State<HomeScreen> {
                 _buildHeader(context),
                 const SizedBox(height: 24),
                 StreamBuilder<DocumentSnapshot<Map<String, dynamic>>>(
-                  stream: FirestoreService().getUserProfile(),
+                  stream: _profileStream,
                   builder: (context, snapshot) {
                     final Map<String, dynamic>? profile = snapshot.data?.data();
                     final String? fullName = profile?['fullName'] as String?;
@@ -179,7 +185,7 @@ class _HomeScreenState extends State<HomeScreen> {
                 ),
                 const SizedBox(height: 16),
                 StreamBuilder<DocumentSnapshot<Map<String, dynamic>>>(
-                  stream: FirestoreService().getUserProfile(),
+                  stream: _profileStream,
                   builder: (context, snapshot) {
                     final String userType =
                         snapshot.data?.data()?['userType'] as String? ?? '';
@@ -268,7 +274,7 @@ class _HomeScreenState extends State<HomeScreen> {
           ),
         ),
         StreamBuilder<DocumentSnapshot<Map<String, dynamic>>>(
-          stream: FirestoreService().getUserProfile(),
+          stream: _profileStream,
           builder: (context, snapshot) {
             final user = FirebaseAuth.instance.currentUser;
             final profile = snapshot.data?.data();
