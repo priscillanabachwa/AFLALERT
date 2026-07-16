@@ -284,6 +284,36 @@ abstract class AppLocalizations {
   /// **'Cancel'**
   String get cancel;
 
+  /// No description provided for @deleteScan.
+  ///
+  /// In en, this message translates to:
+  /// **'Delete Scan'**
+  String get deleteScan;
+
+  /// No description provided for @deleteScanConfirm.
+  ///
+  /// In en, this message translates to:
+  /// **'Are you sure you want to delete this scan record? This cannot be undone.'**
+  String get deleteScanConfirm;
+
+  /// No description provided for @delete.
+  ///
+  /// In en, this message translates to:
+  /// **'Delete'**
+  String get delete;
+
+  /// No description provided for @scanDeleted.
+  ///
+  /// In en, this message translates to:
+  /// **'Scan deleted.'**
+  String get scanDeleted;
+
+  /// No description provided for @couldNotDeleteScan.
+  ///
+  /// In en, this message translates to:
+  /// **'Could not delete scan. Please try again.'**
+  String get couldNotDeleteScan;
+
   /// No description provided for @totalScans.
   ///
   /// In en, this message translates to:

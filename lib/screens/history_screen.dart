@@ -326,8 +326,25 @@ class _HistoryScreenState extends State<HistoryScreen> {
       padding: const EdgeInsets.fromLTRB(16, 8, 16, 0),
       itemCount: records.length,
       separatorBuilder: (context, index) => const SizedBox(height: 10),
-      itemBuilder: (context, i) =>
-          _ScanCard(record: records[i], onTap: () => _openDetail(records[i])),
+      itemBuilder: (context, i) {
+        final record = records[i];
+        return Dismissible(
+          key: ValueKey(record.id),
+          direction: DismissDirection.endToStart,
+          background: Container(
+            alignment: Alignment.centerRight,
+            padding: const EdgeInsets.only(right: 20),
+            decoration: BoxDecoration(
+              color: kDangerRed,
+              borderRadius: BorderRadius.circular(14),
+            ),
+            child: const Icon(Icons.delete_outline, color: Colors.white),
+          ),
+          confirmDismiss: (_) => _confirmDeleteScan(record),
+          onDismissed: (_) => _deleteScan(record),
+          child: _ScanCard(record: record, onTap: () => _openDetail(record)),
+        );
+      },
     );
   }
 
@@ -477,6 +494,42 @@ class _HistoryScreenState extends State<HistoryScreen> {
         confidence: record.matchPercent / 100,
         analysisLabel: record.title,
         imagePath: record.imagePath.isNotEmpty ? record.imagePath : null,
+      ),
+    );
+  }
+
+  Future<bool> _confirmDeleteScan(ScanRecord record) async {
+    final AppLocalizations l10n = AppLocalizations.of(context)!;
+    final bool? confirmed = await showDialog<bool>(
+      context: context,
+      builder: (dialogContext) => AlertDialog(
+        title: Text(l10n.deleteScan),
+        content: Text(l10n.deleteScanConfirm),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(dialogContext, false),
+            child: Text(l10n.cancel),
+          ),
+          TextButton(
+            onPressed: () => Navigator.pop(dialogContext, true),
+            child: Text(l10n.delete, style: const TextStyle(color: kDangerRed)),
+          ),
+        ],
+      ),
+    );
+    return confirmed ?? false;
+  }
+
+  Future<void> _deleteScan(ScanRecord record) async {
+    final AppLocalizations l10n = AppLocalizations.of(context)!;
+    final bool success = await _firestoreService.deleteScanRecord(record.id);
+    if (!mounted) return;
+
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(
+        content: Text(success ? l10n.scanDeleted : l10n.couldNotDeleteScan),
+        backgroundColor: success ? kPrimaryGreen : kDangerRed,
+        behavior: SnackBarBehavior.floating,
       ),
     );
   }

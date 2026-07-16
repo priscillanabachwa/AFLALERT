@@ -102,6 +102,23 @@ class AppLocalizationsLg extends AppLocalizations {
   String get cancel => 'okusazaamu';
 
   @override
+  String get deleteScan => 'Sazaamu Scan';
+
+  @override
+  String get deleteScanConfirm =>
+      'Oli mukakafu nti oyagala okusazaamu ekiwandiiko kino? Tekisobola kuddizibwa.';
+
+  @override
+  String get delete => 'Sazaamu';
+
+  @override
+  String get scanDeleted => 'Scan esaziddwamu.';
+
+  @override
+  String get couldNotDeleteScan =>
+      'Tetusobodde kusazaamu scan. Ddamu ogezeeko.';
+
+  @override
   String get totalScans => 'Scan Zonna';
 
   @override
