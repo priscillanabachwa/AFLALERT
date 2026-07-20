@@ -102,6 +102,28 @@ class AppLocalizationsEn extends AppLocalizations {
   String get cancel => 'Cancel';
 
   @override
+  String get deleteScan => 'Delete Scan';
+
+  @override
+  String get deleteScanConfirm =>
+      'Are you sure you want to delete this scan record? This cannot be undone.';
+
+  @override
+  String get delete => 'Delete';
+
+  @override
+  String get scanDeleted => 'Scan deleted.';
+
+  @override
+  String get couldNotDeleteScan => 'Could not delete scan. Please try again.';
+
+  @override
+  String get undo => 'Undo';
+
+  @override
+  String get scanDetails => 'Scan Details';
+
+  @override
   String get totalScans => 'Total Scans';
 
   @override
@@ -712,28 +734,63 @@ class AppLocalizationsEn extends AppLocalizations {
       'Please log out and log back in, then try again.';
 
   @override
-  String get passwordResetLinkSent =>
-      'Password reset link sent! Check your email.';
-
-  @override
   String get errorOccurredTryAgain => 'An error occurred. Please try again.';
-
-  @override
-  String get noAccountFoundEmail => 'No account found with this email address.';
 
   @override
   String get resetPassword => 'Reset Password';
 
   @override
   String get resetPasswordInstructions =>
-      'Enter your registered email address below. We will send you a secure link to reset your password and keep your tracking account secure.';
+      'Enter your registered email address below. We will send you a 6-digit code to reset your password and keep your account secure.';
 
   @override
   String get pleaseEnterValidEmailAddress =>
       'Please enter a valid email address';
 
   @override
-  String get sendResetLink => 'Send Reset Link';
+  String get sendResetLink => 'Send Code';
+
+  @override
+  String get otpScreenTitle => 'Enter Code';
+
+  @override
+  String otpInstructions(String email) {
+    return 'Enter the 6-digit code we sent to $email.';
+  }
+
+  @override
+  String get otpLabel => 'Verification Code';
+
+  @override
+  String get pleaseEnterOtp => 'Please enter the code';
+
+  @override
+  String get otpInvalidLength => 'Enter the 6-digit code';
+
+  @override
+  String get verifyAndReset => 'Verify & Reset Password';
+
+  @override
+  String get resendCode => 'Resend Code';
+
+  @override
+  String resendCodeIn(int seconds) {
+    return 'Resend code in ${seconds}s';
+  }
+
+  @override
+  String get pleaseWaitBeforeResend =>
+      'Please wait before requesting another code.';
+
+  @override
+  String get codeExpired => 'This code has expired. Please request a new one.';
+
+  @override
+  String get tooManyAttempts =>
+      'Too many incorrect attempts. Please request a new code.';
+
+  @override
+  String get incorrectCode => 'Incorrect code. Please try again.';
 
   @override
   String get downloadedReports => 'Downloaded Reports';

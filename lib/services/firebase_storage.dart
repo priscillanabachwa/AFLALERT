@@ -89,4 +89,18 @@ class StorageService {
       return null;
     }
   }
+
+  /// Deletes a user's stored profile picture, if one exists. Best-effort:
+  /// a missing file (nothing was ever uploaded) is not treated as an error.
+  Future<void> deleteProfileImage(String uid) async {
+    try {
+      await _storage.ref().child('profile_images/$uid.jpg').delete();
+    } on FirebaseException catch (firebaseError) {
+      if (firebaseError.code != 'object-not-found') {
+        debugPrint('Firebase Storage error deleting profile image: ${firebaseError.code}');
+      }
+    } catch (genericError) {
+      debugPrint('An unexpected error occurred deleting profile image: $genericError');
+    }
+  }
 }

@@ -29,9 +29,15 @@ class HomeScreen extends StatefulWidget {
 }
 
 class _HomeScreenState extends State<HomeScreen> {
+  // Applied to text that sits directly on the background photo (rather than
+  // inside an opaque card) so it stays legible regardless of image content.
+  static const List<Shadow> _onImageShadow = [
+    Shadow(color: Colors.black87, blurRadius: 8, offset: Offset(0, 1)),
+  ];
+
   // Weather can change quickly, so keep it fresh instead of only fetching
   // once when the screen first mounts.
-  static const Duration _refreshInterval = Duration(minutes: 5);
+  static const Duration _refreshInterval = Duration(minutes: 2);
 
   LocationResult? _location;
   WeatherInfo? _weather;
@@ -41,6 +47,12 @@ class _HomeScreenState extends State<HomeScreen> {
 
   String _userType = '';
   StreamSubscription<DocumentSnapshot<Map<String, dynamic>>>? _profileSub;
+
+  // Hoisted so every StreamBuilder below shares one live subscription
+  // instead of each creating (and re-creating on every rebuild) its own
+  // separate Firestore listener on the same document.
+  final Stream<DocumentSnapshot<Map<String, dynamic>>> _profileStream =
+      FirestoreService().getUserProfile();
 
   // Edge-triggered so the alert fires once when it becomes hot, not on
   // every 5-minute refresh while it stays hot.
@@ -54,7 +66,7 @@ class _HomeScreenState extends State<HomeScreen> {
       _refreshInterval,
       (_) => _loadWeather(),
     );
-    _profileSub = FirestoreService().getUserProfile().listen((doc) {
+    _profileSub = _profileStream.listen((doc) {
       final String userType = doc.data()?['userType'] as String? ?? '';
       if (userType == _userType) return;
       setState(() => _userType = userType);
@@ -131,102 +143,138 @@ class _HomeScreenState extends State<HomeScreen> {
     final AppLocalizations l10n = AppLocalizations.of(context)!;
     return Scaffold(
       backgroundColor: AppColors.t95,
-      body: SafeArea(
-        child: RefreshIndicator(
-          color: AppColors.primary,
-          onRefresh: _loadWeather,
-          child: SingleChildScrollView(
-            physics: const AlwaysScrollableScrollPhysics(),
-            padding: const EdgeInsets.symmetric(horizontal: 20),
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                const SizedBox(height: 12),
-                _buildHeader(context),
-                const SizedBox(height: 24),
-                StreamBuilder<DocumentSnapshot<Map<String, dynamic>>>(
-                  stream: FirestoreService().getUserProfile(),
-                  builder: (context, snapshot) {
-                    final Map<String, dynamic>? profile = snapshot.data?.data();
-                    final String? fullName = profile?['fullName'] as String?;
-                    final String firstName =
-                        (fullName != null && fullName.trim().isNotEmpty)
-                        ? fullName.trim().split(' ').first
-                        : l10n.defaultGreetingName;
-                    final String userType =
-                        profile?['userType'] as String? ?? '';
-                    return Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        _buildGreeting(firstName),
-                        const SizedBox(height: 20),
-                        _buildInfoCards(
-                          tipForConditions(userType, _weather?.temperatureC),
-                          isHeatAlert(_weather?.temperatureC),
-                        ),
-                      ],
-                    );
-                  },
-                ),
-                const SizedBox(height: 28),
-                Text(
-                  l10n.guidelines,
-                  style: const TextStyle(
-                    fontSize: 18,
-                    fontWeight: FontWeight.bold,
-                    color: AppColors.primary,
-                  ),
-                ),
-                const SizedBox(height: 16),
-                StreamBuilder<DocumentSnapshot<Map<String, dynamic>>>(
-                  stream: FirestoreService().getUserProfile(),
-                  builder: (context, snapshot) {
-                    final String userType =
-                        snapshot.data?.data()?['userType'] as String? ?? '';
-                    return _buildSeasonalGuidelineCard(userType);
-                  },
-                ),
-                const SizedBox(height: 32),
-                _buildScanButton(context),
-                const SizedBox(height: 12),
-                Center(
-                  child: Text(
-                    l10n.tapToScan,
-                    style: const TextStyle(fontSize: 14, color: Colors.grey),
-                  ),
-                ),
-                const SizedBox(height: 28),
-                StreamBuilder<QuerySnapshot>(
-                  stream: FirestoreService().getUserScanHistory(),
-                  builder: (context, snapshot) {
-                    final docs = snapshot.data?.docs ?? [];
-                    final recentDocs = docs.take(2).toList();
-                    return Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        _buildStatsRow(docs),
-                        const SizedBox(height: 28),
-                        _buildRecentScansHeader(),
-                        const SizedBox(height: 16),
-                        if (recentDocs.isEmpty)
-                          _buildNoScansYet()
-                        else
-                          for (int i = 0; i < recentDocs.length; i++)
-                            Padding(
-                              padding: EdgeInsets.only(
-                                bottom: i == recentDocs.length - 1 ? 0 : 12,
-                              ),
-                              child: _buildScanTileFromDoc(recentDocs[i]),
-                            ),
-                      ],
-                    );
-                  },
-                ),
-                const SizedBox(height: 88),
-              ],
+      extendBody: true,
+      body: Stack(
+        children: [
+          Positioned.fill(
+            child: Image.asset(
+              'lib/assets/images/homescreen.jpeg',
+              fit: BoxFit.cover,
             ),
           ),
-        ),
+          Positioned.fill(
+            child: DecoratedBox(
+              decoration: BoxDecoration(
+                gradient: LinearGradient(
+                  begin: Alignment.topCenter,
+                  end: Alignment.bottomCenter,
+                  colors: [
+                    Colors.black.withValues(alpha: 0.55),
+                    Colors.black.withValues(alpha: 0.35),
+                    Colors.black.withValues(alpha: 0.45),
+                  ],
+                ),
+              ),
+            ),
+          ),
+          SafeArea(
+            child: RefreshIndicator(
+              color: AppColors.primary,
+              onRefresh: _loadWeather,
+              child: SingleChildScrollView(
+                physics: const AlwaysScrollableScrollPhysics(),
+                padding: const EdgeInsets.symmetric(horizontal: 20),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    const SizedBox(height: 12),
+                    _buildHeader(context),
+                    const SizedBox(height: 24),
+                    StreamBuilder<DocumentSnapshot<Map<String, dynamic>>>(
+                      stream: _profileStream,
+                      builder: (context, snapshot) {
+                        final Map<String, dynamic>? profile = snapshot.data
+                            ?.data();
+                        final String? fullName =
+                            profile?['fullName'] as String?;
+                        final String firstName =
+                            (fullName != null && fullName.trim().isNotEmpty)
+                            ? fullName.trim().split(' ').first
+                            : l10n.defaultGreetingName;
+                        final String userType =
+                            profile?['userType'] as String? ?? '';
+                        return Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            _buildGreeting(firstName),
+                            const SizedBox(height: 20),
+                            _buildInfoCards(
+                              tipForConditions(
+                                userType,
+                                _weather?.temperatureC,
+                              ),
+                              isHeatAlert(_weather?.temperatureC),
+                            ),
+                          ],
+                        );
+                      },
+                    ),
+                    const SizedBox(height: 28),
+                    Text(
+                      l10n.guidelines,
+                      style: const TextStyle(
+                        fontSize: 18,
+                        fontWeight: FontWeight.bold,
+                        color: Colors.white,
+                        shadows: _onImageShadow,
+                      ),
+                    ),
+                    const SizedBox(height: 16),
+                    StreamBuilder<DocumentSnapshot<Map<String, dynamic>>>(
+                      stream: _profileStream,
+                      builder: (context, snapshot) {
+                        final String userType =
+                            snapshot.data?.data()?['userType'] as String? ?? '';
+                        return _buildSeasonalGuidelineCard(userType);
+                      },
+                    ),
+                    const SizedBox(height: 32),
+                    _buildScanButton(context),
+                    const SizedBox(height: 12),
+                    Center(
+                      child: Text(
+                        l10n.tapToScan,
+                        style: const TextStyle(
+                          fontSize: 14,
+                          color: Colors.white70,
+                          shadows: _onImageShadow,
+                        ),
+                      ),
+                    ),
+                    const SizedBox(height: 28),
+                    StreamBuilder<QuerySnapshot>(
+                      stream: FirestoreService().getUserScanHistory(),
+                      builder: (context, snapshot) {
+                        final docs = snapshot.data?.docs ?? [];
+                        final recentDocs = docs.take(2).toList();
+                        return Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            _buildStatsRow(docs),
+                            const SizedBox(height: 28),
+                            _buildRecentScansHeader(),
+                            const SizedBox(height: 16),
+                            if (recentDocs.isEmpty)
+                              _buildNoScansYet()
+                            else
+                              for (int i = 0; i < recentDocs.length; i++)
+                                Padding(
+                                  padding: EdgeInsets.only(
+                                    bottom: i == recentDocs.length - 1 ? 0 : 12,
+                                  ),
+                                  child: _buildScanTileFromDoc(recentDocs[i]),
+                                ),
+                          ],
+                        );
+                      },
+                    ),
+                    const SizedBox(height: 88),
+                  ],
+                ),
+              ),
+            ),
+          ),
+        ],
       ),
       bottomNavigationBar: const CustomBottomNav(currentIndex: 0),
     );
@@ -263,12 +311,13 @@ class _HomeScreenState extends State<HomeScreen> {
             style: TextStyle(
               fontSize: 24,
               fontWeight: FontWeight.bold,
-              color: AppColors.primary,
+              color: Colors.white,
+              shadows: _onImageShadow,
             ),
           ),
         ),
         StreamBuilder<DocumentSnapshot<Map<String, dynamic>>>(
-          stream: FirestoreService().getUserProfile(),
+          stream: _profileStream,
           builder: (context, snapshot) {
             final user = FirebaseAuth.instance.currentUser;
             final profile = snapshot.data?.data();
@@ -334,7 +383,8 @@ class _HomeScreenState extends State<HomeScreen> {
           style: const TextStyle(
             fontSize: 28,
             fontWeight: FontWeight.w400,
-            color: AppColors.primary,
+            color: Colors.white,
+            shadows: _onImageShadow,
           ),
         ),
         Text(
@@ -342,13 +392,18 @@ class _HomeScreenState extends State<HomeScreen> {
           style: const TextStyle(
             fontSize: 32,
             fontWeight: FontWeight.bold,
-            color: AppColors.primary,
+            color: Colors.white,
+            shadows: _onImageShadow,
           ),
         ),
         const SizedBox(height: 6),
         Text(
           l10n.homeSubGreeting,
-          style: const TextStyle(fontSize: 14, color: Colors.grey),
+          style: const TextStyle(
+            fontSize: 14,
+            color: Colors.white70,
+            shadows: _onImageShadow,
+          ),
         ),
       ],
     );
@@ -708,7 +763,11 @@ class _HomeScreenState extends State<HomeScreen> {
       ),
       child: Row(
         children: [
-          _buildStatItem('$healthy', l10n.healthyCaps, AppColors.primaryContainer),
+          _buildStatItem(
+            '$healthy',
+            l10n.healthyCaps,
+            AppColors.primaryContainer,
+          ),
           _buildDivider(),
           _buildStatItem('$risky', l10n.riskyCaps, AppColors.error),
           _buildDivider(),
@@ -720,8 +779,20 @@ class _HomeScreenState extends State<HomeScreen> {
 
   Widget _buildNoScansYet() {
     return Container(
+      width: double.infinity,
       padding: const EdgeInsets.symmetric(vertical: 28),
       alignment: Alignment.center,
+      decoration: BoxDecoration(
+        color: Colors.white,
+        borderRadius: BorderRadius.circular(16),
+        boxShadow: [
+          BoxShadow(
+            color: Colors.black.withValues(alpha: 0.05),
+            blurRadius: 10,
+            offset: const Offset(0, 4),
+          ),
+        ],
+      ),
       child: Text(
         AppLocalizations.of(context)!.noScansYetHome,
         textAlign: TextAlign.center,
@@ -806,7 +877,8 @@ class _HomeScreenState extends State<HomeScreen> {
           style: const TextStyle(
             fontSize: 18,
             fontWeight: FontWeight.bold,
-            color: AppColors.primary,
+            color: Colors.white,
+            shadows: _onImageShadow,
           ),
         ),
         TextButton(
@@ -820,6 +892,7 @@ class _HomeScreenState extends State<HomeScreen> {
               fontSize: 13,
               color: AppColors.secondary,
               fontWeight: FontWeight.w600,
+              shadows: _onImageShadow,
             ),
           ),
         ),

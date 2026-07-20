@@ -15,7 +15,7 @@ class AppLocalizationsLg extends AppLocalizations {
   String get login => 'Yingira';
 
   @override
-  String get register => 'Tandika Akaunti';
+  String get register => 'Wandiisa Akawunti';
 
   @override
   String get email => 'Endagiriro ya Email';
@@ -39,43 +39,43 @@ class AppLocalizationsLg extends AppLocalizations {
   String get notifications => 'Obubaka';
 
   @override
-  String get profile => 'Profayiro';
+  String get profile => 'Ebinkwatako';
 
   @override
   String get aiScan => 'SCAN ya AI';
 
   @override
-  String get tapToScan => 'Nyiga oscan ebirime';
+  String get tapToScan => 'Nyiga scan yebirime';
 
   @override
   String get recentScans => 'Scan Ezaakakoleddwa';
 
   @override
-  String get healthy => 'Bulungi';
+  String get healthy => 'Bilamu';
 
   @override
-  String get moldDetected => 'Obukuku Bulabiddwa';
+  String get moldDetected => 'Obukuku bulabiddwamu';
 
   @override
-  String get highRisk => 'AKABI AKASUKKIRIVU';
+  String get highRisk => 'Akabi kasukirivu';
 
   @override
-  String get veryLow => 'Wansi Nnyo';
+  String get veryLow => 'Akabi kakigero';
 
   @override
-  String get confidenceScore => 'Omuwendo gw\'Obwesigwa';
+  String get confidenceScore => 'Omuwendo ogwesigibwa';
 
   @override
-  String get riskLevel => 'Ekitundu ky\'Akabi';
+  String get riskLevel => 'Ekitundutundu ky\'Akabi';
 
   @override
-  String get recommendations => 'Ebiteesebwa';
+  String get recommendations => 'Okuteesa n\'okuwabula ';
 
   @override
-  String get saveReport => 'Tereka Report';
+  String get saveReport => 'Tereka alipoota';
 
   @override
-  String get scanAgain => 'Scan Nate';
+  String get scanAgain => 'Scan Neera';
 
   @override
   String get exportPdf => 'Fulumya PDF';
@@ -84,64 +84,87 @@ class AppLocalizationsLg extends AppLocalizations {
   String get language => 'Olulimi';
 
   @override
-  String get darkMode => 'Mmoodi Enzikiza';
+  String get darkMode => 'Mmoodi enzikivu';
 
   @override
   String get privacy => 'Eby\'ekyama';
 
   @override
-  String get helpSupport => 'Obuyambi n\'Obuwagizi';
+  String get helpSupport => 'Okuyambibwa';
 
   @override
-  String get logout => 'Fuluma';
+  String get logout => 'Okufuluma akawunti';
 
   @override
   String get logoutConfirm => 'Oli mukakafu nti oyagala okufuluma ku AflAlert?';
 
   @override
-  String get cancel => 'Sazaamu';
+  String get cancel => 'okusazaamu';
+
+  @override
+  String get deleteScan => 'Sazaamu Scan';
+
+  @override
+  String get deleteScanConfirm =>
+      'Oli mukakafu nti oyagala okusazaamu ekiwandiiko kino? Tekisobola kuddizibwa.';
+
+  @override
+  String get delete => 'Sazaamu';
+
+  @override
+  String get scanDeleted => 'Scan esaziddwamu.';
+
+  @override
+  String get couldNotDeleteScan =>
+      'Tetusobodde kusazaamu scan. Ddamu ogezeeko.';
+
+  @override
+  String get undo => 'Zzaawo';
+
+  @override
+  String get scanDetails => 'Ebikwata ku Scan';
 
   @override
   String get totalScans => 'Scan Zonna';
 
   @override
-  String get healthyScans => 'Scan Ezirungi';
+  String get healthyScans => 'Scan ezebilamu';
 
   @override
-  String get detectedScans => 'Scan Ezalabika';
+  String get detectedScans => 'Scan ezalabwamu obukuku';
 
   @override
   String get selectLanguage => 'Londa Olulimi';
 
   @override
-  String get searchCrop => 'Noonya ekirime, ekifo...';
+  String get searchCrop => 'Search by crop, location...';
 
   @override
-  String get analysingImage => 'Twekenneenya ekyokulabirako kyo...';
+  String get analysingImage => 'Twekenneenya ekifananyi kyekilime kyo...';
 
   @override
   String get placeMaize => 'Teeka kasooli mu nsengeka';
 
   @override
-  String get safeStorage => 'Kirungi okutereka era n\'okulya butereevu';
+  String get safeStorage => 'Kirungi okuterekebwa era n\'okuliibwa butereevu';
 
   @override
   String get shareReport => 'Gabana Report';
 
   @override
-  String get downloadPdf => 'Download PDF';
+  String get downloadPdf => 'wanula PDF';
 
   @override
   String get whatIsAflatoxin => 'Aflatoxin kye ki?';
 
   @override
-  String get healthRisks => 'Obulabe bw\'Obulamu obuva mu Kwetabika';
+  String get healthRisks => 'Obulabe ku byobulamu obuva ';
 
   @override
-  String get storageGuide => 'Engeri Entuufu ez\'Okutereka';
+  String get storageGuide => 'Engeri entuufu ez\'okutereka';
 
   @override
-  String get seekHelp => 'Ekiseera Ky\'Okunoonya Obuyambi bw\'Abasawo';
+  String get seekHelp => 'Okunoonya Obuyambi bw\'Abasawo';
 
   @override
   String get englishLanguageName => 'Lungereza';
@@ -153,7 +176,7 @@ class AppLocalizationsLg extends AppLocalizations {
   String get close => 'Ggalawo';
 
   @override
-  String get tryAgain => 'Gezaako Nate';
+  String get tryAgain => 'Gezaako nera';
 
   @override
   String get onboardTitle1 => 'Kuuma Amakungula Go';
@@ -718,28 +741,62 @@ class AppLocalizationsLg extends AppLocalizations {
   String get pleaseLogOutAndBackIn => 'Fuluma oyingire nate, ate ogezeeko.';
 
   @override
-  String get passwordResetLinkSent =>
-      'Link ey\'okuzza ekigambo ky\'ekyama etumiddwa! Kebera email yo.';
-
-  @override
   String get errorOccurredTryAgain => 'Wabaddewo ekisobyo. Ddamu ogezeeko.';
-
-  @override
-  String get noAccountFoundEmail => 'Tewali akaunti eyazuulibwa ku email eno.';
 
   @override
   String get resetPassword => 'Zza Ekigambo ky\'ekyama';
 
   @override
   String get resetPasswordInstructions =>
-      'Yingiza endagiriro yo eya email eyewandiisibbwa waggulu. Tujja kukuweereza link ey\'obukuumi okuzza ekigambo kyo eky\'ekyama era n\'okukuuma akaunti yo obulungi.';
+      'Yingiza endagiriro yo eya email eyewandiisibbwa waggulu. Tujja kukuweereza nampeya ya nnamba mukaaga okuzza ekigambo kyo eky\'ekyama era n\'okukuuma akaunti yo obulungi.';
 
   @override
   String get pleaseEnterValidEmailAddress =>
       'Yingiza endagiriro ya email entuufu';
 
   @override
-  String get sendResetLink => 'Weereza Link Ey\'okuzza';
+  String get sendResetLink => 'Weereza Nampeya';
+
+  @override
+  String get otpScreenTitle => 'Yingiza Nampeya';
+
+  @override
+  String otpInstructions(String email) {
+    return 'Yingiza nampeya ya nnamba mukaaga gye twaweereza ku $email.';
+  }
+
+  @override
+  String get otpLabel => 'Nampeya y\'Okukakasa';
+
+  @override
+  String get pleaseEnterOtp => 'Yingiza nampeya';
+
+  @override
+  String get otpInvalidLength => 'Yingiza nampeya ya nnamba mukaaga';
+
+  @override
+  String get verifyAndReset => 'Kakasa & Zza Ekigambo ky\'ekyama';
+
+  @override
+  String get resendCode => 'Weereza Nampeya Nate';
+
+  @override
+  String resendCodeIn(int seconds) {
+    return 'Weereza nampeya nate mu ${seconds}s';
+  }
+
+  @override
+  String get pleaseWaitBeforeResend => 'Linda okumala okusaba nampeya endala.';
+
+  @override
+  String get codeExpired => 'Nampeya eno ewedde ekiseera. Saba endala.';
+
+  @override
+  String get tooManyAttempts =>
+      'Ogezezzaako emirundi mingi ne kiremererwa. Saba nampeya empya.';
+
+  @override
+  String get incorrectCode => 'Nampeya si ntuufu. Ddamu ogezeeko.';
 
   @override
   String get downloadedReports => 'Report Ezawanguddwa';

@@ -69,12 +69,37 @@ class FirestoreService {
     }
   }
 
+  /// Deletes a single scan record from the active logged-in user's scan history.
+  Future<bool> deleteScanRecord(String scanId) async {
+    try {
+      final User? currentUser = _auth.currentUser;
+      if (currentUser == null) {
+        debugPrint('FirestoreService: Cannot delete record, no authenticated user found.');
+        return false;
+      }
+
+      await _db
+          .collection('users')
+          .doc(currentUser.uid)
+          .collection('scans')
+          .doc(scanId)
+          .delete();
+
+      debugPrint('FirestoreService: Scan $scanId deleted.');
+      return true;
+    } catch (e) {
+      debugPrint('FirestoreService Error deleting scan: $e');
+      return false;
+    }
+  }
+
   /// Updates the active logged-in user's editable profile fields.
   Future<bool> updateUserProfile({
     required String fullName,
     required String phone,
     required String district,
     String? photoUrl,
+    bool removePhoto = false,
   }) async {
     try {
       final User? currentUser = _auth.currentUser;
@@ -87,14 +112,28 @@ class FirestoreService {
         'fullName': fullName,
         'phone': phone,
         'district': district,
-        'photoUrl': ?photoUrl,
+        if (removePhoto) 'photoUrl': FieldValue.delete() else 'photoUrl': ?photoUrl,
       });
 
+      bool authProfileChanged = false;
       if (fullName.isNotEmpty && currentUser.displayName != fullName) {
         await currentUser.updateDisplayName(fullName);
+        authProfileChanged = true;
       }
-      if (photoUrl != null) {
+      if (removePhoto) {
+        await currentUser.updatePhotoURL(null);
+        authProfileChanged = true;
+      } else if (photoUrl != null) {
         await currentUser.updatePhotoURL(photoUrl);
+        authProfileChanged = true;
+      }
+      // updateDisplayName/updatePhotoURL don't refresh the locally cached
+      // currentUser object on their own — without this, any code reading
+      // FirebaseAuth.instance.currentUser.photoURL/displayName right after
+      // this call (e.g. as a fallback when the Firestore field is absent)
+      // would still see the old value until the app restarted.
+      if (authProfileChanged) {
+        await currentUser.reload();
       }
 
       debugPrint('FirestoreService: User profile updated for ${currentUser.uid}.');
