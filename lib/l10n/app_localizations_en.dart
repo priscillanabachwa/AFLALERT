@@ -850,19 +850,10 @@ class AppLocalizationsEn extends AppLocalizations {
       'Recommendations sourced from UNBS and MAAIF guidance.';
 
   @override
-  String get startNewTest => 'Start a New Test';
+  String get tier1Short => 'Tier 1';
 
   @override
-  String get tier1Title => 'Tier 1 · Visual AI Scan';
-
-  @override
-  String get tier1Subtitle => 'Check loose maize or groundnuts for mold';
-
-  @override
-  String get tier2Title => 'Tier 2 · Chemical Strip Scan';
-
-  @override
-  String get tier2Subtitle => 'Read a test strip for an exact ppb level';
+  String get tier2Short => 'Tier 2';
 
   @override
   String get chemicalStripScanTitle => 'Chemical Strip Scan';
@@ -969,4 +960,12 @@ class AppLocalizationsEn extends AppLocalizations {
   String chemicalLevelValueLabel(String value) {
     return 'Chemical level: $value ppb';
   }
+
+  @override
+  String todayHighLowLabel(String high, String low) {
+    return 'Today: H:$high° L:$low°';
+  }
+
+  @override
+  String get nowLabel => 'Now';
 }

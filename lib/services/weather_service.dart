@@ -65,6 +65,36 @@ class RainfallSummary {
   const RainfallSummary({required this.totalMm, required this.windowDays});
 }
 
+class HourlyForecastEntry {
+  final DateTime time;
+  final double temperatureC;
+  final String condition;
+  final IconData icon;
+
+  const HourlyForecastEntry({
+    required this.time,
+    required this.temperatureC,
+    required this.condition,
+    required this.icon,
+  });
+}
+
+/// Today's forecast — trailing off the hourly array from Open-Meteo's
+/// forecast endpoint (same source as [WeatherService.getCurrentWeather], so
+/// no separate API/key setup) so the expanded weather card has something to
+/// show beyond the single current reading.
+class DailyForecast {
+  final double minC;
+  final double maxC;
+  final List<HourlyForecastEntry> hours;
+
+  const DailyForecast({
+    required this.minC,
+    required this.maxC,
+    required this.hours,
+  });
+}
+
 class WeatherService {
   static const String _baseUrl = 'https://api.open-meteo.com/v1/forecast';
 
@@ -95,6 +125,67 @@ class WeatherService {
       return WeatherInfo.fromCode(temperature.toDouble(), weatherCode.toInt());
     } catch (error) {
       debugPrint('WeatherService Error fetching current weather: $error');
+      return null;
+    }
+  }
+
+  /// Fetches the hour-by-hour forecast plus today's min/max for the given
+  /// coordinates. Returns `null` if the request fails for any reason.
+  Future<DailyForecast?> getTodayForecast(double latitude, double longitude) async {
+    final Uri url = Uri.parse(
+      '$_baseUrl?latitude=$latitude&longitude=$longitude'
+      '&hourly=temperature_2m,weather_code'
+      '&daily=temperature_2m_max,temperature_2m_min'
+      '&forecast_days=1&timezone=auto',
+    );
+
+    try {
+      final http.Response response =
+          await http.get(url).timeout(const Duration(seconds: 10));
+
+      if (response.statusCode != 200) {
+        debugPrint('WeatherService Failure: Server returned status code ${response.statusCode}');
+        return null;
+      }
+
+      final Map<String, dynamic> data = jsonDecode(response.body);
+
+      final Map<String, dynamic>? daily = data['daily'] as Map<String, dynamic>?;
+      final List<dynamic>? maxList = daily?['temperature_2m_max'] as List<dynamic>?;
+      final List<dynamic>? minList = daily?['temperature_2m_min'] as List<dynamic>?;
+      final num? maxC = maxList != null && maxList.isNotEmpty ? maxList.first as num? : null;
+      final num? minC = minList != null && minList.isNotEmpty ? minList.first as num? : null;
+      if (maxC == null || minC == null) return null;
+
+      final Map<String, dynamic>? hourly = data['hourly'] as Map<String, dynamic>?;
+      final List<dynamic>? times = hourly?['time'] as List<dynamic>?;
+      final List<dynamic>? temps = hourly?['temperature_2m'] as List<dynamic>?;
+      final List<dynamic>? codes = hourly?['weather_code'] as List<dynamic>?;
+      if (times == null || temps == null || codes == null) return null;
+
+      final DateTime now = DateTime.now();
+      final List<HourlyForecastEntry> hours = [];
+      for (int i = 0; i < times.length && i < temps.length && i < codes.length; i++) {
+        final DateTime? time = DateTime.tryParse(times[i] as String);
+        final num? temp = temps[i] as num?;
+        final num? code = codes[i] as num?;
+        if (time == null || temp == null || code == null) continue;
+        // Only the remaining hours of today are useful in a "today's
+        // forecast" view — earlier hours have already passed.
+        if (time.isBefore(now.subtract(const Duration(hours: 1)))) continue;
+
+        final WeatherInfo info = WeatherInfo.fromCode(temp.toDouble(), code.toInt());
+        hours.add(HourlyForecastEntry(
+          time: time,
+          temperatureC: info.temperatureC,
+          condition: info.condition,
+          icon: info.icon,
+        ));
+      }
+
+      return DailyForecast(minC: minC.toDouble(), maxC: maxC.toDouble(), hours: hours);
+    } catch (error) {
+      debugPrint('WeatherService Error fetching today\'s forecast: $error');
       return null;
     }
   }
