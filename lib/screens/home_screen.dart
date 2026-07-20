@@ -13,6 +13,7 @@ import '../models/app_notification.dart';
 import '../services/firestore_service.dart';
 import '../services/local_notification_service.dart';
 import '../services/location_service.dart';
+import '../services/morning_alert_service.dart';
 import '../services/notification_center.dart';
 import '../services/weather_service.dart';
 import '../utils/user_initials.dart';
@@ -74,6 +75,7 @@ class _HomeScreenState extends State<HomeScreen> {
       final String userType = doc.data()?['userType'] as String? ?? '';
       if (userType == _userType) return;
       setState(() => _userType = userType);
+      MorningAlertService.cacheUserType(userType);
     });
   }
 
@@ -107,6 +109,7 @@ class _HomeScreenState extends State<HomeScreen> {
       _rainfall = results[1] as RainfallSummary?;
       _weatherLoading = false;
     });
+    MorningAlertService.cacheLocation(location.latitude, location.longitude);
     _checkHeatAlert();
     _checkHumidityAlert();
   }

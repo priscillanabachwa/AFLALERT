@@ -1,3 +1,5 @@
+import 'dart:io' show Platform;
+
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_localizations/flutter_localizations.dart';
@@ -21,6 +23,7 @@ import 'package:aflalert/screens/strip_analysis_screen.dart';
 import 'package:aflalert/screens/strip_result_screen.dart';
 import 'package:aflalert/screens/notifications_screen.dart';
 import 'package:aflalert/services/local_notification_service.dart';
+import 'package:aflalert/services/morning_alert_service.dart';
 import 'package:aflalert/services/navigation_service.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'l10n/app_localizations.dart';
@@ -33,6 +36,18 @@ Future<void> main() async {
   );
 
   await LocalNotificationService.instance.init();
+
+  // Android-only: no plugin can guarantee background execution timing on
+  // iOS (Apple's BGTaskScheduler is opportunistic), so the daily morning
+  // weather alert isn't wired up there. Failure here shouldn't block app
+  // startup, so it's non-fatal if scheduling doesn't succeed.
+  if (Platform.isAndroid) {
+    try {
+      await MorningAlertService.initializeAndSchedule();
+    } catch (error) {
+      debugPrint('MorningAlertService init error: $error');
+    }
+  }
 
   runApp(const AflAlert());
 }
