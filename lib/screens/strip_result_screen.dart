@@ -234,8 +234,13 @@ class StripResultsScreen extends StatelessWidget {
 
   Widget _buildToxicLoadCard(BuildContext context) {
     final AppLocalizations l10n = AppLocalizations.of(context)!;
-    final File? photoFile = (imagePath != null && imagePath!.isNotEmpty) ? File(imagePath!) : null;
-    final bool hasPhoto = photoFile != null && photoFile.existsSync();
+    // History-opened scans store a Firebase Storage URL; a freshly-captured
+    // scan still points at the local temp file, so both need handling.
+    final bool isNetworkImage = imagePath != null && imagePath!.startsWith('http');
+    final File? photoFile = (!isNetworkImage && imagePath != null && imagePath!.isNotEmpty)
+        ? File(imagePath!)
+        : null;
+    final bool hasPhoto = isNetworkImage || (photoFile != null && photoFile.existsSync());
 
     return Container(
       decoration: BoxDecoration(
@@ -254,7 +259,15 @@ class StripResultsScreen extends StatelessWidget {
                 if (hasPhoto)
                   ClipRRect(
                     borderRadius: BorderRadius.circular(10),
-                    child: Image.file(photoFile, width: 44, height: 44, fit: BoxFit.cover),
+                    child: isNetworkImage
+                        ? Image.network(
+                            imagePath!,
+                            width: 44,
+                            height: 44,
+                            fit: BoxFit.cover,
+                            errorBuilder: (_, _, _) => const SizedBox(width: 44, height: 44),
+                          )
+                        : Image.file(photoFile!, width: 44, height: 44, fit: BoxFit.cover),
                   ),
                 if (hasPhoto) const SizedBox(width: 12),
                 Expanded(
