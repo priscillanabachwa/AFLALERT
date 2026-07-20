@@ -72,6 +72,7 @@ dev_dependencies:
   flutter_test:
     sdk: flutter
   flutter_launcher_icons: ^0.14.1
+  flutter_native_splash: ^2.4.8
 
 dependency_overrides:
   package_info_plus: ^10.2.0
@@ -133,5 +134,14 @@ flutter_launcher_icons:
     adaptive_icon_background: "#FFFFFF"
     adaptive_icon_foreground: "lib/assets/images/aflalert_logo.png"
 
-  
-
+# Configures the native OS splash screen that Android 12+ shows automatically
+# on cold start, before the Flutter engine draws SplashScreen (lib/screens/
+# splash_screen.dart). Matched to AppColors.logoCream so it reads as one
+# continuous branded launch instead of an unrelated plain-white flash of the
+# launcher icon in front of our own animated splash.
+flutter_native_splash:
+  color: "#F6F4E2"
+  image: "lib/assets/images/aflalert_logo.png"
+  android_12:
+    color: "#F6F4E2"
+    image: "lib/assets/images/aflalert_logo.png"

@@ -56,6 +56,11 @@ class _HomeScreenState extends State<HomeScreen> {
   final Stream<DocumentSnapshot<Map<String, dynamic>>> _profileStream =
       FirestoreService().getUserProfile();
 
+  // Hoisted for the same reason — both the stats bar (near the greeting)
+  // and the Recent Scans list (further down) read from this one stream.
+  final Stream<QuerySnapshot> _scanHistoryStream =
+      FirestoreService().getUserScanHistory();
+
   // Edge-triggered so the alert fires once when it becomes hot, not on
   // every 5-minute refresh while it stays hot.
   bool _heatAlertNotified = false;
@@ -198,9 +203,26 @@ class _HomeScreenState extends State<HomeScreen> {
                         return Column(
                           crossAxisAlignment: CrossAxisAlignment.start,
                           children: [
-                            _buildGreeting(firstName),
+                            Row(
+                              crossAxisAlignment: CrossAxisAlignment.start,
+                              children: [
+                                Expanded(child: _buildGreeting(firstName)),
+                                const SizedBox(width: 12),
+                                _buildCompactWeatherChip(context),
+                              ],
+                            ),
                             const SizedBox(height: 20),
-                            _buildInfoCards(
+                            StreamBuilder<QuerySnapshot>(
+                              stream: _scanHistoryStream,
+                              builder: (context, snapshot) {
+                                final docs = snapshot.data?.docs ?? [];
+                                return _buildStatsRow(docs);
+                              },
+                            ),
+                            const SizedBox(height: 24),
+                            _buildTierPicker(context),
+                            const SizedBox(height: 24),
+                            _buildTipCard(
                               tipForConditions(
                                 userType,
                                 _weather?.temperatureC,
@@ -230,19 +252,15 @@ class _HomeScreenState extends State<HomeScreen> {
                         return _buildSeasonalGuidelineCard(userType);
                       },
                     ),
-                    const SizedBox(height: 32),
-                    _buildTierPicker(context),
                     const SizedBox(height: 28),
                     StreamBuilder<QuerySnapshot>(
-                      stream: FirestoreService().getUserScanHistory(),
+                      stream: _scanHistoryStream,
                       builder: (context, snapshot) {
                         final docs = snapshot.data?.docs ?? [];
                         final recentDocs = docs.take(2).toList();
                         return Column(
                           crossAxisAlignment: CrossAxisAlignment.start,
                           children: [
-                            _buildStatsRow(docs),
-                            const SizedBox(height: 28),
                             _buildRecentScansHeader(),
                             const SizedBox(height: 16),
                             if (recentDocs.isEmpty)
@@ -400,110 +418,110 @@ class _HomeScreenState extends State<HomeScreen> {
     );
   }
 
-  Widget _buildInfoCards(String dailyTip, bool heatAlert) {
+  Widget _buildTipCard(String dailyTip, bool heatAlert) {
     final AppLocalizations l10n = AppLocalizations.of(context)!;
-    return IntrinsicHeight(
-      child: Row(
-        crossAxisAlignment: CrossAxisAlignment.stretch,
+    return Container(
+      width: double.infinity,
+      padding: const EdgeInsets.all(16),
+      decoration: BoxDecoration(
+        color: AppColors.primaryContainer,
+        borderRadius: BorderRadius.circular(16),
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Expanded(
-            child: Container(
-              padding: const EdgeInsets.all(16),
-              decoration: BoxDecoration(
-                color: Colors.white,
-                borderRadius: BorderRadius.circular(16),
-                boxShadow: [
-                  BoxShadow(
-                    color: Colors.black.withValues(alpha: 0.05),
-                    blurRadius: 10,
-                    offset: const Offset(0, 4),
-                  ),
-                ],
-              ),
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Text(
-                    (_location?.placeName?.toUpperCase()) ??
-                        (_weatherLoading
-                            ? l10n.locating
-                            : l10n.locationUnavailable),
-                    style: const TextStyle(
-                      fontSize: 10,
-                      fontWeight: FontWeight.w600,
-                      color: Colors.grey,
-                      letterSpacing: 0.5,
-                    ),
-                  ),
-                  const SizedBox(height: 8),
-                  Text(
-                    _weather != null
-                        ? '${_weather!.temperatureC.round()}°C'
-                        : '--°C',
-                    style: const TextStyle(
-                      fontSize: 24,
-                      fontWeight: FontWeight.bold,
-                      color: AppColors.primary,
-                    ),
-                  ),
-                  const SizedBox(height: 4),
-                  Text(
-                    _weather?.condition ??
-                        (_weatherLoading
-                            ? l10n.fetchingWeather
-                            : l10n.unavailable),
-                    style: const TextStyle(fontSize: 13, color: Colors.grey),
-                  ),
-                  const SizedBox(height: 12),
-                  Icon(
-                    _weather?.icon ?? Icons.cloud_off,
-                    color: AppColors.secondary,
-                    size: 28,
-                  ),
-                ],
-              ),
+          Icon(
+            heatAlert ? Icons.whatshot : Icons.lightbulb_outline,
+            color: AppColors.secondary,
+            size: 20,
+          ),
+          const SizedBox(height: 8),
+          Text(
+            heatAlert ? l10n.heatAlertBadge : l10n.dailyTip,
+            style: const TextStyle(
+              fontSize: 10,
+              fontWeight: FontWeight.w700,
+              color: AppColors.secondary,
+              letterSpacing: 0.5,
             ),
           ),
-          const SizedBox(width: 14),
-          Expanded(
-            child: Container(
-              padding: const EdgeInsets.all(16),
-              decoration: BoxDecoration(
-                color: AppColors.primaryContainer,
-                borderRadius: BorderRadius.circular(16),
-              ),
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Icon(
-                    heatAlert ? Icons.whatshot : Icons.lightbulb_outline,
-                    color: AppColors.secondary,
-                    size: 20,
-                  ),
-                  const SizedBox(height: 8),
-                  Text(
-                    heatAlert ? l10n.heatAlertBadge : l10n.dailyTip,
-                    style: const TextStyle(
-                      fontSize: 10,
-                      fontWeight: FontWeight.w700,
-                      color: AppColors.secondary,
-                      letterSpacing: 0.5,
-                    ),
-                  ),
-                  const SizedBox(height: 8),
-                  Text(
-                    dailyTip,
-                    style: const TextStyle(
-                      fontSize: 12,
-                      color: Colors.white,
-                      height: 1.4,
-                    ),
-                  ),
-                ],
-              ),
+          const SizedBox(height: 8),
+          Text(
+            dailyTip,
+            style: const TextStyle(
+              fontSize: 12,
+              color: Colors.white,
+              height: 1.4,
             ),
           ),
         ],
+      ),
+    );
+  }
+
+  // Compact "location + degrees" chip that sits opposite the greeting.
+  // Tapping it opens the full forecast rather than cluttering the home
+  // screen with hourly detail up front.
+  Widget _buildCompactWeatherChip(BuildContext context) {
+    final AppLocalizations l10n = AppLocalizations.of(context)!;
+    return GestureDetector(
+      onTap: () => _showWeatherForecast(context),
+      child: Container(
+        constraints: const BoxConstraints(maxWidth: 90),
+        padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 6),
+        decoration: BoxDecoration(
+          color: AppColors.t95,
+          borderRadius: BorderRadius.circular(12),
+          boxShadow: [
+            BoxShadow(
+              color: Colors.black.withValues(alpha: 0.05),
+              blurRadius: 10,
+              offset: const Offset(0, 4),
+            ),
+          ],
+        ),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.end,
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            Text(
+              (_location?.placeName?.toUpperCase()) ??
+                  (_weatherLoading ? l10n.locating : l10n.locationUnavailable),
+              style: const TextStyle(
+                fontSize: 9,
+                fontWeight: FontWeight.w600,
+                color: Colors.grey,
+                letterSpacing: 0.3,
+              ),
+              maxLines: 1,
+              overflow: TextOverflow.ellipsis,
+            ),
+            const SizedBox(height: 2),
+            Text(
+              _weather != null ? '${_weather!.temperatureC.round()}°C' : '--°C',
+              style: const TextStyle(
+                fontSize: 16,
+                fontWeight: FontWeight.bold,
+                color: AppColors.primary,
+              ),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
+  void _showWeatherForecast(BuildContext context) {
+    showModalBottomSheet(
+      context: context,
+      shape: const RoundedRectangleBorder(
+        borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
+      ),
+      builder: (_) => _WeatherForecastSheet(
+        location: _location?.placeName,
+        current: _weather,
+        latitude: _location?.latitude,
+        longitude: _location?.longitude,
       ),
     );
   }
@@ -645,98 +663,75 @@ class _HomeScreenState extends State<HomeScreen> {
     );
   }
 
+  // Two circular start-a-test buttons, mirrored on opposite sides of the
+  // row (Tier 1 left, Tier 2 right) rather than the earlier stacked
+  // rectangular cards.
   Widget _buildTierPicker(BuildContext context) {
     final AppLocalizations l10n = AppLocalizations.of(context)!;
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
+    return Row(
+      mainAxisAlignment: MainAxisAlignment.spaceEvenly,
       children: [
-        Text(
-          l10n.startNewTest,
-          style: const TextStyle(
-            fontSize: 18,
-            fontWeight: FontWeight.bold,
-            color: Colors.white,
-            shadows: _onImageShadow,
-          ),
-        ),
-        const SizedBox(height: 12),
-        _buildTierCard(
+        _buildTierCircle(
           icon: Icons.camera_alt_outlined,
-          iconColor: AppColors.primaryContainer,
-          title: l10n.tier1Title,
-          subtitle: l10n.tier1Subtitle,
+          label: l10n.tier1Short,
+          fillColor: AppColors.primaryContainer,
+          contentColor: Colors.white,
           onTap: () => _onTier1Tap(context),
         ),
-        const SizedBox(height: 12),
-        _buildTierCard(
+        _buildTierCircle(
           icon: Icons.science_outlined,
-          iconColor: AppColors.secondary,
-          title: l10n.tier2Title,
-          subtitle: l10n.tier2Subtitle,
+          label: l10n.tier2Short,
+          fillColor: AppColors.secondary,
+          contentColor: AppColors.primary,
           onTap: () => _onTier2Tap(context),
         ),
       ],
     );
   }
 
-  Widget _buildTierCard({
+  Widget _buildTierCircle({
     required IconData icon,
-    required Color iconColor,
-    required String title,
-    required String subtitle,
+    required String label,
+    required Color fillColor,
+    required Color contentColor,
     required VoidCallback onTap,
   }) {
-    return Material(
-      color: Colors.white,
-      borderRadius: BorderRadius.circular(16),
-      elevation: 0,
-      child: InkWell(
-        borderRadius: BorderRadius.circular(16),
-        onTap: onTap,
-        child: Container(
-          padding: const EdgeInsets.all(14),
-          decoration: BoxDecoration(
-            borderRadius: BorderRadius.circular(16),
-            boxShadow: [
-              BoxShadow(
-                color: Colors.black.withValues(alpha: 0.05),
-                blurRadius: 10,
-                offset: const Offset(0, 4),
-              ),
-            ],
+    return Container(
+      width: 132,
+      height: 132,
+      padding: const EdgeInsets.all(5),
+      decoration: BoxDecoration(
+        shape: BoxShape.circle,
+        color: AppColors.t95.withValues(alpha: 0.9),
+        boxShadow: [
+          BoxShadow(
+            color: Colors.black.withValues(alpha: 0.15),
+            blurRadius: 12,
+            offset: const Offset(0, 6),
           ),
-          child: Row(
+        ],
+      ),
+      child: Material(
+        color: fillColor,
+        shape: const CircleBorder(),
+        child: InkWell(
+          customBorder: const CircleBorder(),
+          onTap: onTap,
+          child: Column(
+            mainAxisAlignment: MainAxisAlignment.center,
             children: [
-              Container(
-                padding: const EdgeInsets.all(12),
-                decoration: BoxDecoration(
-                  color: iconColor.withValues(alpha: 0.15),
-                  borderRadius: BorderRadius.circular(12),
-                ),
-                child: Icon(icon, color: iconColor, size: 24),
-              ),
-              const SizedBox(width: 14),
-              Expanded(
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Text(
-                      title,
-                      style: const TextStyle(
-                        fontSize: 14,
-                        fontWeight: FontWeight.w700,
-                        color: AppColors.primary,
-                      ),
-                    ),
-                    const SizedBox(height: 3),
-                    Text(
-                      subtitle,
-                      style: const TextStyle(fontSize: 12, color: Colors.grey),
-                    ),
-                  ],
+              Icon(icon, color: contentColor, size: 32),
+              const SizedBox(height: 8),
+              Text(
+                label,
+                textAlign: TextAlign.center,
+                style: TextStyle(
+                  color: contentColor,
+                  fontSize: 13,
+                  fontWeight: FontWeight.bold,
+                  letterSpacing: 0.5,
                 ),
               ),
-              const Icon(Icons.chevron_right, color: Colors.grey),
             ],
           ),
         ),
@@ -829,7 +824,7 @@ class _HomeScreenState extends State<HomeScreen> {
     return Container(
       padding: const EdgeInsets.symmetric(vertical: 18, horizontal: 12),
       decoration: BoxDecoration(
-        color: Colors.white,
+        color: AppColors.t95,
         borderRadius: BorderRadius.circular(16),
         boxShadow: [
           BoxShadow(
@@ -861,7 +856,7 @@ class _HomeScreenState extends State<HomeScreen> {
       padding: const EdgeInsets.symmetric(vertical: 28),
       alignment: Alignment.center,
       decoration: BoxDecoration(
-        color: Colors.white,
+        color: AppColors.t95,
         borderRadius: BorderRadius.circular(16),
         boxShadow: [
           BoxShadow(
@@ -1006,7 +1001,7 @@ class _HomeScreenState extends State<HomeScreen> {
     return Container(
       padding: const EdgeInsets.all(14),
       decoration: BoxDecoration(
-        color: Colors.white,
+        color: AppColors.t95,
         borderRadius: BorderRadius.circular(16),
         boxShadow: [
           BoxShadow(
@@ -1080,6 +1075,183 @@ class _HomeScreenState extends State<HomeScreen> {
             ],
           ),
         ],
+      ),
+    );
+  }
+}
+
+// ─────────────────────────────────────────
+//  WEATHER FORECAST SHEET
+// ─────────────────────────────────────────
+// Fetched on demand (not alongside the compact chip) since most visits to
+// Home don't need the hour-by-hour breakdown — only pay for it when the
+// user actually taps through.
+class _WeatherForecastSheet extends StatefulWidget {
+  final String? location;
+  final WeatherInfo? current;
+  final double? latitude;
+  final double? longitude;
+
+  const _WeatherForecastSheet({
+    required this.location,
+    required this.current,
+    required this.latitude,
+    required this.longitude,
+  });
+
+  @override
+  State<_WeatherForecastSheet> createState() => _WeatherForecastSheetState();
+}
+
+class _WeatherForecastSheetState extends State<_WeatherForecastSheet> {
+  Future<DailyForecast?>? _forecastFuture;
+
+  @override
+  void initState() {
+    super.initState();
+    if (widget.latitude != null && widget.longitude != null) {
+      _forecastFuture =
+          WeatherService().getTodayForecast(widget.latitude!, widget.longitude!);
+    }
+  }
+
+  static String _formatHour(DateTime time) {
+    final int hour = time.hour % 12 == 0 ? 12 : time.hour % 12;
+    final String period = time.hour >= 12 ? 'PM' : 'AM';
+    return '$hour$period';
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final AppLocalizations l10n = AppLocalizations.of(context)!;
+    return Container(
+      constraints: BoxConstraints(maxHeight: MediaQuery.of(context).size.height * 0.7),
+      child: Padding(
+        padding: const EdgeInsets.fromLTRB(20, 16, 20, 32),
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Center(
+              child: Container(
+                width: 40,
+                height: 4,
+                margin: const EdgeInsets.only(bottom: 20),
+                decoration: BoxDecoration(
+                  color: Colors.grey.shade300,
+                  borderRadius: BorderRadius.circular(2),
+                ),
+              ),
+            ),
+            Text(
+              widget.location?.toUpperCase() ?? l10n.locationUnavailable,
+              style: const TextStyle(
+                fontSize: 11,
+                fontWeight: FontWeight.w600,
+                color: Colors.grey,
+                letterSpacing: 0.5,
+              ),
+            ),
+            const SizedBox(height: 4),
+            Row(
+              crossAxisAlignment: CrossAxisAlignment.end,
+              children: [
+                Icon(widget.current?.icon ?? Icons.cloud_off, color: AppColors.secondary, size: 32),
+                const SizedBox(width: 10),
+                Text(
+                  widget.current != null ? '${widget.current!.temperatureC.round()}°C' : '--°C',
+                  style: const TextStyle(
+                    fontSize: 34,
+                    fontWeight: FontWeight.bold,
+                    color: AppColors.primary,
+                  ),
+                ),
+                const SizedBox(width: 10),
+                Padding(
+                  padding: const EdgeInsets.only(bottom: 8),
+                  child: Text(
+                    widget.current?.condition ?? l10n.unavailable,
+                    style: const TextStyle(fontSize: 14, color: Colors.grey),
+                  ),
+                ),
+              ],
+            ),
+            const SizedBox(height: 20),
+            if (_forecastFuture == null)
+              Text(l10n.locationUnavailable, style: const TextStyle(color: Colors.grey))
+            else
+              FutureBuilder<DailyForecast?>(
+                future: _forecastFuture,
+                builder: (context, snapshot) {
+                  if (snapshot.connectionState != ConnectionState.done) {
+                    return const Padding(
+                      padding: EdgeInsets.symmetric(vertical: 24),
+                      child: Center(child: CircularProgressIndicator(color: AppColors.primary)),
+                    );
+                  }
+                  final DailyForecast? forecast = snapshot.data;
+                  if (forecast == null) {
+                    return Text(
+                      l10n.fetchingWeather,
+                      style: const TextStyle(color: Colors.grey),
+                    );
+                  }
+                  return Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Row(
+                        children: [
+                          Text(
+                            l10n.todayHighLowLabel(
+                              forecast.maxC.round().toString(),
+                              forecast.minC.round().toString(),
+                            ),
+                            style: const TextStyle(
+                              fontSize: 13,
+                              fontWeight: FontWeight.w600,
+                              color: AppColors.primary,
+                            ),
+                          ),
+                        ],
+                      ),
+                      const SizedBox(height: 14),
+                      SizedBox(
+                        height: 96,
+                        child: ListView.separated(
+                          scrollDirection: Axis.horizontal,
+                          itemCount: forecast.hours.length,
+                          separatorBuilder: (_, _) => const SizedBox(width: 18),
+                          itemBuilder: (context, index) {
+                            final HourlyForecastEntry hour = forecast.hours[index];
+                            return Column(
+                              mainAxisSize: MainAxisSize.min,
+                              children: [
+                                Text(
+                                  index == 0 ? l10n.nowLabel : _formatHour(hour.time),
+                                  style: const TextStyle(fontSize: 11, color: Colors.grey),
+                                ),
+                                const SizedBox(height: 8),
+                                Icon(hour.icon, color: AppColors.secondary, size: 22),
+                                const SizedBox(height: 8),
+                                Text(
+                                  '${hour.temperatureC.round()}°',
+                                  style: const TextStyle(
+                                    fontSize: 13,
+                                    fontWeight: FontWeight.w600,
+                                    color: AppColors.primary,
+                                  ),
+                                ),
+                              ],
+                            );
+                          },
+                        ),
+                      ),
+                    ],
+                  );
+                },
+              ),
+          ],
+        ),
       ),
     );
   }
