@@ -1,5 +1,7 @@
-import 'package:flutter/foundation.dart';
+import 'package:flutter/widgets.dart';
 import 'package:flutter_local_notifications/flutter_local_notifications.dart';
+
+import 'navigation_service.dart';
 
 /// Thin wrapper around `flutter_local_notifications` for firing real
 /// device notifications (e.g. a heat-risk alert) alongside the in-app
@@ -34,15 +36,29 @@ class LocalNotificationService {
     try {
       await _plugin.initialize(
         const InitializationSettings(android: androidInit, iOS: iosInit),
+        onDidReceiveNotificationResponse: (_) => _openNotifications(),
       );
       await _plugin
           .resolvePlatformSpecificImplementation<
               AndroidFlutterLocalNotificationsPlugin>()
           ?.requestNotificationsPermission();
       _initialized = true;
+
+      // App was launched (cold start) by tapping a notification, rather than
+      // resumed from background — the tap response above only fires for the
+      // latter, so this covers the former.
+      final NotificationAppLaunchDetails? launchDetails =
+          await _plugin.getNotificationAppLaunchDetails();
+      if (launchDetails?.didNotificationLaunchApp ?? false) {
+        WidgetsBinding.instance.addPostFrameCallback((_) => _openNotifications());
+      }
     } catch (error) {
       debugPrint('LocalNotificationService init error: $error');
     }
+  }
+
+  void _openNotifications() {
+    navigatorKey.currentState?.pushNamed('/notifications');
   }
 
   Future<void> show({required String title, required String body}) async {

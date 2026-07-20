@@ -19,7 +19,9 @@ import 'package:aflalert/screens/result_screen.dart';
 import 'package:aflalert/screens/strip_camera_screen.dart';
 import 'package:aflalert/screens/strip_analysis_screen.dart';
 import 'package:aflalert/screens/strip_result_screen.dart';
+import 'package:aflalert/screens/notifications_screen.dart';
 import 'package:aflalert/services/local_notification_service.dart';
+import 'package:aflalert/services/navigation_service.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'l10n/app_localizations.dart';
 
@@ -81,6 +83,7 @@ class _AflAlertState extends State<AflAlert> {
   @override
   Widget build(BuildContext context) {
     return MaterialApp(
+      navigatorKey: navigatorKey,
       debugShowCheckedModeBanner: false,
       themeMode: _themeMode,
       locale: _locale,
@@ -198,6 +201,7 @@ class _AflAlertState extends State<AflAlert> {
         '/register': (context) => const RegistrationScreen(),
         '/downloadedReports': (context) => const DownloadedReportsScreen(),
         '/settings': (context) => const SettingsScreen(),
+        '/notifications': (context) => const NotificationsScreen(),
         '/camera': (context) {
           debugPrint('ROUTE_TRACE: building /camera');
           return CameraCaptureScreen();
