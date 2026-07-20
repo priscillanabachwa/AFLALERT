@@ -56,6 +56,11 @@ class _HomeScreenState extends State<HomeScreen> {
   final Stream<DocumentSnapshot<Map<String, dynamic>>> _profileStream =
       FirestoreService().getUserProfile();
 
+  // Hoisted for the same reason — both the stats bar (near the greeting)
+  // and the Recent Scans list (further down) read from this one stream.
+  final Stream<QuerySnapshot> _scanHistoryStream =
+      FirestoreService().getUserScanHistory();
+
   // Edge-triggered so the alert fires once when it becomes hot, not on
   // every 5-minute refresh while it stays hot.
   bool _heatAlertNotified = false;
@@ -207,6 +212,14 @@ class _HomeScreenState extends State<HomeScreen> {
                               ],
                             ),
                             const SizedBox(height: 20),
+                            StreamBuilder<QuerySnapshot>(
+                              stream: _scanHistoryStream,
+                              builder: (context, snapshot) {
+                                final docs = snapshot.data?.docs ?? [];
+                                return _buildStatsRow(docs);
+                              },
+                            ),
+                            const SizedBox(height: 20),
                             _buildTipCard(
                               tipForConditions(
                                 userType,
@@ -241,15 +254,13 @@ class _HomeScreenState extends State<HomeScreen> {
                     _buildTierPicker(context),
                     const SizedBox(height: 28),
                     StreamBuilder<QuerySnapshot>(
-                      stream: FirestoreService().getUserScanHistory(),
+                      stream: _scanHistoryStream,
                       builder: (context, snapshot) {
                         final docs = snapshot.data?.docs ?? [];
                         final recentDocs = docs.take(2).toList();
                         return Column(
                           crossAxisAlignment: CrossAxisAlignment.start,
                           children: [
-                            _buildStatsRow(docs),
-                            const SizedBox(height: 28),
                             _buildRecentScansHeader(),
                             const SizedBox(height: 16),
                             if (recentDocs.isEmpty)
