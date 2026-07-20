@@ -5,18 +5,24 @@ import 'package:http/http.dart' as http;
 
 class WeatherInfo {
   final double temperatureC;
+  final double? humidityPercent;
   final String condition;
   final IconData icon;
 
   const WeatherInfo({
     required this.temperatureC,
+    this.humidityPercent,
     required this.condition,
     required this.icon,
   });
 
   /// Maps the WMO weather codes returned by Open-Meteo to a short label and icon.
   /// https://open-meteo.com/en/docs#weathervariables
-  factory WeatherInfo.fromCode(double temperatureC, int code) {
+  factory WeatherInfo.fromCode(
+    double temperatureC,
+    int code, {
+    double? humidityPercent,
+  }) {
     String condition;
     IconData icon;
 
@@ -52,7 +58,12 @@ class WeatherInfo {
       icon = Icons.cloud;
     }
 
-    return WeatherInfo(temperatureC: temperatureC, condition: condition, icon: icon);
+    return WeatherInfo(
+      temperatureC: temperatureC,
+      humidityPercent: humidityPercent,
+      condition: condition,
+      icon: icon,
+    );
   }
 }
 
@@ -72,7 +83,8 @@ class WeatherService {
   /// Returns `null` if the request fails for any reason.
   Future<WeatherInfo?> getCurrentWeather(double latitude, double longitude) async {
     final Uri url = Uri.parse(
-      '$_baseUrl?latitude=$latitude&longitude=$longitude&current=temperature_2m,weather_code',
+      '$_baseUrl?latitude=$latitude&longitude=$longitude'
+      '&current=temperature_2m,relative_humidity_2m,weather_code',
     );
 
     try {
@@ -89,10 +101,15 @@ class WeatherService {
       if (current == null) return null;
 
       final num? temperature = current['temperature_2m'] as num?;
+      final num? humidity = current['relative_humidity_2m'] as num?;
       final num? weatherCode = current['weather_code'] as num?;
       if (temperature == null || weatherCode == null) return null;
 
-      return WeatherInfo.fromCode(temperature.toDouble(), weatherCode.toInt());
+      return WeatherInfo.fromCode(
+        temperature.toDouble(),
+        weatherCode.toInt(),
+        humidityPercent: humidity?.toDouble(),
+      );
     } catch (error) {
       debugPrint('WeatherService Error fetching current weather: $error');
       return null;

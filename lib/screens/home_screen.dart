@@ -56,9 +56,11 @@ class _HomeScreenState extends State<HomeScreen> {
   final Stream<DocumentSnapshot<Map<String, dynamic>>> _profileStream =
       FirestoreService().getUserProfile();
 
-  // Edge-triggered so the alert fires once when it becomes hot, not on
-  // every 5-minute refresh while it stays hot.
+  // Edge-triggered so each alert fires once when conditions become bad, not
+  // on every refresh while they stay bad. Tracked separately since heat and
+  // humidity can trigger independently of each other.
   bool _heatAlertNotified = false;
+  bool _humidityAlertNotified = false;
 
   @override
   void initState() {
@@ -106,6 +108,7 @@ class _HomeScreenState extends State<HomeScreen> {
       _weatherLoading = false;
     });
     _checkHeatAlert();
+    _checkHumidityAlert();
   }
 
   // Depends only on the calendar and rainfall, not on user type, so it can
@@ -130,6 +133,9 @@ class _HomeScreenState extends State<HomeScreen> {
       currentStage: _currentSeasonStage,
     );
     final int tempRounded = _weather!.temperatureC.round();
+    // humidityPercent intentionally omitted above: this is the heat-specific
+    // notification, so it should stay heat-specific even if humidity also
+    // happens to be in alert range right now.
 
     NotificationCenter.instance.add(
       AppNotification(
@@ -146,6 +152,43 @@ class _HomeScreenState extends State<HomeScreen> {
 
     LocalNotificationService.instance.show(
       title: l10n.heatAlertNotifTitle(tempRounded),
+      body: tip,
+    );
+  }
+
+  void _checkHumidityAlert() {
+    final bool alertNow = isHumidityAlert(_weather?.humidityPercent);
+    if (!alertNow) {
+      _humidityAlertNotified = false;
+      return;
+    }
+    if (_humidityAlertNotified) return;
+    _humidityAlertNotified = true;
+
+    final AppLocalizations l10n = AppLocalizations.of(context)!;
+    final String tip = tipForConditions(
+      _userType,
+      null,
+      humidityPercent: _weather?.humidityPercent,
+      currentStage: _currentSeasonStage,
+    );
+    final int humidityRounded = _weather!.humidityPercent!.round();
+
+    NotificationCenter.instance.add(
+      AppNotification(
+        title: l10n.humidityAlertTitle,
+        description: tip,
+        icon: Icons.water_drop,
+        iconColor: const Color(0xFF2A7DE0),
+        iconBackground: const Color(0xFFCBE0FB),
+        category: NotificationCategory.alert,
+        unread: true,
+        highPriority: true,
+      ),
+    );
+
+    LocalNotificationService.instance.show(
+      title: l10n.humidityAlertNotifTitle(humidityRounded),
       body: tip,
     );
   }
@@ -214,9 +257,13 @@ class _HomeScreenState extends State<HomeScreen> {
                               tipForConditions(
                                 userType,
                                 _weather?.temperatureC,
+                                humidityPercent: _weather?.humidityPercent,
                                 currentStage: _currentSeasonStage,
                               ),
-                              isHeatAlert(_weather?.temperatureC),
+                              alertKindFor(
+                                _weather?.temperatureC,
+                                _weather?.humidityPercent,
+                              ),
                             ),
                           ],
                         );
@@ -411,7 +458,7 @@ class _HomeScreenState extends State<HomeScreen> {
     );
   }
 
-  Widget _buildInfoCards(String dailyTip, bool heatAlert) {
+  Widget _buildInfoCards(String dailyTip, WeatherAlertKind alertKind) {
     final AppLocalizations l10n = AppLocalizations.of(context)!;
     return IntrinsicHeight(
       child: Row(
@@ -487,13 +534,21 @@ class _HomeScreenState extends State<HomeScreen> {
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
                   Icon(
-                    heatAlert ? Icons.whatshot : Icons.lightbulb_outline,
+                    switch (alertKind) {
+                      WeatherAlertKind.humidity => Icons.water_drop,
+                      WeatherAlertKind.heat => Icons.whatshot,
+                      WeatherAlertKind.none => Icons.lightbulb_outline,
+                    },
                     color: AppColors.secondary,
                     size: 20,
                   ),
                   const SizedBox(height: 8),
                   Text(
-                    heatAlert ? l10n.heatAlertBadge : l10n.dailyTip,
+                    switch (alertKind) {
+                      WeatherAlertKind.humidity => l10n.humidityAlertBadge,
+                      WeatherAlertKind.heat => l10n.heatAlertBadge,
+                      WeatherAlertKind.none => l10n.dailyTip,
+                    },
                     style: const TextStyle(
                       fontSize: 10,
                       fontWeight: FontWeight.w700,

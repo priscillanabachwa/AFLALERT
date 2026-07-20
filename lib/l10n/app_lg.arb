@@ -119,6 +119,8 @@
 
   "heatAlertTitle": "Okulabula kw'Obwokya",
   "heatAlertNotifTitle": "Okulabula kw'Obwokya — {temp}°C",
+  "humidityAlertTitle": "Okulabula kw'Obunnyogovu",
+  "humidityAlertNotifTitle": "Okulabula kw'Obunnyogovu — {humidity}%",
   "guidelines": "Ebiragiro",
   "homeSubGreeting": "Weetegeke okukuuma amakungula go leero?",
   "goodMorning": "Wasuze Otya",
@@ -131,6 +133,7 @@
   "fetchingWeather": "Tuleeta embeera y'obudde...",
   "unavailable": "Tekiriwo",
   "heatAlertBadge": "OKULABULA KW'OBWOKYA",
+  "humidityAlertBadge": "OKULABULA KW'OBUNNYOGOVU",
   "dailyTip": "AMAGEZI AG'OLUNAKU",
   "seeAll": "Laba Byonna",
   "noScansYetHome": "Tewali scan a bimu — nyiga \"AI Scan\" waggulu okukebera ekibinja kyo ekisooka.",
