@@ -1,8 +1,9 @@
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
-import 'package:firebase_auth/firebase_auth.dart';
+import 'package:cloud_functions/cloud_functions.dart';
 import '../constants/app_colors.dart';
 import '../l10n/app_localizations.dart';
+import 'otp_verification_screen.dart';
 
 class ForgotPasswordScreen extends StatefulWidget {
   const ForgotPasswordScreen({super.key});
@@ -25,38 +26,43 @@ class _ForgotPasswordScreenState extends State<ForgotPasswordScreen> {
   Future<void> _resetPassword() async {
     if (!_formKey.currentState!.validate()) return;
     final AppLocalizations l10n = AppLocalizations.of(context)!;
+    final String email = _emailController.text.trim();
 
     setState(() {
       _isLoading = true;
     });
 
     try {
-      await FirebaseAuth.instance.sendPasswordResetEmail(
-        email: _emailController.text.trim(),
-      );
+      await FirebaseFunctions.instance
+          .httpsCallable('requestPasswordResetOtp')
+          .call({'email': email});
 
       if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(
-            content: Text(
-              l10n.passwordResetLinkSent,
-              style: GoogleFonts.poppins(),
-            ),
-            backgroundColor: Color(0xFF1F4A2C),
+        Navigator.push(
+          context,
+          MaterialPageRoute(
+            builder: (_) => OtpVerificationScreen(email: email),
           ),
         );
-        Navigator.pop(context);
       }
-    } on FirebaseAuthException catch (e) {
+    } on FirebaseFunctionsException catch (e) {
       if (mounted) {
-        String errorMessage = l10n.errorOccurredTryAgain;
-        if (e.code == 'user-not-found') {
-          errorMessage = l10n.noAccountFoundEmail;
-        }
+        final String errorMessage = e.code == 'resource-exhausted'
+            ? l10n.pleaseWaitBeforeResend
+            : l10n.errorOccurredTryAgain;
 
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
             content: Text(errorMessage, style: GoogleFonts.poppins()),
+            backgroundColor: Colors.redAccent,
+          ),
+        );
+      }
+    } catch (_) {
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text(l10n.errorOccurredTryAgain, style: GoogleFonts.poppins()),
             backgroundColor: Colors.redAccent,
           ),
         );

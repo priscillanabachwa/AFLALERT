@@ -1,23 +1,12 @@
-// camera_capture_screen.dart
+// strip_camera_screen.dart
 //
-// AflAlert — maize scan camera capture screen.
+// AflAlert — Tier 2 chemical strip capture screen.
 //
-// Dependencies (add to pubspec.yaml):
-//   camera: ^0.10.5+9
-//
-// Also add camera permissions:
-//   iOS: NSCameraUsageDescription in ios/Runner/Info.plist
-//   Android: <uses-permission android:name="android.permission.CAMERA"/>
-//            in android/app/src/main/AndroidManifest.xml
-//
-// Usage:
-//   final XFile? photo = await Navigator.push(
-//     context,
-//     MaterialPageRoute(builder: (_) => const CameraCaptureScreen()),
-//   );
-//   if (photo != null) {
-//     // photo.path -> send to your mold-detection model
-//   }
+// Structurally a trimmed copy of camera_screen.dart's capture flow
+// (CameraController + gallery fallback + tap-to-focus + flash + quality
+// pills + retake/use-photo review), adapted for a tall rectangular strip
+// cassette instead of a square crop sample, plus a Maize/Groundnut
+// crop-type toggle carried forward to the results screen.
 
 import 'dart:async';
 import 'dart:io';
@@ -30,6 +19,7 @@ import 'package:image_picker/image_picker.dart';
 import '../constants/app_colors.dart';
 import '../l10n/app_localizations.dart';
 
+enum StripCropType { maize, groundnut }
 
 class _AflColors {
   static const bg = Color(0xFF0D1410);
@@ -42,9 +32,9 @@ class _AflColors {
       .withLightness(0.92)
       .withSaturation(0.35)
       .toColor();
-  static const warn = Color(0xFFFAC775); // amber ramp
+  static const warn = Color(0xFFFAC775);
   static const warnText = Color(0xFFFAEEDA);
-  static const danger = Color(0xFFF09595); // red ramp
+  static const danger = Color(0xFFF09595);
   static const dangerText = Color(0xFFF7C1C1);
   static const amberCta = Color(0xFFFAC775);
   static const amberCtaText = Color(0xFF412402);
@@ -54,77 +44,59 @@ enum _LightQuality { good, low }
 
 enum _FocusQuality { adjusting, sharp, blurry }
 
-Future<File> cropImageToSquareFrame(File imageFile, {int maxDimension = 1080}) async {
-  final bytes = await imageFile.readAsBytes();
-  final decoded = img.decodeImage(bytes);
-  if (decoded == null) {
-    return imageFile;
-  }
-
-  final side = decoded.width < decoded.height ? decoded.width : decoded.height;
-  final x = (decoded.width - side) ~/ 2;
-  final y = (decoded.height - side) ~/ 2;
-  final cropped = img.copyCrop(decoded, x: x, y: y, width: side, height: side);
-  final resized = img.copyResize(cropped, width: maxDimension, height: maxDimension);
-
-  final tempDir = await Directory.systemTemp.createTemp('aflalert_crop');
-  final outputPath = '${tempDir.path}/capture_${DateTime.now().microsecondsSinceEpoch}.jpg';
-  final outputFile = File(outputPath);
-  await outputFile.writeAsBytes(img.encodeJpg(resized, quality: 92));
-  return outputFile;
-}
-
-// Crops the captured photo down to exactly the area covered by the on-screen
-// guide frame, rather than a generic center square of the whole sensor image.
-// [previewSize] is the rendered size (in logical pixels) of the live
-// CameraPreview widget, and [frameSize] is the side length of the guide
-// frame drawn on top of it — both share the same screen center, so the
-// crop rectangle in raw image pixels is the frame's fraction of the preview,
-// scaled up by the ratio between the full-resolution photo and the preview.
-Future<File> cropImageToViewfinderFrame(
+Future<File> cropImageToViewfinderRect(
   File imageFile, {
   required Size previewSize,
-  required double frameSize,
-  int maxDimension = 1080,
+  required Size frameSize,
+  int maxWidth = 720,
 }) async {
   final bytes = await imageFile.readAsBytes();
   final rawDecoded = img.decodeImage(bytes);
   if (rawDecoded == null) {
     return imageFile;
   }
-  // Normalize pixel data to match the upright orientation the preview and
-  // final photo are displayed in, so width/height line up with previewSize.
   final decoded = img.bakeOrientation(rawDecoded);
 
-  final shortestSide =
-      decoded.width < decoded.height ? decoded.width : decoded.height;
   if (previewSize.width <= 0 || previewSize.height <= 0) {
-    return cropImageToSquareFrame(imageFile, maxDimension: maxDimension);
+    return imageFile;
   }
 
-  final scale = decoded.width / previewSize.width;
-  final side = (frameSize * scale).round().clamp(1, shortestSide).toInt();
-  final x = (decoded.width - side) ~/ 2;
-  final y = (decoded.height - side) ~/ 2;
-  final cropped = img.copyCrop(decoded, x: x, y: y, width: side, height: side);
-  final resized = img.copyResize(cropped, width: maxDimension, height: maxDimension);
+  final scaleX = decoded.width / previewSize.width;
+  final scaleY = decoded.height / previewSize.height;
+  final width = (frameSize.width * scaleX).round().clamp(1, decoded.width);
+  final height = (frameSize.height * scaleY).round().clamp(1, decoded.height);
+  final x = ((decoded.width - width) ~/ 2).clamp(0, decoded.width - width);
+  final y = ((decoded.height - height) ~/ 2).clamp(0, decoded.height - height);
 
-  final tempDir = await Directory.systemTemp.createTemp('aflalert_crop');
-  final outputPath = '${tempDir.path}/capture_${DateTime.now().microsecondsSinceEpoch}.jpg';
+  final cropped = img.copyCrop(decoded, x: x, y: y, width: width, height: height);
+  final resized = cropped.width > maxWidth
+      ? img.copyResize(cropped, width: maxWidth)
+      : cropped;
+
+  final tempDir = await Directory.systemTemp.createTemp('aflalert_strip_crop');
+  final outputPath =
+      '${tempDir.path}/strip_${DateTime.now().microsecondsSinceEpoch}.jpg';
   final outputFile = File(outputPath);
   await outputFile.writeAsBytes(img.encodeJpg(resized, quality: 92));
   return outputFile;
 }
 
-class CameraCaptureScreen extends StatefulWidget {
-  const CameraCaptureScreen({super.key});
+class StripCameraScreen extends StatefulWidget {
+  const StripCameraScreen({super.key});
 
   @override
-  State<CameraCaptureScreen> createState() => _CameraCaptureScreenState();
+  State<StripCameraScreen> createState() => _StripCameraScreenState();
 }
 
-class _CameraCaptureScreenState extends State<CameraCaptureScreen> {
-  static const double _frameSize = 210;
+class StripCaptureResult {
+  final XFile photo;
+  final StripCropType cropType;
+
+  const StripCaptureResult({required this.photo, required this.cropType});
+}
+
+class _StripCameraScreenState extends State<StripCameraScreen> {
+  static const Size _frameSize = Size(140, 320);
 
   final GlobalKey _previewBoxKey = GlobalKey();
 
@@ -132,6 +104,7 @@ class _CameraCaptureScreenState extends State<CameraCaptureScreen> {
   Future<void>? _initFuture;
 
   bool _flashOn = false;
+  StripCropType _cropType = StripCropType.maize;
   _LightQuality _light = _LightQuality.good;
   _FocusQuality _focus = _FocusQuality.adjusting;
 
@@ -168,17 +141,6 @@ class _CameraCaptureScreenState extends State<CameraCaptureScreen> {
     });
   }
 
-  // Basic real-time lighting check: samples average luma from the camera's
-  // Y-plane. Swap this out for a more sophisticated check if you have one.
-  //
-  // This deliberately keeps the image stream closed most of the time. Early
-  // versions left startImageStream running continuously for as long as the
-  // camera screen was open — the plugin marshals every full-resolution frame
-  // (~30/s) across the platform channel regardless of whether the Dart side
-  // does anything with it, so the longer the screen stayed open before a
-  // capture, the more GC pressure built up and the janker the UI got. Instead
-  // we open the stream just long enough to grab a single frame, close it
-  // immediately, then wait before sampling again.
   void _startBrightnessMonitoring() {
     if (_controller == null || _brightnessMonitoringEnabled) return;
     _brightnessMonitoringEnabled = true;
@@ -208,7 +170,7 @@ class _CameraCaptureScreenState extends State<CameraCaptureScreen> {
       try {
         final yPlane = image.planes[0].bytes;
         int sum = 0;
-        const sampleStep = 97; // sparse sampling keeps this cheap
+        const sampleStep = 97;
         int count = 0;
         for (int i = 0; i < yPlane.length; i += sampleStep) {
           sum += yPlane[i];
@@ -216,8 +178,7 @@ class _CameraCaptureScreenState extends State<CameraCaptureScreen> {
         }
         final avgLuma = count == 0 ? 128 : sum / count;
 
-        final newLight =
-            avgLuma < 70 ? _LightQuality.low : _LightQuality.good;
+        final newLight = avgLuma < 70 ? _LightQuality.low : _LightQuality.good;
         if (newLight != _light && mounted) {
           setState(() => _light = newLight);
         }
@@ -232,10 +193,6 @@ class _CameraCaptureScreenState extends State<CameraCaptureScreen> {
     });
   }
 
-  // Placeholder focus-quality flow: shows "adjusting" briefly after camera
-  // init or a tap-to-focus, then settles to "sharp". Replace with a real
-  // sharpness estimate (e.g. edge/variance analysis or your model's signal)
-  // if you need more than an autofocus-timing heuristic.
   void _simulateFocusSettle() {
     _focusSettleTimer?.cancel();
     setState(() => _focus = _FocusQuality.adjusting);
@@ -265,16 +222,11 @@ class _CameraCaptureScreenState extends State<CameraCaptureScreen> {
         await ImagePicker().pickImage(source: ImageSource.gallery);
     if (picked == null || !mounted) return;
 
-    final croppedFile = await cropImageToSquareFrame(File(picked.path));
-    final croppedPick = XFile(croppedFile.path);
-
-    if (!mounted) return;
-
     final result = await Navigator.push<_ReviewResult>(
       context,
       MaterialPageRoute(
-        builder: (_) => _ReviewScreen(
-          imageFile: croppedPick,
+        builder: (_) => _StripReviewScreen(
+          imageFile: picked,
           lightGood: true,
           focusGood: true,
         ),
@@ -282,7 +234,10 @@ class _CameraCaptureScreenState extends State<CameraCaptureScreen> {
     );
 
     if (result == _ReviewResult.usePhoto && mounted) {
-      Navigator.pop(context, croppedPick);
+      Navigator.pop(
+        context,
+        StripCaptureResult(photo: picked, cropType: _cropType),
+      );
     }
   }
 
@@ -298,19 +253,19 @@ class _CameraCaptureScreenState extends State<CameraCaptureScreen> {
       final previewBox =
           _previewBoxKey.currentContext?.findRenderObject() as RenderBox?;
       final File croppedFile = (previewBox != null && previewBox.hasSize)
-          ? await cropImageToViewfinderFrame(
+          ? await cropImageToViewfinderRect(
               File(file.path),
               previewSize: previewBox.size,
               frameSize: _frameSize,
             )
-          : await cropImageToSquareFrame(File(file.path));
+          : File(file.path);
       final croppedXFile = XFile(croppedFile.path);
       if (!mounted) return;
 
       final result = await Navigator.push<_ReviewResult>(
         context,
         MaterialPageRoute(
-          builder: (_) => _ReviewScreen(
+          builder: (_) => _StripReviewScreen(
             imageFile: croppedXFile,
             lightGood: _light == _LightQuality.good,
             focusGood: _focus == _FocusQuality.sharp,
@@ -319,16 +274,21 @@ class _CameraCaptureScreenState extends State<CameraCaptureScreen> {
       );
 
       if (result == _ReviewResult.retake) {
-        // Resume live view for another attempt.
         _startBrightnessMonitoring();
         _simulateFocusSettle();
       } else if (result == _ReviewResult.usePhoto && mounted) {
-        Navigator.pop(context, croppedXFile);
+        Navigator.pop(
+          context,
+          StripCaptureResult(photo: croppedXFile, cropType: _cropType),
+        );
       }
     } catch (e) {
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text(AppLocalizations.of(context)!.couldNotCapturePhoto('$e'))),
+          SnackBar(
+            content:
+                Text(AppLocalizations.of(context)!.couldNotCapturePhoto('$e')),
+          ),
         );
       }
     }
@@ -369,6 +329,7 @@ class _CameraCaptureScreenState extends State<CameraCaptureScreen> {
                     ),
                   ),
                   _buildTopBar(),
+                  _buildCropTypeToggle(),
                   _buildQualityPills(),
                   _buildFrameAndGuidance(),
                   _buildBottomControls(),
@@ -399,7 +360,7 @@ class _CameraCaptureScreenState extends State<CameraCaptureScreen> {
           Padding(
             padding: const EdgeInsets.only(top: 6),
             child: Text(
-              l10n.scanMaize,
+              l10n.scanTestStrip,
               style: const TextStyle(
                 color: Colors.white,
                 fontSize: 14,
@@ -440,12 +401,57 @@ class _CameraCaptureScreenState extends State<CameraCaptureScreen> {
         const SizedBox(height: 3),
         Text(
           label,
-          style: TextStyle(
-            color: Colors.white.withValues(alpha: 0.65),
-            fontSize: 10,
-          ),
+          style: TextStyle(color: Colors.white.withValues(alpha: 0.65), fontSize: 10),
         ),
       ],
+    );
+  }
+
+  Widget _buildCropTypeToggle() {
+    final AppLocalizations l10n = AppLocalizations.of(context)!;
+    return Positioned(
+      top: 56,
+      left: 0,
+      right: 0,
+      child: Center(
+        child: Container(
+          padding: const EdgeInsets.all(3),
+          decoration: BoxDecoration(
+            color: Colors.black.withValues(alpha: 0.45),
+            borderRadius: BorderRadius.circular(999),
+          ),
+          child: Row(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              _cropTypeSegment(l10n.cropTypeMaize, StripCropType.maize),
+              _cropTypeSegment(l10n.cropTypeGroundnut, StripCropType.groundnut),
+            ],
+          ),
+        ),
+      ),
+    );
+  }
+
+  Widget _cropTypeSegment(String label, StripCropType type) {
+    final bool selected = _cropType == type;
+    return InkWell(
+      borderRadius: BorderRadius.circular(999),
+      onTap: () => setState(() => _cropType = type),
+      child: Container(
+        padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 6),
+        decoration: BoxDecoration(
+          color: selected ? _AflColors.amberCta : Colors.transparent,
+          borderRadius: BorderRadius.circular(999),
+        ),
+        child: Text(
+          label,
+          style: TextStyle(
+            fontSize: 12,
+            fontWeight: FontWeight.w600,
+            color: selected ? _AflColors.amberCtaText : Colors.white70,
+          ),
+        ),
+      ),
     );
   }
 
@@ -456,7 +462,7 @@ class _CameraCaptureScreenState extends State<CameraCaptureScreen> {
     final focusIsAdjusting = _focus == _FocusQuality.adjusting;
 
     return Positioned(
-      top: 78,
+      top: 100,
       left: 0,
       right: 0,
       child: Row(
@@ -519,11 +525,7 @@ class _CameraCaptureScreenState extends State<CameraCaptureScreen> {
           const SizedBox(width: 6),
           Text(
             label,
-            style: TextStyle(
-              fontSize: 12,
-              fontWeight: FontWeight.w500,
-              color: textColor,
-            ),
+            style: TextStyle(fontSize: 12, fontWeight: FontWeight.w500, color: textColor),
           ),
         ],
       ),
@@ -536,47 +538,58 @@ class _CameraCaptureScreenState extends State<CameraCaptureScreen> {
         _light == _LightQuality.good && _focus == _FocusQuality.sharp;
     final bracketColor = allGood ? Colors.white : _AflColors.danger;
 
-    final String mainGuidance = _light == _LightQuality.low
-        ? l10n.moveToBrighterArea
-        : (_focus == _FocusQuality.blurry
-            ? l10n.holdPhoneSteady
-            : '');
-    final String subGuidance = allGood
-        ? l10n.holdPhone20cm
-        : l10n.adjustFrameWillTurnWhite;
-
     return Center(
       child: Column(
         mainAxisSize: MainAxisSize.min,
         children: [
-          CustomPaint(
-            size: const Size(_frameSize, _frameSize),
-            painter: _CornerBracketsPainter(color: bracketColor),
+          SizedBox(
+            width: _StripCameraScreenState._frameSize.width,
+            height: _StripCameraScreenState._frameSize.height,
+            child: CustomPaint(
+              painter: _StripFramePainter(color: bracketColor),
+              child: Stack(
+                children: [
+                  Positioned(
+                    top: 8,
+                    left: 0,
+                    right: 0,
+                    child: Center(
+                      child: Text(
+                        'C',
+                        style: TextStyle(
+                          color: bracketColor.withValues(alpha: 0.7),
+                          fontSize: 11,
+                          fontWeight: FontWeight.bold,
+                        ),
+                      ),
+                    ),
+                  ),
+                  Positioned(
+                    bottom: 8,
+                    left: 0,
+                    right: 0,
+                    child: Center(
+                      child: Text(
+                        'T',
+                        style: TextStyle(
+                          color: bracketColor.withValues(alpha: 0.7),
+                          fontSize: 11,
+                          fontWeight: FontWeight.bold,
+                        ),
+                      ),
+                    ),
+                  ),
+                ],
+              ),
+            ),
           ),
-          const SizedBox(height: 12),
+          const SizedBox(height: 14),
           Padding(
             padding: const EdgeInsets.symmetric(horizontal: 30),
-            child: Column(
-              children: [
-                Text(
-                  mainGuidance,
-                  textAlign: TextAlign.center,
-                  style: const TextStyle(
-                    color: Colors.white,
-                    fontSize: 13,
-                    fontWeight: FontWeight.w500,
-                  ),
-                ),
-                const SizedBox(height: 4),
-                Text(
-                  subGuidance,
-                  textAlign: TextAlign.center,
-                  style: TextStyle(
-                    color: Colors.white.withValues(alpha: 0.55),
-                    fontSize: 11,
-                  ),
-                ),
-              ],
+            child: Text(
+              _focus == _FocusQuality.blurry ? l10n.holdPhoneSteady : l10n.positionStripInFrame,
+              textAlign: TextAlign.center,
+              style: const TextStyle(color: Colors.white, fontSize: 13, fontWeight: FontWeight.w500),
             ),
           ),
         ],
@@ -625,10 +638,7 @@ class _CameraCaptureScreenState extends State<CameraCaptureScreen> {
               decoration: BoxDecoration(
                 color: Colors.white,
                 shape: BoxShape.circle,
-                border: Border.all(
-                  color: Colors.white.withValues(alpha: 0.35),
-                  width: 4,
-                ),
+                border: Border.all(color: Colors.white.withValues(alpha: 0.35), width: 4),
               ),
             ),
           ),
@@ -640,76 +650,53 @@ class _CameraCaptureScreenState extends State<CameraCaptureScreen> {
   }
 }
 
-class _CornerBracketsPainter extends CustomPainter {
+class _StripFramePainter extends CustomPainter {
   final Color color;
-  _CornerBracketsPainter({required this.color});
+  _StripFramePainter({required this.color});
 
   @override
   void paint(Canvas canvas, Size size) {
     final paint = Paint()
       ..color = color
-      ..strokeWidth = 3
-      ..strokeCap = StrokeCap.round
+      ..strokeWidth = 2.5
       ..style = PaintingStyle.stroke;
 
-    const r = 8.0; // corner radius
-    const len = 36.0; // bracket arm length
+    final rrect = RRect.fromRectAndRadius(
+      Rect.fromLTWH(0, 0, size.width, size.height),
+      const Radius.circular(10),
+    );
+    canvas.drawRRect(rrect, paint..color = color.withValues(alpha: 0.9));
 
-    // Top-left
-    canvas.drawPath(
-      Path()
-        ..moveTo(0, len)
-        ..lineTo(0, r)
-        ..quadraticBezierTo(0, 0, r, 0)
-        ..lineTo(len, 0),
-      paint,
-    );
-    // Top-right
-    canvas.drawPath(
-      Path()
-        ..moveTo(size.width - len, 0)
-        ..lineTo(size.width - r, 0)
-        ..quadraticBezierTo(size.width, 0, size.width, r)
-        ..lineTo(size.width, len),
-      paint,
-    );
-    // Bottom-right
-    canvas.drawPath(
-      Path()
-        ..moveTo(size.width, size.height - len)
-        ..lineTo(size.width, size.height - r)
-        ..quadraticBezierTo(
-            size.width, size.height, size.width - r, size.height)
-        ..lineTo(size.width - len, size.height),
-      paint,
-    );
-    // Bottom-left
-    canvas.drawPath(
-      Path()
-        ..moveTo(len, size.height)
-        ..lineTo(r, size.height)
-        ..quadraticBezierTo(0, size.height, 0, size.height - r)
-        ..lineTo(0, size.height - len),
-      paint,
-    );
+    final dashPaint = Paint()
+      ..color = color.withValues(alpha: 0.5)
+      ..strokeWidth = 1.5;
+    const dashWidth = 6.0;
+    const gap = 5.0;
+    double startX = 0;
+    final y = size.height / 2;
+    while (startX < size.width) {
+      canvas.drawLine(
+        Offset(startX, y),
+        Offset((startX + dashWidth).clamp(0, size.width), y),
+        dashPaint,
+      );
+      startX += dashWidth + gap;
+    }
   }
 
   @override
-  bool shouldRepaint(covariant _CornerBracketsPainter oldDelegate) =>
+  bool shouldRepaint(covariant _StripFramePainter oldDelegate) =>
       oldDelegate.color != color;
 }
 
-// ---------------------------------------------------------------------------
-// Review screen — shown after capture, with retake / use photo
-// ---------------------------------------------------------------------------
 enum _ReviewResult { retake, usePhoto }
 
-class _ReviewScreen extends StatelessWidget {
+class _StripReviewScreen extends StatelessWidget {
   final XFile imageFile;
   final bool lightGood;
   final bool focusGood;
 
-  const _ReviewScreen({
+  const _StripReviewScreen({
     required this.imageFile,
     required this.lightGood,
     required this.focusGood,
@@ -731,24 +718,17 @@ class _ReviewScreen extends StatelessWidget {
             const SizedBox(height: 8),
             Text(
               l10n.reviewPhoto,
-              style: const TextStyle(
-                color: Colors.white,
-                fontSize: 14,
-                fontWeight: FontWeight.w500,
-              ),
+              style: const TextStyle(color: Colors.white, fontSize: 14, fontWeight: FontWeight.w500),
             ),
             const SizedBox(height: 24),
             Expanded(
               child: Center(
                 child: Container(
-                  width: 260,
-                  height: 260,
+                  width: 200,
+                  height: 320,
                   decoration: BoxDecoration(
                     borderRadius: BorderRadius.circular(16),
-                    border: Border.all(
-                      color: Colors.white.withValues(alpha: 0.2),
-                      width: 1,
-                    ),
+                    border: Border.all(color: Colors.white.withValues(alpha: 0.2), width: 1),
                   ),
                   clipBehavior: Clip.antiAlias,
                   child: Image.file(File(imageFile.path), fit: BoxFit.cover),
@@ -759,8 +739,7 @@ class _ReviewScreen extends StatelessWidget {
               margin: const EdgeInsets.only(bottom: 16),
               padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 6),
               decoration: BoxDecoration(
-                color: (allGood ? _AflColors.good : _AflColors.warn)
-                    .withValues(alpha: 0.18),
+                color: (allGood ? _AflColors.good : _AflColors.warn).withValues(alpha: 0.18),
                 borderRadius: BorderRadius.circular(999),
                 border: Border.all(
                   color: allGood ? _AflColors.good : _AflColors.warn,
@@ -781,9 +760,7 @@ class _ReviewScreen extends StatelessWidget {
                     style: TextStyle(
                       fontSize: 12,
                       fontWeight: FontWeight.w500,
-                      color: allGood
-                          ? _AflColors.goodText
-                          : _AflColors.warnText,
+                      color: allGood ? _AflColors.goodText : _AflColors.warnText,
                     ),
                   ),
                 ],
@@ -795,19 +772,13 @@ class _ReviewScreen extends StatelessWidget {
                 children: [
                   Expanded(
                     child: OutlinedButton.icon(
-                      onPressed: () =>
-                          Navigator.pop(context, _ReviewResult.retake),
+                      onPressed: () => Navigator.pop(context, _ReviewResult.retake),
                       icon: const Icon(Icons.refresh, color: Colors.white, size: 16),
-                      label: Text(l10n.retake,
-                          style: const TextStyle(color: Colors.white)),
+                      label: Text(l10n.retake, style: const TextStyle(color: Colors.white)),
                       style: OutlinedButton.styleFrom(
                         padding: const EdgeInsets.symmetric(vertical: 14),
-                        side: BorderSide(
-                          color: Colors.white.withValues(alpha: 0.25),
-                        ),
-                        shape: RoundedRectangleBorder(
-                          borderRadius: BorderRadius.circular(12),
-                        ),
+                        side: BorderSide(color: Colors.white.withValues(alpha: 0.25)),
+                        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
                         backgroundColor: Colors.white.withValues(alpha: 0.1),
                       ),
                     ),
@@ -815,21 +786,15 @@ class _ReviewScreen extends StatelessWidget {
                   const SizedBox(width: 12),
                   Expanded(
                     child: ElevatedButton(
-                      onPressed: () =>
-                          Navigator.pop(context, _ReviewResult.usePhoto),
+                      onPressed: () => Navigator.pop(context, _ReviewResult.usePhoto),
                       style: ElevatedButton.styleFrom(
                         padding: const EdgeInsets.symmetric(vertical: 14),
                         backgroundColor: _AflColors.amberCta,
                         foregroundColor: _AflColors.amberCtaText,
-                        shape: RoundedRectangleBorder(
-                          borderRadius: BorderRadius.circular(12),
-                        ),
+                        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
                         elevation: 0,
                       ),
-                      child: Text(
-                        l10n.usePhoto,
-                        style: const TextStyle(fontWeight: FontWeight.w500),
-                      ),
+                      child: Text(l10n.usePhoto, style: const TextStyle(fontWeight: FontWeight.w500)),
                     ),
                   ),
                 ],

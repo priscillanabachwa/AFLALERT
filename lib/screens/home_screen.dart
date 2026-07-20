@@ -20,6 +20,8 @@ import '../widgets/custom_bottom_nav.dart';
 import 'analysis_screen.dart';
 import 'history_screen.dart';
 import 'profile_screen.dart';
+import 'strip_camera_screen.dart';
+import 'strip_analysis_screen.dart';
 
 class HomeScreen extends StatefulWidget {
   const HomeScreen({super.key});
@@ -29,9 +31,15 @@ class HomeScreen extends StatefulWidget {
 }
 
 class _HomeScreenState extends State<HomeScreen> {
+  // Applied to text that sits directly on the background photo (rather than
+  // inside an opaque card) so it stays legible regardless of image content.
+  static const List<Shadow> _onImageShadow = [
+    Shadow(color: Colors.black87, blurRadius: 8, offset: Offset(0, 1)),
+  ];
+
   // Weather can change quickly, so keep it fresh instead of only fetching
   // once when the screen first mounts.
-  static const Duration _refreshInterval = Duration(minutes: 5);
+  static const Duration _refreshInterval = Duration(minutes: 2);
 
   LocationResult? _location;
   WeatherInfo? _weather;
@@ -41,6 +49,12 @@ class _HomeScreenState extends State<HomeScreen> {
 
   String _userType = '';
   StreamSubscription<DocumentSnapshot<Map<String, dynamic>>>? _profileSub;
+
+  // Hoisted so every StreamBuilder below shares one live subscription
+  // instead of each creating (and re-creating on every rebuild) its own
+  // separate Firestore listener on the same document.
+  final Stream<DocumentSnapshot<Map<String, dynamic>>> _profileStream =
+      FirestoreService().getUserProfile();
 
   // Edge-triggered so the alert fires once when it becomes hot, not on
   // every 5-minute refresh while it stays hot.
@@ -54,7 +68,7 @@ class _HomeScreenState extends State<HomeScreen> {
       _refreshInterval,
       (_) => _loadWeather(),
     );
-    _profileSub = FirestoreService().getUserProfile().listen((doc) {
+    _profileSub = _profileStream.listen((doc) {
       final String userType = doc.data()?['userType'] as String? ?? '';
       if (userType == _userType) return;
       setState(() => _userType = userType);
@@ -131,102 +145,127 @@ class _HomeScreenState extends State<HomeScreen> {
     final AppLocalizations l10n = AppLocalizations.of(context)!;
     return Scaffold(
       backgroundColor: AppColors.t95,
-      body: SafeArea(
-        child: RefreshIndicator(
-          color: AppColors.primary,
-          onRefresh: _loadWeather,
-          child: SingleChildScrollView(
-            physics: const AlwaysScrollableScrollPhysics(),
-            padding: const EdgeInsets.symmetric(horizontal: 20),
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                const SizedBox(height: 12),
-                _buildHeader(context),
-                const SizedBox(height: 24),
-                StreamBuilder<DocumentSnapshot<Map<String, dynamic>>>(
-                  stream: FirestoreService().getUserProfile(),
-                  builder: (context, snapshot) {
-                    final Map<String, dynamic>? profile = snapshot.data?.data();
-                    final String? fullName = profile?['fullName'] as String?;
-                    final String firstName =
-                        (fullName != null && fullName.trim().isNotEmpty)
-                        ? fullName.trim().split(' ').first
-                        : l10n.defaultGreetingName;
-                    final String userType =
-                        profile?['userType'] as String? ?? '';
-                    return Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        _buildGreeting(firstName),
-                        const SizedBox(height: 20),
-                        _buildInfoCards(
-                          tipForConditions(userType, _weather?.temperatureC),
-                          isHeatAlert(_weather?.temperatureC),
-                        ),
-                      ],
-                    );
-                  },
-                ),
-                const SizedBox(height: 28),
-                Text(
-                  l10n.guidelines,
-                  style: const TextStyle(
-                    fontSize: 18,
-                    fontWeight: FontWeight.bold,
-                    color: AppColors.primary,
-                  ),
-                ),
-                const SizedBox(height: 16),
-                StreamBuilder<DocumentSnapshot<Map<String, dynamic>>>(
-                  stream: FirestoreService().getUserProfile(),
-                  builder: (context, snapshot) {
-                    final String userType =
-                        snapshot.data?.data()?['userType'] as String? ?? '';
-                    return _buildSeasonalGuidelineCard(userType);
-                  },
-                ),
-                const SizedBox(height: 32),
-                _buildScanButton(context),
-                const SizedBox(height: 12),
-                Center(
-                  child: Text(
-                    l10n.tapToScan,
-                    style: const TextStyle(fontSize: 14, color: Colors.grey),
-                  ),
-                ),
-                const SizedBox(height: 28),
-                StreamBuilder<QuerySnapshot>(
-                  stream: FirestoreService().getUserScanHistory(),
-                  builder: (context, snapshot) {
-                    final docs = snapshot.data?.docs ?? [];
-                    final recentDocs = docs.take(2).toList();
-                    return Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        _buildStatsRow(docs),
-                        const SizedBox(height: 28),
-                        _buildRecentScansHeader(),
-                        const SizedBox(height: 16),
-                        if (recentDocs.isEmpty)
-                          _buildNoScansYet()
-                        else
-                          for (int i = 0; i < recentDocs.length; i++)
-                            Padding(
-                              padding: EdgeInsets.only(
-                                bottom: i == recentDocs.length - 1 ? 0 : 12,
-                              ),
-                              child: _buildScanTileFromDoc(recentDocs[i]),
-                            ),
-                      ],
-                    );
-                  },
-                ),
-                const SizedBox(height: 88),
-              ],
+      extendBody: true,
+      body: Stack(
+        children: [
+          Positioned.fill(
+            child: Image.asset(
+              'lib/assets/images/homescreen.jpeg',
+              fit: BoxFit.cover,
             ),
           ),
-        ),
+          Positioned.fill(
+            child: DecoratedBox(
+              decoration: BoxDecoration(
+                gradient: LinearGradient(
+                  begin: Alignment.topCenter,
+                  end: Alignment.bottomCenter,
+                  colors: [
+                    Colors.black.withValues(alpha: 0.55),
+                    Colors.black.withValues(alpha: 0.35),
+                    Colors.black.withValues(alpha: 0.45),
+                  ],
+                ),
+              ),
+            ),
+          ),
+          SafeArea(
+            child: RefreshIndicator(
+              color: AppColors.primary,
+              onRefresh: _loadWeather,
+              child: SingleChildScrollView(
+                physics: const AlwaysScrollableScrollPhysics(),
+                padding: const EdgeInsets.symmetric(horizontal: 20),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    const SizedBox(height: 12),
+                    _buildHeader(context),
+                    const SizedBox(height: 24),
+                    StreamBuilder<DocumentSnapshot<Map<String, dynamic>>>(
+                      stream: _profileStream,
+                      builder: (context, snapshot) {
+                        final Map<String, dynamic>? profile = snapshot.data
+                            ?.data();
+                        final String? fullName =
+                            profile?['fullName'] as String?;
+                        final String firstName =
+                            (fullName != null && fullName.trim().isNotEmpty)
+                            ? fullName.trim().split(' ').first
+                            : l10n.defaultGreetingName;
+                        final String userType =
+                            profile?['userType'] as String? ?? '';
+                        return Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            _buildGreeting(firstName),
+                            const SizedBox(height: 20),
+                            _buildInfoCards(
+                              tipForConditions(
+                                userType,
+                                _weather?.temperatureC,
+                              ),
+                              isHeatAlert(_weather?.temperatureC),
+                            ),
+                          ],
+                        );
+                      },
+                    ),
+                    const SizedBox(height: 28),
+                    Text(
+                      l10n.guidelines,
+                      style: const TextStyle(
+                        fontSize: 18,
+                        fontWeight: FontWeight.bold,
+                        color: Colors.white,
+                        shadows: _onImageShadow,
+                      ),
+                    ),
+                    const SizedBox(height: 16),
+                    StreamBuilder<DocumentSnapshot<Map<String, dynamic>>>(
+                      stream: _profileStream,
+                      builder: (context, snapshot) {
+                        final String userType =
+                            snapshot.data?.data()?['userType'] as String? ?? '';
+                        return _buildSeasonalGuidelineCard(userType);
+                      },
+                    ),
+                    const SizedBox(height: 32),
+                    _buildTierPicker(context),
+                    const SizedBox(height: 28),
+                    StreamBuilder<QuerySnapshot>(
+                      stream: FirestoreService().getUserScanHistory(),
+                      builder: (context, snapshot) {
+                        final docs = snapshot.data?.docs ?? [];
+                        final recentDocs = docs.take(2).toList();
+                        return Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            _buildStatsRow(docs),
+                            const SizedBox(height: 28),
+                            _buildRecentScansHeader(),
+                            const SizedBox(height: 16),
+                            if (recentDocs.isEmpty)
+                              _buildNoScansYet()
+                            else
+                              for (int i = 0; i < recentDocs.length; i++)
+                                Padding(
+                                  padding: EdgeInsets.only(
+                                    bottom: i == recentDocs.length - 1 ? 0 : 12,
+                                  ),
+                                  child: _buildScanTileFromDoc(recentDocs[i]),
+                                ),
+                          ],
+                        );
+                      },
+                    ),
+                    const SizedBox(height: 88),
+                  ],
+                ),
+              ),
+            ),
+          ),
+        ],
       ),
       bottomNavigationBar: const CustomBottomNav(currentIndex: 0),
     );
@@ -263,12 +302,13 @@ class _HomeScreenState extends State<HomeScreen> {
             style: TextStyle(
               fontSize: 24,
               fontWeight: FontWeight.bold,
-              color: AppColors.primary,
+              color: Colors.white,
+              shadows: _onImageShadow,
             ),
           ),
         ),
         StreamBuilder<DocumentSnapshot<Map<String, dynamic>>>(
-          stream: FirestoreService().getUserProfile(),
+          stream: _profileStream,
           builder: (context, snapshot) {
             final user = FirebaseAuth.instance.currentUser;
             final profile = snapshot.data?.data();
@@ -334,7 +374,8 @@ class _HomeScreenState extends State<HomeScreen> {
           style: const TextStyle(
             fontSize: 28,
             fontWeight: FontWeight.w400,
-            color: AppColors.primary,
+            color: Colors.white,
+            shadows: _onImageShadow,
           ),
         ),
         Text(
@@ -342,13 +383,18 @@ class _HomeScreenState extends State<HomeScreen> {
           style: const TextStyle(
             fontSize: 32,
             fontWeight: FontWeight.bold,
-            color: AppColors.primary,
+            color: Colors.white,
+            shadows: _onImageShadow,
           ),
         ),
         const SizedBox(height: 6),
         Text(
           l10n.homeSubGreeting,
-          style: const TextStyle(fontSize: 14, color: Colors.grey),
+          style: const TextStyle(
+            fontSize: 14,
+            color: Colors.white70,
+            shadows: _onImageShadow,
+          ),
         ),
       ],
     );
@@ -563,7 +609,7 @@ class _HomeScreenState extends State<HomeScreen> {
     );
   }
 
-  Future<void> _onScanTap(BuildContext context) async {
+  Future<void> _onTier1Tap(BuildContext context) async {
     // Reuse the location already resolved for the weather card when
     // possible, falling back to a fresh lookup if that hasn't landed yet.
     final String? location =
@@ -580,43 +626,118 @@ class _HomeScreenState extends State<HomeScreen> {
     );
   }
 
-  Widget _buildScanButton(BuildContext context) {
-    return Center(
-      child: Container(
-        width: 160,
-        height: 160,
-        decoration: BoxDecoration(
-          shape: BoxShape.circle,
-          border: Border.all(color: Colors.grey.shade300, width: 8),
-        ),
-        child: Container(
-          margin: const EdgeInsets.all(8),
-          decoration: const BoxDecoration(
-            shape: BoxShape.circle,
-            color: AppColors.primary,
+  Future<void> _onTier2Tap(BuildContext context) async {
+    final String? location =
+        _location?.placeName ?? await LocationService().getCurrentPlaceName();
+    if (!context.mounted) return;
+
+    final Object? result = await Navigator.pushNamed(context, '/stripCamera');
+    if (result is! StripCaptureResult || !context.mounted) return;
+
+    Navigator.pushNamed(
+      context,
+      '/stripAnalysis',
+      arguments: StripAnalysisScreenArgs(
+        photo: result.photo,
+        cropType: result.cropType,
+        location: location,
+      ),
+    );
+  }
+
+  Widget _buildTierPicker(BuildContext context) {
+    final AppLocalizations l10n = AppLocalizations.of(context)!;
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Text(
+          l10n.startNewTest,
+          style: const TextStyle(
+            fontSize: 18,
+            fontWeight: FontWeight.bold,
+            color: Colors.white,
+            shadows: _onImageShadow,
           ),
-          child: Material(
-            color: Colors.transparent,
-            child: InkWell(
-              customBorder: const CircleBorder(),
-              onTap: () => _onScanTap(context),
-              child: Column(
-                mainAxisAlignment: MainAxisAlignment.center,
-                children: [
-                  const Icon(Icons.camera_alt, color: Colors.white, size: 36),
-                  const SizedBox(height: 8),
-                  Text(
-                    AppLocalizations.of(context)!.aiScan,
-                    style: const TextStyle(
-                      color: Colors.white,
-                      fontSize: 14,
-                      fontWeight: FontWeight.bold,
-                      letterSpacing: 1,
-                    ),
-                  ),
-                ],
+        ),
+        const SizedBox(height: 12),
+        _buildTierCard(
+          icon: Icons.camera_alt_outlined,
+          iconColor: AppColors.primaryContainer,
+          title: l10n.tier1Title,
+          subtitle: l10n.tier1Subtitle,
+          onTap: () => _onTier1Tap(context),
+        ),
+        const SizedBox(height: 12),
+        _buildTierCard(
+          icon: Icons.science_outlined,
+          iconColor: AppColors.secondary,
+          title: l10n.tier2Title,
+          subtitle: l10n.tier2Subtitle,
+          onTap: () => _onTier2Tap(context),
+        ),
+      ],
+    );
+  }
+
+  Widget _buildTierCard({
+    required IconData icon,
+    required Color iconColor,
+    required String title,
+    required String subtitle,
+    required VoidCallback onTap,
+  }) {
+    return Material(
+      color: Colors.white,
+      borderRadius: BorderRadius.circular(16),
+      elevation: 0,
+      child: InkWell(
+        borderRadius: BorderRadius.circular(16),
+        onTap: onTap,
+        child: Container(
+          padding: const EdgeInsets.all(14),
+          decoration: BoxDecoration(
+            borderRadius: BorderRadius.circular(16),
+            boxShadow: [
+              BoxShadow(
+                color: Colors.black.withValues(alpha: 0.05),
+                blurRadius: 10,
+                offset: const Offset(0, 4),
               ),
-            ),
+            ],
+          ),
+          child: Row(
+            children: [
+              Container(
+                padding: const EdgeInsets.all(12),
+                decoration: BoxDecoration(
+                  color: iconColor.withValues(alpha: 0.15),
+                  borderRadius: BorderRadius.circular(12),
+                ),
+                child: Icon(icon, color: iconColor, size: 24),
+              ),
+              const SizedBox(width: 14),
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(
+                      title,
+                      style: const TextStyle(
+                        fontSize: 14,
+                        fontWeight: FontWeight.w700,
+                        color: AppColors.primary,
+                      ),
+                    ),
+                    const SizedBox(height: 3),
+                    Text(
+                      subtitle,
+                      style: const TextStyle(fontSize: 12, color: Colors.grey),
+                    ),
+                  ],
+                ),
+              ),
+              const Icon(Icons.chevron_right, color: Colors.grey),
+            ],
           ),
         ),
       ),
@@ -647,6 +768,18 @@ class _HomeScreenState extends State<HomeScreen> {
           r'no mold|healthy|clean|safe|negative',
           caseSensitive: false,
         ).hasMatch(label);
+  }
+
+  // Docs saved before Tier 2 shipped have no `testType` field and keep
+  // using the Tier 1 regex classifier; chemical scans compare ppb against
+  // the safe limit stored alongside the reading instead.
+  static bool _isRiskyDoc(Map<String, dynamic> data) {
+    if (data['testType'] == 'chemical') {
+      final num ppb = (data['ppbValue'] ?? 0) as num;
+      final num limit = (data['safeLimitPpb'] ?? 0) as num;
+      return ppb > limit;
+    }
+    return _isMoldyLabel((data['label'] ?? '').toString());
   }
 
   static String _formatScanDate(DateTime dt) =>
@@ -681,7 +814,7 @@ class _HomeScreenState extends State<HomeScreen> {
     if (docs.isNotEmpty) {
       for (final doc in docs) {
         final data = doc.data() as Map<String, dynamic>;
-        if (_isMoldyLabel((data['label'] ?? '').toString())) {
+        if (_isRiskyDoc(data)) {
           risky++;
         } else {
           healthy++;
@@ -708,7 +841,11 @@ class _HomeScreenState extends State<HomeScreen> {
       ),
       child: Row(
         children: [
-          _buildStatItem('$healthy', l10n.healthyCaps, AppColors.primaryContainer),
+          _buildStatItem(
+            '$healthy',
+            l10n.healthyCaps,
+            AppColors.primaryContainer,
+          ),
           _buildDivider(),
           _buildStatItem('$risky', l10n.riskyCaps, AppColors.error),
           _buildDivider(),
@@ -720,8 +857,20 @@ class _HomeScreenState extends State<HomeScreen> {
 
   Widget _buildNoScansYet() {
     return Container(
+      width: double.infinity,
       padding: const EdgeInsets.symmetric(vertical: 28),
       alignment: Alignment.center,
+      decoration: BoxDecoration(
+        color: Colors.white,
+        borderRadius: BorderRadius.circular(16),
+        boxShadow: [
+          BoxShadow(
+            color: Colors.black.withValues(alpha: 0.05),
+            blurRadius: 10,
+            offset: const Offset(0, 4),
+          ),
+        ],
+      ),
       child: Text(
         AppLocalizations.of(context)!.noScansYetHome,
         textAlign: TextAlign.center,
@@ -733,14 +882,9 @@ class _HomeScreenState extends State<HomeScreen> {
   Widget _buildScanTileFromDoc(QueryDocumentSnapshot doc) {
     final AppLocalizations l10n = AppLocalizations.of(context)!;
     final data = doc.data() as Map<String, dynamic>;
-    final String label = (data['label'] ?? 'Unknown').toString();
+    final bool isChemical = data['testType'] == 'chemical';
     final String location = (data['location'] ?? '').toString();
-    final num confidenceRaw = (data['confidence'] ?? 0) as num;
-    final int matchPercent =
-        (confidenceRaw <= 1 ? confidenceRaw * 100 : confidenceRaw)
-            .round()
-            .clamp(0, 100);
-    final bool isMoldy = _isMoldyLabel(label);
+    final bool isRisky = _isRiskyDoc(data);
     final Timestamp? timestamp = data['timestamp'] as Timestamp?;
     final String timeText = timestamp != null
         ? _relativeTime(timestamp.toDate())
@@ -748,19 +892,38 @@ class _HomeScreenState extends State<HomeScreen> {
     final String subtitle = location.isNotEmpty
         ? '$location · $timeText'
         : timeText;
-    final Color statusColor = isMoldy
+    final Color statusColor = isRisky
         ? AppColors.error
         : AppColors.primaryContainer;
 
+    final String title;
+    final String trailingText;
+    if (isChemical) {
+      final num ppb = (data['ppbValue'] ?? 0) as num;
+      title = l10n.chemicalStripScanTitle;
+      trailingText = l10n.ppbValueLabel(ppb.toStringAsFixed(1));
+    } else {
+      final String label = (data['label'] ?? 'Unknown').toString();
+      final num confidenceRaw = (data['confidence'] ?? 0) as num;
+      final int matchPercent =
+          (confidenceRaw <= 1 ? confidenceRaw * 100 : confidenceRaw)
+              .round()
+              .clamp(0, 100);
+      title = label;
+      trailingText = l10n.matchPercentLabel(matchPercent);
+    }
+
     return _buildScanTile(
-      icon: isMoldy ? Icons.warning_amber_rounded : Icons.eco,
+      icon: isChemical
+          ? Icons.science_outlined
+          : (isRisky ? Icons.warning_amber_rounded : Icons.eco),
       iconColor: statusColor,
-      title: label,
+      title: title,
       subtitle: subtitle,
-      badgeText: isMoldy ? l10n.atRiskBadge : l10n.safeBadge,
-      badgeColor: isMoldy ? AppColors.errorLight : const Color(0xFFE8F5E9),
+      badgeText: isRisky ? l10n.atRiskBadge : l10n.safeBadge,
+      badgeColor: isRisky ? AppColors.errorLight : const Color(0xFFE8F5E9),
       badgeTextColor: statusColor,
-      trailingText: l10n.matchPercentLabel(matchPercent),
+      trailingText: trailingText,
       trailingColor: statusColor,
     );
   }
@@ -806,7 +969,8 @@ class _HomeScreenState extends State<HomeScreen> {
           style: const TextStyle(
             fontSize: 18,
             fontWeight: FontWeight.bold,
-            color: AppColors.primary,
+            color: Colors.white,
+            shadows: _onImageShadow,
           ),
         ),
         TextButton(
@@ -820,6 +984,7 @@ class _HomeScreenState extends State<HomeScreen> {
               fontSize: 13,
               color: AppColors.secondary,
               fontWeight: FontWeight.w600,
+              shadows: _onImageShadow,
             ),
           ),
         ),
