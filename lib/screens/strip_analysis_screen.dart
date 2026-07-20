@@ -9,68 +9,36 @@ import '../l10n/app_localizations.dart';
 import '../widgets/custom_app_bar.dart';
 import '../widgets/ai_animation.dart';
 import '../widgets/progress_section.dart';
-import 'result_screen.dart';
+import 'strip_camera_screen.dart';
+import 'strip_result_screen.dart';
 import '../services/firebase_storage.dart';
 import '../services/firestore_service.dart';
-import '../services/tflite_service.dart';
+import '../services/strip_analysis_service.dart';
 
-class AnalysisScreenArgs {
+class StripAnalysisScreenArgs {
   final XFile photo;
+  final StripCropType cropType;
   final String? location;
 
-  const AnalysisScreenArgs({required this.photo, this.location});
-}
-
-class _MaizeAnalysis {
-  final String label;
-  final double confidencePercent;
-  final bool isMoldy;
-
-  const _MaizeAnalysis({
-    required this.label,
-    required this.confidencePercent,
-    required this.isMoldy,
+  const StripAnalysisScreenArgs({
+    required this.photo,
+    required this.cropType,
+    this.location,
   });
-
-  factory _MaizeAnalysis.fromResponse(Map<String, dynamic> data) {
-    final String label =
-        (data['label'] ?? data['prediction'] ?? data['result'] ?? 'Unknown')
-            .toString();
-
-    final num rawConfidence =
-        (data['confidence'] ?? data['score'] ?? data['probability'] ?? 0) as num;
-    final double confidencePercent =
-        rawConfidence <= 1 ? rawConfidence * 100 : rawConfidence.toDouble();
-
-    final dynamic moldFlag =
-        data['mold_detected'] ?? data['aflatoxin_detected'] ?? data['is_moldy'];
-    final bool isMoldy = moldFlag is bool
-        ? moldFlag
-        : RegExp(r'mold|aflatox|contamin|infect|positive', caseSensitive: false)
-                .hasMatch(label) &&
-            !RegExp(r'no mold|healthy|clean|safe|negative', caseSensitive: false)
-                .hasMatch(label);
-
-    return _MaizeAnalysis(
-      label: label,
-      confidencePercent: confidencePercent.clamp(0, 100),
-      isMoldy: isMoldy,
-    );
-  }
 }
 
-class AnalysisScreen extends StatefulWidget {
-  const AnalysisScreen({super.key});
+class StripAnalysisScreen extends StatefulWidget {
+  const StripAnalysisScreen({super.key});
 
   @override
-  State<AnalysisScreen> createState() => _AnalysisScreenState();
+  State<StripAnalysisScreen> createState() => _StripAnalysisScreenState();
 }
 
-class _AnalysisScreenState extends State<AnalysisScreen> {
+class _StripAnalysisScreenState extends State<StripAnalysisScreen> {
   bool _isProcessing = true;
   String? _errorMessage;
   bool _started = false;
-  AnalysisScreenArgs? _args;
+  StripAnalysisScreenArgs? _args;
 
   @override
   void didChangeDependencies() {
@@ -79,7 +47,7 @@ class _AnalysisScreenState extends State<AnalysisScreen> {
     _started = true;
 
     final Object? args = ModalRoute.of(context)?.settings.arguments;
-    if (args is AnalysisScreenArgs) {
+    if (args is StripAnalysisScreenArgs) {
       _args = args;
       _runAnalysis(args);
     } else {
@@ -88,11 +56,14 @@ class _AnalysisScreenState extends State<AnalysisScreen> {
   }
 
   Future<void> _retakeAndAnalyze() async {
-    final Object? photo = await Navigator.of(context).pushNamed('/camera');
-    if (photo is! XFile || !mounted) return;
+    final Object? result = await Navigator.of(context).pushNamed('/stripCamera');
+    if (result is! StripCaptureResult || !mounted) return;
 
-    final AnalysisScreenArgs newArgs =
-        AnalysisScreenArgs(photo: photo, location: _args?.location);
+    final StripAnalysisScreenArgs newArgs = StripAnalysisScreenArgs(
+      photo: result.photo,
+      cropType: result.cropType,
+      location: _args?.location,
+    );
     setState(() {
       _args = newArgs;
       _isProcessing = true;
@@ -101,15 +72,13 @@ class _AnalysisScreenState extends State<AnalysisScreen> {
     _runAnalysis(newArgs);
   }
 
-  Future<void> _runAnalysis(AnalysisScreenArgs args) async {
+  Future<void> _runAnalysis(StripAnalysisScreenArgs args) async {
     try {
-      // Run the real work alongside a minimum delay so the processing
-      // animation always gets a chance to play instead of flashing by.
       final results = await Future.wait([
-        _analyzePhoto(args),
+        _analyzeStrip(args),
         Future.delayed(const Duration(milliseconds: 1400)),
       ]);
-      final resultsArgs = results[0] as ResultsScreenArgs?;
+      final resultsArgs = results[0] as StripResultsScreenArgs?;
 
       if (!mounted) return;
       final AppLocalizations l10n = AppLocalizations.of(context)!;
@@ -120,16 +89,16 @@ class _AnalysisScreenState extends State<AnalysisScreen> {
         });
         return;
       }
-      Navigator.pushReplacementNamed(context, '/results', arguments: resultsArgs);
-    } on NotMaizeException catch (e) {
+      Navigator.pushReplacementNamed(context, '/stripResults', arguments: resultsArgs);
+    } on InvalidStripException catch (e) {
       if (!mounted) return;
       final AppLocalizations l10n = AppLocalizations.of(context)!;
       setState(() {
         _isProcessing = false;
         _errorMessage = switch (e.reason) {
-          NotMaizeReason.colorMismatch => l10n.notMaizeColorMismatch,
-          NotMaizeReason.modelRejected => l10n.notMaizeModelRejected,
-          NotMaizeReason.lowConfidence => l10n.notMaizeLowConfidence,
+          InvalidStripReason.stripNotDetected => l10n.stripNotDetectedMessage,
+          InvalidStripReason.controlLineNotDetected =>
+            l10n.controlLineNotDetectedMessage,
         };
       });
     } catch (e) {
@@ -141,32 +110,35 @@ class _AnalysisScreenState extends State<AnalysisScreen> {
     }
   }
 
-  Future<ResultsScreenArgs?> _analyzePhoto(AnalysisScreenArgs args) async {
+  Future<StripResultsScreenArgs?> _analyzeStrip(
+    StripAnalysisScreenArgs args,
+  ) async {
     final File photoFile = File(args.photo.path);
 
-    // Classification runs entirely on-device, so it doesn't depend on
-    // network/storage availability.
-    final Map<String, dynamic>? raw = await TfliteService().classifyMaize(photoFile);
-    if (raw == null) return null;
+    final StripAnalysisResult analysis =
+        await StripAnalysisService().analyzeStripBytes(await photoFile.readAsBytes());
 
-    final _MaizeAnalysis analysis = _MaizeAnalysis.fromResponse(raw);
-
-    // Best-effort: upload the photo and log the scan record. A failure here
-    // shouldn't block showing the user their on-device diagnosis.
-    final String? imageUrl = await StorageService().uploadMaizeImage(photoFile);
-    final String? scanId = await FirestoreService().saveScanRecord(
+    final String? imageUrl = await StorageService().uploadStripImage(photoFile);
+    await FirestoreService().saveStripScanRecord(
       imageUrl: imageUrl ?? '',
-      classificationLabel: analysis.label,
-      confidenceScore: analysis.confidencePercent / 100,
+      cropType: args.cropType.name,
+      ppbValue: analysis.ppbValue,
+      tLineOD: analysis.tLineOD,
+      cLineOD: analysis.cLineOD,
+      odRatio: analysis.odRatio,
+      safeLimitPpb: analysis.safeLimitPpb,
       location: args.location,
     );
 
-    return ResultsScreenArgs(
-      isSafe: !analysis.isMoldy,
-      confidence: analysis.confidencePercent / 100,
-      analysisLabel: analysis.label,
+    return StripResultsScreenArgs(
+      ppbValue: analysis.ppbValue,
+      tLineOD: analysis.tLineOD,
+      cLineOD: analysis.cLineOD,
+      odRatio: analysis.odRatio,
+      safeLimitPpb: analysis.safeLimitPpb,
+      cropType: args.cropType,
       imagePath: photoFile.path,
-      scanId: scanId,
+      location: args.location,
     );
   }
 
@@ -193,7 +165,6 @@ class _AnalysisScreenState extends State<AnalysisScreen> {
         ),
         child: Stack(
           children: [
-            // Background Glow
             Positioned(
               top: -120,
               left: -100,
@@ -240,7 +211,7 @@ class _AnalysisScreenState extends State<AnalysisScreen> {
         const AIAnimation(),
         const SizedBox(height: 40),
         Text(
-          l10n.analyzingImageTitle,
+          l10n.analyzingStripTitle,
           style: const TextStyle(
             fontSize: 30,
             fontWeight: FontWeight.bold,
@@ -249,7 +220,7 @@ class _AnalysisScreenState extends State<AnalysisScreen> {
         ),
         const SizedBox(height: 12),
         Text(
-          l10n.aiDetectingMold,
+          l10n.readingTestControlLines,
           textAlign: TextAlign.center,
         ),
         const SizedBox(height: 40),
@@ -281,7 +252,7 @@ class _AnalysisScreenState extends State<AnalysisScreen> {
         ),
         const SizedBox(height: 8),
         Text(
-          _errorMessage ?? l10n.scanMaizeSampleHint,
+          _errorMessage ?? l10n.scanTestStripHint,
           textAlign: TextAlign.center,
           style: const TextStyle(color: AppColors.grey),
         ),

@@ -40,6 +40,8 @@ class ScanRecord {
   final ScanStatus status;
   final int matchPercent;
   final String imagePath;
+  final bool isChemical;
+  final double ppbValue;
 
   const ScanRecord({
     required this.id,
@@ -49,7 +51,14 @@ class ScanRecord {
     required this.status,
     required this.matchPercent,
     required this.imagePath,
+    this.isChemical = false,
+    this.ppbValue = 0,
   });
+
+  // Tier 1 rows show a confidence %; Tier 2 (chemical strip) rows show the
+  // ppb reading instead — a % match doesn't apply to a quantitative result.
+  String get badgeLabel =>
+      isChemical ? '${ppbValue.toStringAsFixed(1)} ppb' : '$matchPercent%';
 }
 
 // ─────────────────────────────────────────
@@ -68,6 +77,31 @@ ScanRecord? _scanRecordFromDoc(QueryDocumentSnapshot doc) {
   if (rawData is! Map<String, dynamic>) return null;
   final data = rawData;
 
+  final Timestamp? timestamp = data['timestamp'] as Timestamp?;
+  final String date = timestamp != null ? _formatScanDate(timestamp.toDate()) : 'Just now';
+  final String location = (data['location'] ?? '').toString();
+
+  if (data['testType'] == 'chemical') {
+    final num ppb = (data['ppbValue'] ?? 0) as num;
+    final num limit = (data['safeLimitPpb'] ?? 0) as num;
+    final String cropType = (data['cropType'] ?? '').toString();
+    final String cropLabel = cropType.isNotEmpty
+        ? '${cropType[0].toUpperCase()}${cropType.substring(1)}'
+        : 'Crop';
+
+    return ScanRecord(
+      id: doc.id,
+      title: 'Chemical Strip · $cropLabel',
+      location: location,
+      date: date,
+      status: ppb > limit ? ScanStatus.moldDetected : ScanStatus.healthy,
+      matchPercent: 0,
+      imagePath: (data['imageUrl'] ?? '').toString(),
+      isChemical: true,
+      ppbValue: ppb.toDouble(),
+    );
+  }
+
   final String label = (data['label'] ?? 'Unknown').toString();
   final num confidenceRaw = switch (data['confidence']) {
     num n => n,
@@ -81,13 +115,11 @@ ScanRecord? _scanRecordFromDoc(QueryDocumentSnapshot doc) {
           .hasMatch(label) &&
       !RegExp(r'no mold|healthy|clean|safe|negative', caseSensitive: false).hasMatch(label);
 
-  final Timestamp? timestamp = data['timestamp'] as Timestamp?;
-
   return ScanRecord(
     id: doc.id,
     title: label,
-    location: (data['location'] ?? '').toString(),
-    date: timestamp != null ? _formatScanDate(timestamp.toDate()) : 'Just now',
+    location: location,
+    date: date,
     status: isMoldy ? ScanStatus.moldDetected : ScanStatus.healthy,
     matchPercent: matchPercent,
     imagePath: (data['imageUrl'] ?? '').toString(),
@@ -500,7 +532,16 @@ class _HistoryScreenState extends State<HistoryScreen> {
   }
 
   // ── ACTIONS ──────────────────────────────
+  // Chemical (Tier 2) rows show their own bottom sheet — ResultsScreen only
+  // understands Tier 1's isSafe/confidence shape, so a ppb reading has
+  // nowhere to render if routed through it. Tier 1 rows reuse the shared
+  // ResultsScreen in fromHistory mode instead of duplicating that UI here.
   void _openDetail(ScanRecord record) {
+    if (record.isChemical) {
+      _openChemicalDetail(record);
+      return;
+    }
+
     Navigator.pushNamed(
       context,
       '/results',
@@ -511,6 +552,88 @@ class _HistoryScreenState extends State<HistoryScreen> {
         imagePath: record.imagePath.isNotEmpty ? record.imagePath : null,
         fromHistory: true,
       ),
+    );
+  }
+
+  void _openChemicalDetail(ScanRecord record) {
+    final AppLocalizations l10n = AppLocalizations.of(context)!;
+    showModalBottomSheet(
+      context: context,
+      shape: const RoundedRectangleBorder(
+        borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
+      ),
+      builder: (_) {
+        return Padding(
+          padding: const EdgeInsets.fromLTRB(20, 20, 20, 32),
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Center(
+                child: Container(
+                  width: 40,
+                  height: 4,
+                  margin: const EdgeInsets.only(bottom: 16),
+                  decoration: BoxDecoration(
+                    color: kDivider,
+                    borderRadius: BorderRadius.circular(2),
+                  ),
+                ),
+              ),
+              Text(
+                record.title,
+                style: const TextStyle(
+                  fontSize: 20,
+                  fontWeight: FontWeight.w800,
+                  color: kPrimaryGreen,
+                ),
+              ),
+              const SizedBox(height: 8),
+              Text(
+                l10n.locationLabel(record.location.isNotEmpty ? record.location : l10n.notRecorded),
+                style: const TextStyle(fontSize: 14, color: Color(0xFF263238)),
+              ),
+              const SizedBox(height: 4),
+              Text(
+                l10n.dateLabel(record.date),
+                style: const TextStyle(fontSize: 14, color: Color(0xFF263238)),
+              ),
+              const SizedBox(height: 12),
+              Text(
+                l10n.statusLabel(record.status == ScanStatus.moldDetected ? l10n.moldDetected : l10n.healthy),
+                style: TextStyle(
+                  fontSize: 14,
+                  fontWeight: FontWeight.w700,
+                  color: record.status == ScanStatus.moldDetected
+                      ? kDangerRed
+                      : kSafeGreen,
+                ),
+              ),
+              const SizedBox(height: 12),
+              Text(
+                l10n.chemicalLevelValueLabel(record.ppbValue.toStringAsFixed(1)),
+                style: const TextStyle(fontSize: 14, color: Color(0xFF263238)),
+              ),
+              const SizedBox(height: 20),
+              SizedBox(
+                width: double.infinity,
+                child: ElevatedButton(
+                  onPressed: () => Navigator.pop(context),
+                  style: ElevatedButton.styleFrom(
+                    backgroundColor: kPrimaryGreen,
+                    foregroundColor: Colors.white,
+                    padding: const EdgeInsets.symmetric(vertical: 14),
+                    shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(12),
+                    ),
+                  ),
+                  child: Text(l10n.close),
+                ),
+              ),
+            ],
+          ),
+        );
+      },
     );
   }
 
@@ -616,7 +739,7 @@ class _HistoryScreenState extends State<HistoryScreen> {
           .map((r) => PdfReportEntry(
                 title: r.title,
                 isSafe: r.status == ScanStatus.healthy,
-                confidence: r.matchPercent / 100,
+                confidence: r.isChemical ? (r.ppbValue / 100).clamp(0, 1) : r.matchPercent / 100,
                 date: r.date,
                 location: r.location,
               ))
@@ -757,7 +880,7 @@ class _ScanCard extends StatelessWidget {
                             borderRadius: BorderRadius.circular(20),
                           ),
                           child: Text(
-                            '${record.matchPercent}%',
+                            record.badgeLabel,
                             style: TextStyle(
                               fontSize: 11,
                               fontWeight: FontWeight.w800,

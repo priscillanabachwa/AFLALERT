@@ -1651,6 +1651,222 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'Recommendations sourced from UNBS and MAAIF guidance.'**
   String get recommendationsSourced;
+
+  /// No description provided for @startNewTest.
+  ///
+  /// In en, this message translates to:
+  /// **'Start a New Test'**
+  String get startNewTest;
+
+  /// No description provided for @tier1Title.
+  ///
+  /// In en, this message translates to:
+  /// **'Tier 1 · Visual AI Scan'**
+  String get tier1Title;
+
+  /// No description provided for @tier1Subtitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Check loose maize or groundnuts for mold'**
+  String get tier1Subtitle;
+
+  /// No description provided for @tier2Title.
+  ///
+  /// In en, this message translates to:
+  /// **'Tier 2 · Chemical Strip Scan'**
+  String get tier2Title;
+
+  /// No description provided for @tier2Subtitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Read a test strip for an exact ppb level'**
+  String get tier2Subtitle;
+
+  /// No description provided for @chemicalStripScanTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Chemical Strip Scan'**
+  String get chemicalStripScanTitle;
+
+  /// No description provided for @scanTestStrip.
+  ///
+  /// In en, this message translates to:
+  /// **'Scan Test Strip'**
+  String get scanTestStrip;
+
+  /// No description provided for @cropTypeMaize.
+  ///
+  /// In en, this message translates to:
+  /// **'Maize'**
+  String get cropTypeMaize;
+
+  /// No description provided for @cropTypeGroundnut.
+  ///
+  /// In en, this message translates to:
+  /// **'Groundnut'**
+  String get cropTypeGroundnut;
+
+  /// No description provided for @positionStripInFrame.
+  ///
+  /// In en, this message translates to:
+  /// **'Position strip in frame after the 10-minute reaction time'**
+  String get positionStripInFrame;
+
+  /// No description provided for @scanAnotherStrip.
+  ///
+  /// In en, this message translates to:
+  /// **'Scan Another Strip'**
+  String get scanAnotherStrip;
+
+  /// No description provided for @scanTestStripHint.
+  ///
+  /// In en, this message translates to:
+  /// **'Scan a reacted test strip to check aflatoxin levels'**
+  String get scanTestStripHint;
+
+  /// No description provided for @analyzingStripTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Analyzing Strip...'**
+  String get analyzingStripTitle;
+
+  /// No description provided for @readingTestControlLines.
+  ///
+  /// In en, this message translates to:
+  /// **'Reading the test and control lines'**
+  String get readingTestControlLines;
+
+  /// No description provided for @stripNotDetectedMessage.
+  ///
+  /// In en, this message translates to:
+  /// **'Couldn\'t detect a test strip in this photo. Make sure the whole strip is inside the frame and well lit, then try again.'**
+  String get stripNotDetectedMessage;
+
+  /// No description provided for @controlLineNotDetectedMessage.
+  ///
+  /// In en, this message translates to:
+  /// **'Control line not detected — this test may be invalid. Repeat the test with a new strip.'**
+  String get controlLineNotDetectedMessage;
+
+  /// No description provided for @testBatchLabel.
+  ///
+  /// In en, this message translates to:
+  /// **'TEST BATCH'**
+  String get testBatchLabel;
+
+  /// No description provided for @toxicLoadLabel.
+  ///
+  /// In en, this message translates to:
+  /// **'TOXIC LOAD'**
+  String get toxicLoadLabel;
+
+  /// No description provided for @regulatoryScaleLabel.
+  ///
+  /// In en, this message translates to:
+  /// **'REGULATORY SCALE'**
+  String get regulatoryScaleLabel;
+
+  /// No description provided for @actionRequiredLabel.
+  ///
+  /// In en, this message translates to:
+  /// **'ACTION REQUIRED'**
+  String get actionRequiredLabel;
+
+  /// No description provided for @diagnosticBreakdownLabel.
+  ///
+  /// In en, this message translates to:
+  /// **'DIAGNOSTIC BREAKDOWN'**
+  String get diagnosticBreakdownLabel;
+
+  /// No description provided for @chemicalLevelLabel.
+  ///
+  /// In en, this message translates to:
+  /// **'Chemical level'**
+  String get chemicalLevelLabel;
+
+  /// No description provided for @testLineOdLabel.
+  ///
+  /// In en, this message translates to:
+  /// **'Test line (T) optical density'**
+  String get testLineOdLabel;
+
+  /// No description provided for @controlLineOdLabel.
+  ///
+  /// In en, this message translates to:
+  /// **'Control line (C) optical density'**
+  String get controlLineOdLabel;
+
+  /// No description provided for @odRatioLabel.
+  ///
+  /// In en, this message translates to:
+  /// **'T/C ratio'**
+  String get odRatioLabel;
+
+  /// No description provided for @scanLocationLabel.
+  ///
+  /// In en, this message translates to:
+  /// **'Scan location'**
+  String get scanLocationLabel;
+
+  /// No description provided for @withinSafeLimit.
+  ///
+  /// In en, this message translates to:
+  /// **'Within Safe Limit'**
+  String get withinSafeLimit;
+
+  /// No description provided for @exceedsSafeLimit.
+  ///
+  /// In en, this message translates to:
+  /// **'Exceeds Safe Limit'**
+  String get exceedsSafeLimit;
+
+  /// No description provided for @wasThisDiagnosisAccurate.
+  ///
+  /// In en, this message translates to:
+  /// **'Was this diagnosis accurate?'**
+  String get wasThisDiagnosisAccurate;
+
+  /// No description provided for @feedbackThanks.
+  ///
+  /// In en, this message translates to:
+  /// **'Thanks — your feedback helps improve future scans.'**
+  String get feedbackThanks;
+
+  /// No description provided for @feedbackYesTooltip.
+  ///
+  /// In en, this message translates to:
+  /// **'Yes, accurate'**
+  String get feedbackYesTooltip;
+
+  /// No description provided for @feedbackNoTooltip.
+  ///
+  /// In en, this message translates to:
+  /// **'No, inaccurate'**
+  String get feedbackNoTooltip;
+
+  /// No description provided for @safeLimitTick.
+  ///
+  /// In en, this message translates to:
+  /// **'{limit} ppb limit'**
+  String safeLimitTick(String limit);
+
+  /// No description provided for @exceedsSafeLimitMessage.
+  ///
+  /// In en, this message translates to:
+  /// **'This sample exceeds the regulatory safe limit of {limit} ppb for human food.'**
+  String exceedsSafeLimitMessage(String limit);
+
+  /// No description provided for @ppbValueLabel.
+  ///
+  /// In en, this message translates to:
+  /// **'{value} ppb'**
+  String ppbValueLabel(String value);
+
+  /// No description provided for @chemicalLevelValueLabel.
+  ///
+  /// In en, this message translates to:
+  /// **'Chemical level: {value} ppb'**
+  String chemicalLevelValueLabel(String value);
 }
 
 class _AppLocalizationsDelegate
