@@ -6,6 +6,7 @@ import 'package:flutter/material.dart';
 import '../constants/app_colors.dart';
 import '../l10n/app_localizations.dart';
 import '../models/report_model.dart';
+import '../services/firestore_service.dart';
 import '../services/location_service.dart';
 import '../services/pdf_service.dart';
 import '../services/report_storage_service.dart';
@@ -18,6 +19,7 @@ class ResultsScreenArgs {
   final String? analysisLabel;
   final String? imagePath;
   final bool fromHistory;
+  final String? scanId;
 
   const ResultsScreenArgs({
     required this.isSafe,
@@ -25,6 +27,7 @@ class ResultsScreenArgs {
     this.analysisLabel,
     this.imagePath,
     this.fromHistory = false,
+    this.scanId,
   });
 }
 
@@ -48,6 +51,7 @@ class ResultsScreen extends StatelessWidget {
   final String? analysisLabel;
   final String? imagePath;
   final bool fromHistory;
+  final String? scanId;
 
   const ResultsScreen({
     super.key,
@@ -56,6 +60,7 @@ class ResultsScreen extends StatelessWidget {
     this.analysisLabel,
     this.imagePath,
     this.fromHistory = false,
+    this.scanId,
   });
 
   // ---- Palette matched to the shared AppColors theme (registration screen) ----
@@ -401,6 +406,13 @@ class ResultsScreen extends StatelessWidget {
 
                 // Main Diagnosis Card
                 _buildDiagnosisCard(context),
+
+                // Feedback loop: only offered right after a fresh scan (not
+                // when reviewing an old one from History) — the point is to
+                // capture whether the model got THIS call right while the
+                // user still remembers what they actually saw, building a
+                // labeled dataset for future retraining.
+                if (!fromHistory && scanId != null) _FeedbackPrompt(scanId: scanId!),
                 const SizedBox(height: 14),
 
                 // Certified Recommendations Box
@@ -518,6 +530,96 @@ class ResultsScreen extends StatelessWidget {
           ),
         ),
       ),
+    );
+  }
+}
+
+class _FeedbackPrompt extends StatefulWidget {
+  final String scanId;
+
+  const _FeedbackPrompt({required this.scanId});
+
+  @override
+  State<_FeedbackPrompt> createState() => _FeedbackPromptState();
+}
+
+class _FeedbackPromptState extends State<_FeedbackPrompt> {
+  bool? _submittedAccurate;
+  bool _submitting = false;
+
+  Future<void> _submit(bool isAccurate) async {
+    if (_submitting || _submittedAccurate != null) return;
+    setState(() => _submitting = true);
+
+    final bool success = await FirestoreService().submitScanFeedback(widget.scanId, isAccurate);
+    if (!mounted) return;
+    setState(() {
+      _submitting = false;
+      if (success) _submittedAccurate = isAccurate;
+    });
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final AppLocalizations l10n = AppLocalizations.of(context)!;
+    return Container(
+      margin: const EdgeInsets.only(top: 14),
+      padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
+      decoration: BoxDecoration(
+        color: ResultsScreen.cardBg,
+        borderRadius: BorderRadius.circular(12),
+        border: Border.all(color: ResultsScreen.textMuted.withValues(alpha: 0.15)),
+      ),
+      child: _submittedAccurate != null
+          ? Row(
+              children: [
+                const Icon(Icons.check_circle, size: 16, color: AppColors.primaryContainer),
+                const SizedBox(width: 8),
+                Expanded(
+                  child: Text(
+                    l10n.feedbackThanks,
+                    style: const TextStyle(fontSize: 12.5, color: ResultsScreen.textPrimary),
+                  ),
+                ),
+              ],
+            )
+          : Row(
+              children: [
+                Expanded(
+                  child: Text(
+                    l10n.wasThisDiagnosisAccurate,
+                    style: const TextStyle(
+                      fontSize: 12.5,
+                      fontWeight: FontWeight.w500,
+                      color: ResultsScreen.textPrimary,
+                    ),
+                  ),
+                ),
+                const SizedBox(width: 8),
+                if (_submitting)
+                  const SizedBox(
+                    width: 18,
+                    height: 18,
+                    child: CircularProgressIndicator(strokeWidth: 2),
+                  )
+                else ...[
+                  IconButton(
+                    onPressed: () => _submit(true),
+                    icon: const Icon(Icons.thumb_up_outlined, size: 18),
+                    color: AppColors.primaryContainer,
+                    tooltip: l10n.feedbackYesTooltip,
+                    visualDensity: VisualDensity.compact,
+                  ),
+                  IconButton(
+                    onPressed: () => _submit(false),
+                    icon: const Icon(Icons.thumb_down_outlined, size: 18),
+                    color: AppColors.error,
+                    tooltip: l10n.feedbackNoTooltip,
+                    visualDensity: VisualDensity.compact,
+                  ),
+                ],
+              ],
+            ),
     );
   }
 }

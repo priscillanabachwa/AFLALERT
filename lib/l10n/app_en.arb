@@ -364,6 +364,11 @@
   "withinSafeLimit": "Within Safe Limit",
   "exceedsSafeLimit": "Exceeds Safe Limit",
 
+  "wasThisDiagnosisAccurate": "Was this diagnosis accurate?",
+  "feedbackThanks": "Thanks — your feedback helps improve future scans.",
+  "feedbackYesTooltip": "Yes, accurate",
+  "feedbackNoTooltip": "No, inaccurate",
+
   "safeLimitTick": "{limit} ppb limit",
   "@safeLimitTick": {
     "placeholders": { "limit": { "type": "String" } }

@@ -1820,6 +1820,30 @@ abstract class AppLocalizations {
   /// **'Exceeds Safe Limit'**
   String get exceedsSafeLimit;
 
+  /// No description provided for @wasThisDiagnosisAccurate.
+  ///
+  /// In en, this message translates to:
+  /// **'Was this diagnosis accurate?'**
+  String get wasThisDiagnosisAccurate;
+
+  /// No description provided for @feedbackThanks.
+  ///
+  /// In en, this message translates to:
+  /// **'Thanks — your feedback helps improve future scans.'**
+  String get feedbackThanks;
+
+  /// No description provided for @feedbackYesTooltip.
+  ///
+  /// In en, this message translates to:
+  /// **'Yes, accurate'**
+  String get feedbackYesTooltip;
+
+  /// No description provided for @feedbackNoTooltip.
+  ///
+  /// In en, this message translates to:
+  /// **'No, inaccurate'**
+  String get feedbackNoTooltip;
+
   /// No description provided for @safeLimitTick.
   ///
   /// In en, this message translates to:

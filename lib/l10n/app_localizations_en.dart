@@ -938,6 +938,19 @@ class AppLocalizationsEn extends AppLocalizations {
   String get exceedsSafeLimit => 'Exceeds Safe Limit';
 
   @override
+  String get wasThisDiagnosisAccurate => 'Was this diagnosis accurate?';
+
+  @override
+  String get feedbackThanks =>
+      'Thanks — your feedback helps improve future scans.';
+
+  @override
+  String get feedbackYesTooltip => 'Yes, accurate';
+
+  @override
+  String get feedbackNoTooltip => 'No, inaccurate';
+
+  @override
   String safeLimitTick(String limit) {
     return '$limit ppb limit';
   }

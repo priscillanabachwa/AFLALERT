@@ -944,6 +944,19 @@ class AppLocalizationsLg extends AppLocalizations {
   String get exceedsSafeLimit => 'Kisukiddeko Ekigero Ekikkirizibwa';
 
   @override
+  String get wasThisDiagnosisAccurate => 'Ekizuuliddwa kino kituufu?';
+
+  @override
+  String get feedbackThanks =>
+      'Weebale — endowooza yo eyamba okulongoosa scan ez\'omu maaso.';
+
+  @override
+  String get feedbackYesTooltip => 'Yee, kituufu';
+
+  @override
+  String get feedbackNoTooltip => 'Nedda, si kituufu';
+
+  @override
   String safeLimitTick(String limit) {
     return 'Ekigero kya $limit ppb';
   }

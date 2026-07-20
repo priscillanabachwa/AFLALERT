@@ -314,6 +314,11 @@
   "withinSafeLimit": "Kiri mu Ekigero Ekikkirizibwa",
   "exceedsSafeLimit": "Kisukiddeko Ekigero Ekikkirizibwa",
 
+  "wasThisDiagnosisAccurate": "Ekizuuliddwa kino kituufu?",
+  "feedbackThanks": "Weebale — endowooza yo eyamba okulongoosa scan ez'omu maaso.",
+  "feedbackYesTooltip": "Yee, kituufu",
+  "feedbackNoTooltip": "Nedda, si kituufu",
+
   "safeLimitTick": "Ekigero kya {limit} ppb",
   "@safeLimitTick": {
     "placeholders": { "limit": { "type": "String" } }

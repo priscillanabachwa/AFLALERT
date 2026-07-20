@@ -192,6 +192,7 @@ class _AflAlertState extends State<AflAlert> {
             analysisLabel: args.analysisLabel,
             imagePath: args.imagePath,
             fromHistory: args.fromHistory,
+            scanId: args.scanId,
           );
         },
         '/register': (context) => const RegistrationScreen(),

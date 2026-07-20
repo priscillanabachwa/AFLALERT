@@ -154,7 +154,7 @@ class _AnalysisScreenState extends State<AnalysisScreen> {
     // Best-effort: upload the photo and log the scan record. A failure here
     // shouldn't block showing the user their on-device diagnosis.
     final String? imageUrl = await StorageService().uploadMaizeImage(photoFile);
-    await FirestoreService().saveScanRecord(
+    final String? scanId = await FirestoreService().saveScanRecord(
       imageUrl: imageUrl ?? '',
       classificationLabel: analysis.label,
       confidenceScore: analysis.confidencePercent / 100,
@@ -166,6 +166,7 @@ class _AnalysisScreenState extends State<AnalysisScreen> {
       confidence: analysis.confidencePercent / 100,
       analysisLabel: analysis.label,
       imagePath: photoFile.path,
+      scanId: scanId,
     );
   }
 
