@@ -758,6 +758,12 @@ abstract class AppLocalizations {
   /// **'Heat Alert — {temp}°C'**
   String heatAlertNotifTitle(int temp);
 
+  /// No description provided for @humidityAlertNotifTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Humidity is at {humidity}%'**
+  String humidityAlertNotifTitle(int humidity);
+
   /// No description provided for @guidelines.
   ///
   /// In en, this message translates to:
@@ -829,6 +835,12 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'HEAT ALERT'**
   String get heatAlertBadge;
+
+  /// No description provided for @humidityAlertBadge.
+  ///
+  /// In en, this message translates to:
+  /// **'HUMIDITY ALERT'**
+  String get humidityAlertBadge;
 
   /// No description provided for @dailyTip.
   ///

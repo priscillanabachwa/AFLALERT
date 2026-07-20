@@ -123,6 +123,10 @@
   "@heatAlertNotifTitle": {
     "placeholders": { "temp": { "type": "int" } }
   },
+  "humidityAlertNotifTitle": "Humidity is at {humidity}%",
+  "@humidityAlertNotifTitle": {
+    "placeholders": { "humidity": { "type": "int" } }
+  },
   "guidelines": "Guidelines",
   "homeSubGreeting": "Ready to secure your harvest today?",
   "goodMorning": "Good Morning",
@@ -135,6 +139,7 @@
   "fetchingWeather": "Fetching weather...",
   "unavailable": "Unavailable",
   "heatAlertBadge": "HEAT ALERT",
+  "humidityAlertBadge": "HUMIDITY ALERT",
   "dailyTip": "DAILY TIP",
   "seeAll": "See All",
   "noScansYetHome": "No scans yet — tap \"AI Scan\" above to check your first batch.",

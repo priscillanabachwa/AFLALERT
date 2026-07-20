@@ -5,18 +5,24 @@ import 'package:http/http.dart' as http;
 
 class WeatherInfo {
   final double temperatureC;
+  final double? humidityPercent;
   final String condition;
   final IconData icon;
 
   const WeatherInfo({
     required this.temperatureC,
+    this.humidityPercent,
     required this.condition,
     required this.icon,
   });
 
   /// Maps the WMO weather codes returned by Open-Meteo to a short label and icon.
   /// https://open-meteo.com/en/docs#weathervariables
-  factory WeatherInfo.fromCode(double temperatureC, int code) {
+  factory WeatherInfo.fromCode(
+    double temperatureC,
+    int code, {
+    double? humidityPercent,
+  }) {
     String condition;
     IconData icon;
 
@@ -52,7 +58,12 @@ class WeatherInfo {
       icon = Icons.cloud;
     }
 
-    return WeatherInfo(temperatureC: temperatureC, condition: condition, icon: icon);
+    return WeatherInfo(
+      temperatureC: temperatureC,
+      humidityPercent: humidityPercent,
+      condition: condition,
+      icon: icon,
+    );
   }
 }
 
@@ -65,6 +76,17 @@ class RainfallSummary {
   const RainfallSummary({required this.totalMm, required this.windowDays});
 }
 
+<<<<<<< HEAD
+/// Today's forecast summary, used to decide the wording of the morning
+/// weather alert (see morning_alert_service.dart).
+class DailyForecast {
+  final int weatherCode;
+  final double? precipitationProbabilityMax;
+
+  const DailyForecast({
+    required this.weatherCode,
+    this.precipitationProbabilityMax,
+=======
 class HourlyForecastEntry {
   final DateTime time;
   final double temperatureC;
@@ -92,17 +114,27 @@ class DailyForecast {
     required this.minC,
     required this.maxC,
     required this.hours,
+>>>>>>> e00c4af13d4bea2ff2f7770d10c6c91e44eb66be
   });
 }
 
 class WeatherService {
   static const String _baseUrl = 'https://api.open-meteo.com/v1/forecast';
 
+  // Open-Meteo's auto-picked "best_match" model disagreed with real
+  // conditions in Kampala by a wide margin (84% vs an actual ~63% relative
+  // humidity), while GFS matched the observed temperature almost exactly in
+  // the same check. Pinning the model keeps results consistent instead of
+  // silently switching between models Open-Meteo considers "best" per query.
+  static const String _model = 'gfs_seamless';
+
   /// Fetches the current temperature and condition for the given coordinates.
   /// Returns `null` if the request fails for any reason.
   Future<WeatherInfo?> getCurrentWeather(double latitude, double longitude) async {
     final Uri url = Uri.parse(
-      '$_baseUrl?latitude=$latitude&longitude=$longitude&current=temperature_2m,weather_code',
+      '$_baseUrl?latitude=$latitude&longitude=$longitude'
+      '&current=temperature_2m,relative_humidity_2m,weather_code'
+      '&models=$_model',
     );
 
     try {
@@ -119,10 +151,15 @@ class WeatherService {
       if (current == null) return null;
 
       final num? temperature = current['temperature_2m'] as num?;
+      final num? humidity = current['relative_humidity_2m'] as num?;
       final num? weatherCode = current['weather_code'] as num?;
       if (temperature == null || weatherCode == null) return null;
 
-      return WeatherInfo.fromCode(temperature.toDouble(), weatherCode.toInt());
+      return WeatherInfo.fromCode(
+        temperature.toDouble(),
+        weatherCode.toInt(),
+        humidityPercent: humidity?.toDouble(),
+      );
     } catch (error) {
       debugPrint('WeatherService Error fetching current weather: $error');
       return null;
@@ -201,7 +238,8 @@ class WeatherService {
   }) async {
     final Uri url = Uri.parse(
       '$_baseUrl?latitude=$latitude&longitude=$longitude'
-      '&daily=precipitation_sum&past_days=$days&forecast_days=1&timezone=auto',
+      '&daily=precipitation_sum&past_days=$days&forecast_days=1&timezone=auto'
+      '&models=$_model',
     );
 
     try {
@@ -225,6 +263,50 @@ class WeatherService {
       return RainfallSummary(totalMm: total, windowDays: days);
     } catch (error) {
       debugPrint('WeatherService Error fetching recent rainfall: $error');
+      return null;
+    }
+  }
+
+  /// Fetches today's forecast summary (expected weather and max chance of
+  /// rain) for the given coordinates, used to decide the wording of the
+  /// morning weather alert. Returns `null` if the request fails for any
+  /// reason.
+  Future<DailyForecast?> getTodayForecast(double latitude, double longitude) async {
+    final Uri url = Uri.parse(
+      '$_baseUrl?latitude=$latitude&longitude=$longitude'
+      '&daily=weather_code,precipitation_probability_max&forecast_days=1&timezone=auto'
+      '&models=$_model',
+    );
+
+    try {
+      final http.Response response =
+          await http.get(url).timeout(const Duration(seconds: 10));
+
+      if (response.statusCode != 200) {
+        debugPrint('WeatherService Failure: Server returned status code ${response.statusCode}');
+        return null;
+      }
+
+      final Map<String, dynamic> data = jsonDecode(response.body);
+      final Map<String, dynamic>? daily = data['daily'] as Map<String, dynamic>?;
+      final List<dynamic>? weatherCodes = daily?['weather_code'] as List<dynamic>?;
+      final List<dynamic>? precipProbabilities =
+          daily?['precipitation_probability_max'] as List<dynamic>?;
+      final num? weatherCode = weatherCodes?.isNotEmpty == true
+          ? weatherCodes!.first as num?
+          : null;
+      if (weatherCode == null) return null;
+
+      final num? precipProbability = precipProbabilities?.isNotEmpty == true
+          ? precipProbabilities!.first as num?
+          : null;
+
+      return DailyForecast(
+        weatherCode: weatherCode.toInt(),
+        precipitationProbabilityMax: precipProbability?.toDouble(),
+      );
+    } catch (error) {
+      debugPrint('WeatherService Error fetching today\'s forecast: $error');
       return null;
     }
   }

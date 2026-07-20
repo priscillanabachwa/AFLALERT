@@ -348,6 +348,11 @@ class AppLocalizationsEn extends AppLocalizations {
   }
 
   @override
+  String humidityAlertNotifTitle(int humidity) {
+    return 'Humidity is at $humidity%';
+  }
+
+  @override
   String get guidelines => 'Guidelines';
 
   @override
@@ -382,6 +387,9 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get heatAlertBadge => 'HEAT ALERT';
+
+  @override
+  String get humidityAlertBadge => 'HUMIDITY ALERT';
 
   @override
   String get dailyTip => 'DAILY TIP';

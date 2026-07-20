@@ -351,6 +351,11 @@ class AppLocalizationsLg extends AppLocalizations {
   }
 
   @override
+  String humidityAlertNotifTitle(int humidity) {
+    return 'Obunnyogovu buli ku $humidity%';
+  }
+
+  @override
   String get guidelines => 'Ebiragiro';
 
   @override
@@ -385,6 +390,9 @@ class AppLocalizationsLg extends AppLocalizations {
 
   @override
   String get heatAlertBadge => 'OKULABULA KW\'OBWOKYA';
+
+  @override
+  String get humidityAlertBadge => 'OKULABULA KW\'OBUNNYOGOVU';
 
   @override
   String get dailyTip => 'AMAGEZI AG\'OLUNAKU';
