@@ -53,6 +53,12 @@ class MorningAlertService {
     await prefs.setString(_prefUserType, userType);
   }
 
+  /// Runs the exact same fetch/classify/notify logic as the scheduled
+  /// background task, but immediately in the calling isolate — for manually
+  /// verifying the alert content without waiting for the next 7am. Debug
+  /// use only; see the "Test Morning Alert Now" tile in Settings.
+  static Future<void> testNow() => _runMorningAlert();
+
   static Future<void> _scheduleNext() async {
     await Workmanager().registerOneOffTask(
       _uniqueName,
