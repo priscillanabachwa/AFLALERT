@@ -5,13 +5,11 @@ import 'package:flutter/material.dart';
 import '../constants/app_colors.dart';
 import '../l10n/app_localizations.dart';
 import '../models/report_model.dart';
-import '../services/location_service.dart';
 import '../services/pdf_service.dart';
 import '../services/report_storage_service.dart';
 import '../services/strip_analysis_service.dart';
 import '../widgets/pdf_export_dialog.dart';
 import 'strip_camera_screen.dart';
-import 'strip_analysis_screen.dart';
 
 class StripResultsScreenArgs {
   final double ppbValue;
@@ -146,24 +144,6 @@ class StripResultsScreen extends StatelessWidget {
         'Re-route this batch for disposal or approved industrial/distillery use — do not feed it to livestock either, as aflatoxins carry over into milk and meat.',
       ),
     ];
-  }
-
-  Future<void> _scanAnotherStrip(BuildContext context) async {
-    final String? loc = await LocationService().getCurrentPlaceName();
-    if (!context.mounted) return;
-
-    final Object? result = await Navigator.pushNamed(context, '/stripCamera');
-    if (result is! StripCaptureResult || !context.mounted) return;
-
-    Navigator.pushReplacementNamed(
-      context,
-      '/stripAnalysis',
-      arguments: StripAnalysisScreenArgs(
-        photo: result.photo,
-        cropType: result.cropType,
-        location: loc,
-      ),
-    );
   }
 
   Future<void> _exportPdf(BuildContext context) async {
@@ -572,19 +552,6 @@ class StripResultsScreen extends StatelessWidget {
                     padding: const EdgeInsets.symmetric(vertical: 14),
                     shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
                     elevation: 0,
-                  ),
-                ),
-                const SizedBox(height: 16),
-                ElevatedButton.icon(
-                  onPressed: () => _scanAnotherStrip(context),
-                  icon: const Icon(Icons.science_outlined),
-                  label: Text(l10n.scanAnotherStrip),
-                  style: ElevatedButton.styleFrom(
-                    backgroundColor: AppColors.primary,
-                    foregroundColor: Colors.white,
-                    elevation: 0,
-                    padding: const EdgeInsets.symmetric(vertical: 14),
-                    shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
                   ),
                 ),
               ],
