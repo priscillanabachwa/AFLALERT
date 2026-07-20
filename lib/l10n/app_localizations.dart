@@ -323,7 +323,7 @@ abstract class AppLocalizations {
   /// No description provided for @scanDetails.
   ///
   /// In en, this message translates to:
-  /// **'Scan Details'**
+  /// **'Maize Scan Details'**
   String get scanDetails;
 
   /// No description provided for @totalScans.
