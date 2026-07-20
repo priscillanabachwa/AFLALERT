@@ -331,5 +331,58 @@
   "helpSupportSection": "Help & support",
   "contactSupport": "Contact support",
   "aboutAflAlert": "About AflAlert",
-  "recommendationsSourced": "Recommendations sourced from UNBS and MAAIF guidance."
+  "recommendationsSourced": "Recommendations sourced from UNBS and MAAIF guidance.",
+
+  "startNewTest": "Start a New Test",
+  "tier1Title": "Tier 1 · Visual AI Scan",
+  "tier1Subtitle": "Check loose maize or groundnuts for mold",
+  "tier2Title": "Tier 2 · Chemical Strip Scan",
+  "tier2Subtitle": "Read a test strip for an exact ppb level",
+  "chemicalStripScanTitle": "Chemical Strip Scan",
+  "scanTestStrip": "Scan Test Strip",
+  "cropTypeMaize": "Maize",
+  "cropTypeGroundnut": "Groundnut",
+  "positionStripInFrame": "Position strip in frame after the 10-minute reaction time",
+  "scanAnotherStrip": "Scan Another Strip",
+  "scanTestStripHint": "Scan a reacted test strip to check aflatoxin levels",
+
+  "analyzingStripTitle": "Analyzing Strip...",
+  "readingTestControlLines": "Reading the test and control lines",
+  "stripNotDetectedMessage": "Couldn't detect a test strip in this photo. Make sure the whole strip is inside the frame and well lit, then try again.",
+  "controlLineNotDetectedMessage": "Control line not detected — this test may be invalid. Repeat the test with a new strip.",
+
+  "testBatchLabel": "TEST BATCH",
+  "toxicLoadLabel": "TOXIC LOAD",
+  "regulatoryScaleLabel": "REGULATORY SCALE",
+  "actionRequiredLabel": "ACTION REQUIRED",
+  "diagnosticBreakdownLabel": "DIAGNOSTIC BREAKDOWN",
+  "chemicalLevelLabel": "Chemical level",
+  "testLineOdLabel": "Test line (T) optical density",
+  "controlLineOdLabel": "Control line (C) optical density",
+  "odRatioLabel": "T/C ratio",
+  "scanLocationLabel": "Scan location",
+  "withinSafeLimit": "Within Safe Limit",
+  "exceedsSafeLimit": "Exceeds Safe Limit",
+
+  "wasThisDiagnosisAccurate": "Was this diagnosis accurate?",
+  "feedbackThanks": "Thanks — your feedback helps improve future scans.",
+  "feedbackYesTooltip": "Yes, accurate",
+  "feedbackNoTooltip": "No, inaccurate",
+
+  "safeLimitTick": "{limit} ppb limit",
+  "@safeLimitTick": {
+    "placeholders": { "limit": { "type": "String" } }
+  },
+  "exceedsSafeLimitMessage": "This sample exceeds the regulatory safe limit of {limit} ppb for human food.",
+  "@exceedsSafeLimitMessage": {
+    "placeholders": { "limit": { "type": "String" } }
+  },
+  "ppbValueLabel": "{value} ppb",
+  "@ppbValueLabel": {
+    "placeholders": { "value": { "type": "String" } }
+  },
+  "chemicalLevelValueLabel": "Chemical level: {value} ppb",
+  "@chemicalLevelValueLabel": {
+    "placeholders": { "value": { "type": "String" } }
+  }
 }

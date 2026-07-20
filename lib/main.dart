@@ -16,6 +16,9 @@ import 'package:aflalert/screens/camera_screen.dart';
 import 'package:aflalert/screens/downloaded_reports_screen.dart';
 import 'package:aflalert/screens/settings_screen.dart';
 import 'package:aflalert/screens/result_screen.dart';
+import 'package:aflalert/screens/strip_camera_screen.dart';
+import 'package:aflalert/screens/strip_analysis_screen.dart';
+import 'package:aflalert/screens/strip_result_screen.dart';
 import 'package:aflalert/services/local_notification_service.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'l10n/app_localizations.dart';
@@ -189,6 +192,7 @@ class _AflAlertState extends State<AflAlert> {
             analysisLabel: args.analysisLabel,
             imagePath: args.imagePath,
             fromHistory: args.fromHistory,
+            scanId: args.scanId,
           );
         },
         '/register': (context) => const RegistrationScreen(),
@@ -197,6 +201,22 @@ class _AflAlertState extends State<AflAlert> {
         '/camera': (context) {
           debugPrint('ROUTE_TRACE: building /camera');
           return CameraCaptureScreen();
+        },
+        '/stripCamera': (context) => const StripCameraScreen(),
+        '/stripAnalysis': (context) => const StripAnalysisScreen(),
+        '/stripResults': (context) {
+          final args =
+              ModalRoute.of(context)!.settings.arguments as StripResultsScreenArgs;
+          return StripResultsScreen(
+            ppbValue: args.ppbValue,
+            tLineOD: args.tLineOD,
+            cLineOD: args.cLineOD,
+            odRatio: args.odRatio,
+            safeLimitPpb: args.safeLimitPpb,
+            cropType: args.cropType,
+            imagePath: args.imagePath,
+            location: args.location,
+          );
         },
       },
     );
