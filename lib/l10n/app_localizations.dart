@@ -758,16 +758,10 @@ abstract class AppLocalizations {
   /// **'Heat Alert — {temp}°C'**
   String heatAlertNotifTitle(int temp);
 
-  /// No description provided for @humidityAlertTitle.
-  ///
-  /// In en, this message translates to:
-  /// **'Humidity Alert'**
-  String get humidityAlertTitle;
-
   /// No description provided for @humidityAlertNotifTitle.
   ///
   /// In en, this message translates to:
-  /// **'Humidity Alert — {humidity}%'**
+  /// **'Humidity is at {humidity}%'**
   String humidityAlertNotifTitle(int humidity);
 
   /// No description provided for @guidelines.

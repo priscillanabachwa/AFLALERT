@@ -176,7 +176,7 @@ class _HomeScreenState extends State<HomeScreen> {
 
     NotificationCenter.instance.add(
       AppNotification(
-        title: l10n.humidityAlertTitle,
+        title: l10n.humidityAlertNotifTitle(humidityRounded),
         description: tip,
         icon: Icons.water_drop,
         iconColor: const Color(0xFF2A7DE0),

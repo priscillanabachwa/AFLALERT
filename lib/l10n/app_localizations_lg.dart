@@ -351,11 +351,8 @@ class AppLocalizationsLg extends AppLocalizations {
   }
 
   @override
-  String get humidityAlertTitle => 'Okulabula kw\'Obunnyogovu';
-
-  @override
   String humidityAlertNotifTitle(int humidity) {
-    return 'Okulabula kw\'Obunnyogovu — $humidity%';
+    return 'Obunnyogovu buli ku $humidity%';
   }
 
   @override

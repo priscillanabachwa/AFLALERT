@@ -119,8 +119,7 @@
 
   "heatAlertTitle": "Okulabula kw'Obwokya",
   "heatAlertNotifTitle": "Okulabula kw'Obwokya — {temp}°C",
-  "humidityAlertTitle": "Okulabula kw'Obunnyogovu",
-  "humidityAlertNotifTitle": "Okulabula kw'Obunnyogovu — {humidity}%",
+  "humidityAlertNotifTitle": "Obunnyogovu buli ku {humidity}%",
   "guidelines": "Ebiragiro",
   "homeSubGreeting": "Weetegeke okukuuma amakungula go leero?",
   "goodMorning": "Wasuze Otya",

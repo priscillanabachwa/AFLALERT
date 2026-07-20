@@ -123,8 +123,7 @@
   "@heatAlertNotifTitle": {
     "placeholders": { "temp": { "type": "int" } }
   },
-  "humidityAlertTitle": "Humidity Alert",
-  "humidityAlertNotifTitle": "Humidity Alert — {humidity}%",
+  "humidityAlertNotifTitle": "Humidity is at {humidity}%",
   "@humidityAlertNotifTitle": {
     "placeholders": { "humidity": { "type": "int" } }
   },
