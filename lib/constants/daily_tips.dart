@@ -4,6 +4,8 @@
 /// the first entry, so returning users see fresh advice.
 library;
 
+import '../constants/seasonal_guidelines.dart' show SeasonStage;
+
 const List<String> farmerDailyTips = [
   'Keep corn moisture below 13.5%. Wet grain lets mold grow fast, and that mold is what makes aflatoxin.',
   'Dry maize on a raised platform, not on bare ground. Wet soil makes the grain damp again and mold grows.',
@@ -44,11 +46,46 @@ const List<String> traderDailyTips = [
   'Keep a record of scan results for each batch. This proves your grain is safe if a buyer ever asks.',
 ];
 
+// Indices into [farmerDailyTips]/[traderDailyTips] whose advice is already
+// covered, near-verbatim, by that stage's seasonal guideline text (see
+// seasonal_guidelines.dart). Excluded from rotation while that guideline is
+// showing so the Daily Tip card never just repeats the Guidelines card.
+const Map<SeasonStage, Set<int>> _farmerStageOverlap = {
+  SeasonStage.landPreparation: {7},
+  SeasonStage.planting: {},
+  SeasonStage.growing: {8, 9, 14},
+  SeasonStage.harvest: {2, 15},
+  SeasonStage.dryingStorage: {0, 1, 4, 12},
+};
+
+const Map<SeasonStage, Set<int>> _traderStageOverlap = {
+  SeasonStage.landPreparation: {},
+  SeasonStage.planting: {},
+  SeasonStage.growing: {},
+  SeasonStage.harvest: {0, 2},
+  SeasonStage.dryingStorage: {4, 5, 11},
+};
+
 /// Picks a tip for [userType] ("Farmer" or "Trader", case-insensitive) that
 /// changes once per day. Defaults to the farmer list for unknown/empty types.
-String tipOfTheDay(String userType) {
-  final List<String> tips = _isTrader(userType) ? traderDailyTips : farmerDailyTips;
-  return tips[_dayOfYear() % tips.length];
+///
+/// When [currentStage] is given, skips any tip that overlaps with that
+/// stage's seasonal guideline advice, so the two cards don't repeat each
+/// other on the same day.
+String tipOfTheDay(String userType, {SeasonStage? currentStage}) {
+  final bool isTrader = _isTrader(userType);
+  final List<String> tips = isTrader ? traderDailyTips : farmerDailyTips;
+  final Set<int> excluded = currentStage == null
+      ? const {}
+      : (isTrader ? _traderStageOverlap : _farmerStageOverlap)[currentStage] ??
+            const {};
+
+  final int dayIndex = _dayOfYear();
+  for (int offset = 0; offset < tips.length; offset++) {
+    final int i = (dayIndex + offset) % tips.length;
+    if (!excluded.contains(i)) return tips[i];
+  }
+  return tips[dayIndex % tips.length];
 }
 
 // Aflatoxin-producing molds thrive fastest once ambient temperature climbs
@@ -75,9 +112,17 @@ bool isHeatAlert(double? temperatureC) =>
 
 /// Picks the tip to show for [userType] given the current [temperatureC].
 /// When it's hot enough to meaningfully raise aflatoxin risk, this returns a
-/// heat-specific warning instead of the normal rotating daily tip.
-String tipForConditions(String userType, double? temperatureC) {
-  if (!isHeatAlert(temperatureC)) return tipOfTheDay(userType);
+/// heat-specific warning instead of the normal rotating daily tip. Otherwise
+/// forwards [currentStage] to [tipOfTheDay] so the rotating tip stays
+/// distinct from the seasonal guideline currently on screen.
+String tipForConditions(
+  String userType,
+  double? temperatureC, {
+  SeasonStage? currentStage,
+}) {
+  if (!isHeatAlert(temperatureC)) {
+    return tipOfTheDay(userType, currentStage: currentStage);
+  }
   final List<String> tips = _isTrader(userType) ? traderHeatAlertTips : farmerHeatAlertTips;
   return tips[_dayOfYear() % tips.length];
 }

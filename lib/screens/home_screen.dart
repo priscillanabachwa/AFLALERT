@@ -108,6 +108,12 @@ class _HomeScreenState extends State<HomeScreen> {
     _checkHeatAlert();
   }
 
+  // Depends only on the calendar and rainfall, not on user type, so it can
+  // be shared by both the Daily Tip card and the Guidelines card to keep
+  // their content in sync.
+  SeasonStage get _currentSeasonStage =>
+      currentSeasonalGuideline(recentRainfallMm: _rainfall?.totalMm).stage;
+
   void _checkHeatAlert() {
     final bool alertNow = isHeatAlert(_weather?.temperatureC);
     if (!alertNow) {
@@ -118,7 +124,11 @@ class _HomeScreenState extends State<HomeScreen> {
     _heatAlertNotified = true;
 
     final AppLocalizations l10n = AppLocalizations.of(context)!;
-    final String tip = tipForConditions(_userType, _weather?.temperatureC);
+    final String tip = tipForConditions(
+      _userType,
+      _weather?.temperatureC,
+      currentStage: _currentSeasonStage,
+    );
     final int tempRounded = _weather!.temperatureC.round();
 
     NotificationCenter.instance.add(
@@ -204,6 +214,7 @@ class _HomeScreenState extends State<HomeScreen> {
                               tipForConditions(
                                 userType,
                                 _weather?.temperatureC,
+                                currentStage: _currentSeasonStage,
                               ),
                               isHeatAlert(_weather?.temperatureC),
                             ),
