@@ -79,12 +79,20 @@ class RainfallSummary {
 class WeatherService {
   static const String _baseUrl = 'https://api.open-meteo.com/v1/forecast';
 
+  // Open-Meteo's auto-picked "best_match" model disagreed with real
+  // conditions in Kampala by a wide margin (84% vs an actual ~63% relative
+  // humidity), while GFS matched the observed temperature almost exactly in
+  // the same check. Pinning the model keeps results consistent instead of
+  // silently switching between models Open-Meteo considers "best" per query.
+  static const String _model = 'gfs_seamless';
+
   /// Fetches the current temperature and condition for the given coordinates.
   /// Returns `null` if the request fails for any reason.
   Future<WeatherInfo?> getCurrentWeather(double latitude, double longitude) async {
     final Uri url = Uri.parse(
       '$_baseUrl?latitude=$latitude&longitude=$longitude'
-      '&current=temperature_2m,relative_humidity_2m,weather_code',
+      '&current=temperature_2m,relative_humidity_2m,weather_code'
+      '&models=$_model',
     );
 
     try {
@@ -127,7 +135,8 @@ class WeatherService {
   }) async {
     final Uri url = Uri.parse(
       '$_baseUrl?latitude=$latitude&longitude=$longitude'
-      '&daily=precipitation_sum&past_days=$days&forecast_days=1&timezone=auto',
+      '&daily=precipitation_sum&past_days=$days&forecast_days=1&timezone=auto'
+      '&models=$_model',
     );
 
     try {
