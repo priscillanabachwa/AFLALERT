@@ -137,8 +137,13 @@ class _HomeScreenState extends State<HomeScreen> {
     // notification, so it should stay heat-specific even if humidity also
     // happens to be in alert range right now.
 
+    // Shared between the in-app and device notification so tapping the
+    // device notification can scroll straight to this entry.
+    final String notificationId = DateTime.now().microsecondsSinceEpoch.toString();
+
     NotificationCenter.instance.add(
       AppNotification(
+        id: notificationId,
         title: l10n.heatAlertTitle,
         description: tip,
         icon: Icons.whatshot,
@@ -153,6 +158,7 @@ class _HomeScreenState extends State<HomeScreen> {
     LocalNotificationService.instance.show(
       title: l10n.heatAlertNotifTitle(tempRounded),
       body: tip,
+      notificationId: notificationId,
     );
   }
 
@@ -173,9 +179,11 @@ class _HomeScreenState extends State<HomeScreen> {
       currentStage: _currentSeasonStage,
     );
     final int humidityRounded = _weather!.humidityPercent!.round();
+    final String notificationId = DateTime.now().microsecondsSinceEpoch.toString();
 
     NotificationCenter.instance.add(
       AppNotification(
+        id: notificationId,
         title: l10n.humidityAlertNotifTitle(humidityRounded),
         description: tip,
         icon: Icons.water_drop,
@@ -190,6 +198,7 @@ class _HomeScreenState extends State<HomeScreen> {
     LocalNotificationService.instance.show(
       title: l10n.humidityAlertNotifTitle(humidityRounded),
       body: tip,
+      notificationId: notificationId,
     );
   }
 

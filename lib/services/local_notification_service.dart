@@ -36,7 +36,8 @@ class LocalNotificationService {
     try {
       await _plugin.initialize(
         const InitializationSettings(android: androidInit, iOS: iosInit),
-        onDidReceiveNotificationResponse: (_) => _openNotifications(),
+        onDidReceiveNotificationResponse: (response) =>
+            _openNotifications(response.payload),
       );
       await _plugin
           .resolvePlatformSpecificImplementation<
@@ -50,18 +51,32 @@ class LocalNotificationService {
       final NotificationAppLaunchDetails? launchDetails =
           await _plugin.getNotificationAppLaunchDetails();
       if (launchDetails?.didNotificationLaunchApp ?? false) {
-        WidgetsBinding.instance.addPostFrameCallback((_) => _openNotifications());
+        final String? payload = launchDetails?.notificationResponse?.payload;
+        WidgetsBinding.instance.addPostFrameCallback(
+          (_) => _openNotifications(payload),
+        );
       }
     } catch (error) {
       debugPrint('LocalNotificationService init error: $error');
     }
   }
 
-  void _openNotifications() {
-    navigatorKey.currentState?.pushNamed('/notifications');
+  void _openNotifications([String? notificationId]) {
+    navigatorKey.currentState?.pushNamed(
+      '/notifications',
+      arguments: notificationId,
+    );
   }
 
-  Future<void> show({required String title, required String body}) async {
+  /// Shows a device notification. [notificationId] should match the id of
+  /// the corresponding [AppNotification] added to [NotificationCenter] (see
+  /// home_screen.dart), so tapping this notification can scroll straight to
+  /// it on the Notifications screen.
+  Future<void> show({
+    required String title,
+    required String body,
+    String? notificationId,
+  }) async {
     if (!_initialized) await init();
     try {
       await _plugin.show(
@@ -69,6 +84,7 @@ class LocalNotificationService {
         title,
         body,
         const NotificationDetails(android: _androidDetails),
+        payload: notificationId,
       );
     } catch (error) {
       debugPrint('LocalNotificationService show error: $error');
