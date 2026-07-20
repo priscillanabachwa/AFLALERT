@@ -1,5 +1,7 @@
-import 'package:flutter/foundation.dart';
+import 'package:flutter/widgets.dart';
 import 'package:flutter_local_notifications/flutter_local_notifications.dart';
+
+import 'navigation_service.dart';
 
 /// Thin wrapper around `flutter_local_notifications` for firing real
 /// device notifications (e.g. a heat-risk alert) alongside the in-app
@@ -34,18 +36,47 @@ class LocalNotificationService {
     try {
       await _plugin.initialize(
         const InitializationSettings(android: androidInit, iOS: iosInit),
+        onDidReceiveNotificationResponse: (response) =>
+            _openNotifications(response.payload),
       );
       await _plugin
           .resolvePlatformSpecificImplementation<
               AndroidFlutterLocalNotificationsPlugin>()
           ?.requestNotificationsPermission();
       _initialized = true;
+
+      // App was launched (cold start) by tapping a notification, rather than
+      // resumed from background — the tap response above only fires for the
+      // latter, so this covers the former.
+      final NotificationAppLaunchDetails? launchDetails =
+          await _plugin.getNotificationAppLaunchDetails();
+      if (launchDetails?.didNotificationLaunchApp ?? false) {
+        final String? payload = launchDetails?.notificationResponse?.payload;
+        WidgetsBinding.instance.addPostFrameCallback(
+          (_) => _openNotifications(payload),
+        );
+      }
     } catch (error) {
       debugPrint('LocalNotificationService init error: $error');
     }
   }
 
-  Future<void> show({required String title, required String body}) async {
+  void _openNotifications([String? notificationId]) {
+    navigatorKey.currentState?.pushNamed(
+      '/notifications',
+      arguments: notificationId,
+    );
+  }
+
+  /// Shows a device notification. [notificationId] should match the id of
+  /// the corresponding [AppNotification] added to [NotificationCenter] (see
+  /// home_screen.dart), so tapping this notification can scroll straight to
+  /// it on the Notifications screen.
+  Future<void> show({
+    required String title,
+    required String body,
+    String? notificationId,
+  }) async {
     if (!_initialized) await init();
     try {
       await _plugin.show(
@@ -53,6 +84,7 @@ class LocalNotificationService {
         title,
         body,
         const NotificationDetails(android: _androidDetails),
+        payload: notificationId,
       );
     } catch (error) {
       debugPrint('LocalNotificationService show error: $error');

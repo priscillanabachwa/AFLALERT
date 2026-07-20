@@ -13,6 +13,7 @@ import '../models/app_notification.dart';
 import '../services/firestore_service.dart';
 import '../services/local_notification_service.dart';
 import '../services/location_service.dart';
+import '../services/morning_alert_service.dart';
 import '../services/notification_center.dart';
 import '../services/weather_service.dart';
 import '../utils/user_initials.dart';
@@ -56,6 +57,11 @@ class _HomeScreenState extends State<HomeScreen> {
   final Stream<DocumentSnapshot<Map<String, dynamic>>> _profileStream =
       FirestoreService().getUserProfile();
 
+<<<<<<< HEAD
+  // Edge-triggered so each alert fires once when conditions become bad, not
+  // on every refresh while they stay bad. Tracked separately since heat and
+  // humidity can trigger independently of each other.
+=======
   // Hoisted for the same reason — both the stats bar (near the greeting)
   // and the Recent Scans list (further down) read from this one stream.
   final Stream<QuerySnapshot> _scanHistoryStream =
@@ -63,7 +69,9 @@ class _HomeScreenState extends State<HomeScreen> {
 
   // Edge-triggered so the alert fires once when it becomes hot, not on
   // every 5-minute refresh while it stays hot.
+>>>>>>> e00c4af13d4bea2ff2f7770d10c6c91e44eb66be
   bool _heatAlertNotified = false;
+  bool _humidityAlertNotified = false;
 
   @override
   void initState() {
@@ -77,6 +85,7 @@ class _HomeScreenState extends State<HomeScreen> {
       final String userType = doc.data()?['userType'] as String? ?? '';
       if (userType == _userType) return;
       setState(() => _userType = userType);
+      MorningAlertService.cacheUserType(userType);
     });
   }
 
@@ -110,8 +119,16 @@ class _HomeScreenState extends State<HomeScreen> {
       _rainfall = results[1] as RainfallSummary?;
       _weatherLoading = false;
     });
+    MorningAlertService.cacheLocation(location.latitude, location.longitude);
     _checkHeatAlert();
+    _checkHumidityAlert();
   }
+
+  // Depends only on the calendar and rainfall, not on user type, so it can
+  // be shared by both the Daily Tip card and the Guidelines card to keep
+  // their content in sync.
+  SeasonStage get _currentSeasonStage =>
+      currentSeasonalGuideline(recentRainfallMm: _rainfall?.totalMm).stage;
 
   void _checkHeatAlert() {
     final bool alertNow = isHeatAlert(_weather?.temperatureC);
@@ -123,11 +140,23 @@ class _HomeScreenState extends State<HomeScreen> {
     _heatAlertNotified = true;
 
     final AppLocalizations l10n = AppLocalizations.of(context)!;
-    final String tip = tipForConditions(_userType, _weather?.temperatureC);
+    final String tip = tipForConditions(
+      _userType,
+      _weather?.temperatureC,
+      currentStage: _currentSeasonStage,
+    );
     final int tempRounded = _weather!.temperatureC.round();
+    // humidityPercent intentionally omitted above: this is the heat-specific
+    // notification, so it should stay heat-specific even if humidity also
+    // happens to be in alert range right now.
+
+    // Shared between the in-app and device notification so tapping the
+    // device notification can scroll straight to this entry.
+    final String notificationId = DateTime.now().microsecondsSinceEpoch.toString();
 
     NotificationCenter.instance.add(
       AppNotification(
+        id: notificationId,
         title: l10n.heatAlertTitle,
         description: tip,
         icon: Icons.whatshot,
@@ -142,6 +171,47 @@ class _HomeScreenState extends State<HomeScreen> {
     LocalNotificationService.instance.show(
       title: l10n.heatAlertNotifTitle(tempRounded),
       body: tip,
+      notificationId: notificationId,
+    );
+  }
+
+  void _checkHumidityAlert() {
+    final bool alertNow = isHumidityAlert(_weather?.humidityPercent);
+    if (!alertNow) {
+      _humidityAlertNotified = false;
+      return;
+    }
+    if (_humidityAlertNotified) return;
+    _humidityAlertNotified = true;
+
+    final AppLocalizations l10n = AppLocalizations.of(context)!;
+    final String tip = tipForConditions(
+      _userType,
+      null,
+      humidityPercent: _weather?.humidityPercent,
+      currentStage: _currentSeasonStage,
+    );
+    final int humidityRounded = _weather!.humidityPercent!.round();
+    final String notificationId = DateTime.now().microsecondsSinceEpoch.toString();
+
+    NotificationCenter.instance.add(
+      AppNotification(
+        id: notificationId,
+        title: l10n.humidityAlertNotifTitle(humidityRounded),
+        description: tip,
+        icon: Icons.water_drop,
+        iconColor: const Color(0xFF2A7DE0),
+        iconBackground: const Color(0xFFCBE0FB),
+        category: NotificationCategory.alert,
+        unread: true,
+        highPriority: true,
+      ),
+    );
+
+    LocalNotificationService.instance.show(
+      title: l10n.humidityAlertNotifTitle(humidityRounded),
+      body: tip,
+      notificationId: notificationId,
     );
   }
 
@@ -226,8 +296,13 @@ class _HomeScreenState extends State<HomeScreen> {
                               tipForConditions(
                                 userType,
                                 _weather?.temperatureC,
+                                humidityPercent: _weather?.humidityPercent,
+                                currentStage: _currentSeasonStage,
                               ),
-                              isHeatAlert(_weather?.temperatureC),
+                              alertKindFor(
+                                _weather?.temperatureC,
+                                _weather?.humidityPercent,
+                              ),
                             ),
                           ],
                         );
@@ -418,7 +493,11 @@ class _HomeScreenState extends State<HomeScreen> {
     );
   }
 
+<<<<<<< HEAD
+  Widget _buildInfoCards(String dailyTip, WeatherAlertKind alertKind) {
+=======
   Widget _buildTipCard(String dailyTip, bool heatAlert) {
+>>>>>>> e00c4af13d4bea2ff2f7770d10c6c91e44eb66be
     final AppLocalizations l10n = AppLocalizations.of(context)!;
     return Container(
       width: double.infinity,
@@ -445,6 +524,53 @@ class _HomeScreenState extends State<HomeScreen> {
               letterSpacing: 0.5,
             ),
           ),
+<<<<<<< HEAD
+          const SizedBox(width: 14),
+          Expanded(
+            child: Container(
+              padding: const EdgeInsets.all(16),
+              decoration: BoxDecoration(
+                color: AppColors.primaryContainer,
+                borderRadius: BorderRadius.circular(16),
+              ),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Icon(
+                    switch (alertKind) {
+                      WeatherAlertKind.humidity => Icons.water_drop,
+                      WeatherAlertKind.heat => Icons.whatshot,
+                      WeatherAlertKind.none => Icons.lightbulb_outline,
+                    },
+                    color: AppColors.secondary,
+                    size: 20,
+                  ),
+                  const SizedBox(height: 8),
+                  Text(
+                    switch (alertKind) {
+                      WeatherAlertKind.humidity => l10n.humidityAlertBadge,
+                      WeatherAlertKind.heat => l10n.heatAlertBadge,
+                      WeatherAlertKind.none => l10n.dailyTip,
+                    },
+                    style: const TextStyle(
+                      fontSize: 10,
+                      fontWeight: FontWeight.w700,
+                      color: AppColors.secondary,
+                      letterSpacing: 0.5,
+                    ),
+                  ),
+                  const SizedBox(height: 8),
+                  Text(
+                    dailyTip,
+                    style: const TextStyle(
+                      fontSize: 12,
+                      color: Colors.white,
+                      height: 1.4,
+                    ),
+                  ),
+                ],
+              ),
+=======
           const SizedBox(height: 8),
           Text(
             dailyTip,
@@ -452,6 +578,7 @@ class _HomeScreenState extends State<HomeScreen> {
               fontSize: 12,
               color: Colors.white,
               height: 1.4,
+>>>>>>> e00c4af13d4bea2ff2f7770d10c6c91e44eb66be
             ),
           ),
         ],

@@ -60,6 +60,45 @@ class _NotificationsScreenState extends State<NotificationsScreen> {
   static const List<String> _filters = ['All', 'Alerts', 'Updates'];
   String _selectedFilter = 'All';
 
+  // Id of the notification to scroll to and highlight, passed in as the
+  // route argument when the user taps a device notification. Cleared once
+  // the highlight has faded, so it only applies to the initial landing.
+  String? _highlightId;
+  bool _scrolledToHighlight = false;
+  final Map<String, GlobalKey> _itemKeys = {};
+
+  @override
+  void didChangeDependencies() {
+    super.didChangeDependencies();
+    if (_highlightId == null && !_scrolledToHighlight) {
+      final Object? args = ModalRoute.of(context)?.settings.arguments;
+      if (args is String) {
+        _highlightId = args;
+        // Force "All" so the targeted notification can't be hidden by
+        // whatever filter happened to be selected.
+        _selectedFilter = 'All';
+      }
+    }
+  }
+
+  void _scrollToHighlightIfReady() {
+    if (_highlightId == null || _scrolledToHighlight) return;
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      final BuildContext? itemContext = _itemKeys[_highlightId]?.currentContext;
+      if (itemContext == null) return;
+      _scrolledToHighlight = true;
+      Scrollable.ensureVisible(
+        itemContext,
+        duration: const Duration(milliseconds: 400),
+        curve: Curves.easeInOut,
+        alignment: 0.1,
+      );
+      Future.delayed(const Duration(seconds: 3), () {
+        if (mounted) setState(() => _highlightId = null);
+      });
+    });
+  }
+
   List<AppNotification> _filteredNotifications(List<AppNotification> notifications) {
     switch (_selectedFilter) {
       case 'Alerts':
@@ -78,6 +117,7 @@ class _NotificationsScreenState extends State<NotificationsScreen> {
       listenable: NotificationCenter.instance,
       builder: (context, _) {
         final filtered = _filteredNotifications(NotificationCenter.instance.notifications);
+        _scrollToHighlightIfReady();
 
         return Scaffold(
           backgroundColor: kBackground,
@@ -114,15 +154,21 @@ class _NotificationsScreenState extends State<NotificationsScreen> {
                         itemCount: filtered.length,
                         itemBuilder: (context, index) {
                           final notification = filtered[index];
+                          final GlobalKey itemKey =
+                              _itemKeys.putIfAbsent(notification.id, () => GlobalKey());
                           return Dismissible(
                             key: ValueKey(notification.id),
                             direction: DismissDirection.endToStart,
                             background: _DeleteBackground(),
                             onDismissed: (_) =>
                                 NotificationCenter.instance.remove(notification),
-                            child: _NotificationCard(
-                              notification: notification,
-                              onTap: () => NotificationCenter.instance.markRead(notification),
+                            child: KeyedSubtree(
+                              key: itemKey,
+                              child: _NotificationCard(
+                                notification: notification,
+                                highlighted: notification.id == _highlightId,
+                                onTap: () => NotificationCenter.instance.markRead(notification),
+                              ),
                             ),
                           );
                         },
@@ -263,19 +309,23 @@ class _NotificationCard extends StatelessWidget {
   const _NotificationCard({
     required this.notification,
     required this.onTap,
+    this.highlighted = false,
   });
 
   final AppNotification notification;
   final VoidCallback onTap;
+  final bool highlighted;
 
   @override
   Widget build(BuildContext context) {
     final radius = BorderRadius.circular(18);
 
-    final card = Container(
+    final card = AnimatedContainer(
+      duration: const Duration(milliseconds: 300),
       decoration: BoxDecoration(
-        color: Colors.white,
+        color: highlighted ? kAmber.withValues(alpha: 0.22) : Colors.white,
         borderRadius: radius,
+        border: highlighted ? Border.all(color: kAmber, width: 2) : null,
         boxShadow: [
           BoxShadow(
             color: Colors.black.withValues(alpha: 0.05),
