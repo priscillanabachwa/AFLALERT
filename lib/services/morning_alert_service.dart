@@ -101,8 +101,8 @@ Future<void> _runMorningAlert() async {
   final double? longitude = prefs.getDouble(_prefLon);
   if (latitude == null || longitude == null) return;
 
-  final DailyForecast? forecast =
-      await WeatherService().getTodayForecast(latitude, longitude);
+  final DailyAlertForecast? forecast =
+      await WeatherService().getDailyAlertForecast(latitude, longitude);
   if (forecast == null) return;
 
   final MorningWeatherKind kind = classifyMorningWeather(

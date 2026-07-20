@@ -76,17 +76,18 @@ class RainfallSummary {
   const RainfallSummary({required this.totalMm, required this.windowDays});
 }
 
-<<<<<<< HEAD
 /// Today's forecast summary, used to decide the wording of the morning
 /// weather alert (see morning_alert_service.dart).
-class DailyForecast {
+class DailyAlertForecast {
   final int weatherCode;
   final double? precipitationProbabilityMax;
 
-  const DailyForecast({
+  const DailyAlertForecast({
     required this.weatherCode,
     this.precipitationProbabilityMax,
-=======
+  });
+}
+
 class HourlyForecastEntry {
   final DateTime time;
   final double temperatureC;
@@ -114,7 +115,6 @@ class DailyForecast {
     required this.minC,
     required this.maxC,
     required this.hours,
->>>>>>> e00c4af13d4bea2ff2f7770d10c6c91e44eb66be
   });
 }
 
@@ -271,7 +271,7 @@ class WeatherService {
   /// rain) for the given coordinates, used to decide the wording of the
   /// morning weather alert. Returns `null` if the request fails for any
   /// reason.
-  Future<DailyForecast?> getTodayForecast(double latitude, double longitude) async {
+  Future<DailyAlertForecast?> getDailyAlertForecast(double latitude, double longitude) async {
     final Uri url = Uri.parse(
       '$_baseUrl?latitude=$latitude&longitude=$longitude'
       '&daily=weather_code,precipitation_probability_max&forecast_days=1&timezone=auto'
@@ -301,7 +301,7 @@ class WeatherService {
           ? precipProbabilities!.first as num?
           : null;
 
-      return DailyForecast(
+      return DailyAlertForecast(
         weatherCode: weatherCode.toInt(),
         precipitationProbabilityMax: precipProbability?.toDouble(),
       );

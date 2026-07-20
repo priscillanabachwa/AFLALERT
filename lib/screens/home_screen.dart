@@ -57,19 +57,14 @@ class _HomeScreenState extends State<HomeScreen> {
   final Stream<DocumentSnapshot<Map<String, dynamic>>> _profileStream =
       FirestoreService().getUserProfile();
 
-<<<<<<< HEAD
-  // Edge-triggered so each alert fires once when conditions become bad, not
-  // on every refresh while they stay bad. Tracked separately since heat and
-  // humidity can trigger independently of each other.
-=======
   // Hoisted for the same reason — both the stats bar (near the greeting)
   // and the Recent Scans list (further down) read from this one stream.
   final Stream<QuerySnapshot> _scanHistoryStream =
       FirestoreService().getUserScanHistory();
 
-  // Edge-triggered so the alert fires once when it becomes hot, not on
-  // every 5-minute refresh while it stays hot.
->>>>>>> e00c4af13d4bea2ff2f7770d10c6c91e44eb66be
+  // Edge-triggered so each alert fires once when conditions become bad, not
+  // on every refresh while they stay bad. Tracked separately since heat and
+  // humidity can trigger independently of each other.
   bool _heatAlertNotified = false;
   bool _humidityAlertNotified = false;
 
@@ -493,11 +488,7 @@ class _HomeScreenState extends State<HomeScreen> {
     );
   }
 
-<<<<<<< HEAD
-  Widget _buildInfoCards(String dailyTip, WeatherAlertKind alertKind) {
-=======
-  Widget _buildTipCard(String dailyTip, bool heatAlert) {
->>>>>>> e00c4af13d4bea2ff2f7770d10c6c91e44eb66be
+  Widget _buildTipCard(String dailyTip, WeatherAlertKind alertKind) {
     final AppLocalizations l10n = AppLocalizations.of(context)!;
     return Container(
       width: double.infinity,
@@ -510,13 +501,21 @@ class _HomeScreenState extends State<HomeScreen> {
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           Icon(
-            heatAlert ? Icons.whatshot : Icons.lightbulb_outline,
+            switch (alertKind) {
+              WeatherAlertKind.humidity => Icons.water_drop,
+              WeatherAlertKind.heat => Icons.whatshot,
+              WeatherAlertKind.none => Icons.lightbulb_outline,
+            },
             color: AppColors.secondary,
             size: 20,
           ),
           const SizedBox(height: 8),
           Text(
-            heatAlert ? l10n.heatAlertBadge : l10n.dailyTip,
+            switch (alertKind) {
+              WeatherAlertKind.humidity => l10n.humidityAlertBadge,
+              WeatherAlertKind.heat => l10n.heatAlertBadge,
+              WeatherAlertKind.none => l10n.dailyTip,
+            },
             style: const TextStyle(
               fontSize: 10,
               fontWeight: FontWeight.w700,
@@ -524,53 +523,6 @@ class _HomeScreenState extends State<HomeScreen> {
               letterSpacing: 0.5,
             ),
           ),
-<<<<<<< HEAD
-          const SizedBox(width: 14),
-          Expanded(
-            child: Container(
-              padding: const EdgeInsets.all(16),
-              decoration: BoxDecoration(
-                color: AppColors.primaryContainer,
-                borderRadius: BorderRadius.circular(16),
-              ),
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Icon(
-                    switch (alertKind) {
-                      WeatherAlertKind.humidity => Icons.water_drop,
-                      WeatherAlertKind.heat => Icons.whatshot,
-                      WeatherAlertKind.none => Icons.lightbulb_outline,
-                    },
-                    color: AppColors.secondary,
-                    size: 20,
-                  ),
-                  const SizedBox(height: 8),
-                  Text(
-                    switch (alertKind) {
-                      WeatherAlertKind.humidity => l10n.humidityAlertBadge,
-                      WeatherAlertKind.heat => l10n.heatAlertBadge,
-                      WeatherAlertKind.none => l10n.dailyTip,
-                    },
-                    style: const TextStyle(
-                      fontSize: 10,
-                      fontWeight: FontWeight.w700,
-                      color: AppColors.secondary,
-                      letterSpacing: 0.5,
-                    ),
-                  ),
-                  const SizedBox(height: 8),
-                  Text(
-                    dailyTip,
-                    style: const TextStyle(
-                      fontSize: 12,
-                      color: Colors.white,
-                      height: 1.4,
-                    ),
-                  ),
-                ],
-              ),
-=======
           const SizedBox(height: 8),
           Text(
             dailyTip,
@@ -578,7 +530,6 @@ class _HomeScreenState extends State<HomeScreen> {
               fontSize: 12,
               color: Colors.white,
               height: 1.4,
->>>>>>> e00c4af13d4bea2ff2f7770d10c6c91e44eb66be
             ),
           ),
         ],
