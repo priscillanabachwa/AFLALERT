@@ -856,19 +856,10 @@ class AppLocalizationsLg extends AppLocalizations {
       'Ebiteesebwa biva mu buwabuzi bwa UNBS ne MAAIF.';
 
   @override
-  String get startNewTest => 'Tandika Ekigezo Ekipya';
+  String get tier1Short => 'Tier 1';
 
   @override
-  String get tier1Title => 'Tier 1 · Okukebera kwa AI (Amaaso)';
-
-  @override
-  String get tier1Subtitle => 'Kebera kasooli oba binyeebwa oba biriko obukuku';
-
-  @override
-  String get tier2Title => 'Tier 2 · Chemical Strip Scan';
-
-  @override
-  String get tier2Subtitle => 'Soma test strip okufuna ppb ntuufu';
+  String get tier2Short => 'Tier 2';
 
   @override
   String get chemicalStripScanTitle => 'Chemical Strip Scan';

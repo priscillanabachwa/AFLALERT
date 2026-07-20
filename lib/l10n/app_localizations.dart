@@ -1652,35 +1652,17 @@ abstract class AppLocalizations {
   /// **'Recommendations sourced from UNBS and MAAIF guidance.'**
   String get recommendationsSourced;
 
-  /// No description provided for @startNewTest.
+  /// No description provided for @tier1Short.
   ///
   /// In en, this message translates to:
-  /// **'Start a New Test'**
-  String get startNewTest;
+  /// **'Tier 1'**
+  String get tier1Short;
 
-  /// No description provided for @tier1Title.
+  /// No description provided for @tier2Short.
   ///
   /// In en, this message translates to:
-  /// **'Tier 1 · Visual AI Scan'**
-  String get tier1Title;
-
-  /// No description provided for @tier1Subtitle.
-  ///
-  /// In en, this message translates to:
-  /// **'Check loose maize or groundnuts for mold'**
-  String get tier1Subtitle;
-
-  /// No description provided for @tier2Title.
-  ///
-  /// In en, this message translates to:
-  /// **'Tier 2 · Chemical Strip Scan'**
-  String get tier2Title;
-
-  /// No description provided for @tier2Subtitle.
-  ///
-  /// In en, this message translates to:
-  /// **'Read a test strip for an exact ppb level'**
-  String get tier2Subtitle;
+  /// **'Tier 2'**
+  String get tier2Short;
 
   /// No description provided for @chemicalStripScanTitle.
   ///

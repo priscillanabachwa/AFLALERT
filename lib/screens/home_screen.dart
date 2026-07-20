@@ -219,7 +219,9 @@ class _HomeScreenState extends State<HomeScreen> {
                                 return _buildStatsRow(docs);
                               },
                             ),
-                            const SizedBox(height: 20),
+                            const SizedBox(height: 24),
+                            _buildTierPicker(context),
+                            const SizedBox(height: 24),
                             _buildTipCard(
                               tipForConditions(
                                 userType,
@@ -250,8 +252,6 @@ class _HomeScreenState extends State<HomeScreen> {
                         return _buildSeasonalGuidelineCard(userType);
                       },
                     ),
-                    const SizedBox(height: 32),
-                    _buildTierPicker(context),
                     const SizedBox(height: 28),
                     StreamBuilder<QuerySnapshot>(
                       stream: _scanHistoryStream,
@@ -663,98 +663,75 @@ class _HomeScreenState extends State<HomeScreen> {
     );
   }
 
+  // Two circular start-a-test buttons, mirrored on opposite sides of the
+  // row (Tier 1 left, Tier 2 right) rather than the earlier stacked
+  // rectangular cards.
   Widget _buildTierPicker(BuildContext context) {
     final AppLocalizations l10n = AppLocalizations.of(context)!;
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
+    return Row(
+      mainAxisAlignment: MainAxisAlignment.spaceEvenly,
       children: [
-        Text(
-          l10n.startNewTest,
-          style: const TextStyle(
-            fontSize: 18,
-            fontWeight: FontWeight.bold,
-            color: Colors.white,
-            shadows: _onImageShadow,
-          ),
-        ),
-        const SizedBox(height: 12),
-        _buildTierCard(
+        _buildTierCircle(
           icon: Icons.camera_alt_outlined,
-          iconColor: AppColors.primaryContainer,
-          title: l10n.tier1Title,
-          subtitle: l10n.tier1Subtitle,
+          label: l10n.tier1Short,
+          fillColor: AppColors.primaryContainer,
+          contentColor: Colors.white,
           onTap: () => _onTier1Tap(context),
         ),
-        const SizedBox(height: 12),
-        _buildTierCard(
+        _buildTierCircle(
           icon: Icons.science_outlined,
-          iconColor: AppColors.secondary,
-          title: l10n.tier2Title,
-          subtitle: l10n.tier2Subtitle,
+          label: l10n.tier2Short,
+          fillColor: AppColors.secondary,
+          contentColor: AppColors.primary,
           onTap: () => _onTier2Tap(context),
         ),
       ],
     );
   }
 
-  Widget _buildTierCard({
+  Widget _buildTierCircle({
     required IconData icon,
-    required Color iconColor,
-    required String title,
-    required String subtitle,
+    required String label,
+    required Color fillColor,
+    required Color contentColor,
     required VoidCallback onTap,
   }) {
-    return Material(
-      color: Colors.white,
-      borderRadius: BorderRadius.circular(16),
-      elevation: 0,
-      child: InkWell(
-        borderRadius: BorderRadius.circular(16),
-        onTap: onTap,
-        child: Container(
-          padding: const EdgeInsets.all(14),
-          decoration: BoxDecoration(
-            borderRadius: BorderRadius.circular(16),
-            boxShadow: [
-              BoxShadow(
-                color: Colors.black.withValues(alpha: 0.05),
-                blurRadius: 10,
-                offset: const Offset(0, 4),
-              ),
-            ],
+    return Container(
+      width: 132,
+      height: 132,
+      padding: const EdgeInsets.all(5),
+      decoration: BoxDecoration(
+        shape: BoxShape.circle,
+        color: Colors.white.withValues(alpha: 0.9),
+        boxShadow: [
+          BoxShadow(
+            color: Colors.black.withValues(alpha: 0.15),
+            blurRadius: 12,
+            offset: const Offset(0, 6),
           ),
-          child: Row(
+        ],
+      ),
+      child: Material(
+        color: fillColor,
+        shape: const CircleBorder(),
+        child: InkWell(
+          customBorder: const CircleBorder(),
+          onTap: onTap,
+          child: Column(
+            mainAxisAlignment: MainAxisAlignment.center,
             children: [
-              Container(
-                padding: const EdgeInsets.all(12),
-                decoration: BoxDecoration(
-                  color: iconColor.withValues(alpha: 0.15),
-                  borderRadius: BorderRadius.circular(12),
-                ),
-                child: Icon(icon, color: iconColor, size: 24),
-              ),
-              const SizedBox(width: 14),
-              Expanded(
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Text(
-                      title,
-                      style: const TextStyle(
-                        fontSize: 14,
-                        fontWeight: FontWeight.w700,
-                        color: AppColors.primary,
-                      ),
-                    ),
-                    const SizedBox(height: 3),
-                    Text(
-                      subtitle,
-                      style: const TextStyle(fontSize: 12, color: Colors.grey),
-                    ),
-                  ],
+              Icon(icon, color: contentColor, size: 32),
+              const SizedBox(height: 8),
+              Text(
+                label,
+                textAlign: TextAlign.center,
+                style: TextStyle(
+                  color: contentColor,
+                  fontSize: 13,
+                  fontWeight: FontWeight.bold,
+                  letterSpacing: 0.5,
                 ),
               ),
-              const Icon(Icons.chevron_right, color: Colors.grey),
             ],
           ),
         ),

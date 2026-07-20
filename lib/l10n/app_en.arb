@@ -333,11 +333,8 @@
   "aboutAflAlert": "About AflAlert",
   "recommendationsSourced": "Recommendations sourced from UNBS and MAAIF guidance.",
 
-  "startNewTest": "Start a New Test",
-  "tier1Title": "Tier 1 · Visual AI Scan",
-  "tier1Subtitle": "Check loose maize or groundnuts for mold",
-  "tier2Title": "Tier 2 · Chemical Strip Scan",
-  "tier2Subtitle": "Read a test strip for an exact ppb level",
+  "tier1Short": "Tier 1",
+  "tier2Short": "Tier 2",
   "chemicalStripScanTitle": "Chemical Strip Scan",
   "scanTestStrip": "Scan Test Strip",
   "cropTypeMaize": "Maize",
