@@ -128,10 +128,10 @@ class AppLocalizationsLg extends AppLocalizations {
   String get totalScans => 'Scan Zonna';
 
   @override
-  String get healthyScans => 'Scan ezebilamu';
+  String get healthyScans => 'Scan Ezirungi';
 
   @override
-  String get detectedScans => 'Scan ezalabwamu obukuku';
+  String get detectedScans => 'Scan Ezalabika';
 
   @override
   String get selectLanguage => 'Londa Olulimi';
@@ -237,7 +237,7 @@ class AppLocalizationsLg extends AppLocalizations {
   String get googleButton => 'Google';
 
   @override
-  String get newToAflalert => 'Guusi ku AflAlert? ';
+  String get newToAflalert => 'Oli mupya ku AflAlert? ';
 
   @override
   String get registerHere => 'Weewandiise wano';

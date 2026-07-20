@@ -324,7 +324,7 @@ class _AnalysisScreenState extends State<AnalysisScreen> {
         crossAxisAlignment: CrossAxisAlignment.start,
         children: bullets
             .map(
-              (bullet) => Padding(
+              (bulsslet) => Padding(
                 padding: const EdgeInsets.only(bottom: 14),
                 child: Row(
                   crossAxisAlignment: CrossAxisAlignment.start,
