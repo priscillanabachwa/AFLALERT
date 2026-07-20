@@ -13,6 +13,7 @@ import '../models/app_notification.dart';
 import '../services/firestore_service.dart';
 import '../services/local_notification_service.dart';
 import '../services/location_service.dart';
+import '../services/morning_alert_service.dart';
 import '../services/notification_center.dart';
 import '../services/weather_service.dart';
 import '../utils/user_initials.dart';
@@ -20,6 +21,8 @@ import '../widgets/custom_bottom_nav.dart';
 import 'analysis_screen.dart';
 import 'history_screen.dart';
 import 'profile_screen.dart';
+import 'strip_camera_screen.dart';
+import 'strip_analysis_screen.dart';
 
 class HomeScreen extends StatefulWidget {
   const HomeScreen({super.key});
@@ -29,9 +32,15 @@ class HomeScreen extends StatefulWidget {
 }
 
 class _HomeScreenState extends State<HomeScreen> {
+  // Applied to text that sits directly on the background photo (rather than
+  // inside an opaque card) so it stays legible regardless of image content.
+  static const List<Shadow> _onImageShadow = [
+    Shadow(color: Colors.black87, blurRadius: 8, offset: Offset(0, 1)),
+  ];
+
   // Weather can change quickly, so keep it fresh instead of only fetching
   // once when the screen first mounts.
-  static const Duration _refreshInterval = Duration(minutes: 5);
+  static const Duration _refreshInterval = Duration(minutes: 2);
 
   LocationResult? _location;
   WeatherInfo? _weather;
@@ -48,9 +57,21 @@ class _HomeScreenState extends State<HomeScreen> {
   final Stream<DocumentSnapshot<Map<String, dynamic>>> _profileStream =
       FirestoreService().getUserProfile();
 
+<<<<<<< HEAD
+  // Edge-triggered so each alert fires once when conditions become bad, not
+  // on every refresh while they stay bad. Tracked separately since heat and
+  // humidity can trigger independently of each other.
+=======
+  // Hoisted for the same reason — both the stats bar (near the greeting)
+  // and the Recent Scans list (further down) read from this one stream.
+  final Stream<QuerySnapshot> _scanHistoryStream =
+      FirestoreService().getUserScanHistory();
+
   // Edge-triggered so the alert fires once when it becomes hot, not on
   // every 5-minute refresh while it stays hot.
+>>>>>>> e00c4af13d4bea2ff2f7770d10c6c91e44eb66be
   bool _heatAlertNotified = false;
+  bool _humidityAlertNotified = false;
 
   @override
   void initState() {
@@ -64,6 +85,7 @@ class _HomeScreenState extends State<HomeScreen> {
       final String userType = doc.data()?['userType'] as String? ?? '';
       if (userType == _userType) return;
       setState(() => _userType = userType);
+      MorningAlertService.cacheUserType(userType);
     });
   }
 
@@ -97,8 +119,16 @@ class _HomeScreenState extends State<HomeScreen> {
       _rainfall = results[1] as RainfallSummary?;
       _weatherLoading = false;
     });
+    MorningAlertService.cacheLocation(location.latitude, location.longitude);
     _checkHeatAlert();
+    _checkHumidityAlert();
   }
+
+  // Depends only on the calendar and rainfall, not on user type, so it can
+  // be shared by both the Daily Tip card and the Guidelines card to keep
+  // their content in sync.
+  SeasonStage get _currentSeasonStage =>
+      currentSeasonalGuideline(recentRainfallMm: _rainfall?.totalMm).stage;
 
   void _checkHeatAlert() {
     final bool alertNow = isHeatAlert(_weather?.temperatureC);
@@ -110,11 +140,23 @@ class _HomeScreenState extends State<HomeScreen> {
     _heatAlertNotified = true;
 
     final AppLocalizations l10n = AppLocalizations.of(context)!;
-    final String tip = tipForConditions(_userType, _weather?.temperatureC);
+    final String tip = tipForConditions(
+      _userType,
+      _weather?.temperatureC,
+      currentStage: _currentSeasonStage,
+    );
     final int tempRounded = _weather!.temperatureC.round();
+    // humidityPercent intentionally omitted above: this is the heat-specific
+    // notification, so it should stay heat-specific even if humidity also
+    // happens to be in alert range right now.
+
+    // Shared between the in-app and device notification so tapping the
+    // device notification can scroll straight to this entry.
+    final String notificationId = DateTime.now().microsecondsSinceEpoch.toString();
 
     NotificationCenter.instance.add(
       AppNotification(
+        id: notificationId,
         title: l10n.heatAlertTitle,
         description: tip,
         icon: Icons.whatshot,
@@ -129,6 +171,47 @@ class _HomeScreenState extends State<HomeScreen> {
     LocalNotificationService.instance.show(
       title: l10n.heatAlertNotifTitle(tempRounded),
       body: tip,
+      notificationId: notificationId,
+    );
+  }
+
+  void _checkHumidityAlert() {
+    final bool alertNow = isHumidityAlert(_weather?.humidityPercent);
+    if (!alertNow) {
+      _humidityAlertNotified = false;
+      return;
+    }
+    if (_humidityAlertNotified) return;
+    _humidityAlertNotified = true;
+
+    final AppLocalizations l10n = AppLocalizations.of(context)!;
+    final String tip = tipForConditions(
+      _userType,
+      null,
+      humidityPercent: _weather?.humidityPercent,
+      currentStage: _currentSeasonStage,
+    );
+    final int humidityRounded = _weather!.humidityPercent!.round();
+    final String notificationId = DateTime.now().microsecondsSinceEpoch.toString();
+
+    NotificationCenter.instance.add(
+      AppNotification(
+        id: notificationId,
+        title: l10n.humidityAlertNotifTitle(humidityRounded),
+        description: tip,
+        icon: Icons.water_drop,
+        iconColor: const Color(0xFF2A7DE0),
+        iconBackground: const Color(0xFFCBE0FB),
+        category: NotificationCategory.alert,
+        unread: true,
+        highPriority: true,
+      ),
+    );
+
+    LocalNotificationService.instance.show(
+      title: l10n.humidityAlertNotifTitle(humidityRounded),
+      body: tip,
+      notificationId: notificationId,
     );
   }
 
@@ -137,102 +220,145 @@ class _HomeScreenState extends State<HomeScreen> {
     final AppLocalizations l10n = AppLocalizations.of(context)!;
     return Scaffold(
       backgroundColor: AppColors.t95,
-      body: SafeArea(
-        child: RefreshIndicator(
-          color: AppColors.primary,
-          onRefresh: _loadWeather,
-          child: SingleChildScrollView(
-            physics: const AlwaysScrollableScrollPhysics(),
-            padding: const EdgeInsets.symmetric(horizontal: 20),
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                const SizedBox(height: 12),
-                _buildHeader(context),
-                const SizedBox(height: 24),
-                StreamBuilder<DocumentSnapshot<Map<String, dynamic>>>(
-                  stream: _profileStream,
-                  builder: (context, snapshot) {
-                    final Map<String, dynamic>? profile = snapshot.data?.data();
-                    final String? fullName = profile?['fullName'] as String?;
-                    final String firstName =
-                        (fullName != null && fullName.trim().isNotEmpty)
-                        ? fullName.trim().split(' ').first
-                        : l10n.defaultGreetingName;
-                    final String userType =
-                        profile?['userType'] as String? ?? '';
-                    return Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        _buildGreeting(firstName),
-                        const SizedBox(height: 20),
-                        _buildInfoCards(
-                          tipForConditions(userType, _weather?.temperatureC),
-                          isHeatAlert(_weather?.temperatureC),
-                        ),
-                      ],
-                    );
-                  },
-                ),
-                const SizedBox(height: 28),
-                Text(
-                  l10n.guidelines,
-                  style: const TextStyle(
-                    fontSize: 18,
-                    fontWeight: FontWeight.bold,
-                    color: AppColors.primary,
-                  ),
-                ),
-                const SizedBox(height: 16),
-                StreamBuilder<DocumentSnapshot<Map<String, dynamic>>>(
-                  stream: _profileStream,
-                  builder: (context, snapshot) {
-                    final String userType =
-                        snapshot.data?.data()?['userType'] as String? ?? '';
-                    return _buildSeasonalGuidelineCard(userType);
-                  },
-                ),
-                const SizedBox(height: 32),
-                _buildScanButton(context),
-                const SizedBox(height: 12),
-                Center(
-                  child: Text(
-                    l10n.tapToScan,
-                    style: const TextStyle(fontSize: 14, color: Colors.grey),
-                  ),
-                ),
-                const SizedBox(height: 28),
-                StreamBuilder<QuerySnapshot>(
-                  stream: FirestoreService().getUserScanHistory(),
-                  builder: (context, snapshot) {
-                    final docs = snapshot.data?.docs ?? [];
-                    final recentDocs = docs.take(2).toList();
-                    return Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        _buildStatsRow(docs),
-                        const SizedBox(height: 28),
-                        _buildRecentScansHeader(),
-                        const SizedBox(height: 16),
-                        if (recentDocs.isEmpty)
-                          _buildNoScansYet()
-                        else
-                          for (int i = 0; i < recentDocs.length; i++)
-                            Padding(
-                              padding: EdgeInsets.only(
-                                bottom: i == recentDocs.length - 1 ? 0 : 12,
-                              ),
-                              child: _buildScanTileFromDoc(recentDocs[i]),
-                            ),
-                      ],
-                    );
-                  },
-                ),
-                const SizedBox(height: 88),
-              ],
+      extendBody: true,
+      body: Stack(
+        children: [
+          Positioned.fill(
+            child: Image.asset(
+              'lib/assets/images/homescreen.jpeg',
+              fit: BoxFit.cover,
             ),
           ),
-        ),
+          Positioned.fill(
+            child: DecoratedBox(
+              decoration: BoxDecoration(
+                gradient: LinearGradient(
+                  begin: Alignment.topCenter,
+                  end: Alignment.bottomCenter,
+                  colors: [
+                    Colors.black.withValues(alpha: 0.55),
+                    Colors.black.withValues(alpha: 0.35),
+                    Colors.black.withValues(alpha: 0.45),
+                  ],
+                ),
+              ),
+            ),
+          ),
+          SafeArea(
+            child: RefreshIndicator(
+              color: AppColors.primary,
+              onRefresh: _loadWeather,
+              child: SingleChildScrollView(
+                physics: const AlwaysScrollableScrollPhysics(),
+                padding: const EdgeInsets.symmetric(horizontal: 20),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    const SizedBox(height: 12),
+                    _buildHeader(context),
+                    const SizedBox(height: 24),
+                    StreamBuilder<DocumentSnapshot<Map<String, dynamic>>>(
+                      stream: _profileStream,
+                      builder: (context, snapshot) {
+                        final Map<String, dynamic>? profile = snapshot.data
+                            ?.data();
+                        final String? fullName =
+                            profile?['fullName'] as String?;
+                        final String firstName =
+                            (fullName != null && fullName.trim().isNotEmpty)
+                            ? fullName.trim().split(' ').first
+                            : l10n.defaultGreetingName;
+                        final String userType =
+                            profile?['userType'] as String? ?? '';
+                        return Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            Row(
+                              crossAxisAlignment: CrossAxisAlignment.start,
+                              children: [
+                                Expanded(child: _buildGreeting(firstName)),
+                                const SizedBox(width: 12),
+                                _buildCompactWeatherChip(context),
+                              ],
+                            ),
+                            const SizedBox(height: 20),
+                            StreamBuilder<QuerySnapshot>(
+                              stream: _scanHistoryStream,
+                              builder: (context, snapshot) {
+                                final docs = snapshot.data?.docs ?? [];
+                                return _buildStatsRow(docs);
+                              },
+                            ),
+                            const SizedBox(height: 24),
+                            _buildTierPicker(context),
+                            const SizedBox(height: 24),
+                            _buildTipCard(
+                              tipForConditions(
+                                userType,
+                                _weather?.temperatureC,
+                                humidityPercent: _weather?.humidityPercent,
+                                currentStage: _currentSeasonStage,
+                              ),
+                              alertKindFor(
+                                _weather?.temperatureC,
+                                _weather?.humidityPercent,
+                              ),
+                            ),
+                          ],
+                        );
+                      },
+                    ),
+                    const SizedBox(height: 28),
+                    Text(
+                      l10n.guidelines,
+                      style: const TextStyle(
+                        fontSize: 18,
+                        fontWeight: FontWeight.bold,
+                        color: Colors.white,
+                        shadows: _onImageShadow,
+                      ),
+                    ),
+                    const SizedBox(height: 16),
+                    StreamBuilder<DocumentSnapshot<Map<String, dynamic>>>(
+                      stream: _profileStream,
+                      builder: (context, snapshot) {
+                        final String userType =
+                            snapshot.data?.data()?['userType'] as String? ?? '';
+                        return _buildSeasonalGuidelineCard(userType);
+                      },
+                    ),
+                    const SizedBox(height: 28),
+                    StreamBuilder<QuerySnapshot>(
+                      stream: _scanHistoryStream,
+                      builder: (context, snapshot) {
+                        final docs = snapshot.data?.docs ?? [];
+                        final recentDocs = docs.take(2).toList();
+                        return Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            _buildRecentScansHeader(),
+                            const SizedBox(height: 16),
+                            if (recentDocs.isEmpty)
+                              _buildNoScansYet()
+                            else
+                              for (int i = 0; i < recentDocs.length; i++)
+                                Padding(
+                                  padding: EdgeInsets.only(
+                                    bottom: i == recentDocs.length - 1 ? 0 : 12,
+                                  ),
+                                  child: _buildScanTileFromDoc(recentDocs[i]),
+                                ),
+                          ],
+                        );
+                      },
+                    ),
+                    const SizedBox(height: 88),
+                  ],
+                ),
+              ),
+            ),
+          ),
+        ],
       ),
       bottomNavigationBar: const CustomBottomNav(currentIndex: 0),
     );
@@ -269,7 +395,8 @@ class _HomeScreenState extends State<HomeScreen> {
             style: TextStyle(
               fontSize: 24,
               fontWeight: FontWeight.bold,
-              color: AppColors.primary,
+              color: Colors.white,
+              shadows: _onImageShadow,
             ),
           ),
         ),
@@ -340,7 +467,8 @@ class _HomeScreenState extends State<HomeScreen> {
           style: const TextStyle(
             fontSize: 28,
             fontWeight: FontWeight.w400,
-            color: AppColors.primary,
+            color: Colors.white,
+            shadows: _onImageShadow,
           ),
         ),
         Text(
@@ -348,82 +476,55 @@ class _HomeScreenState extends State<HomeScreen> {
           style: const TextStyle(
             fontSize: 32,
             fontWeight: FontWeight.bold,
-            color: AppColors.primary,
+            color: Colors.white,
+            shadows: _onImageShadow,
           ),
         ),
         const SizedBox(height: 6),
         Text(
           l10n.homeSubGreeting,
-          style: const TextStyle(fontSize: 14, color: Colors.grey),
+          style: const TextStyle(
+            fontSize: 14,
+            color: Colors.white70,
+            shadows: _onImageShadow,
+          ),
         ),
       ],
     );
   }
 
-  Widget _buildInfoCards(String dailyTip, bool heatAlert) {
+<<<<<<< HEAD
+  Widget _buildInfoCards(String dailyTip, WeatherAlertKind alertKind) {
+=======
+  Widget _buildTipCard(String dailyTip, bool heatAlert) {
+>>>>>>> e00c4af13d4bea2ff2f7770d10c6c91e44eb66be
     final AppLocalizations l10n = AppLocalizations.of(context)!;
-    return IntrinsicHeight(
-      child: Row(
-        crossAxisAlignment: CrossAxisAlignment.stretch,
+    return Container(
+      width: double.infinity,
+      padding: const EdgeInsets.all(16),
+      decoration: BoxDecoration(
+        color: AppColors.primaryContainer,
+        borderRadius: BorderRadius.circular(16),
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Expanded(
-            child: Container(
-              padding: const EdgeInsets.all(16),
-              decoration: BoxDecoration(
-                color: Colors.white,
-                borderRadius: BorderRadius.circular(16),
-                boxShadow: [
-                  BoxShadow(
-                    color: Colors.black.withValues(alpha: 0.05),
-                    blurRadius: 10,
-                    offset: const Offset(0, 4),
-                  ),
-                ],
-              ),
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Text(
-                    (_location?.placeName?.toUpperCase()) ??
-                        (_weatherLoading
-                            ? l10n.locating
-                            : l10n.locationUnavailable),
-                    style: const TextStyle(
-                      fontSize: 10,
-                      fontWeight: FontWeight.w600,
-                      color: Colors.grey,
-                      letterSpacing: 0.5,
-                    ),
-                  ),
-                  const SizedBox(height: 8),
-                  Text(
-                    _weather != null
-                        ? '${_weather!.temperatureC.round()}°C'
-                        : '--°C',
-                    style: const TextStyle(
-                      fontSize: 24,
-                      fontWeight: FontWeight.bold,
-                      color: AppColors.primary,
-                    ),
-                  ),
-                  const SizedBox(height: 4),
-                  Text(
-                    _weather?.condition ??
-                        (_weatherLoading
-                            ? l10n.fetchingWeather
-                            : l10n.unavailable),
-                    style: const TextStyle(fontSize: 13, color: Colors.grey),
-                  ),
-                  const SizedBox(height: 12),
-                  Icon(
-                    _weather?.icon ?? Icons.cloud_off,
-                    color: AppColors.secondary,
-                    size: 28,
-                  ),
-                ],
-              ),
+          Icon(
+            heatAlert ? Icons.whatshot : Icons.lightbulb_outline,
+            color: AppColors.secondary,
+            size: 20,
+          ),
+          const SizedBox(height: 8),
+          Text(
+            heatAlert ? l10n.heatAlertBadge : l10n.dailyTip,
+            style: const TextStyle(
+              fontSize: 10,
+              fontWeight: FontWeight.w700,
+              color: AppColors.secondary,
+              letterSpacing: 0.5,
             ),
           ),
+<<<<<<< HEAD
           const SizedBox(width: 14),
           Expanded(
             child: Container(
@@ -436,13 +537,21 @@ class _HomeScreenState extends State<HomeScreen> {
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
                   Icon(
-                    heatAlert ? Icons.whatshot : Icons.lightbulb_outline,
+                    switch (alertKind) {
+                      WeatherAlertKind.humidity => Icons.water_drop,
+                      WeatherAlertKind.heat => Icons.whatshot,
+                      WeatherAlertKind.none => Icons.lightbulb_outline,
+                    },
                     color: AppColors.secondary,
                     size: 20,
                   ),
                   const SizedBox(height: 8),
                   Text(
-                    heatAlert ? l10n.heatAlertBadge : l10n.dailyTip,
+                    switch (alertKind) {
+                      WeatherAlertKind.humidity => l10n.humidityAlertBadge,
+                      WeatherAlertKind.heat => l10n.heatAlertBadge,
+                      WeatherAlertKind.none => l10n.dailyTip,
+                    },
                     style: const TextStyle(
                       fontSize: 10,
                       fontWeight: FontWeight.w700,
@@ -461,9 +570,85 @@ class _HomeScreenState extends State<HomeScreen> {
                   ),
                 ],
               ),
+=======
+          const SizedBox(height: 8),
+          Text(
+            dailyTip,
+            style: const TextStyle(
+              fontSize: 12,
+              color: Colors.white,
+              height: 1.4,
+>>>>>>> e00c4af13d4bea2ff2f7770d10c6c91e44eb66be
             ),
           ),
         ],
+      ),
+    );
+  }
+
+  // Compact "location + degrees" chip that sits opposite the greeting.
+  // Tapping it opens the full forecast rather than cluttering the home
+  // screen with hourly detail up front.
+  Widget _buildCompactWeatherChip(BuildContext context) {
+    final AppLocalizations l10n = AppLocalizations.of(context)!;
+    return GestureDetector(
+      onTap: () => _showWeatherForecast(context),
+      child: Container(
+        constraints: const BoxConstraints(maxWidth: 90),
+        padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 6),
+        decoration: BoxDecoration(
+          color: AppColors.t95,
+          borderRadius: BorderRadius.circular(12),
+          boxShadow: [
+            BoxShadow(
+              color: Colors.black.withValues(alpha: 0.05),
+              blurRadius: 10,
+              offset: const Offset(0, 4),
+            ),
+          ],
+        ),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.end,
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            Text(
+              (_location?.placeName?.toUpperCase()) ??
+                  (_weatherLoading ? l10n.locating : l10n.locationUnavailable),
+              style: const TextStyle(
+                fontSize: 9,
+                fontWeight: FontWeight.w600,
+                color: Colors.grey,
+                letterSpacing: 0.3,
+              ),
+              maxLines: 1,
+              overflow: TextOverflow.ellipsis,
+            ),
+            const SizedBox(height: 2),
+            Text(
+              _weather != null ? '${_weather!.temperatureC.round()}°C' : '--°C',
+              style: const TextStyle(
+                fontSize: 16,
+                fontWeight: FontWeight.bold,
+                color: AppColors.primary,
+              ),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
+  void _showWeatherForecast(BuildContext context) {
+    showModalBottomSheet(
+      context: context,
+      shape: const RoundedRectangleBorder(
+        borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
+      ),
+      builder: (_) => _WeatherForecastSheet(
+        location: _location?.placeName,
+        current: _weather,
+        latitude: _location?.latitude,
+        longitude: _location?.longitude,
       ),
     );
   }
@@ -569,7 +754,7 @@ class _HomeScreenState extends State<HomeScreen> {
     );
   }
 
-  Future<void> _onScanTap(BuildContext context) async {
+  Future<void> _onTier1Tap(BuildContext context) async {
     // Reuse the location already resolved for the weather card when
     // possible, falling back to a fresh lookup if that hasn't landed yet.
     final String? location =
@@ -586,43 +771,95 @@ class _HomeScreenState extends State<HomeScreen> {
     );
   }
 
-  Widget _buildScanButton(BuildContext context) {
-    return Center(
-      child: Container(
-        width: 160,
-        height: 160,
-        decoration: BoxDecoration(
-          shape: BoxShape.circle,
-          border: Border.all(color: Colors.grey.shade300, width: 8),
+  Future<void> _onTier2Tap(BuildContext context) async {
+    final String? location =
+        _location?.placeName ?? await LocationService().getCurrentPlaceName();
+    if (!context.mounted) return;
+
+    final Object? result = await Navigator.pushNamed(context, '/stripCamera');
+    if (result is! StripCaptureResult || !context.mounted) return;
+
+    Navigator.pushNamed(
+      context,
+      '/stripAnalysis',
+      arguments: StripAnalysisScreenArgs(
+        photo: result.photo,
+        cropType: result.cropType,
+        location: location,
+      ),
+    );
+  }
+
+  // Two circular start-a-test buttons, mirrored on opposite sides of the
+  // row (Tier 1 left, Tier 2 right) rather than the earlier stacked
+  // rectangular cards.
+  Widget _buildTierPicker(BuildContext context) {
+    final AppLocalizations l10n = AppLocalizations.of(context)!;
+    return Row(
+      mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+      children: [
+        _buildTierCircle(
+          icon: Icons.camera_alt_outlined,
+          label: l10n.tier1Short,
+          fillColor: AppColors.primaryContainer,
+          contentColor: Colors.white,
+          onTap: () => _onTier1Tap(context),
         ),
-        child: Container(
-          margin: const EdgeInsets.all(8),
-          decoration: const BoxDecoration(
-            shape: BoxShape.circle,
-            color: AppColors.primary,
+        _buildTierCircle(
+          icon: Icons.science_outlined,
+          label: l10n.tier2Short,
+          fillColor: AppColors.secondary,
+          contentColor: AppColors.primary,
+          onTap: () => _onTier2Tap(context),
+        ),
+      ],
+    );
+  }
+
+  Widget _buildTierCircle({
+    required IconData icon,
+    required String label,
+    required Color fillColor,
+    required Color contentColor,
+    required VoidCallback onTap,
+  }) {
+    return Container(
+      width: 132,
+      height: 132,
+      padding: const EdgeInsets.all(5),
+      decoration: BoxDecoration(
+        shape: BoxShape.circle,
+        color: AppColors.t95.withValues(alpha: 0.9),
+        boxShadow: [
+          BoxShadow(
+            color: Colors.black.withValues(alpha: 0.15),
+            blurRadius: 12,
+            offset: const Offset(0, 6),
           ),
-          child: Material(
-            color: Colors.transparent,
-            child: InkWell(
-              customBorder: const CircleBorder(),
-              onTap: () => _onScanTap(context),
-              child: Column(
-                mainAxisAlignment: MainAxisAlignment.center,
-                children: [
-                  const Icon(Icons.camera_alt, color: Colors.white, size: 36),
-                  const SizedBox(height: 8),
-                  Text(
-                    AppLocalizations.of(context)!.aiScan,
-                    style: const TextStyle(
-                      color: Colors.white,
-                      fontSize: 14,
-                      fontWeight: FontWeight.bold,
-                      letterSpacing: 1,
-                    ),
-                  ),
-                ],
+        ],
+      ),
+      child: Material(
+        color: fillColor,
+        shape: const CircleBorder(),
+        child: InkWell(
+          customBorder: const CircleBorder(),
+          onTap: onTap,
+          child: Column(
+            mainAxisAlignment: MainAxisAlignment.center,
+            children: [
+              Icon(icon, color: contentColor, size: 32),
+              const SizedBox(height: 8),
+              Text(
+                label,
+                textAlign: TextAlign.center,
+                style: TextStyle(
+                  color: contentColor,
+                  fontSize: 13,
+                  fontWeight: FontWeight.bold,
+                  letterSpacing: 0.5,
+                ),
               ),
-            ),
+            ],
           ),
         ),
       ),
@@ -653,6 +890,18 @@ class _HomeScreenState extends State<HomeScreen> {
           r'ld|healthy|clean|safe|negative',
           caseSensitive: false,
         ).hasMatch(label);
+  }
+
+  // Docs saved before Tier 2 shipped have no `testType` field and keep
+  // using the Tier 1 regex classifier; chemical scans compare ppb against
+  // the safe limit stored alongside the reading instead.
+  static bool _isRiskyDoc(Map<String, dynamic> data) {
+    if (data['testType'] == 'chemical') {
+      final num ppb = (data['ppbValue'] ?? 0) as num;
+      final num limit = (data['safeLimitPpb'] ?? 0) as num;
+      return ppb > limit;
+    }
+    return _isMoldyLabel((data['label'] ?? '').toString());
   }
 
   static String _formatScanDate(DateTime dt) =>
@@ -687,7 +936,7 @@ class _HomeScreenState extends State<HomeScreen> {
     if (docs.isNotEmpty) {
       for (final doc in docs) {
         final data = doc.data() as Map<String, dynamic>;
-        if (_isMoldyLabel((data['label'] ?? '').toString())) {
+        if (_isRiskyDoc(data)) {
           risky++;
         } else {
           healthy++;
@@ -702,7 +951,7 @@ class _HomeScreenState extends State<HomeScreen> {
     return Container(
       padding: const EdgeInsets.symmetric(vertical: 18, horizontal: 12),
       decoration: BoxDecoration(
-        color: Colors.white,
+        color: AppColors.t95,
         borderRadius: BorderRadius.circular(16),
         boxShadow: [
           BoxShadow(
@@ -714,7 +963,11 @@ class _HomeScreenState extends State<HomeScreen> {
       ),
       child: Row(
         children: [
-          _buildStatItem('$healthy', l10n.healthyCaps, AppColors.primaryContainer),
+          _buildStatItem(
+            '$healthy',
+            l10n.healthyCaps,
+            AppColors.primaryContainer,
+          ),
           _buildDivider(),
           _buildStatItem('$risky', l10n.riskyCaps, AppColors.error),
           _buildDivider(),
@@ -726,8 +979,20 @@ class _HomeScreenState extends State<HomeScreen> {
 
   Widget _buildNoScansYet() {
     return Container(
+      width: double.infinity,
       padding: const EdgeInsets.symmetric(vertical: 28),
       alignment: Alignment.center,
+      decoration: BoxDecoration(
+        color: AppColors.t95,
+        borderRadius: BorderRadius.circular(16),
+        boxShadow: [
+          BoxShadow(
+            color: Colors.black.withValues(alpha: 0.05),
+            blurRadius: 10,
+            offset: const Offset(0, 4),
+          ),
+        ],
+      ),
       child: Text(
         AppLocalizations.of(context)!.noScansYetHome,
         textAlign: TextAlign.center,
@@ -739,14 +1004,9 @@ class _HomeScreenState extends State<HomeScreen> {
   Widget _buildScanTileFromDoc(QueryDocumentSnapshot doc) {
     final AppLocalizations l10n = AppLocalizations.of(context)!;
     final data = doc.data() as Map<String, dynamic>;
-    final String label = (data['label'] ?? 'Unknown').toString();
+    final bool isChemical = data['testType'] == 'chemical';
     final String location = (data['location'] ?? '').toString();
-    final num confidenceRaw = (data['confidence'] ?? 0) as num;
-    final int matchPercent =
-        (confidenceRaw <= 1 ? confidenceRaw * 100 : confidenceRaw)
-            .round()
-            .clamp(0, 100);
-    final bool isMoldy = _isMoldyLabel(label);
+    final bool isRisky = _isRiskyDoc(data);
     final Timestamp? timestamp = data['timestamp'] as Timestamp?;
     final String timeText = timestamp != null
         ? _relativeTime(timestamp.toDate())
@@ -754,19 +1014,38 @@ class _HomeScreenState extends State<HomeScreen> {
     final String subtitle = location.isNotEmpty
         ? '$location · $timeText'
         : timeText;
-    final Color statusColor = isMoldy
+    final Color statusColor = isRisky
         ? AppColors.error
         : AppColors.primaryContainer;
 
+    final String title;
+    final String trailingText;
+    if (isChemical) {
+      final num ppb = (data['ppbValue'] ?? 0) as num;
+      title = l10n.chemicalStripScanTitle;
+      trailingText = l10n.ppbValueLabel(ppb.toStringAsFixed(1));
+    } else {
+      final String label = (data['label'] ?? 'Unknown').toString();
+      final num confidenceRaw = (data['confidence'] ?? 0) as num;
+      final int matchPercent =
+          (confidenceRaw <= 1 ? confidenceRaw * 100 : confidenceRaw)
+              .round()
+              .clamp(0, 100);
+      title = label;
+      trailingText = l10n.matchPercentLabel(matchPercent);
+    }
+
     return _buildScanTile(
-      icon: isMoldy ? Icons.warning_amber_rounded : Icons.eco,
+      icon: isChemical
+          ? Icons.science_outlined
+          : (isRisky ? Icons.warning_amber_rounded : Icons.eco),
       iconColor: statusColor,
-      title: label,
+      title: title,
       subtitle: subtitle,
-      badgeText: isMoldy ? l10n.atRiskBadge : l10n.safeBadge,
-      badgeColor: isMoldy ? AppColors.errorLight : const Color(0xFFE8F5E9),
+      badgeText: isRisky ? l10n.atRiskBadge : l10n.safeBadge,
+      badgeColor: isRisky ? AppColors.errorLight : const Color(0xFFE8F5E9),
       badgeTextColor: statusColor,
-      trailingText: l10n.matchPercentLabel(matchPercent),
+      trailingText: trailingText,
       trailingColor: statusColor,
     );
   }
@@ -812,7 +1091,8 @@ class _HomeScreenState extends State<HomeScreen> {
           style: const TextStyle(
             fontSize: 18,
             fontWeight: FontWeight.bold,
-            color: AppColors.primary,
+            color: Colors.white,
+            shadows: _onImageShadow,
           ),
         ),
         TextButton(
@@ -826,6 +1106,7 @@ class _HomeScreenState extends State<HomeScreen> {
               fontSize: 13,
               color: AppColors.secondary,
               fontWeight: FontWeight.w600,
+              shadows: _onImageShadow,
             ),
           ),
         ),
@@ -847,7 +1128,7 @@ class _HomeScreenState extends State<HomeScreen> {
     return Container(
       padding: const EdgeInsets.all(14),
       decoration: BoxDecoration(
-        color: Colors.white,
+        color: AppColors.t95,
         borderRadius: BorderRadius.circular(16),
         boxShadow: [
           BoxShadow(
@@ -921,6 +1202,183 @@ class _HomeScreenState extends State<HomeScreen> {
             ],
           ),
         ],
+      ),
+    );
+  }
+}
+
+// ─────────────────────────────────────────
+//  WEATHER FORECAST SHEET
+// ─────────────────────────────────────────
+// Fetched on demand (not alongside the compact chip) since most visits to
+// Home don't need the hour-by-hour breakdown — only pay for it when the
+// user actually taps through.
+class _WeatherForecastSheet extends StatefulWidget {
+  final String? location;
+  final WeatherInfo? current;
+  final double? latitude;
+  final double? longitude;
+
+  const _WeatherForecastSheet({
+    required this.location,
+    required this.current,
+    required this.latitude,
+    required this.longitude,
+  });
+
+  @override
+  State<_WeatherForecastSheet> createState() => _WeatherForecastSheetState();
+}
+
+class _WeatherForecastSheetState extends State<_WeatherForecastSheet> {
+  Future<DailyForecast?>? _forecastFuture;
+
+  @override
+  void initState() {
+    super.initState();
+    if (widget.latitude != null && widget.longitude != null) {
+      _forecastFuture =
+          WeatherService().getTodayForecast(widget.latitude!, widget.longitude!);
+    }
+  }
+
+  static String _formatHour(DateTime time) {
+    final int hour = time.hour % 12 == 0 ? 12 : time.hour % 12;
+    final String period = time.hour >= 12 ? 'PM' : 'AM';
+    return '$hour$period';
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final AppLocalizations l10n = AppLocalizations.of(context)!;
+    return Container(
+      constraints: BoxConstraints(maxHeight: MediaQuery.of(context).size.height * 0.7),
+      child: Padding(
+        padding: const EdgeInsets.fromLTRB(20, 16, 20, 32),
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Center(
+              child: Container(
+                width: 40,
+                height: 4,
+                margin: const EdgeInsets.only(bottom: 20),
+                decoration: BoxDecoration(
+                  color: Colors.grey.shade300,
+                  borderRadius: BorderRadius.circular(2),
+                ),
+              ),
+            ),
+            Text(
+              widget.location?.toUpperCase() ?? l10n.locationUnavailable,
+              style: const TextStyle(
+                fontSize: 11,
+                fontWeight: FontWeight.w600,
+                color: Colors.grey,
+                letterSpacing: 0.5,
+              ),
+            ),
+            const SizedBox(height: 4),
+            Row(
+              crossAxisAlignment: CrossAxisAlignment.end,
+              children: [
+                Icon(widget.current?.icon ?? Icons.cloud_off, color: AppColors.secondary, size: 32),
+                const SizedBox(width: 10),
+                Text(
+                  widget.current != null ? '${widget.current!.temperatureC.round()}°C' : '--°C',
+                  style: const TextStyle(
+                    fontSize: 34,
+                    fontWeight: FontWeight.bold,
+                    color: AppColors.primary,
+                  ),
+                ),
+                const SizedBox(width: 10),
+                Padding(
+                  padding: const EdgeInsets.only(bottom: 8),
+                  child: Text(
+                    widget.current?.condition ?? l10n.unavailable,
+                    style: const TextStyle(fontSize: 14, color: Colors.grey),
+                  ),
+                ),
+              ],
+            ),
+            const SizedBox(height: 20),
+            if (_forecastFuture == null)
+              Text(l10n.locationUnavailable, style: const TextStyle(color: Colors.grey))
+            else
+              FutureBuilder<DailyForecast?>(
+                future: _forecastFuture,
+                builder: (context, snapshot) {
+                  if (snapshot.connectionState != ConnectionState.done) {
+                    return const Padding(
+                      padding: EdgeInsets.symmetric(vertical: 24),
+                      child: Center(child: CircularProgressIndicator(color: AppColors.primary)),
+                    );
+                  }
+                  final DailyForecast? forecast = snapshot.data;
+                  if (forecast == null) {
+                    return Text(
+                      l10n.fetchingWeather,
+                      style: const TextStyle(color: Colors.grey),
+                    );
+                  }
+                  return Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Row(
+                        children: [
+                          Text(
+                            l10n.todayHighLowLabel(
+                              forecast.maxC.round().toString(),
+                              forecast.minC.round().toString(),
+                            ),
+                            style: const TextStyle(
+                              fontSize: 13,
+                              fontWeight: FontWeight.w600,
+                              color: AppColors.primary,
+                            ),
+                          ),
+                        ],
+                      ),
+                      const SizedBox(height: 14),
+                      SizedBox(
+                        height: 96,
+                        child: ListView.separated(
+                          scrollDirection: Axis.horizontal,
+                          itemCount: forecast.hours.length,
+                          separatorBuilder: (_, _) => const SizedBox(width: 18),
+                          itemBuilder: (context, index) {
+                            final HourlyForecastEntry hour = forecast.hours[index];
+                            return Column(
+                              mainAxisSize: MainAxisSize.min,
+                              children: [
+                                Text(
+                                  index == 0 ? l10n.nowLabel : _formatHour(hour.time),
+                                  style: const TextStyle(fontSize: 11, color: Colors.grey),
+                                ),
+                                const SizedBox(height: 8),
+                                Icon(hour.icon, color: AppColors.secondary, size: 22),
+                                const SizedBox(height: 8),
+                                Text(
+                                  '${hour.temperatureC.round()}°',
+                                  style: const TextStyle(
+                                    fontSize: 13,
+                                    fontWeight: FontWeight.w600,
+                                    color: AppColors.primary,
+                                  ),
+                                ),
+                              ],
+                            );
+                          },
+                        ),
+                      ),
+                    ],
+                  );
+                },
+              ),
+          ],
+        ),
       ),
     );
   }

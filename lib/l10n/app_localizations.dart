@@ -284,6 +284,48 @@ abstract class AppLocalizations {
   /// **'Cancel'**
   String get cancel;
 
+  /// No description provided for @deleteScan.
+  ///
+  /// In en, this message translates to:
+  /// **'Delete Scan'**
+  String get deleteScan;
+
+  /// No description provided for @deleteScanConfirm.
+  ///
+  /// In en, this message translates to:
+  /// **'Are you sure you want to delete this scan record? This cannot be undone.'**
+  String get deleteScanConfirm;
+
+  /// No description provided for @delete.
+  ///
+  /// In en, this message translates to:
+  /// **'Delete'**
+  String get delete;
+
+  /// No description provided for @scanDeleted.
+  ///
+  /// In en, this message translates to:
+  /// **'Scan deleted.'**
+  String get scanDeleted;
+
+  /// No description provided for @couldNotDeleteScan.
+  ///
+  /// In en, this message translates to:
+  /// **'Could not delete scan. Please try again.'**
+  String get couldNotDeleteScan;
+
+  /// No description provided for @undo.
+  ///
+  /// In en, this message translates to:
+  /// **'Undo'**
+  String get undo;
+
+  /// No description provided for @scanDetails.
+  ///
+  /// In en, this message translates to:
+  /// **'Scan Details'**
+  String get scanDetails;
+
   /// No description provided for @totalScans.
   ///
   /// In en, this message translates to:
@@ -716,6 +758,12 @@ abstract class AppLocalizations {
   /// **'Heat Alert — {temp}°C'**
   String heatAlertNotifTitle(int temp);
 
+  /// No description provided for @humidityAlertNotifTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Humidity is at {humidity}%'**
+  String humidityAlertNotifTitle(int humidity);
+
   /// No description provided for @guidelines.
   ///
   /// In en, this message translates to:
@@ -787,6 +835,12 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'HEAT ALERT'**
   String get heatAlertBadge;
+
+  /// No description provided for @humidityAlertBadge.
+  ///
+  /// In en, this message translates to:
+  /// **'HUMIDITY ALERT'**
+  String get humidityAlertBadge;
 
   /// No description provided for @dailyTip.
   ///
@@ -1400,23 +1454,11 @@ abstract class AppLocalizations {
   /// **'Please log out and log back in, then try again.'**
   String get pleaseLogOutAndBackIn;
 
-  /// No description provided for @passwordResetLinkSent.
-  ///
-  /// In en, this message translates to:
-  /// **'Password reset link sent! Check your email.'**
-  String get passwordResetLinkSent;
-
   /// No description provided for @errorOccurredTryAgain.
   ///
   /// In en, this message translates to:
   /// **'An error occurred. Please try again.'**
   String get errorOccurredTryAgain;
-
-  /// No description provided for @noAccountFoundEmail.
-  ///
-  /// In en, this message translates to:
-  /// **'No account found with this email address.'**
-  String get noAccountFoundEmail;
 
   /// No description provided for @resetPassword.
   ///
@@ -1427,7 +1469,7 @@ abstract class AppLocalizations {
   /// No description provided for @resetPasswordInstructions.
   ///
   /// In en, this message translates to:
-  /// **'Enter your registered email address below. We will send you a secure link to reset your password and keep your tracking account secure.'**
+  /// **'Enter your registered email address below. We will send you a 6-digit code to reset your password and keep your account secure.'**
   String get resetPasswordInstructions;
 
   /// No description provided for @pleaseEnterValidEmailAddress.
@@ -1439,8 +1481,80 @@ abstract class AppLocalizations {
   /// No description provided for @sendResetLink.
   ///
   /// In en, this message translates to:
-  /// **'Send Reset Link'**
+  /// **'Send Code'**
   String get sendResetLink;
+
+  /// No description provided for @otpScreenTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Enter Code'**
+  String get otpScreenTitle;
+
+  /// No description provided for @otpInstructions.
+  ///
+  /// In en, this message translates to:
+  /// **'Enter the 6-digit code we sent to {email}.'**
+  String otpInstructions(String email);
+
+  /// No description provided for @otpLabel.
+  ///
+  /// In en, this message translates to:
+  /// **'Verification Code'**
+  String get otpLabel;
+
+  /// No description provided for @pleaseEnterOtp.
+  ///
+  /// In en, this message translates to:
+  /// **'Please enter the code'**
+  String get pleaseEnterOtp;
+
+  /// No description provided for @otpInvalidLength.
+  ///
+  /// In en, this message translates to:
+  /// **'Enter the 6-digit code'**
+  String get otpInvalidLength;
+
+  /// No description provided for @verifyAndReset.
+  ///
+  /// In en, this message translates to:
+  /// **'Verify & Reset Password'**
+  String get verifyAndReset;
+
+  /// No description provided for @resendCode.
+  ///
+  /// In en, this message translates to:
+  /// **'Resend Code'**
+  String get resendCode;
+
+  /// No description provided for @resendCodeIn.
+  ///
+  /// In en, this message translates to:
+  /// **'Resend code in {seconds}s'**
+  String resendCodeIn(int seconds);
+
+  /// No description provided for @pleaseWaitBeforeResend.
+  ///
+  /// In en, this message translates to:
+  /// **'Please wait before requesting another code.'**
+  String get pleaseWaitBeforeResend;
+
+  /// No description provided for @codeExpired.
+  ///
+  /// In en, this message translates to:
+  /// **'This code has expired. Please request a new one.'**
+  String get codeExpired;
+
+  /// No description provided for @tooManyAttempts.
+  ///
+  /// In en, this message translates to:
+  /// **'Too many incorrect attempts. Please request a new code.'**
+  String get tooManyAttempts;
+
+  /// No description provided for @incorrectCode.
+  ///
+  /// In en, this message translates to:
+  /// **'Incorrect code. Please try again.'**
+  String get incorrectCode;
 
   /// No description provided for @downloadedReports.
   ///
@@ -1549,6 +1663,216 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'Recommendations sourced from UNBS and MAAIF guidance.'**
   String get recommendationsSourced;
+
+  /// No description provided for @tier1Short.
+  ///
+  /// In en, this message translates to:
+  /// **'Tier 1'**
+  String get tier1Short;
+
+  /// No description provided for @tier2Short.
+  ///
+  /// In en, this message translates to:
+  /// **'Tier 2'**
+  String get tier2Short;
+
+  /// No description provided for @chemicalStripScanTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Chemical Strip Scan'**
+  String get chemicalStripScanTitle;
+
+  /// No description provided for @scanTestStrip.
+  ///
+  /// In en, this message translates to:
+  /// **'Scan Test Strip'**
+  String get scanTestStrip;
+
+  /// No description provided for @cropTypeMaize.
+  ///
+  /// In en, this message translates to:
+  /// **'Maize'**
+  String get cropTypeMaize;
+
+  /// No description provided for @cropTypeGroundnut.
+  ///
+  /// In en, this message translates to:
+  /// **'Groundnut'**
+  String get cropTypeGroundnut;
+
+  /// No description provided for @positionStripInFrame.
+  ///
+  /// In en, this message translates to:
+  /// **'Position strip in frame after the 10-minute reaction time'**
+  String get positionStripInFrame;
+
+  /// No description provided for @scanAnotherStrip.
+  ///
+  /// In en, this message translates to:
+  /// **'Scan Another Strip'**
+  String get scanAnotherStrip;
+
+  /// No description provided for @scanTestStripHint.
+  ///
+  /// In en, this message translates to:
+  /// **'Scan a reacted test strip to check aflatoxin levels'**
+  String get scanTestStripHint;
+
+  /// No description provided for @analyzingStripTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Analyzing Strip...'**
+  String get analyzingStripTitle;
+
+  /// No description provided for @readingTestControlLines.
+  ///
+  /// In en, this message translates to:
+  /// **'Reading the test and control lines'**
+  String get readingTestControlLines;
+
+  /// No description provided for @stripNotDetectedMessage.
+  ///
+  /// In en, this message translates to:
+  /// **'Couldn\'t detect a test strip in this photo. Make sure the whole strip is inside the frame and well lit, then try again.'**
+  String get stripNotDetectedMessage;
+
+  /// No description provided for @controlLineNotDetectedMessage.
+  ///
+  /// In en, this message translates to:
+  /// **'Control line not detected — this test may be invalid. Repeat the test with a new strip.'**
+  String get controlLineNotDetectedMessage;
+
+  /// No description provided for @testBatchLabel.
+  ///
+  /// In en, this message translates to:
+  /// **'TEST BATCH'**
+  String get testBatchLabel;
+
+  /// No description provided for @toxicLoadLabel.
+  ///
+  /// In en, this message translates to:
+  /// **'TOXIC LOAD'**
+  String get toxicLoadLabel;
+
+  /// No description provided for @regulatoryScaleLabel.
+  ///
+  /// In en, this message translates to:
+  /// **'REGULATORY SCALE'**
+  String get regulatoryScaleLabel;
+
+  /// No description provided for @actionRequiredLabel.
+  ///
+  /// In en, this message translates to:
+  /// **'ACTION REQUIRED'**
+  String get actionRequiredLabel;
+
+  /// No description provided for @diagnosticBreakdownLabel.
+  ///
+  /// In en, this message translates to:
+  /// **'DIAGNOSTIC BREAKDOWN'**
+  String get diagnosticBreakdownLabel;
+
+  /// No description provided for @chemicalLevelLabel.
+  ///
+  /// In en, this message translates to:
+  /// **'Chemical level'**
+  String get chemicalLevelLabel;
+
+  /// No description provided for @testLineOdLabel.
+  ///
+  /// In en, this message translates to:
+  /// **'Test line (T) optical density'**
+  String get testLineOdLabel;
+
+  /// No description provided for @controlLineOdLabel.
+  ///
+  /// In en, this message translates to:
+  /// **'Control line (C) optical density'**
+  String get controlLineOdLabel;
+
+  /// No description provided for @odRatioLabel.
+  ///
+  /// In en, this message translates to:
+  /// **'T/C ratio'**
+  String get odRatioLabel;
+
+  /// No description provided for @scanLocationLabel.
+  ///
+  /// In en, this message translates to:
+  /// **'Scan location'**
+  String get scanLocationLabel;
+
+  /// No description provided for @withinSafeLimit.
+  ///
+  /// In en, this message translates to:
+  /// **'Within Safe Limit'**
+  String get withinSafeLimit;
+
+  /// No description provided for @exceedsSafeLimit.
+  ///
+  /// In en, this message translates to:
+  /// **'Exceeds Safe Limit'**
+  String get exceedsSafeLimit;
+
+  /// No description provided for @wasThisDiagnosisAccurate.
+  ///
+  /// In en, this message translates to:
+  /// **'Was this diagnosis accurate?'**
+  String get wasThisDiagnosisAccurate;
+
+  /// No description provided for @feedbackThanks.
+  ///
+  /// In en, this message translates to:
+  /// **'Thanks — your feedback helps improve future scans.'**
+  String get feedbackThanks;
+
+  /// No description provided for @feedbackYesTooltip.
+  ///
+  /// In en, this message translates to:
+  /// **'Yes, accurate'**
+  String get feedbackYesTooltip;
+
+  /// No description provided for @feedbackNoTooltip.
+  ///
+  /// In en, this message translates to:
+  /// **'No, inaccurate'**
+  String get feedbackNoTooltip;
+
+  /// No description provided for @safeLimitTick.
+  ///
+  /// In en, this message translates to:
+  /// **'{limit} ppb limit'**
+  String safeLimitTick(String limit);
+
+  /// No description provided for @exceedsSafeLimitMessage.
+  ///
+  /// In en, this message translates to:
+  /// **'This sample exceeds the regulatory safe limit of {limit} ppb for human food.'**
+  String exceedsSafeLimitMessage(String limit);
+
+  /// No description provided for @ppbValueLabel.
+  ///
+  /// In en, this message translates to:
+  /// **'{value} ppb'**
+  String ppbValueLabel(String value);
+
+  /// No description provided for @chemicalLevelValueLabel.
+  ///
+  /// In en, this message translates to:
+  /// **'Chemical level: {value} ppb'**
+  String chemicalLevelValueLabel(String value);
+
+  /// No description provided for @todayHighLowLabel.
+  ///
+  /// In en, this message translates to:
+  /// **'Today: H:{high}° L:{low}°'**
+  String todayHighLowLabel(String high, String low);
+
+  /// No description provided for @nowLabel.
+  ///
+  /// In en, this message translates to:
+  /// **'Now'**
+  String get nowLabel;
 }
 
 class _AppLocalizationsDelegate

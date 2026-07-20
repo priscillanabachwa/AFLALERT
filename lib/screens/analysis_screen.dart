@@ -154,7 +154,7 @@ class _AnalysisScreenState extends State<AnalysisScreen> {
     // Best-effort: upload the photo and log the scan record. A failure here
     // shouldn't block showing the user their on-device diagnosis.
     final String? imageUrl = await StorageService().uploadMaizeImage(photoFile);
-    await FirestoreService().saveScanRecord(
+    final String? scanId = await FirestoreService().saveScanRecord(
       imageUrl: imageUrl ?? '',
       classificationLabel: analysis.label,
       confidenceScore: analysis.confidencePercent / 100,
@@ -166,6 +166,7 @@ class _AnalysisScreenState extends State<AnalysisScreen> {
       confidence: analysis.confidencePercent / 100,
       analysisLabel: analysis.label,
       imagePath: photoFile.path,
+      scanId: scanId,
     );
   }
 
@@ -279,11 +280,29 @@ class _AnalysisScreenState extends State<AnalysisScreen> {
           ),
         ),
         const SizedBox(height: 8),
-        Text(
-          _errorMessage ?? l10n.scanMaizeSampleHint,
-          textAlign: TextAlign.center,
-          style: const TextStyle(color: AppColors.grey),
-        ),
+        if (isError) ...[
+  Text(
+    "We couldn't analyze your photo.",
+    textAlign: TextAlign.center,
+    style: const TextStyle(
+      color: AppColors.grey,
+      fontSize: 16,
+      height: 1.5,
+    ),
+  ),
+  const SizedBox(height: 20),
+  _buildBulletedMessage(
+    "Our AI only recognizes raw, unprocessed maize kernels. "
+    "Please retake a clear photo of raw maize kernels.",
+  ),
+] else
+  Text(
+    l10n.scanMaizeSampleHint,
+    textAlign: TextAlign.center,
+    style: const TextStyle(color: AppColors.grey),
+  ),
+
+        
         const SizedBox(height: 28),
         ElevatedButton(
           onPressed: _retakeAndAnalyze,
@@ -292,4 +311,68 @@ class _AnalysisScreenState extends State<AnalysisScreen> {
       ],
     );
   }
+ Widget _buildBulletedMessage(String message) {
+    final bullets = message
+        .split(RegExp(r'(?<=[.])\s+|\s+—\s+'))
+        .map((s) => s.trim())
+        .where((s) => s.isNotEmpty)
+        .toList();
+
+    return Align(
+      alignment: Alignment.centerLeft,
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: bullets
+            .map(
+              (bullet) => Padding(
+                padding: const EdgeInsets.only(bottom: 14),
+                child: Row(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Container(
+                      width: 18,
+                      height: 18,
+                      margin: const EdgeInsets.only(top: 2, right: 14),
+                      decoration: BoxDecoration(
+                        shape: BoxShape.circle,
+                        color: AppColors.primary.withValues(alpha: .10),
+                      ),
+                      child: Center(
+                        child: Container(
+                          width: 7,
+                          height: 7,
+                          decoration: BoxDecoration(
+                            shape: BoxShape.circle,
+                            color: AppColors.primary,
+                            boxShadow: [
+                              BoxShadow(
+                                color: AppColors.primary.withValues(alpha: .12),
+                                blurRadius: 0,
+                                spreadRadius: 3,
+                              ),
+                            ],
+                          ),
+                        ),
+                      ),
+                    ),
+                    Expanded(
+                      child: Text(
+                        bullet,
+                        style: const TextStyle(
+                          color: Color(0xFF7C827E),
+                          fontSize: 15,
+                          height: 1.55,
+                          letterSpacing: 0.1,
+                        ),
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+            )
+            .toList(),
+      ),
+    );
+  }
 }
+

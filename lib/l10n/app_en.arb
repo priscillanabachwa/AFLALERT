@@ -31,6 +31,13 @@
   "logout": "Logout",
   "logoutConfirm": "Are you sure you want to logout from AflAlert?",
   "cancel": "Cancel",
+  "deleteScan": "Delete Scan",
+  "deleteScanConfirm": "Are you sure you want to delete this scan record? This cannot be undone.",
+  "delete": "Delete",
+  "scanDeleted": "Scan deleted.",
+  "couldNotDeleteScan": "Could not delete scan. Please try again.",
+  "undo": "Undo",
+  "scanDetails": "Scan Details",
   "totalScans": "Total Scans",
   "healthyScans": "Healthy Scans",
   "detectedScans": "Detected Scans",
@@ -116,6 +123,10 @@
   "@heatAlertNotifTitle": {
     "placeholders": { "temp": { "type": "int" } }
   },
+  "humidityAlertNotifTitle": "Humidity is at {humidity}%",
+  "@humidityAlertNotifTitle": {
+    "placeholders": { "humidity": { "type": "int" } }
+  },
   "guidelines": "Guidelines",
   "homeSubGreeting": "Ready to secure your harvest today?",
   "goodMorning": "Good Morning",
@@ -128,6 +139,7 @@
   "fetchingWeather": "Fetching weather...",
   "unavailable": "Unavailable",
   "heatAlertBadge": "HEAT ALERT",
+  "humidityAlertBadge": "HUMIDITY ALERT",
   "dailyTip": "DAILY TIP",
   "seeAll": "See All",
   "noScansYetHome": "No scans yet — tap \"AI Scan\" above to check your first batch.",
@@ -279,13 +291,29 @@
   "newPasswordTooWeak": "New password is too weak.",
   "pleaseLogOutAndBackIn": "Please log out and log back in, then try again.",
 
-  "passwordResetLinkSent": "Password reset link sent! Check your email.",
   "errorOccurredTryAgain": "An error occurred. Please try again.",
-  "noAccountFoundEmail": "No account found with this email address.",
   "resetPassword": "Reset Password",
-  "resetPasswordInstructions": "Enter your registered email address below. We will send you a secure link to reset your password and keep your tracking account secure.",
+  "resetPasswordInstructions": "Enter your registered email address below. We will send you a 6-digit code to reset your password and keep your account secure.",
   "pleaseEnterValidEmailAddress": "Please enter a valid email address",
-  "sendResetLink": "Send Reset Link",
+  "sendResetLink": "Send Code",
+  "otpScreenTitle": "Enter Code",
+  "otpInstructions": "Enter the 6-digit code we sent to {email}.",
+  "@otpInstructions": {
+    "placeholders": { "email": { "type": "String" } }
+  },
+  "otpLabel": "Verification Code",
+  "pleaseEnterOtp": "Please enter the code",
+  "otpInvalidLength": "Enter the 6-digit code",
+  "verifyAndReset": "Verify & Reset Password",
+  "resendCode": "Resend Code",
+  "resendCodeIn": "Resend code in {seconds}s",
+  "@resendCodeIn": {
+    "placeholders": { "seconds": { "type": "int" } }
+  },
+  "pleaseWaitBeforeResend": "Please wait before requesting another code.",
+  "codeExpired": "This code has expired. Please request a new one.",
+  "tooManyAttempts": "Too many incorrect attempts. Please request a new code.",
+  "incorrectCode": "Incorrect code. Please try again.",
 
   "downloadedReports": "Downloaded Reports",
   "noDownloadedReports": "No downloaded reports",
@@ -308,5 +336,61 @@
   "helpSupportSection": "Help & support",
   "contactSupport": "Contact support",
   "aboutAflAlert": "About AflAlert",
-  "recommendationsSourced": "Recommendations sourced from UNBS and MAAIF guidance."
+  "recommendationsSourced": "Recommendations sourced from UNBS and MAAIF guidance.",
+
+  "tier1Short": "Tier 1",
+  "tier2Short": "Tier 2",
+  "chemicalStripScanTitle": "Chemical Strip Scan",
+  "scanTestStrip": "Scan Test Strip",
+  "cropTypeMaize": "Maize",
+  "cropTypeGroundnut": "Groundnut",
+  "positionStripInFrame": "Position strip in frame after the 10-minute reaction time",
+  "scanAnotherStrip": "Scan Another Strip",
+  "scanTestStripHint": "Scan a reacted test strip to check aflatoxin levels",
+
+  "analyzingStripTitle": "Analyzing Strip...",
+  "readingTestControlLines": "Reading the test and control lines",
+  "stripNotDetectedMessage": "Couldn't detect a test strip in this photo. Make sure the whole strip is inside the frame and well lit, then try again.",
+  "controlLineNotDetectedMessage": "Control line not detected — this test may be invalid. Repeat the test with a new strip.",
+
+  "testBatchLabel": "TEST BATCH",
+  "toxicLoadLabel": "TOXIC LOAD",
+  "regulatoryScaleLabel": "REGULATORY SCALE",
+  "actionRequiredLabel": "ACTION REQUIRED",
+  "diagnosticBreakdownLabel": "DIAGNOSTIC BREAKDOWN",
+  "chemicalLevelLabel": "Chemical level",
+  "testLineOdLabel": "Test line (T) optical density",
+  "controlLineOdLabel": "Control line (C) optical density",
+  "odRatioLabel": "T/C ratio",
+  "scanLocationLabel": "Scan location",
+  "withinSafeLimit": "Within Safe Limit",
+  "exceedsSafeLimit": "Exceeds Safe Limit",
+
+  "wasThisDiagnosisAccurate": "Was this diagnosis accurate?",
+  "feedbackThanks": "Thanks — your feedback helps improve future scans.",
+  "feedbackYesTooltip": "Yes, accurate",
+  "feedbackNoTooltip": "No, inaccurate",
+
+  "safeLimitTick": "{limit} ppb limit",
+  "@safeLimitTick": {
+    "placeholders": { "limit": { "type": "String" } }
+  },
+  "exceedsSafeLimitMessage": "This sample exceeds the regulatory safe limit of {limit} ppb for human food.",
+  "@exceedsSafeLimitMessage": {
+    "placeholders": { "limit": { "type": "String" } }
+  },
+  "ppbValueLabel": "{value} ppb",
+  "@ppbValueLabel": {
+    "placeholders": { "value": { "type": "String" } }
+  },
+  "chemicalLevelValueLabel": "Chemical level: {value} ppb",
+  "@chemicalLevelValueLabel": {
+    "placeholders": { "value": { "type": "String" } }
+  },
+
+  "todayHighLowLabel": "Today: H:{high}° L:{low}°",
+  "@todayHighLowLabel": {
+    "placeholders": { "high": { "type": "String" }, "low": { "type": "String" } }
+  },
+  "nowLabel": "Now"
 }

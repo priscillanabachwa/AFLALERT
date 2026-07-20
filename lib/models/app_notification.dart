@@ -10,6 +10,9 @@ const Map<String, IconData> _iconRegistry = {
   'whatshot': Icons.whatshot,
   'person_add_alt_1': Icons.person_add_alt_1,
   'lock_reset': Icons.lock_reset,
+  'water_drop': Icons.water_drop,
+  'wb_sunny': Icons.wb_sunny,
+  'cloud': Icons.cloud,
 };
 const String _defaultIconKey = 'whatshot';
 

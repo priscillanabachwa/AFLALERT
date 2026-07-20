@@ -4,6 +4,8 @@
 /// the first entry, so returning users see fresh advice.
 library;
 
+import '../constants/seasonal_guidelines.dart' show SeasonStage;
+
 const List<String> farmerDailyTips = [
   'Keep corn moisture below 13.5%. Wet grain lets mold grow fast, and that mold is what makes aflatoxin.',
   'Dry maize on a raised platform, not on bare ground. Wet soil makes the grain damp again and mold grows.',
@@ -44,11 +46,46 @@ const List<String> traderDailyTips = [
   'Keep a record of scan results for each batch. This proves your grain is safe if a buyer ever asks.',
 ];
 
+// Indices into [farmerDailyTips]/[traderDailyTips] whose advice is already
+// covered, near-verbatim, by that stage's seasonal guideline text (see
+// seasonal_guidelines.dart). Excluded from rotation while that guideline is
+// showing so the Daily Tip card never just repeats the Guidelines card.
+const Map<SeasonStage, Set<int>> _farmerStageOverlap = {
+  SeasonStage.landPreparation: {7},
+  SeasonStage.planting: {},
+  SeasonStage.growing: {8, 9, 14},
+  SeasonStage.harvest: {2, 15},
+  SeasonStage.dryingStorage: {0, 1, 4, 12},
+};
+
+const Map<SeasonStage, Set<int>> _traderStageOverlap = {
+  SeasonStage.landPreparation: {},
+  SeasonStage.planting: {},
+  SeasonStage.growing: {},
+  SeasonStage.harvest: {0, 2},
+  SeasonStage.dryingStorage: {4, 5, 11},
+};
+
 /// Picks a tip for [userType] ("Farmer" or "Trader", case-insensitive) that
 /// changes once per day. Defaults to the farmer list for unknown/empty types.
-String tipOfTheDay(String userType) {
-  final List<String> tips = _isTrader(userType) ? traderDailyTips : farmerDailyTips;
-  return tips[_dayOfYear() % tips.length];
+///
+/// When [currentStage] is given, skips any tip that overlaps with that
+/// stage's seasonal guideline advice, so the two cards don't repeat each
+/// other on the same day.
+String tipOfTheDay(String userType, {SeasonStage? currentStage}) {
+  final bool isTrader = _isTrader(userType);
+  final List<String> tips = isTrader ? traderDailyTips : farmerDailyTips;
+  final Set<int> excluded = currentStage == null
+      ? const {}
+      : (isTrader ? _traderStageOverlap : _farmerStageOverlap)[currentStage] ??
+            const {};
+
+  final int dayIndex = _dayOfYear();
+  for (int offset = 0; offset < tips.length; offset++) {
+    final int i = (dayIndex + offset) % tips.length;
+    if (!excluded.contains(i)) return tips[i];
+  }
+  return tips[dayIndex % tips.length];
 }
 
 // Aflatoxin-producing molds thrive fastest once ambient temperature climbs
@@ -73,13 +110,66 @@ const List<String> traderHeatAlertTips = [
 bool isHeatAlert(double? temperatureC) =>
     temperatureC != null && temperatureC >= highHeatThresholdC;
 
-/// Picks the tip to show for [userType] given the current [temperatureC].
-/// When it's hot enough to meaningfully raise aflatoxin risk, this returns a
-/// heat-specific warning instead of the normal rotating daily tip.
-String tipForConditions(String userType, double? temperatureC) {
-  if (!isHeatAlert(temperatureC)) return tipOfTheDay(userType);
-  final List<String> tips = _isTrader(userType) ? traderHeatAlertTips : farmerHeatAlertTips;
-  return tips[_dayOfYear() % tips.length];
+// Ambient moisture is the more direct driver of aflatoxin risk — it's what
+// keeps grain from drying out and lets mold spread — so relative humidity at
+// or above this level triggers a humidity-specific warning in place of the
+// regular rotating tip.
+const double highHumidityPercentThreshold = 70.0;
+
+const List<String> farmerHumidityAlertTips = [
+  'The air is very humid today. Damp air slows drying, so check drying grain more often and cover it if rain threatens.',
+  'High humidity lets mold spread even in grain that felt dry. Check stored maize closely today.',
+  'Humid air raises mold risk on standing crops too. Keep an eye out for early signs of disease in the field.',
+];
+
+const List<String> traderHumidityAlertTips = [
+  'The air is very humid today. Check your stored batches more closely — damp air lets mold spread fast.',
+  'High humidity can undo good drying. Improve airflow in the warehouse and re-check moisture on older batches.',
+  'Humid conditions raise mold risk across your stock. Prioritize testing batches that have been in storage longest.',
+];
+
+/// True when [humidityPercent] (relative humidity) is high enough to warrant
+/// a moisture-risk warning instead of the regular rotating tip.
+bool isHumidityAlert(double? humidityPercent) =>
+    humidityPercent != null && humidityPercent >= highHumidityPercentThreshold;
+
+/// Which weather-driven warning, if any, should replace the regular rotating
+/// tip. Humidity takes priority over heat when both are in alert range,
+/// since moisture — not temperature — is the more direct driver of
+/// aflatoxin risk.
+enum WeatherAlertKind { none, heat, humidity }
+
+WeatherAlertKind alertKindFor(double? temperatureC, double? humidityPercent) {
+  if (isHumidityAlert(humidityPercent)) return WeatherAlertKind.humidity;
+  if (isHeatAlert(temperatureC)) return WeatherAlertKind.heat;
+  return WeatherAlertKind.none;
+}
+
+/// Picks the tip to show for [userType] given the current [temperatureC] and
+/// [humidityPercent]. When conditions meaningfully raise aflatoxin risk, this
+/// returns a weather-specific warning (see [alertKindFor] for how heat and
+/// humidity are prioritized) instead of the normal rotating daily tip.
+/// Otherwise forwards [currentStage] to [tipOfTheDay] so the rotating tip
+/// stays distinct from the seasonal guideline currently on screen.
+String tipForConditions(
+  String userType,
+  double? temperatureC, {
+  double? humidityPercent,
+  SeasonStage? currentStage,
+}) {
+  final bool isTrader = _isTrader(userType);
+  switch (alertKindFor(temperatureC, humidityPercent)) {
+    case WeatherAlertKind.humidity:
+      final List<String> tips =
+          isTrader ? traderHumidityAlertTips : farmerHumidityAlertTips;
+      return tips[_dayOfYear() % tips.length];
+    case WeatherAlertKind.heat:
+      final List<String> tips =
+          isTrader ? traderHeatAlertTips : farmerHeatAlertTips;
+      return tips[_dayOfYear() % tips.length];
+    case WeatherAlertKind.none:
+      return tipOfTheDay(userType, currentStage: currentStage);
+  }
 }
 
 bool _isTrader(String userType) => userType.trim().toLowerCase() == 'trader';

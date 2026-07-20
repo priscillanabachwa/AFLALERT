@@ -133,6 +133,123 @@ class PdfService {
     return _saveToDownloadedReports(pdf, "Report");
   }
 
+  Future<File> generateStripReport({
+    required bool isSafe,
+    required double ppbValue,
+    required double safeLimitPpb,
+    required double tLineOD,
+    required double cLineOD,
+    required double odRatio,
+    required String cropLabel,
+    required String batchId,
+  }) async {
+    final pdf = pw.Document();
+
+    final result = isSafe ? "Within Safe Limit" : "Exceeds Safe Limit";
+    final statusColor = isSafe ? _PdfColors.primaryContainer : _PdfColors.error;
+    final statusBg = isSafe ? _PdfColors.successLight : _PdfColors.errorLight;
+
+    final recommendations = isSafe
+        ? [
+            "Safe for storage and immediate human consumption.",
+            "Keep grain moisture below 13% and re-test periodically during storage.",
+          ]
+        : [
+            "Do not mix this batch with clean grain.",
+            "Isolate this batch immediately and arrange certified laboratory testing.",
+            "Re-route for disposal or approved industrial/distillery use — do not feed to livestock.",
+          ];
+
+    pdf.addPage(
+      pw.Page(
+        pageFormat: PdfPageFormat.a4,
+        build: (context) {
+          return pw.Padding(
+            padding: const pw.EdgeInsets.all(20),
+            child: pw.Column(
+              crossAxisAlignment: pw.CrossAxisAlignment.start,
+              children: [
+                _buildHeaderBanner("AFLALERT CHEMICAL STRIP REPORT"),
+                pw.SizedBox(height: 20),
+
+                pw.Text(
+                  "Date: ${DateTime.now()}",
+                  style: pw.TextStyle(color: _PdfColors.grey),
+                ),
+                pw.Text(
+                  "Test Batch: $batchId — $cropLabel",
+                  style: pw.TextStyle(color: _PdfColors.grey),
+                ),
+
+                pw.SizedBox(height: 16),
+
+                pw.Container(
+                  width: double.infinity,
+                  padding: const pw.EdgeInsets.all(14),
+                  decoration: pw.BoxDecoration(
+                    color: statusBg,
+                    borderRadius: pw.BorderRadius.circular(8),
+                    border: pw.Border.all(color: statusColor, width: 1),
+                  ),
+                  child: pw.Column(
+                    crossAxisAlignment: pw.CrossAxisAlignment.start,
+                    children: [
+                      pw.Text(
+                        "Toxic Load: ${ppbValue.toStringAsFixed(1)} ppb",
+                        style: pw.TextStyle(
+                          fontSize: 18,
+                          fontWeight: pw.FontWeight.bold,
+                          color: statusColor,
+                        ),
+                      ),
+                      pw.SizedBox(height: 4),
+                      pw.Text(
+                        "Result: $result (safe limit: ${safeLimitPpb.toStringAsFixed(0)} ppb)",
+                        style: pw.TextStyle(color: statusColor),
+                      ),
+                    ],
+                  ),
+                ),
+
+                pw.SizedBox(height: 16),
+
+                pw.Text(
+                  "Diagnostic Breakdown",
+                  style: pw.TextStyle(
+                    fontSize: 14,
+                    fontWeight: pw.FontWeight.bold,
+                    color: _PdfColors.primary,
+                  ),
+                ),
+                pw.SizedBox(height: 8),
+                pw.Text("Test line OD: ${tLineOD.toStringAsFixed(2)}"),
+                pw.Text("Control line OD: ${cLineOD.toStringAsFixed(2)}"),
+                pw.Text("OD ratio (T/C): ${odRatio.toStringAsFixed(2)}"),
+
+                pw.SizedBox(height: 20),
+
+                pw.Text(
+                  "Recommendations",
+                  style: pw.TextStyle(
+                    fontSize: 16,
+                    fontWeight: pw.FontWeight.bold,
+                    color: _PdfColors.primary,
+                  ),
+                ),
+
+                pw.SizedBox(height: 10),
+
+                ...recommendations.map((item) => _buildBullet(item, statusColor)),
+              ],
+            ),
+          );
+        },
+      ),
+    );
+
+    return _saveToDownloadedReports(pdf, "Strip_Report");
+  }
+
   // Generates a single PDF summarizing multiple scan records as a table —
   // used by the History screen's "Export PDF" button to export the
   // currently filtered list in one document.

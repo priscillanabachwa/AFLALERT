@@ -102,6 +102,28 @@ class AppLocalizationsEn extends AppLocalizations {
   String get cancel => 'Cancel';
 
   @override
+  String get deleteScan => 'Delete Scan';
+
+  @override
+  String get deleteScanConfirm =>
+      'Are you sure you want to delete this scan record? This cannot be undone.';
+
+  @override
+  String get delete => 'Delete';
+
+  @override
+  String get scanDeleted => 'Scan deleted.';
+
+  @override
+  String get couldNotDeleteScan => 'Could not delete scan. Please try again.';
+
+  @override
+  String get undo => 'Undo';
+
+  @override
+  String get scanDetails => 'Scan Details';
+
+  @override
   String get totalScans => 'Total Scans';
 
   @override
@@ -326,6 +348,11 @@ class AppLocalizationsEn extends AppLocalizations {
   }
 
   @override
+  String humidityAlertNotifTitle(int humidity) {
+    return 'Humidity is at $humidity%';
+  }
+
+  @override
   String get guidelines => 'Guidelines';
 
   @override
@@ -360,6 +387,9 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get heatAlertBadge => 'HEAT ALERT';
+
+  @override
+  String get humidityAlertBadge => 'HUMIDITY ALERT';
 
   @override
   String get dailyTip => 'DAILY TIP';
@@ -712,28 +742,63 @@ class AppLocalizationsEn extends AppLocalizations {
       'Please log out and log back in, then try again.';
 
   @override
-  String get passwordResetLinkSent =>
-      'Password reset link sent! Check your email.';
-
-  @override
   String get errorOccurredTryAgain => 'An error occurred. Please try again.';
-
-  @override
-  String get noAccountFoundEmail => 'No account found with this email address.';
 
   @override
   String get resetPassword => 'Reset Password';
 
   @override
   String get resetPasswordInstructions =>
-      'Enter your registered email address below. We will send you a secure link to reset your password and keep your tracking account secure.';
+      'Enter your registered email address below. We will send you a 6-digit code to reset your password and keep your account secure.';
 
   @override
   String get pleaseEnterValidEmailAddress =>
       'Please enter a valid email address';
 
   @override
-  String get sendResetLink => 'Send Reset Link';
+  String get sendResetLink => 'Send Code';
+
+  @override
+  String get otpScreenTitle => 'Enter Code';
+
+  @override
+  String otpInstructions(String email) {
+    return 'Enter the 6-digit code we sent to $email.';
+  }
+
+  @override
+  String get otpLabel => 'Verification Code';
+
+  @override
+  String get pleaseEnterOtp => 'Please enter the code';
+
+  @override
+  String get otpInvalidLength => 'Enter the 6-digit code';
+
+  @override
+  String get verifyAndReset => 'Verify & Reset Password';
+
+  @override
+  String get resendCode => 'Resend Code';
+
+  @override
+  String resendCodeIn(int seconds) {
+    return 'Resend code in ${seconds}s';
+  }
+
+  @override
+  String get pleaseWaitBeforeResend =>
+      'Please wait before requesting another code.';
+
+  @override
+  String get codeExpired => 'This code has expired. Please request a new one.';
+
+  @override
+  String get tooManyAttempts =>
+      'Too many incorrect attempts. Please request a new code.';
+
+  @override
+  String get incorrectCode => 'Incorrect code. Please try again.';
 
   @override
   String get downloadedReports => 'Downloaded Reports';
@@ -791,4 +856,124 @@ class AppLocalizationsEn extends AppLocalizations {
   @override
   String get recommendationsSourced =>
       'Recommendations sourced from UNBS and MAAIF guidance.';
+
+  @override
+  String get tier1Short => 'Tier 1';
+
+  @override
+  String get tier2Short => 'Tier 2';
+
+  @override
+  String get chemicalStripScanTitle => 'Chemical Strip Scan';
+
+  @override
+  String get scanTestStrip => 'Scan Test Strip';
+
+  @override
+  String get cropTypeMaize => 'Maize';
+
+  @override
+  String get cropTypeGroundnut => 'Groundnut';
+
+  @override
+  String get positionStripInFrame =>
+      'Position strip in frame after the 10-minute reaction time';
+
+  @override
+  String get scanAnotherStrip => 'Scan Another Strip';
+
+  @override
+  String get scanTestStripHint =>
+      'Scan a reacted test strip to check aflatoxin levels';
+
+  @override
+  String get analyzingStripTitle => 'Analyzing Strip...';
+
+  @override
+  String get readingTestControlLines => 'Reading the test and control lines';
+
+  @override
+  String get stripNotDetectedMessage =>
+      'Couldn\'t detect a test strip in this photo. Make sure the whole strip is inside the frame and well lit, then try again.';
+
+  @override
+  String get controlLineNotDetectedMessage =>
+      'Control line not detected — this test may be invalid. Repeat the test with a new strip.';
+
+  @override
+  String get testBatchLabel => 'TEST BATCH';
+
+  @override
+  String get toxicLoadLabel => 'TOXIC LOAD';
+
+  @override
+  String get regulatoryScaleLabel => 'REGULATORY SCALE';
+
+  @override
+  String get actionRequiredLabel => 'ACTION REQUIRED';
+
+  @override
+  String get diagnosticBreakdownLabel => 'DIAGNOSTIC BREAKDOWN';
+
+  @override
+  String get chemicalLevelLabel => 'Chemical level';
+
+  @override
+  String get testLineOdLabel => 'Test line (T) optical density';
+
+  @override
+  String get controlLineOdLabel => 'Control line (C) optical density';
+
+  @override
+  String get odRatioLabel => 'T/C ratio';
+
+  @override
+  String get scanLocationLabel => 'Scan location';
+
+  @override
+  String get withinSafeLimit => 'Within Safe Limit';
+
+  @override
+  String get exceedsSafeLimit => 'Exceeds Safe Limit';
+
+  @override
+  String get wasThisDiagnosisAccurate => 'Was this diagnosis accurate?';
+
+  @override
+  String get feedbackThanks =>
+      'Thanks — your feedback helps improve future scans.';
+
+  @override
+  String get feedbackYesTooltip => 'Yes, accurate';
+
+  @override
+  String get feedbackNoTooltip => 'No, inaccurate';
+
+  @override
+  String safeLimitTick(String limit) {
+    return '$limit ppb limit';
+  }
+
+  @override
+  String exceedsSafeLimitMessage(String limit) {
+    return 'This sample exceeds the regulatory safe limit of $limit ppb for human food.';
+  }
+
+  @override
+  String ppbValueLabel(String value) {
+    return '$value ppb';
+  }
+
+  @override
+  String chemicalLevelValueLabel(String value) {
+    return 'Chemical level: $value ppb';
+  }
+
+  @override
+  String todayHighLowLabel(String high, String low) {
+    return 'Today: H:$high° L:$low°';
+  }
+
+  @override
+  String get nowLabel => 'Now';
 }
