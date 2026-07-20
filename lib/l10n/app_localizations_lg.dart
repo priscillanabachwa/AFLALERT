@@ -975,4 +975,12 @@ class AppLocalizationsLg extends AppLocalizations {
   String chemicalLevelValueLabel(String value) {
     return 'Ekigero ky\'obutwa: $value ppb';
   }
+
+  @override
+  String todayHighLowLabel(String high, String low) {
+    return 'Leero: Ekya waggulu $high° Ekya wansi $low°';
+  }
+
+  @override
+  String get nowLabel => 'Kaakano';
 }

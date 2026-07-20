@@ -334,5 +334,11 @@
   "chemicalLevelValueLabel": "Ekigero ky'obutwa: {value} ppb",
   "@chemicalLevelValueLabel": {
     "placeholders": { "value": { "type": "String" } }
-  }
+  },
+
+  "todayHighLowLabel": "Leero: Ekya waggulu {high}° Ekya wansi {low}°",
+  "@todayHighLowLabel": {
+    "placeholders": { "high": { "type": "String" }, "low": { "type": "String" } }
+  },
+  "nowLabel": "Kaakano"
 }

@@ -1867,6 +1867,18 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'Chemical level: {value} ppb'**
   String chemicalLevelValueLabel(String value);
+
+  /// No description provided for @todayHighLowLabel.
+  ///
+  /// In en, this message translates to:
+  /// **'Today: H:{high}° L:{low}°'**
+  String todayHighLowLabel(String high, String low);
+
+  /// No description provided for @nowLabel.
+  ///
+  /// In en, this message translates to:
+  /// **'Now'**
+  String get nowLabel;
 }
 
 class _AppLocalizationsDelegate

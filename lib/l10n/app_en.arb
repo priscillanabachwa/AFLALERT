@@ -384,5 +384,11 @@
   "chemicalLevelValueLabel": "Chemical level: {value} ppb",
   "@chemicalLevelValueLabel": {
     "placeholders": { "value": { "type": "String" } }
-  }
+  },
+
+  "todayHighLowLabel": "Today: H:{high}° L:{low}°",
+  "@todayHighLowLabel": {
+    "placeholders": { "high": { "type": "String" }, "low": { "type": "String" } }
+  },
+  "nowLabel": "Now"
 }

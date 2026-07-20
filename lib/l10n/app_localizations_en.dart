@@ -969,4 +969,12 @@ class AppLocalizationsEn extends AppLocalizations {
   String chemicalLevelValueLabel(String value) {
     return 'Chemical level: $value ppb';
   }
+
+  @override
+  String todayHighLowLabel(String high, String low) {
+    return 'Today: H:$high° L:$low°';
+  }
+
+  @override
+  String get nowLabel => 'Now';
 }
