@@ -810,10 +810,11 @@ class _HomeScreenState extends State<HomeScreen> {
               icon: const Text('🌽', style: TextStyle(fontSize: 34)),
               label: l10n.maizeScanLabel,
               gradientColors: const [
-                AppColors.primaryContainer,
-                AppColors.primary,
+                AppColors.successLight,
+                AppColors.successLight,
               ],
-              contentColor: Colors.white,
+              contentColor: AppColors.primaryContainer,
+              ringColor: AppColors.secondary,
               onTap: () => _onMaizeScanTap(context),
             ),
             const SizedBox(height: 10),
@@ -824,13 +825,14 @@ class _HomeScreenState extends State<HomeScreen> {
           children: [
             _buildScanCircle(
               key: _stripScanKey,
-              icon: const Icon(Icons.biotech_outlined, color: AppColors.primary, size: 36),
+              icon: const Icon(Icons.biotech_outlined, color: AppColors.primaryContainer, size: 36),
               label: l10n.stripScanLabel,
-              gradientColors: [
-                AppColors.secondary,
-                Color.lerp(AppColors.secondary, Colors.black, 0.18)!,
+              gradientColors: const [
+                AppColors.successLight,
+                AppColors.successLight,
               ],
-              contentColor: AppColors.primary,
+              contentColor: AppColors.primaryContainer,
+              ringColor: AppColors.primaryContainer,
               onTap: () => _onStripTestTap(context),
             ),
             const SizedBox(height: 10),
@@ -869,6 +871,7 @@ class _HomeScreenState extends State<HomeScreen> {
     required String label,
     required List<Color> gradientColors,
     required Color contentColor,
+    required Color ringColor,
     required VoidCallback onTap,
   }) {
     return Container(
@@ -878,7 +881,7 @@ class _HomeScreenState extends State<HomeScreen> {
       padding: const EdgeInsets.all(5),
       decoration: BoxDecoration(
         shape: BoxShape.circle,
-        color: AppColors.t95.withValues(alpha: 0.9),
+        color: AppColors.successLight,
         boxShadow: [
           BoxShadow(
             color: Colors.black.withValues(alpha: 0.2),
@@ -888,8 +891,8 @@ class _HomeScreenState extends State<HomeScreen> {
         ],
       ),
       child: Material(
-        shape: const CircleBorder(
-          side: BorderSide(color: Colors.white, width: 2),
+        shape: CircleBorder(
+          side: BorderSide(color: ringColor, width: 2),
         ),
         clipBehavior: Clip.antiAlias,
         child: Ink(
