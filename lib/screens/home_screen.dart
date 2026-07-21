@@ -762,22 +762,14 @@ class _HomeScreenState extends State<HomeScreen> {
               onTap: () => _onMaizeScanTap(context),
             ),
             const SizedBox(height: 10),
-            Text(
-              'Scan the maize here',
-              textAlign: TextAlign.center,
-              style: TextStyle(
-                fontSize: 12,
-                color: Colors.white.withValues(alpha: 0.8),
-                shadows: _onImageShadow,
-              ),
-            ),
+            _buildScanCaption('Scan the maize here'),
           ],
         ),
         Column(
           children: [
             _buildScanCircle(
               icon: Icons.biotech_outlined,
-              label: l10n.stripTestLabel,
+              label: l10n.stripScanLabel,
               gradientColors: [
                 AppColors.secondary,
                 Color.lerp(AppColors.secondary, Colors.black, 0.18)!,
@@ -786,18 +778,32 @@ class _HomeScreenState extends State<HomeScreen> {
               onTap: () => _onStripTestTap(context),
             ),
             const SizedBox(height: 10),
-            Text(
-              'Scan the chemical strip here',
-              textAlign: TextAlign.center,
-              style: TextStyle(
-                fontSize: 12,
-                color: Colors.white.withValues(alpha: 0.8),
-                shadows: _onImageShadow,
-              ),
-            ),
+            _buildScanCaption('Scan the chemical strip here'),
           ],
         ),
       ],
+    );
+  }
+
+  // Sits directly on the busy background photo, so a shadow alone wasn't
+  // reliably legible — a solid backing pill guarantees contrast regardless
+  // of what's behind it.
+  Widget _buildScanCaption(String text) {
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 5),
+      decoration: BoxDecoration(
+        color: Colors.black.withValues(alpha: 0.45),
+        borderRadius: BorderRadius.circular(8),
+      ),
+      child: Text(
+        text,
+        textAlign: TextAlign.center,
+        style: const TextStyle(
+          fontSize: 12,
+          fontWeight: FontWeight.w600,
+          color: Colors.white,
+        ),
+      ),
     );
   }
 
@@ -1354,7 +1360,18 @@ class _WeatherForecastSheetState extends State<_WeatherForecastSheet> {
                                   style: const TextStyle(fontSize: 11, color: Colors.grey),
                                 ),
                                 const SizedBox(height: 8),
-                                Icon(hour.icon, color: AppColors.secondary, size: 22),
+                                Icon(
+                                  hour.icon,
+                                  // A single accent color made every hour
+                                  // read as "daytime" regardless of the
+                                  // icon shape, which is what made the
+                                  // moon at 9PM look like an outlier
+                                  // instead of the start of a night run.
+                                  color: hour.isDay
+                                      ? AppColors.secondary
+                                      : const Color(0xFF7C8DB5),
+                                  size: 22,
+                                ),
                                 const SizedBox(height: 8),
                                 Text(
                                   '${hour.temperatureC.round()}°',

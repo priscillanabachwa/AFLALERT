@@ -1670,11 +1670,11 @@ abstract class AppLocalizations {
   /// **'Maize Scan'**
   String get maizeScanLabel;
 
-  /// No description provided for @stripTestLabel.
+  /// No description provided for @stripScanLabel.
   ///
   /// In en, this message translates to:
-  /// **'Strip Test'**
-  String get stripTestLabel;
+  /// **'Strip Scan'**
+  String get stripScanLabel;
 
   /// No description provided for @chemicalStripScanTitle.
   ///

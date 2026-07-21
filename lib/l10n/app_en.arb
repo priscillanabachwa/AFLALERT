@@ -339,7 +339,7 @@
   "recommendationsSourced": "Recommendations sourced from UNBS and MAAIF guidance.",
 
   "maizeScanLabel": "Maize Scan",
-  "stripTestLabel": "Strip Test",
+  "stripScanLabel": "Strip Scan",
   "chemicalStripScanTitle": "Chemical Strip Scan",
   "scanTestStrip": "Scan Test Strip",
   "cropTypeMaize": "Maize",

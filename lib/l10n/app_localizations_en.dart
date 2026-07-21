@@ -861,7 +861,7 @@ class AppLocalizationsEn extends AppLocalizations {
   String get maizeScanLabel => 'Maize Scan';
 
   @override
-  String get stripTestLabel => 'Strip Test';
+  String get stripScanLabel => 'Strip Scan';
 
   @override
   String get chemicalStripScanTitle => 'Chemical Strip Scan';
