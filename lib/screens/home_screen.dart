@@ -1,3 +1,4 @@
+```dart
 import 'dart:async';
 
 import 'package:camera/camera.dart';
@@ -747,19 +748,47 @@ class _HomeScreenState extends State<HomeScreen> {
     return Row(
       mainAxisAlignment: MainAxisAlignment.spaceEvenly,
       children: [
-        _buildTierCircle(
-          icon: Icons.camera_alt_outlined,
-          label: l10n.tier1Short,
-          fillColor: AppColors.primaryContainer,
-          contentColor: Colors.white,
-          onTap: () => _onTier1Tap(context),
+        Column(
+          children: [
+            _buildTierCircle(
+              icon: Icons.camera_alt_outlined,
+              label: l10n.tier1Short,
+              fillColor: AppColors.primaryContainer,
+              contentColor: Colors.white,
+              onTap: () => _onTier1Tap(context),
+            ),
+            const SizedBox(height: 10),
+            Text(
+              'Scan the maize here',
+              textAlign: TextAlign.center,
+              style: TextStyle(
+                fontSize: 12,
+                color: Colors.white.withValues(alpha: 0.8),
+                shadows: _onImageShadow,
+              ),
+            ),
+          ],
         ),
-        _buildTierCircle(
-          icon: Icons.science_outlined,
-          label: l10n.tier2Short,
-          fillColor: AppColors.secondary,
-          contentColor: AppColors.primary,
-          onTap: () => _onTier2Tap(context),
+        Column(
+          children: [
+            _buildTierCircle(
+              icon: Icons.science_outlined,
+              label: l10n.tier2Short,
+              fillColor: AppColors.secondary,
+              contentColor: AppColors.primary,
+              onTap: () => _onTier2Tap(context),
+            ),
+            const SizedBox(height: 10),
+            Text(
+              'Scan the chemical strip here',
+              textAlign: TextAlign.center,
+              style: TextStyle(
+                fontSize: 12,
+                color: Colors.white.withValues(alpha: 0.8),
+                shadows: _onImageShadow,
+              ),
+            ),
+          ],
         ),
       ],
     );
