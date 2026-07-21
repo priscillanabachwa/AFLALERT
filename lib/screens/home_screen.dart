@@ -57,11 +57,7 @@ class _HomeScreenState extends State<HomeScreen> {
   final Stream<DocumentSnapshot<Map<String, dynamic>>> _profileStream =
       FirestoreService().getUserProfile();
 
-<<<<<<< HEAD
-  // Edge-triggered so each alert fires once when conditions become bad, not
-  // on every refresh while they stay bad. Tracked separately since heat and
-  // humidity can trigger independently of each other.
-=======
+
   // Hoisted for the same reason — both the stats bar (near the greeting)
   // and the Recent Scans list (further down) read from this one stream.
   final Stream<QuerySnapshot> _scanHistoryStream =
@@ -69,7 +65,7 @@ class _HomeScreenState extends State<HomeScreen> {
 
   // Edge-triggered so the alert fires once when it becomes hot, not on
   // every 5-minute refresh while it stays hot.
->>>>>>> e00c4af13d4bea2ff2f7770d10c6c91e44eb66be
+
 
   bool _heatAlertNotified = false;
   bool _humidityAlertNotified = false;
