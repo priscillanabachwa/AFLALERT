@@ -519,53 +519,7 @@ class _HomeScreenState extends State<HomeScreen> {
               letterSpacing: 0.5,
             ),
           ),
-<<<<<<< HEAD
-          const SizedBox(width: 14),
-          Expanded(
-            child: Container(
-              padding: const EdgeInsets.all(16),
-              decoration: BoxDecoration(
-                color: AppColors.primaryContainer,
-                borderRadius: BorderRadius.circular(16),
-              ),
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Icon(
-                    switch (alertKind) {
-                      WeatherAlertKind.humidity => Icons.water_drop,
-                      WeatherAlertKind.heat => Icons.whatshot,
-                      WeatherAlertKind.none => Icons.lightbulb_outline,
-                    },
-                    color: AppColors.secondary,
-                    size: 20,
-                  ),
-                  const SizedBox(height: 8),
-                  Text(
-                    switch (alertKind) {
-                      WeatherAlertKind.humidity => l10n.humidityAlertBadge,
-                      WeatherAlertKind.heat => l10n.heatAlertBadge,
-                      WeatherAlertKind.none => l10n.dailyTip,
-                    },
-                    style: const TextStyle(
-                      fontSize: 10,
-                      fontWeight: FontWeight.w700,
-                      color: AppColors.secondary,
-                      letterSpacing: 0.5,
-                    ),
-                  ),
-                  const SizedBox(height: 8),
-                  Text(
-                    dailyTip,
-                    style: const TextStyle(
-                      fontSize: 12,
-                      color: Colors.white,
-                      height: 1.4,
-                    ),
-                  ),
-                ],
-              ),
-=======
+
           const SizedBox(height: 8),
           Text(
             dailyTip,
@@ -573,7 +527,7 @@ class _HomeScreenState extends State<HomeScreen> {
               fontSize: 12,
               color: Colors.white,
               height: 1.4,
->>>>>>> e00c4af13d4bea2ff2f7770d10c6c91e44eb66be
+
             ),
           ),
         ],
