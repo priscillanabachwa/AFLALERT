@@ -1664,17 +1664,71 @@ abstract class AppLocalizations {
   /// **'Recommendations sourced from UNBS and MAAIF guidance.'**
   String get recommendationsSourced;
 
-  /// No description provided for @tier1Short.
+  /// No description provided for @maizeScanLabel.
   ///
   /// In en, this message translates to:
-  /// **'Tier 1'**
-  String get tier1Short;
+  /// **'Maize Scan'**
+  String get maizeScanLabel;
 
-  /// No description provided for @tier2Short.
+  /// No description provided for @stripScanLabel.
   ///
   /// In en, this message translates to:
-  /// **'Tier 2'**
-  String get tier2Short;
+  /// **'Strip Scan'**
+  String get stripScanLabel;
+
+  /// No description provided for @coachMarkSkip.
+  ///
+  /// In en, this message translates to:
+  /// **'Skip'**
+  String get coachMarkSkip;
+
+  /// No description provided for @coachMarkNext.
+  ///
+  /// In en, this message translates to:
+  /// **'Next'**
+  String get coachMarkNext;
+
+  /// No description provided for @coachMarkGotIt.
+  ///
+  /// In en, this message translates to:
+  /// **'Got it'**
+  String get coachMarkGotIt;
+
+  /// No description provided for @coachMarkMaizeTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Scan your maize'**
+  String get coachMarkMaizeTitle;
+
+  /// No description provided for @coachMarkMaizeDesc.
+  ///
+  /// In en, this message translates to:
+  /// **'Tap here to photograph maize kernels and check for visible mold.'**
+  String get coachMarkMaizeDesc;
+
+  /// No description provided for @coachMarkStripTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Test a chemical strip'**
+  String get coachMarkStripTitle;
+
+  /// No description provided for @coachMarkStripDesc.
+  ///
+  /// In en, this message translates to:
+  /// **'Tap here after the strip\'s reaction time to check aflatoxin levels.'**
+  String get coachMarkStripDesc;
+
+  /// No description provided for @coachMarkWeatherTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Today\'s weather'**
+  String get coachMarkWeatherTitle;
+
+  /// No description provided for @coachMarkWeatherDesc.
+  ///
+  /// In en, this message translates to:
+  /// **'Tap this card anytime to see the full hourly forecast.'**
+  String get coachMarkWeatherDesc;
 
   /// No description provided for @chemicalStripScanTitle.
   ///
