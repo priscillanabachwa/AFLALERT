@@ -173,7 +173,8 @@ class WeatherService {
       '$_baseUrl?latitude=$latitude&longitude=$longitude'
       '&hourly=temperature_2m,weather_code'
       '&daily=temperature_2m_max,temperature_2m_min'
-      '&forecast_days=1&timezone=auto',
+      '&forecast_days=1&timezone=auto'
+      '&models=$_model',
     );
 
     try {

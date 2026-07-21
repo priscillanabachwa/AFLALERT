@@ -864,10 +864,10 @@ class AppLocalizationsLg extends AppLocalizations {
       'Ebiteesebwa biva mu buwabuzi bwa UNBS ne MAAIF.';
 
   @override
-  String get tier1Short => 'Tier 1';
+  String get maizeScanLabel => 'Maize Scan';
 
   @override
-  String get tier2Short => 'Tier 2';
+  String get stripTestLabel => 'Strip Test';
 
   @override
   String get chemicalStripScanTitle => 'Chemical Strip Scan';

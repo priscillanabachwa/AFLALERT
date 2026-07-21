@@ -286,8 +286,8 @@
 
   "searchCrop": "Noonya nga okozesa ekirime, ekifo...",
 
-  "tier1Short": "Tier 1",
-  "tier2Short": "Tier 2",
+  "maizeScanLabel": "Maize Scan",
+  "stripTestLabel": "Strip Test",
   "chemicalStripScanTitle": "Chemical Strip Scan",
   "scanTestStrip": "Kebera Test Strip",
   "cropTypeMaize": "Kasooli",

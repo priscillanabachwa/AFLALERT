@@ -285,7 +285,7 @@ class _HomeScreenState extends State<HomeScreen> {
                               },
                             ),
                             const SizedBox(height: 24),
-                            _buildTierPicker(context),
+                            _buildScanPicker(context),
                             const SizedBox(height: 24),
                             _buildTipCard(
                               tipForConditions(
@@ -705,7 +705,7 @@ class _HomeScreenState extends State<HomeScreen> {
     );
   }
 
-  Future<void> _onTier1Tap(BuildContext context) async {
+  Future<void> _onMaizeScanTap(BuildContext context) async {
     // Reuse the location already resolved for the weather card when
     // possible, falling back to a fresh lookup if that hasn't landed yet.
     final String? location =
@@ -722,7 +722,7 @@ class _HomeScreenState extends State<HomeScreen> {
     );
   }
 
-  Future<void> _onTier2Tap(BuildContext context) async {
+  Future<void> _onStripTestTap(BuildContext context) async {
     final String? location =
         _location?.placeName ?? await LocationService().getCurrentPlaceName();
     if (!context.mounted) return;
@@ -742,21 +742,24 @@ class _HomeScreenState extends State<HomeScreen> {
   }
 
   // Two circular start-a-test buttons, mirrored on opposite sides of the
-  // row (Tier 1 left, Tier 2 right) rather than the earlier stacked
+  // row (maize scan left, strip test right) rather than the earlier stacked
   // rectangular cards.
-  Widget _buildTierPicker(BuildContext context) {
+  Widget _buildScanPicker(BuildContext context) {
     final AppLocalizations l10n = AppLocalizations.of(context)!;
     return Row(
       mainAxisAlignment: MainAxisAlignment.spaceEvenly,
       children: [
         Column(
           children: [
-            _buildTierCircle(
-              icon: Icons.camera_alt_outlined,
-              label: l10n.tier1Short,
-              fillColor: AppColors.primaryContainer,
+            _buildScanCircle(
+              icon: Icons.agriculture_outlined,
+              label: l10n.maizeScanLabel,
+              gradientColors: const [
+                AppColors.primaryContainer,
+                AppColors.primary,
+              ],
               contentColor: Colors.white,
-              onTap: () => _onTier1Tap(context),
+              onTap: () => _onMaizeScanTap(context),
             ),
             const SizedBox(height: 10),
             Text(
@@ -772,12 +775,15 @@ class _HomeScreenState extends State<HomeScreen> {
         ),
         Column(
           children: [
-            _buildTierCircle(
-              icon: Icons.science_outlined,
-              label: l10n.tier2Short,
-              fillColor: AppColors.secondary,
+            _buildScanCircle(
+              icon: Icons.biotech_outlined,
+              label: l10n.stripTestLabel,
+              gradientColors: [
+                AppColors.secondary,
+                Color.lerp(AppColors.secondary, Colors.black, 0.18)!,
+              ],
               contentColor: AppColors.primary,
-              onTap: () => _onTier2Tap(context),
+              onTap: () => _onStripTestTap(context),
             ),
             const SizedBox(height: 10),
             Text(
@@ -795,50 +801,61 @@ class _HomeScreenState extends State<HomeScreen> {
     );
   }
 
-  Widget _buildTierCircle({
+  Widget _buildScanCircle({
     required IconData icon,
     required String label,
-    required Color fillColor,
+    required List<Color> gradientColors,
     required Color contentColor,
     required VoidCallback onTap,
   }) {
     return Container(
-      width: 132,
-      height: 132,
+      width: 140,
+      height: 140,
       padding: const EdgeInsets.all(5),
       decoration: BoxDecoration(
         shape: BoxShape.circle,
         color: AppColors.t95.withValues(alpha: 0.9),
         boxShadow: [
           BoxShadow(
-            color: Colors.black.withValues(alpha: 0.15),
-            blurRadius: 12,
-            offset: const Offset(0, 6),
+            color: Colors.black.withValues(alpha: 0.2),
+            blurRadius: 16,
+            offset: const Offset(0, 8),
           ),
         ],
       ),
       child: Material(
-        color: fillColor,
-        shape: const CircleBorder(),
-        child: InkWell(
-          customBorder: const CircleBorder(),
-          onTap: onTap,
-          child: Column(
-            mainAxisAlignment: MainAxisAlignment.center,
-            children: [
-              Icon(icon, color: contentColor, size: 32),
-              const SizedBox(height: 8),
-              Text(
-                label,
-                textAlign: TextAlign.center,
-                style: TextStyle(
-                  color: contentColor,
-                  fontSize: 13,
-                  fontWeight: FontWeight.bold,
-                  letterSpacing: 0.5,
+        shape: const CircleBorder(
+          side: BorderSide(color: Colors.white, width: 2),
+        ),
+        clipBehavior: Clip.antiAlias,
+        child: Ink(
+          decoration: BoxDecoration(
+            shape: BoxShape.circle,
+            gradient: LinearGradient(
+              begin: Alignment.topLeft,
+              end: Alignment.bottomRight,
+              colors: gradientColors,
+            ),
+          ),
+          child: InkWell(
+            onTap: onTap,
+            child: Column(
+              mainAxisAlignment: MainAxisAlignment.center,
+              children: [
+                Icon(icon, color: contentColor, size: 36),
+                const SizedBox(height: 8),
+                Text(
+                  label,
+                  textAlign: TextAlign.center,
+                  style: TextStyle(
+                    color: contentColor,
+                    fontSize: 13,
+                    fontWeight: FontWeight.bold,
+                    letterSpacing: 0.5,
+                  ),
                 ),
-              ),
-            ],
+              ],
+            ),
           ),
         ),
       ),

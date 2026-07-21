@@ -1664,17 +1664,17 @@ abstract class AppLocalizations {
   /// **'Recommendations sourced from UNBS and MAAIF guidance.'**
   String get recommendationsSourced;
 
-  /// No description provided for @tier1Short.
+  /// No description provided for @maizeScanLabel.
   ///
   /// In en, this message translates to:
-  /// **'Tier 1'**
-  String get tier1Short;
+  /// **'Maize Scan'**
+  String get maizeScanLabel;
 
-  /// No description provided for @tier2Short.
+  /// No description provided for @stripTestLabel.
   ///
   /// In en, this message translates to:
-  /// **'Tier 2'**
-  String get tier2Short;
+  /// **'Strip Test'**
+  String get stripTestLabel;
 
   /// No description provided for @chemicalStripScanTitle.
   ///
