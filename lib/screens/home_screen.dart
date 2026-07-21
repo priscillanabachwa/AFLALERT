@@ -70,6 +70,7 @@ class _HomeScreenState extends State<HomeScreen> {
   // Edge-triggered so the alert fires once when it becomes hot, not on
   // every 5-minute refresh while it stays hot.
 >>>>>>> e00c4af13d4bea2ff2f7770d10c6c91e44eb66be
+
   bool _heatAlertNotified = false;
   bool _humidityAlertNotified = false;
 
@@ -493,11 +494,9 @@ class _HomeScreenState extends State<HomeScreen> {
     );
   }
 
-<<<<<<< HEAD
-  Widget _buildInfoCards(String dailyTip, WeatherAlertKind alertKind) {
-=======
+
   Widget _buildTipCard(String dailyTip, bool heatAlert) {
->>>>>>> e00c4af13d4bea2ff2f7770d10c6c91e44eb66be
+
     final AppLocalizations l10n = AppLocalizations.of(context)!;
     return Container(
       width: double.infinity,
