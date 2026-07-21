@@ -154,49 +154,53 @@ class _CoachMarkTooltip extends StatelessWidget {
             style: const TextStyle(fontSize: 13, color: Colors.black87, height: 1.4),
           ),
           const SizedBox(height: 14),
-          Row(
-            mainAxisAlignment: MainAxisAlignment.spaceBetween,
-            children: [
-              Row(
-                mainAxisSize: MainAxisSize.min,
-                children: List.generate(
-                  stepCount,
-                  (i) => Container(
-                    margin: const EdgeInsets.only(right: 5),
-                    width: i == stepIndex ? 16 : 6,
-                    height: 6,
-                    decoration: BoxDecoration(
-                      color: i == stepIndex
-                          ? AppColors.primaryContainer
-                          : AppColors.outline,
-                      borderRadius: BorderRadius.circular(3),
+          SizedBox(
+            height: 40,
+            child: Row(
+              children: [
+                Expanded(
+                  child: Row(
+                    mainAxisSize: MainAxisSize.min,
+                    children: List.generate(
+                      stepCount,
+                      (i) => Container(
+                        margin: const EdgeInsets.only(right: 5),
+                        width: i == stepIndex ? 16 : 6,
+                        height: 6,
+                        decoration: BoxDecoration(
+                          color: i == stepIndex
+                              ? AppColors.primaryContainer
+                              : AppColors.outline,
+                          borderRadius: BorderRadius.circular(3),
+                        ),
+                      ),
                     ),
                   ),
                 ),
-              ),
-              Row(
-                mainAxisSize: MainAxisSize.min,
-                children: [
-                  if (!isLastStep)
-                    TextButton(
-                      onPressed: onSkip,
-                      child: Text(l10n.coachMarkSkip, style: const TextStyle(color: AppColors.grey)),
-                    ),
-                  ElevatedButton(
-                    onPressed: onNext,
-                    style: ElevatedButton.styleFrom(
-                      backgroundColor: AppColors.primaryContainer,
-                      foregroundColor: Colors.white,
-                      padding: const EdgeInsets.symmetric(horizontal: 18, vertical: 10),
-                      shape: RoundedRectangleBorder(
-                        borderRadius: BorderRadius.circular(10),
-                      ),
-                    ),
-                    child: Text(isLastStep ? l10n.coachMarkGotIt : l10n.coachMarkNext),
+                if (!isLastStep)
+                  TextButton(
+                    onPressed: onSkip,
+                    child: Text(l10n.coachMarkSkip, style: const TextStyle(color: AppColors.grey)),
                   ),
-                ],
-              ),
-            ],
+                ElevatedButton(
+                  onPressed: onNext,
+                  style: ElevatedButton.styleFrom(
+                    // Overrides the app's global ElevatedButtonTheme, which
+                    // defaults minimumSize to Size(double.infinity, 56) for
+                    // full-width buttons elsewhere — that forced this
+                    // button's Row parent into an infinite-width layout.
+                    minimumSize: Size.zero,
+                    backgroundColor: AppColors.primaryContainer,
+                    foregroundColor: Colors.white,
+                    padding: const EdgeInsets.symmetric(horizontal: 18, vertical: 10),
+                    shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(10),
+                    ),
+                  ),
+                  child: Text(isLastStep ? l10n.coachMarkGotIt : l10n.coachMarkNext),
+                ),
+              ],
+            ),
           ),
         ],
       ),
