@@ -83,16 +83,18 @@ class _CoachMarkOverlayState extends State<CoachMarkOverlay> {
           ),
           Positioned(
             left: 24,
-            right: 24,
             top: roomBelow ? target.bottom + 16 : null,
             bottom: roomBelow ? null : screen.height - target.top + 16,
-            child: _CoachMarkTooltip(
-              step: step,
-              stepIndex: _stepIndex,
-              stepCount: widget.steps.length,
-              isLastStep: isLastStep,
-              onNext: _next,
-              onSkip: widget.onFinished,
+            child: SizedBox(
+              width: screen.width - 48,
+              child: _CoachMarkTooltip(
+                step: step,
+                stepIndex: _stepIndex,
+                stepCount: widget.steps.length,
+                isLastStep: isLastStep,
+                onNext: _next,
+                onSkip: widget.onFinished,
+              ),
             ),
           ),
         ],
@@ -153,8 +155,10 @@ class _CoachMarkTooltip extends StatelessWidget {
           ),
           const SizedBox(height: 14),
           Row(
+            mainAxisAlignment: MainAxisAlignment.spaceBetween,
             children: [
               Row(
+                mainAxisSize: MainAxisSize.min,
                 children: List.generate(
                   stepCount,
                   (i) => Container(
@@ -170,23 +174,27 @@ class _CoachMarkTooltip extends StatelessWidget {
                   ),
                 ),
               ),
-              const Spacer(),
-              if (!isLastStep)
-                TextButton(
-                  onPressed: onSkip,
-                  child: Text(l10n.coachMarkSkip, style: const TextStyle(color: AppColors.grey)),
-                ),
-              ElevatedButton(
-                onPressed: onNext,
-                style: ElevatedButton.styleFrom(
-                  backgroundColor: AppColors.primaryContainer,
-                  foregroundColor: Colors.white,
-                  padding: const EdgeInsets.symmetric(horizontal: 18, vertical: 10),
-                  shape: RoundedRectangleBorder(
-                    borderRadius: BorderRadius.circular(10),
+              Row(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  if (!isLastStep)
+                    TextButton(
+                      onPressed: onSkip,
+                      child: Text(l10n.coachMarkSkip, style: const TextStyle(color: AppColors.grey)),
+                    ),
+                  ElevatedButton(
+                    onPressed: onNext,
+                    style: ElevatedButton.styleFrom(
+                      backgroundColor: AppColors.primaryContainer,
+                      foregroundColor: Colors.white,
+                      padding: const EdgeInsets.symmetric(horizontal: 18, vertical: 10),
+                      shape: RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(10),
+                      ),
+                    ),
+                    child: Text(isLastStep ? l10n.coachMarkGotIt : l10n.coachMarkNext),
                   ),
-                ),
-                child: Text(isLastStep ? l10n.coachMarkGotIt : l10n.coachMarkNext),
+                ],
               ),
             ],
           ),
