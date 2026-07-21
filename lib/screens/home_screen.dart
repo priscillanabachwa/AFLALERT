@@ -4,6 +4,7 @@ import 'package:camera/camera.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 
 import '../constants/app_colors.dart';
 import '../constants/daily_tips.dart';
@@ -17,6 +18,7 @@ import '../services/morning_alert_service.dart';
 import '../services/notification_center.dart';
 import '../services/weather_service.dart';
 import '../utils/user_initials.dart';
+import '../widgets/coach_mark_overlay.dart';
 import '../widgets/custom_bottom_nav.dart';
 import 'analysis_screen.dart';
 import 'history_screen.dart';
@@ -68,6 +70,13 @@ class _HomeScreenState extends State<HomeScreen> {
   bool _heatAlertNotified = false;
   bool _humidityAlertNotified = false;
 
+  // First-launch walkthrough pointing out the scan buttons and weather card.
+  static const String _prefCoachMarksSeen = 'home_coach_marks_seen';
+  final GlobalKey _maizeScanKey = GlobalKey();
+  final GlobalKey _stripScanKey = GlobalKey();
+  final GlobalKey _weatherChipKey = GlobalKey();
+  bool _showCoachMarks = false;
+
   @override
   void initState() {
     super.initState();
@@ -82,6 +91,25 @@ class _HomeScreenState extends State<HomeScreen> {
       setState(() => _userType = userType);
       MorningAlertService.cacheUserType(userType);
     });
+    _maybeShowCoachMarks();
+  }
+
+  Future<void> _maybeShowCoachMarks() async {
+    final SharedPreferences prefs = await SharedPreferences.getInstance();
+    if (prefs.getBool(_prefCoachMarksSeen) ?? false) return;
+    if (!mounted) return;
+    // Wait for the first real frame so the target widgets have a laid-out
+    // RenderBox for the overlay to measure and spotlight.
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      if (mounted) setState(() => _showCoachMarks = true);
+    });
+  }
+
+  void _dismissCoachMarks() {
+    setState(() => _showCoachMarks = false);
+    SharedPreferences.getInstance().then(
+      (prefs) => prefs.setBool(_prefCoachMarksSeen, true),
+    );
   }
 
   @override
@@ -353,6 +381,29 @@ class _HomeScreenState extends State<HomeScreen> {
               ),
             ),
           ),
+          if (_showCoachMarks)
+            CoachMarkOverlay(
+              steps: [
+                CoachMarkStep(
+                  targetKey: _maizeScanKey,
+                  shape: CoachMarkShape.circle,
+                  title: l10n.coachMarkMaizeTitle,
+                  description: l10n.coachMarkMaizeDesc,
+                ),
+                CoachMarkStep(
+                  targetKey: _stripScanKey,
+                  shape: CoachMarkShape.circle,
+                  title: l10n.coachMarkStripTitle,
+                  description: l10n.coachMarkStripDesc,
+                ),
+                CoachMarkStep(
+                  targetKey: _weatherChipKey,
+                  title: l10n.coachMarkWeatherTitle,
+                  description: l10n.coachMarkWeatherDesc,
+                ),
+              ],
+              onFinished: _dismissCoachMarks,
+            ),
         ],
       ),
       bottomNavigationBar: const CustomBottomNav(currentIndex: 0),
@@ -545,6 +596,7 @@ class _HomeScreenState extends State<HomeScreen> {
     return GestureDetector(
       onTap: () => _showWeatherForecast(context),
       child: Container(
+        key: _weatherChipKey,
         constraints: const BoxConstraints(maxWidth: 90),
         padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 6),
         decoration: BoxDecoration(
@@ -752,6 +804,7 @@ class _HomeScreenState extends State<HomeScreen> {
         Column(
           children: [
             _buildScanCircle(
+              key: _maizeScanKey,
               icon: Icons.agriculture_outlined,
               label: l10n.maizeScanLabel,
               gradientColors: const [
@@ -768,6 +821,7 @@ class _HomeScreenState extends State<HomeScreen> {
         Column(
           children: [
             _buildScanCircle(
+              key: _stripScanKey,
               icon: Icons.biotech_outlined,
               label: l10n.stripScanLabel,
               gradientColors: [
@@ -808,6 +862,7 @@ class _HomeScreenState extends State<HomeScreen> {
   }
 
   Widget _buildScanCircle({
+    Key? key,
     required IconData icon,
     required String label,
     required List<Color> gradientColors,
@@ -815,6 +870,7 @@ class _HomeScreenState extends State<HomeScreen> {
     required VoidCallback onTap,
   }) {
     return Container(
+      key: key,
       width: 140,
       height: 140,
       padding: const EdgeInsets.all(5),
