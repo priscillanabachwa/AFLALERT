@@ -805,7 +805,9 @@ class _HomeScreenState extends State<HomeScreen> {
           children: [
             _buildScanCircle(
               key: _maizeScanKey,
-              icon: Icons.agriculture_outlined,
+              // No Material icon depicts a maize cob, so the emoji glyph
+              // reads more accurately than a generic agriculture/tractor icon.
+              icon: const Text('🌽', style: TextStyle(fontSize: 34)),
               label: l10n.maizeScanLabel,
               gradientColors: const [
                 AppColors.primaryContainer,
@@ -822,7 +824,7 @@ class _HomeScreenState extends State<HomeScreen> {
           children: [
             _buildScanCircle(
               key: _stripScanKey,
-              icon: Icons.biotech_outlined,
+              icon: const Icon(Icons.biotech_outlined, color: AppColors.primary, size: 36),
               label: l10n.stripScanLabel,
               gradientColors: [
                 AppColors.secondary,
@@ -863,7 +865,7 @@ class _HomeScreenState extends State<HomeScreen> {
 
   Widget _buildScanCircle({
     Key? key,
-    required IconData icon,
+    required Widget icon,
     required String label,
     required List<Color> gradientColors,
     required Color contentColor,
@@ -904,7 +906,7 @@ class _HomeScreenState extends State<HomeScreen> {
             child: Column(
               mainAxisAlignment: MainAxisAlignment.center,
               children: [
-                Icon(icon, color: contentColor, size: 36),
+                icon,
                 const SizedBox(height: 8),
                 Text(
                   label,
