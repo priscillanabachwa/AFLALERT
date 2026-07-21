@@ -878,10 +878,8 @@ class _HomeScreenState extends State<HomeScreen> {
       key: key,
       width: 140,
       height: 140,
-      padding: const EdgeInsets.all(5),
       decoration: BoxDecoration(
         shape: BoxShape.circle,
-        color: AppColors.successLight,
         boxShadow: [
           BoxShadow(
             color: Colors.black.withValues(alpha: 0.2),
@@ -892,7 +890,7 @@ class _HomeScreenState extends State<HomeScreen> {
       ),
       child: Material(
         shape: CircleBorder(
-          side: BorderSide(color: ringColor, width: 2),
+          side: BorderSide(color: ringColor, width: 4),
         ),
         clipBehavior: Clip.antiAlias,
         child: Ink(
