@@ -23,8 +23,6 @@ class LegalDocumentScreen extends StatelessWidget {
     'of', 'to', 'the', 'in', 'for', 'and', 'or', 'on', 'at',
   };
 
-  bool _isPrivacyDoc() => title.toLowerCase().contains('privacy');
-
   MapEntry<String, String>? _extractLabel(String line) {
     final match = _labelLineReg.firstMatch(line);
     if (match == null) return null;
@@ -143,7 +141,6 @@ class LegalDocumentScreen extends StatelessWidget {
     final docTitle = lines.isNotEmpty ? lines[0].trim() : title;
     final lastUpdated = lines.length > 1 ? lines[1].trim() : '';
     final contentLines = lines.length > 2 ? lines.sublist(2) : <String>[];
-    final icon = _isPrivacyDoc() ? Icons.privacy_tip_outlined : Icons.description_outlined;
 
     return Scaffold(
       backgroundColor: AppColors.t95,
@@ -167,8 +164,6 @@ class LegalDocumentScreen extends StatelessWidget {
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    Icon(icon, color: AppColors.primary, size: 30),
-                    const SizedBox(height: 12),
                     Text(
                       docTitle,
                       style: const TextStyle(
