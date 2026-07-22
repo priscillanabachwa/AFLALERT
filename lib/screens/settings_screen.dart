@@ -5,7 +5,6 @@ import 'package:shared_preferences/shared_preferences.dart';
 import '../constants/app_colors.dart';
 import '../l10n/app_localizations.dart';
 import '../main.dart';
-import '../services/morning_alert_service.dart';
 import '../services/rain_alert_service.dart';
 import 'legal_screen.dart';
 
@@ -201,17 +200,6 @@ class _SettingsScreenState extends State<SettingsScreen> {
               _SectionHeader(title: 'Debug'),
               _SettingsCard(
                 children: [
-                  _SettingsTile(
-                    icon: Icons.notifications_active_outlined,
-                    label: 'Test Morning Alert Now',
-                    onTap: () async {
-                      final ScaffoldMessengerState messenger = ScaffoldMessenger.of(context);
-                      await MorningAlertService.testNow();
-                      messenger.showSnackBar(
-                        const SnackBar(content: Text('Morning alert triggered — check your notifications.')),
-                      );
-                    },
-                  ),
                   _SettingsTile(
                     icon: Icons.umbrella_outlined,
                     label: 'Test Rain Alert Now',
