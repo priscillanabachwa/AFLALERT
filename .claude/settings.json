@@ -15,7 +15,10 @@
       "Bash(jobs)",
       "PowerShell(try { $stream = [System.IO.File]::Open\\(\"c:\\\\Users\\\\hp\\\\Desktop\\\\AFLALERT\\\\lib\\\\main.dart\", 'Open', 'ReadWrite', 'None'\\); $stream.Close\\(\\); Write-Output \"File is not locked\" } catch { Write-Output \"File is LOCKED: $\\($_.Exception.Message\\)\" })",
       "Bash(flutter clean *)",
-      "PowerShell(Get-Process | Where-Object { $_.ProcessName -match 'java|gradle' } | Select-Object Id, ProcessName, CPU, StartTime, @{N='Mem\\(MB\\)';E={[math]::Round\\($_.WorkingSet/1MB\\)}} | Format-Table -AutoSize)"
+      "PowerShell(Get-Process | Where-Object { $_.ProcessName -match 'java|gradle' } | Select-Object Id, ProcessName, CPU, StartTime, @{N='Mem\\(MB\\)';E={[math]::Round\\($_.WorkingSet/1MB\\)}} | Format-Table -AutoSize)",
+      "Bash(find /c/Users/hp/AppData/Local/Temp/claude/c--Users-hp-Desktop-AFLALERT/5d793a96-1e08-4f61-b1fa-e24023457e9a/scratchpad/dataset -maxdepth 2 -iname *.yaml -o -maxdepth 2 -iname *.txt)",
+      "Bash(adb -s emulator-5554 shell getprop sys.boot_completed)",
+      "PowerShell(Get-Process | Where-Object { $_.ProcessName -match \"emulator|qemu\" } | Format-Table Id, ProcessName -AutoSize)"
     ]
   }
 }
