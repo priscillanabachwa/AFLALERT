@@ -10,12 +10,9 @@ import '../constants/app_colors.dart';
 import '../constants/daily_tips.dart';
 import '../constants/seasonal_guidelines.dart';
 import '../l10n/app_localizations.dart';
-import '../models/app_notification.dart';
 import '../services/firestore_service.dart';
-import '../services/local_notification_service.dart';
 import '../services/location_service.dart';
 import '../services/morning_alert_service.dart';
-import '../services/notification_center.dart';
 import '../services/rain_alert_service.dart';
 import '../services/weather_service.dart';
 import '../utils/user_initials.dart';
@@ -64,20 +61,6 @@ class _HomeScreenState extends State<HomeScreen> {
   // and the Recent Scans list (further down) read from this one stream.
   final Stream<QuerySnapshot> _scanHistoryStream =
       FirestoreService().getUserScanHistory();
-
-  // Edge-triggered so each alert fires once when conditions become bad, not
-  // on every refresh while they stay bad. Tracked separately since heat and
-  // humidity can trigger independently of each other.
-  bool _heatAlertNotified = false;
-  bool _humidityAlertNotified = false;
-
-  // Humidity can flicker above/below the threshold repeatedly in one day
-  // (each dip-then-rise re-triggers the edge above), so on top of the
-  // edge-trigger this caps how many humidity alerts actually get sent per
-  // calendar day. Persisted since a day can span multiple app sessions.
-  static const String _prefHumidityAlertDate = 'humidityAlert.date';
-  static const String _prefHumidityAlertCount = 'humidityAlert.count';
-  static const int _maxHumidityAlertsPerDay = 2;
 
   // First-launch walkthrough pointing out the scan buttons and weather card.
   static const String _prefCoachMarksSeen = 'home_coach_marks_seen';
@@ -153,8 +136,6 @@ class _HomeScreenState extends State<HomeScreen> {
     });
     MorningAlertService.cacheLocation(location.latitude, location.longitude);
     RainAlertService.checkNow(latitude: location.latitude, longitude: location.longitude);
-    _checkHeatAlert();
-    _checkHumidityAlert();
   }
 
   // Depends only on the calendar and rainfall, not on user type, so it can
@@ -162,100 +143,6 @@ class _HomeScreenState extends State<HomeScreen> {
   // their content in sync.
   SeasonStage get _currentSeasonStage =>
       currentSeasonalGuideline(recentRainfallMm: _rainfall?.totalMm).stage;
-
-  void _checkHeatAlert() {
-    final bool alertNow = isHeatAlert(_weather?.temperatureC);
-    if (!alertNow) {
-      _heatAlertNotified = false;
-      return;
-    }
-    if (_heatAlertNotified) return;
-    _heatAlertNotified = true;
-
-    final AppLocalizations l10n = AppLocalizations.of(context)!;
-    final String tip = tipForConditions(
-      _userType,
-      _weather?.temperatureC,
-      currentStage: _currentSeasonStage,
-    );
-    final int tempRounded = _weather!.temperatureC.round();
-    // humidityPercent intentionally omitted above: this is the heat-specific
-    // notification, so it should stay heat-specific even if humidity also
-    // happens to be in alert range right now.
-
-    // Shared between the in-app and device notification so tapping the
-    // device notification can scroll straight to this entry.
-    final String notificationId = DateTime.now().microsecondsSinceEpoch.toString();
-
-    NotificationCenter.instance.add(
-      AppNotification(
-        id: notificationId,
-        title: l10n.heatAlertTitle,
-        description: tip,
-        icon: Icons.whatshot,
-        iconColor: const Color(0xFFE0562A),
-        iconBackground: const Color(0xFFFBDCCB),
-        category: NotificationCategory.alert,
-        unread: true,
-        highPriority: true,
-      ),
-    );
-
-    LocalNotificationService.instance.show(
-      title: l10n.heatAlertNotifTitle(tempRounded),
-      body: tip,
-      notificationId: notificationId,
-    );
-  }
-
-  Future<void> _checkHumidityAlert() async {
-    final bool alertNow = isHumidityAlert(_weather?.humidityPercent);
-    if (!alertNow) {
-      _humidityAlertNotified = false;
-      return;
-    }
-    if (_humidityAlertNotified) return;
-    _humidityAlertNotified = true;
-
-    final SharedPreferences prefs = await SharedPreferences.getInstance();
-    final String today = DateTime.now().toIso8601String().substring(0, 10);
-    final bool isNewDay = prefs.getString(_prefHumidityAlertDate) != today;
-    final int countSoFar = isNewDay ? 0 : (prefs.getInt(_prefHumidityAlertCount) ?? 0);
-    if (countSoFar >= _maxHumidityAlertsPerDay) return;
-    await prefs.setString(_prefHumidityAlertDate, today);
-    await prefs.setInt(_prefHumidityAlertCount, countSoFar + 1);
-
-    if (!mounted) return;
-    final AppLocalizations l10n = AppLocalizations.of(context)!;
-    final String tip = tipForConditions(
-      _userType,
-      null,
-      humidityPercent: _weather?.humidityPercent,
-      currentStage: _currentSeasonStage,
-    );
-    final int humidityRounded = _weather!.humidityPercent!.round();
-    final String notificationId = DateTime.now().microsecondsSinceEpoch.toString();
-
-    NotificationCenter.instance.add(
-      AppNotification(
-        id: notificationId,
-        title: l10n.humidityAlertNotifTitle(humidityRounded),
-        description: tip,
-        icon: Icons.water_drop,
-        iconColor: const Color(0xFF2A7DE0),
-        iconBackground: const Color(0xFFCBE0FB),
-        category: NotificationCategory.alert,
-        unread: true,
-        highPriority: true,
-      ),
-    );
-
-    LocalNotificationService.instance.show(
-      title: l10n.humidityAlertNotifTitle(humidityRounded),
-      body: tip,
-      notificationId: notificationId,
-    );
-  }
 
   @override
   Widget build(BuildContext context) {

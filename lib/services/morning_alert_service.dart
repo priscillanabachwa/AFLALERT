@@ -7,6 +7,7 @@ import '../models/app_notification.dart';
 import 'local_notification_service.dart';
 import 'notification_center.dart';
 import 'rain_alert_service.dart';
+import 'temp_humidity_alert_service.dart';
 import 'weather_service.dart';
 
 const String _uniqueName = 'morningWeatherAlert';
@@ -18,11 +19,16 @@ const String _prefUserType = 'morningAlert.userType';
 
 const int _alertHour = 7;
 
-/// Schedules (and re-schedules) a once-daily, live-fetched weather alert —
-/// "Rain Likely Today" / "Sunny Skies Today" plus role-specific advice —
-/// delivered via Android's WorkManager so it fires even if the app isn't
-/// open. Android-only: iOS background execution timing can't be guaranteed
-/// by any plugin, so this isn't wired up for iOS.
+/// Schedules (and re-schedules) a once-daily, live-fetched weather check at
+/// 7am, delivered via Android's WorkManager so it fires even if the app
+/// isn't open. Android-only: iOS background execution timing can't be
+/// guaranteed by any plugin, so this isn't wired up for iOS.
+///
+/// Fires up to two separate notifications from that single 7am run: the
+/// rain/sunny summary ("Rain Likely Today" / "Sunny Skies Today") plus
+/// role-specific advice, and — independently — a heat & humidity alert (see
+/// temp_humidity_alert_service.dart) when temperature and humidity are both
+/// in a risky range at once.
 class MorningAlertService {
   MorningAlertService._();
 
@@ -106,6 +112,31 @@ Future<void> _runMorningAlert() async {
   final double? longitude = prefs.getDouble(_prefLon);
   if (latitude == null || longitude == null) return;
 
+  final String userType = prefs.getString(_prefUserType) ?? '';
+  final String languageCode = prefs.getString('languageCode') ?? 'en';
+
+  // Independent notifications from a shared 7am trigger — a failure or
+  // no-op in one shouldn't suppress the other.
+  await _runRainSummaryAlert(
+    latitude: latitude,
+    longitude: longitude,
+    userType: userType,
+    languageCode: languageCode,
+  );
+  await runTempHumidityAlert(
+    latitude: latitude,
+    longitude: longitude,
+    userType: userType,
+    languageCode: languageCode,
+  );
+}
+
+Future<void> _runRainSummaryAlert({
+  required double latitude,
+  required double longitude,
+  required String userType,
+  required String languageCode,
+}) async {
   final DailyAlertForecast? forecast =
       await WeatherService().getDailyAlertForecast(latitude, longitude);
   if (forecast == null) return;
@@ -114,9 +145,7 @@ Future<void> _runMorningAlert() async {
     weatherCode: forecast.weatherCode,
     precipitationProbabilityMax: forecast.precipitationProbabilityMax,
   );
-  final String userType = prefs.getString(_prefUserType) ?? '';
   final bool isTrader = userType.trim().toLowerCase() == 'trader';
-  final String languageCode = prefs.getString('languageCode') ?? 'en';
 
   final String title = morningAlertTitle(languageCode, kind);
   final String body = morningAlertAdvice(languageCode, kind, isTrader);
