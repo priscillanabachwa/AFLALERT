@@ -97,7 +97,7 @@ class LegalDocumentScreen extends StatelessWidget {
             '${subMatch.group(1)}. ${subMatch.group(2)}',
             style: const TextStyle(
               color: AppColors.primaryContainer,
-              fontSize: 14.5,
+              fontSize: 14,
               fontWeight: FontWeight.w700,
             ),
           ),
