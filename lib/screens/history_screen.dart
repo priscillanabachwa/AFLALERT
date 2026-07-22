@@ -483,7 +483,6 @@ class _HistoryScreenState extends State<HistoryScreen> {
             onLongPress: () {
               if (!_selectionMode) _enterSelectionMode(record.id);
             },
-            onDelete: () => _confirmAndDeleteScan(record),
           ),
         );
       },
@@ -744,12 +743,6 @@ class _HistoryScreenState extends State<HistoryScreen> {
     return confirmed ?? false;
   }
 
-  Future<void> _confirmAndDeleteScan(ScanRecord record) async {
-    final bool confirmed = await _confirmDeleteScan(record);
-    if (!confirmed || !mounted) return;
-    _scheduleDelete(record);
-  }
-
   // Hides the scan(s) immediately and shows an Undo snackbar; the Firestore
   // delete only actually happens once the undo window elapses uncancelled.
   void _scheduleDelete(ScanRecord record) => _scheduleDeleteIds([record.id]);
@@ -944,7 +937,6 @@ class _ScanCard extends StatelessWidget {
   final bool selected;
   final VoidCallback onTap;
   final VoidCallback onLongPress;
-  final VoidCallback onDelete;
 
   const _ScanCard({
     required this.record,
@@ -952,7 +944,6 @@ class _ScanCard extends StatelessWidget {
     this.selected = false,
     required this.onTap,
     required this.onLongPress,
-    required this.onDelete,
   });
 
   @override
@@ -1145,23 +1136,12 @@ class _ScanCard extends StatelessWidget {
                           ),
                         ),
                         const Spacer(),
-                        if (!selectionMode) ...[
-                          IconButton(
-                            onPressed: onDelete,
-                            icon: const Icon(Icons.delete_outline),
-                            iconSize: 18,
-                            color: kDangerRed.withAlpha((0.7 * 255).round()),
-                            padding: EdgeInsets.zero,
-                            constraints: const BoxConstraints(minWidth: 32, minHeight: 32),
-                            splashRadius: 18,
-                            tooltip: AppLocalizations.of(context)!.delete,
-                          ),
+                        if (!selectionMode)
                           Icon(
                             Icons.chevron_right,
                             color: kSubtitle.withAlpha((0.5 * 255).round()),
                             size: 20,
                           ),
-                        ],
                       ],
                     ),
                   ],
