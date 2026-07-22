@@ -28,6 +28,8 @@ const kCardBg = AppColors.surface;
 const kPageBg = AppColors.t95;
 const kSubtitle = AppColors.grey;
 const kDivider = Color(0xFFECEFF1);
+// Matches the unselected filter-chip color on the notifications screen.
+const kChipBg = Color(0xFFE7E3DA);
 
 // ─────────────────────────────────────────
 //  DATA MODEL
@@ -248,8 +250,9 @@ class _HistoryScreenState extends State<HistoryScreen> {
   // ── APP BAR ──────────────────────────────
   PreferredSizeWidget _buildAppBar() {
     return AppBar(
-      backgroundColor: kCardBg,
+      backgroundColor: kPageBg,
       elevation: 0,
+      scrolledUnderElevation: 0,
       leading: IconButton(
         icon: const Icon(Icons.arrow_back, color: kPrimaryGreen),
         onPressed: () => Navigator.maybePop(context),
@@ -258,16 +261,11 @@ class _HistoryScreenState extends State<HistoryScreen> {
         AppLocalizations.of(context)!.history,
         style: const TextStyle(
           color: kPrimaryGreen,
-          fontSize: 20,
+          fontSize: 22,
           fontWeight: FontWeight.w700,
-          letterSpacing: 0.3,
         ),
       ),
       centerTitle: false,
-      bottom: PreferredSize(
-        preferredSize: const Size.fromHeight(1),
-        child: Container(height: 1, color: kDivider),
-      ),
     );
   }
 
@@ -306,21 +304,17 @@ class _HistoryScreenState extends State<HistoryScreen> {
       onTap: () => setState(() => _activeFilter = filter),
       child: AnimatedContainer(
         duration: const Duration(milliseconds: 200),
-        padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 6),
+        padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
         decoration: BoxDecoration(
-          color: selected ? kPrimaryGreen : kCardBg,
-          borderRadius: BorderRadius.circular(20),
-          border: Border.all(
-            color: selected ? kPrimaryGreen : kDivider,
-            width: 1.2,
-          ),
+          color: selected ? kPrimaryGreen : kChipBg,
+          borderRadius: BorderRadius.circular(24),
         ),
         child: Text(
           label,
           style: TextStyle(
             fontSize: 12,
             fontWeight: FontWeight.w600,
-            color: selected ? Colors.white : kSubtitle,
+            color: selected ? Colors.white : Colors.black87,
           ),
         ),
       ),
@@ -335,14 +329,10 @@ class _HistoryScreenState extends State<HistoryScreen> {
       onTap: locations.isEmpty ? null : () => _showLocationPicker(locations),
       child: AnimatedContainer(
         duration: const Duration(milliseconds: 200),
-        padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+        padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
         decoration: BoxDecoration(
-          color: isActive ? kPrimaryGreen : kCardBg,
-          borderRadius: BorderRadius.circular(20),
-          border: Border.all(
-            color: isActive ? kPrimaryGreen : kDivider,
-            width: 1.2,
-          ),
+          color: isActive ? kPrimaryGreen : kChipBg,
+          borderRadius: BorderRadius.circular(24),
         ),
         child: Row(
           mainAxisSize: MainAxisSize.min,
@@ -352,14 +342,14 @@ class _HistoryScreenState extends State<HistoryScreen> {
               style: TextStyle(
                 fontSize: 12,
                 fontWeight: FontWeight.w600,
-                color: isActive ? Colors.white : kSubtitle,
+                color: isActive ? Colors.white : Colors.black87,
               ),
             ),
             const SizedBox(width: 2),
             Icon(
               isActive ? Icons.close : Icons.keyboard_arrow_down,
               size: 16,
-              color: isActive ? Colors.white : kSubtitle,
+              color: isActive ? Colors.white : Colors.black87,
             ),
           ],
         ),
