@@ -4,6 +4,7 @@ import 'package:camera/camera.dart';
 import 'package:flutter/material.dart';
 
 import '../constants/app_colors.dart';
+import '../l10n/app_localizations.dart';
 
 import '../widgets/custom_app_bar.dart';
 import '../widgets/ai_animation.dart';
@@ -111,26 +112,31 @@ class _AnalysisScreenState extends State<AnalysisScreen> {
       final resultsArgs = results[0] as ResultsScreenArgs?;
 
       if (!mounted) return;
+      final AppLocalizations l10n = AppLocalizations.of(context)!;
       if (resultsArgs == null) {
         setState(() {
           _isProcessing = false;
-          _errorMessage = 'Could not analyze this photo. Please try again.';
+          _errorMessage = l10n.couldNotAnalyzePhoto;
         });
         return;
       }
       Navigator.pushReplacementNamed(context, '/results', arguments: resultsArgs);
-    } on NotMaizeException {
+    } on NotMaizeException catch (e) {
       if (!mounted) return;
+      final AppLocalizations l10n = AppLocalizations.of(context)!;
       setState(() {
         _isProcessing = false;
-        _errorMessage =
-            'This doesn\'t look like a photo of maize. Please retake a clear photo of maize kernels.';
+        _errorMessage = switch (e.reason) {
+          NotMaizeReason.colorMismatch => l10n.notMaizeColorMismatch,
+          NotMaizeReason.modelRejected => l10n.notMaizeModelRejected,
+          NotMaizeReason.lowConfidence => l10n.notMaizeLowConfidence,
+        };
       });
     } catch (e) {
       if (!mounted) return;
       setState(() {
         _isProcessing = false;
-        _errorMessage = 'Could not analyze this photo. Please try again.';
+        _errorMessage = AppLocalizations.of(context)!.couldNotAnalyzePhoto;
       });
     }
   }
@@ -148,7 +154,7 @@ class _AnalysisScreenState extends State<AnalysisScreen> {
     // Best-effort: upload the photo and log the scan record. A failure here
     // shouldn't block showing the user their on-device diagnosis.
     final String? imageUrl = await StorageService().uploadMaizeImage(photoFile);
-    await FirestoreService().saveScanRecord(
+    final String? scanId = await FirestoreService().saveScanRecord(
       imageUrl: imageUrl ?? '',
       classificationLabel: analysis.label,
       confidenceScore: analysis.confidencePercent / 100,
@@ -160,6 +166,7 @@ class _AnalysisScreenState extends State<AnalysisScreen> {
       confidence: analysis.confidencePercent / 100,
       analysisLabel: analysis.label,
       imagePath: photoFile.path,
+      scanId: scanId,
     );
   }
 
@@ -215,7 +222,7 @@ class _AnalysisScreenState extends State<AnalysisScreen> {
               child: SingleChildScrollView(
                 padding: const EdgeInsets.all(20),
                 child: _isProcessing
-                    ? _buildLoading()
+                    ? _buildLoading(context)
                     : _buildFallback(context),
               ),
             ),
@@ -225,32 +232,34 @@ class _AnalysisScreenState extends State<AnalysisScreen> {
     );
   }
 
-  Widget _buildLoading() {
+  Widget _buildLoading(BuildContext context) {
+    final AppLocalizations l10n = AppLocalizations.of(context)!;
     return Column(
-      children: const [
-        SizedBox(height: 20),
-        AIAnimation(),
-        SizedBox(height: 40),
+      children: [
+        const SizedBox(height: 20),
+        const AIAnimation(),
+        const SizedBox(height: 40),
         Text(
-          "Analyzing Image...",
-          style: TextStyle(
+          l10n.analyzingImageTitle,
+          style: const TextStyle(
             fontSize: 30,
             fontWeight: FontWeight.bold,
             color: AppColors.primary,
           ),
         ),
-        SizedBox(height: 12),
+        const SizedBox(height: 12),
         Text(
-          "Our AI model is detecting visible mold associated with aflatoxin contamination.",
+          l10n.aiDetectingMold,
           textAlign: TextAlign.center,
         ),
-        SizedBox(height: 40),
-        ProgressSection(),
+        const SizedBox(height: 40),
+        const ProgressSection(),
       ],
     );
   }
 
   Widget _buildFallback(BuildContext context) {
+    final AppLocalizations l10n = AppLocalizations.of(context)!;
     final bool isError = _errorMessage != null;
 
     return Column(
@@ -263,7 +272,7 @@ class _AnalysisScreenState extends State<AnalysisScreen> {
         ),
         const SizedBox(height: 20),
         Text(
-          isError ? "Analysis failed" : "No scan result found",
+          isError ? l10n.analysisFailed : l10n.noScanResultFound,
           style: const TextStyle(
             fontSize: 22,
             fontWeight: FontWeight.bold,
@@ -271,17 +280,99 @@ class _AnalysisScreenState extends State<AnalysisScreen> {
           ),
         ),
         const SizedBox(height: 8),
-        Text(
-          _errorMessage ?? "Scan a maize sample to see its diagnosis here.",
-          textAlign: TextAlign.center,
-          style: const TextStyle(color: AppColors.grey),
-        ),
+        if (isError) ...[
+  Text(
+    "We couldn't analyze your photo.",
+    textAlign: TextAlign.center,
+    style: const TextStyle(
+      color: AppColors.grey,
+      fontSize: 16,
+      height: 1.5,
+    ),
+  ),
+  const SizedBox(height: 20),
+  _buildBulletedMessage(
+    "Our AI only recognizes raw, unprocessed maize kernels. "
+    "Please retake a clear photo of raw maize kernels.",
+  ),
+] else
+  Text(
+    l10n.scanMaizeSampleHint,
+    textAlign: TextAlign.center,
+    style: const TextStyle(color: AppColors.grey),
+  ),
+
+        
         const SizedBox(height: 28),
         ElevatedButton(
           onPressed: _retakeAndAnalyze,
-          child: Text(isError ? 'Try again' : 'Scan a sample'),
+          child: Text(isError ? l10n.tryAgain : l10n.scanASample),
         ),
       ],
     );
   }
+ Widget _buildBulletedMessage(String message) {
+    final bullets = message
+        .split(RegExp(r'(?<=[.])\s+|\s+—\s+'))
+        .map((s) => s.trim())
+        .where((s) => s.isNotEmpty)
+        .toList();
+
+    return Align(
+      alignment: Alignment.centerLeft,
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: bullets
+            .map(
+              (bullet) => Padding(
+                padding: const EdgeInsets.only(bottom: 14),
+                child: Row(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Container(
+                      width: 18,
+                      height: 18,
+                      margin: const EdgeInsets.only(top: 2, right: 14),
+                      decoration: BoxDecoration(
+                        shape: BoxShape.circle,
+                        color: AppColors.primary.withValues(alpha: .10),
+                      ),
+                      child: Center(
+                        child: Container(
+                          width: 7,
+                          height: 7,
+                          decoration: BoxDecoration(
+                            shape: BoxShape.circle,
+                            color: AppColors.primary,
+                            boxShadow: [
+                              BoxShadow(
+                                color: AppColors.primary.withValues(alpha: .12),
+                                blurRadius: 0,
+                                spreadRadius: 3,
+                              ),
+                            ],
+                          ),
+                        ),
+                      ),
+                    ),
+                    Expanded(
+                      child: Text(
+                        bullet,
+                        style: const TextStyle(
+                          color: Color(0xFF7C827E),
+                          fontSize: 15,
+                          height: 1.55,
+                          letterSpacing: 0.1,
+                        ),
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+            )
+            .toList(),
+      ),
+    );
+  }
 }
+

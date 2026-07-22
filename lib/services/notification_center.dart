@@ -11,13 +11,20 @@ import '../models/app_notification.dart';
 /// read) — nothing here auto-expires or auto-clears.
 class NotificationCenter extends ChangeNotifier {
   NotificationCenter._internal() {
-    _load();
+    _loaded = _load();
   }
   static final NotificationCenter instance = NotificationCenter._internal();
 
   static const String _prefsKey = 'notifications';
 
   final List<AppNotification> _notifications = [];
+
+  // Guards _persist() so it can never write to disk before the initial
+  // _load() has merged in whatever was already there — otherwise a
+  // same-tick add() (as happens the moment a fresh isolate first touches
+  // .instance, e.g. from a background task) can win the race and overwrite
+  // the on-disk history with just the one new entry.
+  late final Future<void> _loaded;
 
   List<AppNotification> get notifications => List.unmodifiable(_notifications);
 
@@ -37,6 +44,7 @@ class NotificationCenter extends ChangeNotifier {
   }
 
   Future<void> _persist() async {
+    await _loaded;
     final SharedPreferences prefs = await SharedPreferences.getInstance();
     await prefs.setStringList(
       _prefsKey,

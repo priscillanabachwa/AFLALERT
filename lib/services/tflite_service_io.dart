@@ -4,8 +4,11 @@ import 'dart:typed_data';
 import 'package:image/image.dart' as img;
 import 'package:tflite_flutter/tflite_flutter.dart';
 
+enum NotMaizeReason { colorMismatch, modelRejected, lowConfidence }
+
 class NotMaizeException implements Exception {
-  const NotMaizeException();
+  final NotMaizeReason reason;
+  const NotMaizeException(this.reason);
 }
 
 class TfliteService {
@@ -40,7 +43,7 @@ class TfliteService {
     if (decoded == null) return null;
 
     if (!_looksLikeMaize(decoded)) {
-      throw const NotMaizeException();
+      throw const NotMaizeException(NotMaizeReason.colorMismatch);
     }
 
     try {
@@ -76,8 +79,11 @@ class TfliteService {
       }
       final double confidence = probs[predictedIndex];
 
-      if (predictedIndex == _nonMaizeIndex || confidence < _minConfidence) {
-        throw const NotMaizeException();
+      if (predictedIndex == _nonMaizeIndex) {
+        throw const NotMaizeException(NotMaizeReason.modelRejected);
+      }
+      if (confidence < _minConfidence) {
+        throw const NotMaizeException(NotMaizeReason.lowConfidence);
       }
 
       final bool isMoldy = predictedIndex == _moldyIndex;
@@ -85,7 +91,7 @@ class TfliteService {
       return {
         'label': isMoldy
             ? 'Aflatoxin contamination detected'
-            : 'Healthy — no mold detected',
+            : 'Healthy ',
         'confidence': confidence,
         'mold_detected': isMoldy,
       };

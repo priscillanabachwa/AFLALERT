@@ -61,6 +61,36 @@ class StorageService {
     }
   }
 
+  /// Uploads a photographed lateral-flow test strip to Firebase Storage.
+  ///
+  /// Returns the secure, permanent [String] download URL if successful.
+  /// Returns [null] if the upload fails or is canceled.
+  Future<String?> uploadStripImage(File file) async {
+    if (!await file.exists()) {
+      debugPrint('StorageService Error: The local file does not exist.');
+      return null;
+    }
+
+    try {
+      String uniqueFileName = 'strip_${DateTime.now().millisecondsSinceEpoch}.jpg';
+      Reference destinationRef = _storage.ref().child('strip_images/$uniqueFileName');
+      SettableMetadata metadata = SettableMetadata(contentType: 'image/jpeg');
+
+      UploadTask uploadTask = destinationRef.putFile(file, metadata);
+      TaskSnapshot snapshot = await uploadTask;
+      String downloadUrl = await snapshot.ref.getDownloadURL();
+
+      debugPrint('StorageService Success: File uploaded to path: ${snapshot.ref.fullPath}');
+      return downloadUrl;
+    } on FirebaseException catch (firebaseError) {
+      debugPrint('Firebase Storage specific error occurred: ${firebaseError.code} - ${firebaseError.message}');
+      return null;
+    } catch (genericError) {
+      debugPrint('An unexpected error occurred during strip image upload: $genericError');
+      return null;
+    }
+  }
+
   /// Uploads a user's profile picture, keyed by [uid] so re-uploading
   /// replaces the previous picture instead of leaving orphaned files behind.
   ///
@@ -87,6 +117,20 @@ class StorageService {
     } catch (genericError) {
       debugPrint('An unexpected error occurred during profile image upload: $genericError');
       return null;
+    }
+  }
+
+  /// Deletes a user's stored profile picture, if one exists. Best-effort:
+  /// a missing file (nothing was ever uploaded) is not treated as an error.
+  Future<void> deleteProfileImage(String uid) async {
+    try {
+      await _storage.ref().child('profile_images/$uid.jpg').delete();
+    } on FirebaseException catch (firebaseError) {
+      if (firebaseError.code != 'object-not-found') {
+        debugPrint('Firebase Storage error deleting profile image: ${firebaseError.code}');
+      }
+    } catch (genericError) {
+      debugPrint('An unexpected error occurred deleting profile image: $genericError');
     }
   }
 }

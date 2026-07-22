@@ -28,6 +28,7 @@ import 'package:image/image.dart' as img;
 import 'package:image_picker/image_picker.dart';
 
 import '../constants/app_colors.dart';
+import '../l10n/app_localizations.dart';
 
 
 class _AflColors {
@@ -135,8 +136,9 @@ class _CameraCaptureScreenState extends State<CameraCaptureScreen> {
   _FocusQuality _focus = _FocusQuality.adjusting;
 
   Timer? _focusSettleTimer;
-  bool _isStreamingForBrightness = false;
-  DateTime _lastBrightnessSampleAt = DateTime.fromMillisecondsSinceEpoch(0);
+  bool _brightnessMonitoringEnabled = false;
+  bool _imageStreamOpen = false;
+  Timer? _brightnessCycleTimer;
 
   @override
   void initState() {
@@ -168,21 +170,40 @@ class _CameraCaptureScreenState extends State<CameraCaptureScreen> {
 
   // Basic real-time lighting check: samples average luma from the camera's
   // Y-plane. Swap this out for a more sophisticated check if you have one.
+  //
+  // This deliberately keeps the image stream closed most of the time. Early
+  // versions left startImageStream running continuously for as long as the
+  // camera screen was open — the plugin marshals every full-resolution frame
+  // (~30/s) across the platform channel regardless of whether the Dart side
+  // does anything with it, so the longer the screen stayed open before a
+  // capture, the more GC pressure built up and the janker the UI got. Instead
+  // we open the stream just long enough to grab a single frame, close it
+  // immediately, then wait before sampling again.
   void _startBrightnessMonitoring() {
-    if (_controller == null || _isStreamingForBrightness) return;
-    _isStreamingForBrightness = true;
+    if (_controller == null || _brightnessMonitoringEnabled) return;
+    _brightnessMonitoringEnabled = true;
+    _sampleBrightnessOnce();
+  }
 
-    _controller!.startImageStream((CameraImage image) {
-      // Sampling every frame (~30/s) did the luma scan and a potential
-      // setState on every single frame, which was a steady source of GC
-      // churn and contributed to the camera screen's intermittent jank.
-      // The lighting pill doesn't need to update faster than a few times
-      // a second, so throttle how often we actually process a frame.
-      final now = DateTime.now();
-      if (now.difference(_lastBrightnessSampleAt) < const Duration(milliseconds: 400)) {
-        return;
-      }
-      _lastBrightnessSampleAt = now;
+  void _stopBrightnessMonitoring() {
+    _brightnessMonitoringEnabled = false;
+    _brightnessCycleTimer?.cancel();
+    _brightnessCycleTimer = null;
+    if (_imageStreamOpen) {
+      _imageStreamOpen = false;
+      _controller?.stopImageStream();
+    }
+  }
+
+  void _sampleBrightnessOnce() {
+    if (_controller == null || !mounted || !_brightnessMonitoringEnabled) {
+      return;
+    }
+
+    _imageStreamOpen = true;
+    _controller!.startImageStream((CameraImage image) async {
+      _imageStreamOpen = false;
+      await _controller?.stopImageStream();
 
       try {
         final yPlane = image.planes[0].bytes;
@@ -202,6 +223,11 @@ class _CameraCaptureScreenState extends State<CameraCaptureScreen> {
         }
       } catch (_) {
         // Ignore malformed frames.
+      }
+
+      if (mounted && _brightnessMonitoringEnabled) {
+        _brightnessCycleTimer =
+            Timer(const Duration(milliseconds: 400), _sampleBrightnessOnce);
       }
     });
   }
@@ -265,10 +291,7 @@ class _CameraCaptureScreenState extends State<CameraCaptureScreen> {
     if (_controller!.value.isTakingPicture) return;
 
     try {
-      if (_isStreamingForBrightness) {
-        await _controller!.stopImageStream();
-        _isStreamingForBrightness = false;
-      }
+      _stopBrightnessMonitoring();
       final XFile file = await _controller!.takePicture();
       if (!mounted) return;
 
@@ -305,7 +328,7 @@ class _CameraCaptureScreenState extends State<CameraCaptureScreen> {
     } catch (e) {
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text('Could not capture photo: $e')),
+          SnackBar(content: Text(AppLocalizations.of(context)!.couldNotCapturePhoto('$e'))),
         );
       }
     }
@@ -314,6 +337,7 @@ class _CameraCaptureScreenState extends State<CameraCaptureScreen> {
   @override
   void dispose() {
     _focusSettleTimer?.cancel();
+    _stopBrightnessMonitoring();
     _controller?.dispose();
     super.dispose();
   }
@@ -358,6 +382,7 @@ class _CameraCaptureScreenState extends State<CameraCaptureScreen> {
   }
 
   Widget _buildTopBar() {
+    final AppLocalizations l10n = AppLocalizations.of(context)!;
     return Positioned(
       top: 8,
       left: 8,
@@ -368,14 +393,14 @@ class _CameraCaptureScreenState extends State<CameraCaptureScreen> {
         children: [
           _iconButtonWithLabel(
             icon: Icons.close,
-            label: 'Close',
+            label: l10n.close,
             onTap: () => Navigator.of(context).maybePop(),
           ),
-          const Padding(
-            padding: EdgeInsets.only(top: 6),
+          Padding(
+            padding: const EdgeInsets.only(top: 6),
             child: Text(
-              'Scan maize',
-              style: TextStyle(
+              l10n.scanMaize,
+              style: const TextStyle(
                 color: Colors.white,
                 fontSize: 14,
                 fontWeight: FontWeight.w500,
@@ -384,7 +409,7 @@ class _CameraCaptureScreenState extends State<CameraCaptureScreen> {
           ),
           _iconButtonWithLabel(
             icon: _flashOn ? Icons.flash_on : Icons.flash_off,
-            label: _flashOn ? 'Flash on' : 'Flash off',
+            label: _flashOn ? l10n.flashOn : l10n.flashOff,
             onTap: _toggleFlash,
           ),
         ],
@@ -425,6 +450,7 @@ class _CameraCaptureScreenState extends State<CameraCaptureScreen> {
   }
 
   Widget _buildQualityPills() {
+    final AppLocalizations l10n = AppLocalizations.of(context)!;
     final lightIsGood = _light == _LightQuality.good;
     final focusIsSharp = _focus == _FocusQuality.sharp;
     final focusIsAdjusting = _focus == _FocusQuality.adjusting;
@@ -438,7 +464,7 @@ class _CameraCaptureScreenState extends State<CameraCaptureScreen> {
         children: [
           _qualityPill(
             icon: lightIsGood ? Icons.wb_sunny : Icons.wb_twilight,
-            label: lightIsGood ? 'Lighting good' : 'Too dark',
+            label: lightIsGood ? l10n.lightingGood : l10n.tooDark,
             good: lightIsGood,
             warn: false,
           ),
@@ -446,8 +472,8 @@ class _CameraCaptureScreenState extends State<CameraCaptureScreen> {
           _qualityPill(
             icon: Icons.center_focus_strong,
             label: focusIsAdjusting
-                ? 'Adjusting focus'
-                : (focusIsSharp ? 'Focus sharp' : 'Blurry, hold steady'),
+                ? l10n.adjustingFocus
+                : (focusIsSharp ? l10n.focusSharp : l10n.blurryHoldSteady),
             good: focusIsSharp,
             warn: focusIsAdjusting || !focusIsSharp,
           ),
@@ -505,18 +531,19 @@ class _CameraCaptureScreenState extends State<CameraCaptureScreen> {
   }
 
   Widget _buildFrameAndGuidance() {
+    final AppLocalizations l10n = AppLocalizations.of(context)!;
     final bool allGood =
         _light == _LightQuality.good && _focus == _FocusQuality.sharp;
     final bracketColor = allGood ? Colors.white : _AflColors.danger;
 
     final String mainGuidance = _light == _LightQuality.low
-        ? 'Move to a brighter, well-lit area'
+        ? l10n.moveToBrighterArea
         : (_focus == _FocusQuality.blurry
-            ? 'Hold the phone steady before capturing'
+            ? l10n.holdPhoneSteady
             : '');
     final String subGuidance = allGood
-        ? 'Hold phone about 20cm above the sample'
-        : 'Adjust and the frame will turn white when ready';
+        ? l10n.holdPhone20cm
+        : l10n.adjustFrameWillTurnWhite;
 
     return Center(
       child: Column(
@@ -583,7 +610,7 @@ class _CameraCaptureScreenState extends State<CameraCaptureScreen> {
               ),
               const SizedBox(height: 3),
               Text(
-                'Gallery',
+                AppLocalizations.of(context)!.gallery,
                 style: TextStyle(color: Colors.white.withValues(alpha: 0.65), fontSize: 10),
               ),
             ],
@@ -690,10 +717,11 @@ class _ReviewScreen extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final AppLocalizations l10n = AppLocalizations.of(context)!;
     final bool allGood = lightGood && focusGood;
     final String qualityLabel = allGood
-        ? 'Sharp and well lit'
-        : (!lightGood ? 'Photo may be too dark' : 'Photo may be blurry');
+        ? l10n.sharpAndWellLit
+        : (!lightGood ? l10n.photoMayBeTooDark : l10n.photoMayBeBlurry);
 
     return Scaffold(
       backgroundColor: _AflColors.bg,
@@ -701,9 +729,9 @@ class _ReviewScreen extends StatelessWidget {
         child: Column(
           children: [
             const SizedBox(height: 8),
-            const Text(
-              'Review photo',
-              style: TextStyle(
+            Text(
+              l10n.reviewPhoto,
+              style: const TextStyle(
                 color: Colors.white,
                 fontSize: 14,
                 fontWeight: FontWeight.w500,
@@ -770,8 +798,8 @@ class _ReviewScreen extends StatelessWidget {
                       onPressed: () =>
                           Navigator.pop(context, _ReviewResult.retake),
                       icon: const Icon(Icons.refresh, color: Colors.white, size: 16),
-                      label: const Text('Retake',
-                          style: TextStyle(color: Colors.white)),
+                      label: Text(l10n.retake,
+                          style: const TextStyle(color: Colors.white)),
                       style: OutlinedButton.styleFrom(
                         padding: const EdgeInsets.symmetric(vertical: 14),
                         side: BorderSide(
@@ -798,9 +826,9 @@ class _ReviewScreen extends StatelessWidget {
                         ),
                         elevation: 0,
                       ),
-                      child: const Text(
-                        'Use photo',
-                        style: TextStyle(fontWeight: FontWeight.w500),
+                      child: Text(
+                        l10n.usePhoto,
+                        style: const TextStyle(fontWeight: FontWeight.w500),
                       ),
                     ),
                   ),

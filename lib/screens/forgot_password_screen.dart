@@ -1,7 +1,9 @@
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
-import 'package:firebase_auth/firebase_auth.dart';
+import 'package:cloud_functions/cloud_functions.dart';
 import '../constants/app_colors.dart';
+import '../l10n/app_localizations.dart';
+import 'otp_verification_screen.dart';
 
 class ForgotPasswordScreen extends StatefulWidget {
   const ForgotPasswordScreen({super.key});
@@ -23,38 +25,44 @@ class _ForgotPasswordScreenState extends State<ForgotPasswordScreen> {
 
   Future<void> _resetPassword() async {
     if (!_formKey.currentState!.validate()) return;
+    final AppLocalizations l10n = AppLocalizations.of(context)!;
+    final String email = _emailController.text.trim();
 
     setState(() {
       _isLoading = true;
     });
 
     try {
-      await FirebaseAuth.instance.sendPasswordResetEmail(
-        email: _emailController.text.trim(),
-      );
+      await FirebaseFunctions.instance
+          .httpsCallable('requestPasswordResetOtp')
+          .call({'email': email});
 
       if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(
-            content: Text(
-              'Password reset link sent! Check your email.',
-              style: GoogleFonts.poppins(),
-            ),
-            backgroundColor: Color(0xFF1F4A2C),
+        Navigator.push(
+          context,
+          MaterialPageRoute(
+            builder: (_) => OtpVerificationScreen(email: email),
           ),
         );
-        Navigator.pop(context);
       }
-    } on FirebaseAuthException catch (e) {
+    } on FirebaseFunctionsException catch (e) {
       if (mounted) {
-        String errorMessage = 'An error occurred. Please try again.';
-        if (e.code == 'user-not-found') {
-          errorMessage = 'No account found with this email address.';
-        }
+        final String errorMessage = e.code == 'resource-exhausted'
+            ? l10n.pleaseWaitBeforeResend
+            : l10n.errorOccurredTryAgain;
 
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
             content: Text(errorMessage, style: GoogleFonts.poppins()),
+            backgroundColor: Colors.redAccent,
+          ),
+        );
+      }
+    } catch (_) {
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text(l10n.errorOccurredTryAgain, style: GoogleFonts.poppins()),
             backgroundColor: Colors.redAccent,
           ),
         );
@@ -70,6 +78,7 @@ class _ForgotPasswordScreenState extends State<ForgotPasswordScreen> {
 
   @override
   Widget build(BuildContext context) {
+    final AppLocalizations l10n = AppLocalizations.of(context)!;
     return Scaffold(
       backgroundColor: AppColors.logoCream,
       appBar: AppBar(
@@ -96,7 +105,7 @@ class _ForgotPasswordScreenState extends State<ForgotPasswordScreen> {
                 ),
                 const SizedBox(height: 16),
                 Text(
-                  'Reset Password',
+                  l10n.resetPassword,
                   style: GoogleFonts.poppins(
                     fontSize: 28,
                     fontWeight: FontWeight.bold,
@@ -105,7 +114,7 @@ class _ForgotPasswordScreenState extends State<ForgotPasswordScreen> {
                 ),
                 const SizedBox(height: 10),
                 Text(
-                  'Enter your registered email address below. We will send you a secure link to reset your password and keep your tracking account secure.',
+                  l10n.resetPasswordInstructions,
                   textAlign: TextAlign.center,
                   style: GoogleFonts.poppins(
                     fontSize: 14,
@@ -118,7 +127,7 @@ class _ForgotPasswordScreenState extends State<ForgotPasswordScreen> {
                   controller: _emailController,
                   keyboardType: TextInputType.emailAddress,
                   decoration: InputDecoration(
-                    labelText: 'Email Address',
+                    labelText: l10n.email,
                     filled: true,
                     fillColor: const Color(0xFFF3F4F6),
                     prefixIcon: const Icon(Icons.email_outlined, color: AppColors.primaryContainer),
@@ -148,12 +157,12 @@ class _ForgotPasswordScreenState extends State<ForgotPasswordScreen> {
                   ),
                   validator: (value) {
                     if (value == null || value.trim().isEmpty) {
-                      return 'Please enter your email';
+                      return l10n.pleaseEnterEmail;
                     }
                     if (!RegExp(
                       r'^[\w-\.]+@([\w-]+\.)+[\w-]{2,4}$',
                     ).hasMatch(value.trim())) {
-                      return 'Please enter a valid email address';
+                      return l10n.pleaseEnterValidEmailAddress;
                     }
                     return null;
                   },
@@ -174,7 +183,7 @@ class _ForgotPasswordScreenState extends State<ForgotPasswordScreen> {
                     child: _isLoading
                         ? const CircularProgressIndicator(color: Colors.white)
                         : Text(
-                            'Send Reset Link',
+                            l10n.sendResetLink,
                             style: GoogleFonts.poppins(
                               fontSize: 16,
                               fontWeight: FontWeight.bold,

@@ -6,11 +6,13 @@ import 'package:flutter/material.dart';
 import 'package:image_picker/image_picker.dart';
 
 import '../constants/app_colors.dart';
+import '../l10n/app_localizations.dart';
 import '../models/app_notification.dart';
 import '../services/firebase_storage.dart';
 import '../services/firestore_service.dart';
 import '../services/local_notification_service.dart';
 import '../services/notification_center.dart';
+import '../services/remembered_accounts_service.dart';
 import '../utils/user_initials.dart';
 import 'settings_screen.dart';
 
@@ -112,9 +114,9 @@ class _ProfileScreenState extends State<ProfileScreen> {
         icon: const Icon(Icons.arrow_back, color: kGreen),
         onPressed: () => Navigator.maybePop(context),
       ),
-      title: const Text(
-        'Profile',
-        style: TextStyle(
+      title: Text(
+        AppLocalizations.of(context)!.profile,
+        style: const TextStyle(
           color: kGreen,
           fontWeight: FontWeight.bold,
           fontSize: 18,
@@ -236,6 +238,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
 
   // ── account section (change password / logout) ──
   Widget _buildAccountSection() {
+    final AppLocalizations l10n = AppLocalizations.of(context)!;
     return Padding(
       padding: const EdgeInsets.symmetric(horizontal: 16),
       child: Container(
@@ -258,9 +261,9 @@ class _ProfileScreenState extends State<ProfileScreen> {
               ListTile(
                 contentPadding: EdgeInsets.zero,
                 leading: const Icon(Icons.lock_outline, color: kGreen, size: 20),
-                title: const Text(
-                  'Change password',
-                  style: TextStyle(color: Colors.black87, fontSize: 14),
+                title: Text(
+                  l10n.changePassword,
+                  style: const TextStyle(color: Colors.black87, fontSize: 14),
                 ),
                 trailing: const Icon(Icons.chevron_right, color: kGrey, size: 18),
                 onTap: _showChangePassword,
@@ -269,9 +272,9 @@ class _ProfileScreenState extends State<ProfileScreen> {
               ListTile(
                 contentPadding: EdgeInsets.zero,
                 leading: const Icon(Icons.logout_rounded, color: kRed, size: 20),
-                title: const Text(
-                  'Logout',
-                  style: TextStyle(color: kRed, fontWeight: FontWeight.w600, fontSize: 14),
+                title: Text(
+                  l10n.logout,
+                  style: const TextStyle(color: kRed, fontWeight: FontWeight.w600, fontSize: 14),
                 ),
                 onTap: _confirmLogout,
               ),
@@ -311,22 +314,23 @@ class _ProfileScreenState extends State<ProfileScreen> {
   }
 
   void _confirmLogout() {
+    final AppLocalizations l10n = AppLocalizations.of(context)!;
     showDialog(
       context: context,
       builder: (_) => AlertDialog(
         shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
-        title: const Text(
-          'Logout',
-          style: TextStyle(fontWeight: FontWeight.bold),
+        title: Text(
+          l10n.logout,
+          style: const TextStyle(fontWeight: FontWeight.bold),
         ),
-        content: const Text(
-          'Are you sure you want to logout from AflaScan?',
-          style: TextStyle(color: kGrey),
+        content: Text(
+          l10n.logoutConfirm,
+          style: const TextStyle(color: kGrey),
         ),
         actions: [
           TextButton(
             onPressed: () => Navigator.pop(context),
-            child: const Text('Cancel', style: TextStyle(color: kGrey)),
+            child: Text(l10n.cancel, style: const TextStyle(color: kGrey)),
           ),
           ElevatedButton(
             onPressed: () async {
@@ -341,7 +345,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
                 borderRadius: BorderRadius.circular(10),
               ),
             ),
-            child: const Text('Logout', style: TextStyle(color: Colors.white)),
+            child: Text(l10n.logout, style: const TextStyle(color: Colors.white)),
           ),
         ],
       ),
@@ -376,6 +380,7 @@ class _EditProfileSheetState extends State<_EditProfileSheet> {
   late TextEditingController _phoneCtrl;
   late TextEditingController _locationCtrl;
   File? _pickedImage;
+  bool _removePhoto = false;
   bool _isSaving = false;
 
   @override
@@ -394,7 +399,11 @@ class _EditProfileSheetState extends State<_EditProfileSheet> {
     super.dispose();
   }
 
+  bool get _hasPhotoToRemove =>
+      _pickedImage != null || (widget.photoUrl.isNotEmpty && !_removePhoto);
+
   Future<void> _pickImage() async {
+    final bool hasPhoto = _hasPhotoToRemove;
     final picked = await showModalBottomSheet<XFile?>(
       context: context,
       shape: const RoundedRectangleBorder(
@@ -406,22 +415,41 @@ class _EditProfileSheetState extends State<_EditProfileSheet> {
           children: [
             ListTile(
               leading: const Icon(Icons.photo_camera_outlined, color: kGreen),
-              title: const Text('Take a photo'),
+              title: Text(AppLocalizations.of(context)!.takeAPhoto),
               onTap: () => _pickFrom(sheetContext, ImageSource.camera),
             ),
             ListTile(
               leading: const Icon(Icons.photo_library_outlined, color: kGreen),
-              title: const Text('Choose from gallery'),
+              title: Text(AppLocalizations.of(context)!.chooseFromGallery),
               onTap: () => _pickFrom(sheetContext, ImageSource.gallery),
             ),
+            if (hasPhoto)
+              ListTile(
+                leading: const Icon(Icons.delete_outline, color: kRed),
+                title: const Text('Remove Photo', style: TextStyle(color: kRed)),
+                onTap: () {
+                  _clearPhoto();
+                  Navigator.pop(sheetContext);
+                },
+              ),
           ],
         ),
       ),
     );
 
     if (picked != null) {
-      setState(() => _pickedImage = File(picked.path));
+      setState(() {
+        _pickedImage = File(picked.path);
+        _removePhoto = false;
+      });
     }
+  }
+
+  void _clearPhoto() {
+    setState(() {
+      _pickedImage = null;
+      _removePhoto = true;
+    });
   }
 
   // Picking can throw (e.g. camera/gallery permission denied) — without a
@@ -435,12 +463,13 @@ class _EditProfileSheetState extends State<_EditProfileSheet> {
       if (!mounted) return;
       final messenger = ScaffoldMessenger.of(context);
       if (sheetContext.mounted) Navigator.pop(sheetContext);
+      final AppLocalizations l10n = AppLocalizations.of(context)!;
       messenger.showSnackBar(
         SnackBar(
           content: Text(
             source == ImageSource.camera
-                ? 'Camera access was denied. Enable it in Settings to take a photo.'
-                : 'Photo library access was denied. Enable it in Settings to choose a photo.',
+                ? l10n.cameraAccessDenied
+                : l10n.photoLibraryAccessDenied,
           ),
           backgroundColor: kRed,
           behavior: SnackBarBehavior.floating,
@@ -450,11 +479,12 @@ class _EditProfileSheetState extends State<_EditProfileSheet> {
   }
 
   Future<void> _save() async {
+    final AppLocalizations l10n = AppLocalizations.of(context)!;
     final name = _nameCtrl.text.trim();
     if (name.isEmpty) {
       ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(
-          content: Text('Full name cannot be empty'),
+        SnackBar(
+          content: Text(l10n.fullNameCannotBeEmpty),
           backgroundColor: kRed,
           behavior: SnackBarBehavior.floating,
         ),
@@ -474,8 +504,8 @@ class _EditProfileSheetState extends State<_EditProfileSheet> {
         if (!mounted) return;
         setState(() => _isSaving = false);
         ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(
-            content: Text('Could not upload profile picture. Please try again.'),
+          SnackBar(
+            content: Text(l10n.couldNotUploadProfilePicture),
             backgroundColor: kRed,
             behavior: SnackBarBehavior.floating,
           ),
@@ -484,19 +514,41 @@ class _EditProfileSheetState extends State<_EditProfileSheet> {
       }
     }
 
+    if (_removePhoto) {
+      final user = FirebaseAuth.instance.currentUser;
+      if (user != null) await _storageService.deleteProfileImage(user.uid);
+    }
+
     final success = await _firestoreService.updateUserProfile(
       fullName: name,
       phone: _phoneCtrl.text.trim(),
       district: _locationCtrl.text.trim(),
+      removePhoto: _removePhoto,
       photoUrl: photoUrl,
     );
     if (!mounted) return;
 
     if (success) {
+      NotificationCenter.instance.add(
+        AppNotification(
+          title: 'Profile Updated',
+          description: 'Your account details were updated successfully.',
+          icon: Icons.person_add_alt_1,
+          iconColor: kGreen,
+          iconBackground: kGreenLight,
+          category: NotificationCategory.update,
+          unread: true,
+        ),
+      );
+      LocalNotificationService.instance.show(
+        title: 'Profile Updated',
+        body: 'Your account details were updated successfully.',
+      );
+
       Navigator.pop(context);
       ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(
-          content: Text('Profile updated successfully'),
+        SnackBar(
+          content: Text(l10n.profileUpdatedSuccessfully),
           backgroundColor: kGreen,
           behavior: SnackBarBehavior.floating,
         ),
@@ -504,8 +556,8 @@ class _EditProfileSheetState extends State<_EditProfileSheet> {
     } else {
       setState(() => _isSaving = false);
       ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(
-          content: Text('Could not update profile. Please try again.'),
+        SnackBar(
+          content: Text(l10n.couldNotUpdateProfile),
           backgroundColor: kRed,
           behavior: SnackBarBehavior.floating,
         ),
@@ -515,6 +567,7 @@ class _EditProfileSheetState extends State<_EditProfileSheet> {
 
   @override
   Widget build(BuildContext context) {
+    final AppLocalizations l10n = AppLocalizations.of(context)!;
     return Padding(
       padding: EdgeInsets.fromLTRB(
         24,
@@ -538,9 +591,9 @@ class _EditProfileSheetState extends State<_EditProfileSheet> {
               ),
             ),
           ),
-          const Text(
-            'Edit Profile',
-            style: TextStyle(
+          Text(
+            l10n.editProfile,
+            style: const TextStyle(
               fontSize: 20,
               fontWeight: FontWeight.bold,
               color: Colors.black87,
@@ -558,9 +611,10 @@ class _EditProfileSheetState extends State<_EditProfileSheet> {
                     backgroundColor: kGreenLight,
                     backgroundImage: _pickedImage != null
                         ? FileImage(_pickedImage!)
-                        : (widget.photoUrl.isNotEmpty ? NetworkImage(widget.photoUrl) : null)
-                            as ImageProvider?,
-                    child: _pickedImage == null && widget.photoUrl.isEmpty
+                        : (!_removePhoto && widget.photoUrl.isNotEmpty)
+                            ? NetworkImage(widget.photoUrl)
+                            : null as ImageProvider?,
+                    child: _pickedImage == null && (_removePhoto || widget.photoUrl.isEmpty)
                         ? Text(
                             getInitials(widget.name),
                             style: const TextStyle(
@@ -585,11 +639,11 @@ class _EditProfileSheetState extends State<_EditProfileSheet> {
             ),
           ),
           const SizedBox(height: 20),
-          _buildField('Full Name', _nameCtrl, Icons.person_outline),
+          _buildField(l10n.fullName, _nameCtrl, Icons.person_outline),
           const SizedBox(height: 12),
-          _buildField('Phone Number', _phoneCtrl, Icons.phone_outlined),
+          _buildField(l10n.phoneNumber, _phoneCtrl, Icons.phone_outlined),
           const SizedBox(height: 12),
-          _buildField('Location', _locationCtrl, Icons.location_on_outlined),
+          _buildField(l10n.locationField, _locationCtrl, Icons.location_on_outlined),
           const SizedBox(height: 24),
           ElevatedButton(
             onPressed: _isSaving ? null : _save,
@@ -607,9 +661,9 @@ class _EditProfileSheetState extends State<_EditProfileSheet> {
                     width: 20,
                     child: CircularProgressIndicator(strokeWidth: 2, color: Colors.white),
                   )
-                : const Text(
-                    'Save Changes',
-                    style: TextStyle(
+                : Text(
+                    l10n.saveChanges,
+                    style: const TextStyle(
                       color: Colors.white,
                       fontWeight: FontWeight.w700,
                       fontSize: 15,
@@ -683,6 +737,7 @@ class _ChangePasswordSheetState extends State<_ChangePasswordSheet> {
 
   Future<void> _submit() async {
     if (!_formKey.currentState!.validate()) return;
+    final AppLocalizations l10n = AppLocalizations.of(context)!;
 
     setState(() => _isSaving = true);
     try {
@@ -699,10 +754,19 @@ class _ChangePasswordSheetState extends State<_ChangePasswordSheet> {
       await user.reauthenticateWithCredential(credential);
       await user.updatePassword(_newCtrl.text);
 
+      // Keep "Remember me" in sync — otherwise the login screen would keep
+      // auto-filling the now-stale old password and every future login
+      // attempt would silently fail until the user noticed and retyped it.
+      final Map<String, String> rememberedAccounts =
+          await RememberedAccountsService.instance.getAccounts();
+      if (rememberedAccounts.containsKey(email)) {
+        await RememberedAccountsService.instance.saveAccount(email, _newCtrl.text);
+      }
+
       NotificationCenter.instance.add(
         AppNotification(
-          title: 'Password Changed',
-          description: 'Your account password was changed successfully.',
+          title: l10n.passwordChangedTitle,
+          description: l10n.passwordChangedBody,
           icon: Icons.lock_reset,
           iconColor: kGreen,
           iconBackground: kGreenLight,
@@ -712,27 +776,27 @@ class _ChangePasswordSheetState extends State<_ChangePasswordSheet> {
         ),
       );
       LocalNotificationService.instance.show(
-        title: 'Password Changed',
-        body: 'Your account password was changed successfully.',
+        title: l10n.passwordChangedTitle,
+        body: l10n.passwordChangedBody,
       );
 
       if (!mounted) return;
       Navigator.pop(context);
       ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(
-          content: Text('Password updated successfully'),
+        SnackBar(
+          content: Text(l10n.passwordUpdatedSuccessfully),
           backgroundColor: kGreen,
           behavior: SnackBarBehavior.floating,
         ),
       );
     } on FirebaseAuthException catch (e) {
-      String message = 'Could not change password. Please try again.';
+      String message = l10n.couldNotChangePassword;
       if (e.code == 'wrong-password' || e.code == 'invalid-credential') {
-        message = 'Current password is incorrect.';
+        message = l10n.currentPasswordIncorrect;
       } else if (e.code == 'weak-password') {
-        message = 'New password is too weak.';
+        message = l10n.newPasswordTooWeak;
       } else if (e.code == 'requires-recent-login') {
-        message = 'Please log out and log back in, then try again.';
+        message = l10n.pleaseLogOutAndBackIn;
       }
       if (!mounted) return;
       ScaffoldMessenger.of(context).showSnackBar(
@@ -745,6 +809,7 @@ class _ChangePasswordSheetState extends State<_ChangePasswordSheet> {
 
   @override
   Widget build(BuildContext context) {
+    final AppLocalizations l10n = AppLocalizations.of(context)!;
     return Padding(
       padding: EdgeInsets.fromLTRB(
         24,
@@ -770,9 +835,9 @@ class _ChangePasswordSheetState extends State<_ChangePasswordSheet> {
                 ),
               ),
             ),
-            const Text(
-              'Change Password',
-              style: TextStyle(
+            Text(
+              l10n.changePasswordTitle,
+              style: const TextStyle(
                 fontSize: 20,
                 fontWeight: FontWeight.bold,
                 color: Colors.black87,
@@ -780,28 +845,28 @@ class _ChangePasswordSheetState extends State<_ChangePasswordSheet> {
             ),
             const SizedBox(height: 20),
             _buildPasswordField(
-              'Current Password',
+              l10n.currentPassword,
               _currentCtrl,
               _obscureCurrent,
               () => setState(() => _obscureCurrent = !_obscureCurrent),
-              validator: (v) => (v == null || v.isEmpty) ? 'Enter your current password' : null,
+              validator: (v) => (v == null || v.isEmpty) ? l10n.enterCurrentPassword : null,
             ),
             const SizedBox(height: 12),
             _buildPasswordField(
-              'New Password',
+              l10n.newPassword,
               _newCtrl,
               _obscureNew,
               () => setState(() => _obscureNew = !_obscureNew),
               validator: (v) =>
-                  (v == null || v.length < 6) ? 'Password must be at least 6 characters' : null,
+                  (v == null || v.length < 6) ? l10n.passwordMin6Chars : null,
             ),
             const SizedBox(height: 12),
             _buildPasswordField(
-              'Confirm New Password',
+              l10n.confirmNewPassword,
               _confirmCtrl,
               _obscureConfirm,
               () => setState(() => _obscureConfirm = !_obscureConfirm),
-              validator: (v) => v != _newCtrl.text ? 'Passwords do not match' : null,
+              validator: (v) => v != _newCtrl.text ? l10n.passwordsDoNotMatch : null,
             ),
             const SizedBox(height: 24),
             ElevatedButton(
@@ -820,9 +885,9 @@ class _ChangePasswordSheetState extends State<_ChangePasswordSheet> {
                       width: 20,
                       child: CircularProgressIndicator(strokeWidth: 2, color: Colors.white),
                     )
-                  : const Text(
-                      'Update Password',
-                      style: TextStyle(
+                  : Text(
+                      l10n.updatePassword,
+                      style: const TextStyle(
                         color: Colors.white,
                         fontWeight: FontWeight.w700,
                         fontSize: 15,

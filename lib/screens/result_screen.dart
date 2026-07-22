@@ -4,7 +4,9 @@ import 'package:camera/camera.dart';
 import 'package:flutter/material.dart';
 
 import '../constants/app_colors.dart';
+import '../l10n/app_localizations.dart';
 import '../models/report_model.dart';
+import '../services/firestore_service.dart';
 import '../services/location_service.dart';
 import '../services/pdf_service.dart';
 import '../services/report_storage_service.dart';
@@ -16,12 +18,16 @@ class ResultsScreenArgs {
   final double confidence;
   final String? analysisLabel;
   final String? imagePath;
+  final bool fromHistory;
+  final String? scanId;
 
   const ResultsScreenArgs({
     required this.isSafe,
     required this.confidence,
     this.analysisLabel,
     this.imagePath,
+    this.fromHistory = false,
+    this.scanId,
   });
 }
 
@@ -44,6 +50,8 @@ class ResultsScreen extends StatelessWidget {
   final double confidence; // 0.0 - 1.0
   final String? analysisLabel;
   final String? imagePath;
+  final bool fromHistory;
+  final String? scanId;
 
   const ResultsScreen({
     super.key,
@@ -51,6 +59,8 @@ class ResultsScreen extends StatelessWidget {
     required this.confidence,
     this.analysisLabel,
     this.imagePath,
+    this.fromHistory = false,
+    this.scanId,
   });
 
   // ---- Palette matched to the shared AppColors theme (registration screen) ----
@@ -77,18 +87,18 @@ class ResultsScreen extends StatelessWidget {
   Color get boxTextColor => textPrimary;
   Color get headingColor => isSafe ? safeHeading : unsafeHeading;
 
-  String get displayAnalysisLabel {
+  String displayAnalysisLabel(AppLocalizations l10n) {
     final label = analysisLabel?.trim();
     if (label != null && label.isNotEmpty) {
       return label;
     }
-    return isSafe ? 'Healthy Maize' : 'Unsafe for Human Consumption';
+    return isSafe ? l10n.healthyMaize : l10n.unsafeForConsumption;
   }
 
-  String get title => displayAnalysisLabel;
-  String get subtitle => isSafe
-      ? 'Diagnosis completed successfully'
-      : 'Analysis flagged this sample for review';
+  String title(AppLocalizations l10n) => displayAnalysisLabel(l10n);
+  String subtitle(AppLocalizations l10n) => isSafe
+      ? l10n.diagnosisCompletedSuccessfully
+      : l10n.analysisFlaggedForReview;
 
   int get confidencePercent => (confidence * 100).round();
 
@@ -176,9 +186,10 @@ class ResultsScreen extends StatelessWidget {
   }
 
   Future<void> _exportPdf(BuildContext context) async {
+    final AppLocalizations l10n = AppLocalizations.of(context)!;
     _showActionStatus(
       context,
-      'Generating PDF report...',
+      l10n.generatingPdfReport,
       Icons.picture_as_pdf_rounded,
       AppColors.primaryContainer,
     );
@@ -192,7 +203,7 @@ class ResultsScreen extends StatelessWidget {
       await ReportStorageService().saveReport(
         ReportModel(
           id: DateTime.now().millisecondsSinceEpoch.toString(),
-          result: displayAnalysisLabel,
+          result: displayAnalysisLabel(l10n),
           confidence: confidence,
           date: DateTime.now(),
           pdfPath: file.path,
@@ -205,7 +216,7 @@ class ResultsScreen extends StatelessWidget {
       if (!context.mounted) return;
       _showActionStatus(
         context,
-        'Could not save PDF report',
+        l10n.couldNotSavePdfReport,
         Icons.error_outline_rounded,
         AppColors.error,
       );
@@ -235,10 +246,30 @@ class ResultsScreen extends StatelessWidget {
     );
   }
 
-  Widget _buildDiagnosisCard() {
+  Widget _buildPhoto() {
+    if (imagePath != null && imagePath!.startsWith('http')) {
+      return Image.network(
+        imagePath!,
+        height: 180,
+        width: double.infinity,
+        fit: BoxFit.cover,
+        errorBuilder: (_, _, _) => const SizedBox(height: 180),
+      );
+    }
+    return Image.file(
+      File(imagePath!),
+      height: 180,
+      width: double.infinity,
+      fit: BoxFit.cover,
+    );
+  }
+
+  Widget _buildDiagnosisCard(BuildContext context) {
+    final AppLocalizations l10n = AppLocalizations.of(context)!;
+    final bool isNetworkImage = imagePath != null && imagePath!.startsWith('http');
     final File? photoFile =
-        (imagePath != null && imagePath!.isNotEmpty) ? File(imagePath!) : null;
-    final bool hasPhoto = photoFile != null && photoFile.existsSync();
+        (!isNetworkImage && imagePath != null && imagePath!.isNotEmpty) ? File(imagePath!) : null;
+    final bool hasPhoto = isNetworkImage || (photoFile != null && photoFile.existsSync());
 
     return Container(
       decoration: BoxDecoration(
@@ -261,12 +292,7 @@ class ResultsScreen extends StatelessWidget {
               children: [
                 ClipRRect(
                   borderRadius: const BorderRadius.vertical(top: Radius.circular(16)),
-                  child: Image.file(
-                    photoFile,
-                    height: 180,
-                    width: double.infinity,
-                    fit: BoxFit.cover,
-                  ),
+                  child: _buildPhoto(),
                 ),
                 Positioned(
                   bottom: -24,
@@ -309,7 +335,7 @@ class ResultsScreen extends StatelessWidget {
             child: Column(
               children: [
                 Text(
-                  title,
+                  title(l10n),
                   textAlign: TextAlign.center,
                   style: const TextStyle(
                     fontSize: 18,
@@ -318,10 +344,10 @@ class ResultsScreen extends StatelessWidget {
                   ),
                 ),
                 const SizedBox(height: 8),
-                _buildConfidenceBadge(),
+                _buildConfidenceBadge(l10n),
                 const SizedBox(height: 6),
                 Text(
-                  subtitle,
+                  subtitle(l10n),
                   style: const TextStyle(fontSize: 12, color: textMuted),
                 ),
               ],
@@ -332,7 +358,7 @@ class ResultsScreen extends StatelessWidget {
     );
   }
 
-  Widget _buildConfidenceBadge() {
+  Widget _buildConfidenceBadge(AppLocalizations l10n) {
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
       decoration: BoxDecoration(
@@ -340,7 +366,7 @@ class ResultsScreen extends StatelessWidget {
         borderRadius: BorderRadius.circular(20),
       ),
       child: Text(
-        '$confidencePercent% confidence',
+        l10n.confidencePercentLabel(confidencePercent),
         style: TextStyle(fontSize: 11, fontWeight: FontWeight.w600, color: iconBg),
       ),
     );
@@ -348,6 +374,7 @@ class ResultsScreen extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final AppLocalizations l10n = AppLocalizations.of(context)!;
     return Scaffold(
       backgroundColor: pageBg,
       body: SafeArea(
@@ -365,9 +392,9 @@ class ResultsScreen extends StatelessWidget {
                       icon: const Icon(Icons.arrow_back, color: AppColors.primary),
                     ),
                     const SizedBox(width: 4),
-                    const Text(
-                      'Aflatoxin Detector',
-                      style: TextStyle(
+                    Text(
+                      fromHistory ? l10n.scanDetails : l10n.aflatoxinDetector,
+                      style: const TextStyle(
                         color: AppColors.primary,
                         fontSize: 17,
                         fontWeight: FontWeight.w500,
@@ -378,7 +405,14 @@ class ResultsScreen extends StatelessWidget {
                 const SizedBox(height: 18),
 
                 // Main Diagnosis Card
-                _buildDiagnosisCard(),
+                _buildDiagnosisCard(context),
+
+                // Feedback loop: only offered right after a fresh scan (not
+                // when reviewing an old one from History) — the point is to
+                // capture whether the model got THIS call right while the
+                // user still remembers what they actually saw, building a
+                // labeled dataset for future retraining.
+                if (!fromHistory && scanId != null) _FeedbackPrompt(scanId: scanId!),
                 const SizedBox(height: 14),
 
                 // Certified Recommendations Box
@@ -396,7 +430,7 @@ class ResultsScreen extends StatelessWidget {
                           Icon(Icons.fact_check_outlined, size: 16, color: headingColor),
                           const SizedBox(width: 6),
                           Text(
-                            'Recommendations & Directives',
+                            l10n.recommendationsAndDirectives,
                             style: TextStyle(
                               fontSize: 13,
                               fontWeight: FontWeight.w500,
@@ -460,9 +494,9 @@ class ResultsScreen extends StatelessWidget {
                 ElevatedButton.icon(
                   onPressed: () => _exportPdf(context),
                   icon: const Icon(Icons.save_alt_rounded, size: 16),
-                  label: const Text(
-                    'Export PDF',
-                    style: TextStyle(fontSize: 13, fontWeight: FontWeight.w700),
+                  label: Text(
+                    l10n.exportPdf,
+                    style: const TextStyle(fontSize: 13, fontWeight: FontWeight.w700),
                   ),
                   style: ElevatedButton.styleFrom(
                     backgroundColor: AppColors.secondary,
@@ -472,28 +506,120 @@ class ResultsScreen extends StatelessWidget {
                     elevation: 0,
                   ),
                 ),
-                const SizedBox(height: 16),
+                if (!fromHistory) ...[
+                  const SizedBox(height: 16),
 
-                // Scan Again Button (opens the camera to capture and analyze a new batch)
-                ElevatedButton.icon(
-                  onPressed: () => _scanAnotherBatch(context),
-                  icon: const Icon(Icons.camera_alt_outlined),
-                  label: const Text('Scan Another Batch'),
-                  style: ElevatedButton.styleFrom(
-                    backgroundColor: AppColors.primary,
-                    foregroundColor: Colors.white,
-                    elevation: 0,
-                    padding: const EdgeInsets.symmetric(vertical: 14),
-                    shape: RoundedRectangleBorder(
-                      borderRadius: BorderRadius.circular(12),
+                  // Scan Again Button (opens the camera to capture and analyze a new batch)
+                  ElevatedButton.icon(
+                    onPressed: () => _scanAnotherBatch(context),
+                    icon: const Icon(Icons.camera_alt_outlined),
+                    label: Text(l10n.scanAnotherBatch),
+                    style: ElevatedButton.styleFrom(
+                      backgroundColor: AppColors.primary,
+                      foregroundColor: Colors.white,
+                      elevation: 0,
+                      padding: const EdgeInsets.symmetric(vertical: 14),
+                      shape: RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(12),
+                      ),
                     ),
                   ),
-                ),
+                ],
               ],
             ),
           ),
         ),
       ),
+    );
+  }
+}
+
+class _FeedbackPrompt extends StatefulWidget {
+  final String scanId;
+
+  const _FeedbackPrompt({required this.scanId});
+
+  @override
+  State<_FeedbackPrompt> createState() => _FeedbackPromptState();
+}
+
+class _FeedbackPromptState extends State<_FeedbackPrompt> {
+  bool? _submittedAccurate;
+  bool _submitting = false;
+
+  Future<void> _submit(bool isAccurate) async {
+    if (_submitting || _submittedAccurate != null) return;
+    setState(() => _submitting = true);
+
+    final bool success = await FirestoreService().submitScanFeedback(widget.scanId, isAccurate);
+    if (!mounted) return;
+    setState(() {
+      _submitting = false;
+      if (success) _submittedAccurate = isAccurate;
+    });
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final AppLocalizations l10n = AppLocalizations.of(context)!;
+    return Container(
+      margin: const EdgeInsets.only(top: 14),
+      padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
+      decoration: BoxDecoration(
+        color: ResultsScreen.cardBg,
+        borderRadius: BorderRadius.circular(12),
+        border: Border.all(color: ResultsScreen.textMuted.withValues(alpha: 0.15)),
+      ),
+      child: _submittedAccurate != null
+          ? Row(
+              children: [
+                const Icon(Icons.check_circle, size: 16, color: AppColors.primaryContainer),
+                const SizedBox(width: 8),
+                Expanded(
+                  child: Text(
+                    l10n.feedbackThanks,
+                    style: const TextStyle(fontSize: 12.5, color: ResultsScreen.textPrimary),
+                  ),
+                ),
+              ],
+            )
+          : Row(
+              children: [
+                Expanded(
+                  child: Text(
+                    l10n.wasThisDiagnosisAccurate,
+                    style: const TextStyle(
+                      fontSize: 12.5,
+                      fontWeight: FontWeight.w500,
+                      color: ResultsScreen.textPrimary,
+                    ),
+                  ),
+                ),
+                const SizedBox(width: 8),
+                if (_submitting)
+                  const SizedBox(
+                    width: 18,
+                    height: 18,
+                    child: CircularProgressIndicator(strokeWidth: 2),
+                  )
+                else ...[
+                  IconButton(
+                    onPressed: () => _submit(true),
+                    icon: const Icon(Icons.thumb_up_outlined, size: 18),
+                    color: AppColors.primaryContainer,
+                    tooltip: l10n.feedbackYesTooltip,
+                    visualDensity: VisualDensity.compact,
+                  ),
+                  IconButton(
+                    onPressed: () => _submit(false),
+                    icon: const Icon(Icons.thumb_down_outlined, size: 18),
+                    color: AppColors.error,
+                    tooltip: l10n.feedbackNoTooltip,
+                    visualDensity: VisualDensity.compact,
+                  ),
+                ],
+              ],
+            ),
     );
   }
 }
