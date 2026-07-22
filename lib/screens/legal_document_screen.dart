@@ -223,7 +223,7 @@ class LegalDocumentScreen extends StatelessWidget {
 
 const String kTermsOfServiceText = '''
 TERMS AND CONDITIONS FOR AFLALERT
-Last Updated: July 8, 2026
+Last Updated: July 22, 2026
 
 Please read these Terms and Conditions ("Terms") carefully before downloading, installing, or using the AflAlert mobile application ("App") operated by AflAlert ("us", "we", or "our").
 
@@ -264,7 +264,7 @@ If you have any questions about these Terms, please contact us at: aflalert.supp
 
 const String kPrivacyPolicyText = '''
 PRIVACY POLICY FOR AFLALERT
-Last Updated: July 8, 2026
+Last Updated: July 22, 2026
 
 AflAlert ("we", "our", or "us") is committed to protecting your privacy. This Privacy Policy explains how AflAlert ("App") collects, uses, discloses, and safeguards your information when you use our mobile application.
 
