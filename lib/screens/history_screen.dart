@@ -3,6 +3,7 @@ import 'dart:io';
 
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:flutter/material.dart';
+import 'package:share_plus/share_plus.dart';
 
 import '../constants/app_colors.dart';
 import '../l10n/app_localizations.dart';
@@ -175,6 +176,47 @@ class _HistoryScreenState extends State<HistoryScreen> {
   final Set<String> _pendingDeleteIds = {};
   final Map<String, Timer> _pendingDeleteTimers = {};
 
+  // Multi-select mode for bulk delete/share, entered via long-press on a card.
+  bool _selectionMode = false;
+  final Set<String> _selectedIds = {};
+
+  void _enterSelectionMode(String initialId) {
+    setState(() {
+      _selectionMode = true;
+      _selectedIds.add(initialId);
+    });
+  }
+
+  void _exitSelectionMode() {
+    setState(() {
+      _selectionMode = false;
+      _selectedIds.clear();
+    });
+  }
+
+  void _toggleSelection(String id) {
+    setState(() {
+      if (_selectedIds.contains(id)) {
+        _selectedIds.remove(id);
+        if (_selectedIds.isEmpty) _selectionMode = false;
+      } else {
+        _selectedIds.add(id);
+      }
+    });
+  }
+
+  void _toggleSelectAll(List<ScanRecord> records) {
+    setState(() {
+      if (_selectedIds.length == records.length) {
+        _selectedIds.clear();
+      } else {
+        _selectedIds
+          ..clear()
+          ..addAll(records.map((r) => r.id));
+      }
+    });
+  }
+
   List<ScanRecord> _filterRecords(List<ScanRecord> source) {
     return source.where((s) {
       final matchesQuery =
@@ -249,6 +291,30 @@ class _HistoryScreenState extends State<HistoryScreen> {
 
   // ── APP BAR ──────────────────────────────
   PreferredSizeWidget _buildAppBar() {
+    final AppLocalizations l10n = AppLocalizations.of(context)!;
+
+    if (_selectionMode) {
+      return AppBar(
+        backgroundColor: kPageBg,
+        elevation: 0,
+        scrolledUnderElevation: 0,
+        leading: IconButton(
+          icon: const Icon(Icons.close, color: kPrimaryGreen),
+          tooltip: l10n.cancel,
+          onPressed: _exitSelectionMode,
+        ),
+        title: Text(
+          l10n.scansSelectedCount(_selectedIds.length),
+          style: const TextStyle(
+            color: kPrimaryGreen,
+            fontSize: 18,
+            fontWeight: FontWeight.w700,
+          ),
+        ),
+        centerTitle: false,
+      );
+    }
+
     return AppBar(
       backgroundColor: kPageBg,
       elevation: 0,
@@ -258,7 +324,7 @@ class _HistoryScreenState extends State<HistoryScreen> {
         onPressed: () => Navigator.maybePop(context),
       ),
       title: Text(
-        AppLocalizations.of(context)!.history,
+        l10n.history,
         style: const TextStyle(
           color: kPrimaryGreen,
           fontSize: 22,
@@ -266,6 +332,13 @@ class _HistoryScreenState extends State<HistoryScreen> {
         ),
       ),
       centerTitle: false,
+      actions: [
+        IconButton(
+          icon: const Icon(Icons.checklist, color: kPrimaryGreen),
+          tooltip: l10n.selectScans,
+          onPressed: () => setState(() => _selectionMode = true),
+        ),
+      ],
     );
   }
 
@@ -384,7 +457,7 @@ class _HistoryScreenState extends State<HistoryScreen> {
         final record = records[i];
         return Dismissible(
           key: ValueKey(record.id),
-          direction: DismissDirection.endToStart,
+          direction: _selectionMode ? DismissDirection.none : DismissDirection.endToStart,
           background: Container(
             alignment: Alignment.centerRight,
             padding: const EdgeInsets.only(right: 20),
@@ -398,7 +471,18 @@ class _HistoryScreenState extends State<HistoryScreen> {
           onDismissed: (_) => _scheduleDelete(record),
           child: _ScanCard(
             record: record,
-            onTap: () => _openDetail(record),
+            selectionMode: _selectionMode,
+            selected: _selectedIds.contains(record.id),
+            onTap: () {
+              if (_selectionMode) {
+                _toggleSelection(record.id);
+              } else {
+                _openDetail(record);
+              }
+            },
+            onLongPress: () {
+              if (!_selectionMode) _enterSelectionMode(record.id);
+            },
             onDelete: () => _confirmAndDeleteScan(record),
           ),
         );
@@ -408,6 +492,7 @@ class _HistoryScreenState extends State<HistoryScreen> {
 
   // ── BOTTOM INFO BAR ──────────────────────
   Widget _buildBottomBar(List<ScanRecord> results) {
+    if (_selectionMode) return _buildSelectionBar(results);
     if (results.isEmpty) return const SizedBox.shrink();
 
     final AppLocalizations l10n = AppLocalizations.of(context)!;
@@ -460,6 +545,63 @@ class _HistoryScreenState extends State<HistoryScreen> {
                 borderRadius: BorderRadius.circular(10),
               ),
               elevation: 0,
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  // ── SELECTION ACTION BAR ─────────────────
+  Widget _buildSelectionBar(List<ScanRecord> records) {
+    final AppLocalizations l10n = AppLocalizations.of(context)!;
+    final bool allSelected = records.isNotEmpty && _selectedIds.length == records.length;
+    final bool hasSelection = _selectedIds.isNotEmpty;
+
+    return Container(
+      color: kCardBg,
+      padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+      child: Row(
+        children: [
+          GestureDetector(
+            onTap: records.isEmpty ? null : () => _toggleSelectAll(records),
+            child: Row(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                Icon(
+                  allSelected ? Icons.check_box : Icons.check_box_outline_blank,
+                  size: 20,
+                  color: kPrimaryGreen,
+                ),
+                const SizedBox(width: 6),
+                Text(
+                  allSelected ? l10n.deselectAll : l10n.selectAll,
+                  style: const TextStyle(
+                    fontSize: 13,
+                    fontWeight: FontWeight.w600,
+                    color: kPrimaryGreen,
+                  ),
+                ),
+              ],
+            ),
+          ),
+          const Spacer(),
+          TextButton.icon(
+            onPressed: hasSelection ? () => _shareSelected(records) : null,
+            icon: const Icon(Icons.ios_share, size: 18),
+            label: Text(l10n.share),
+            style: TextButton.styleFrom(
+              foregroundColor: kPrimaryGreen,
+              disabledForegroundColor: kPrimaryGreen.withAlpha((0.4 * 255).round()),
+            ),
+          ),
+          TextButton.icon(
+            onPressed: hasSelection ? () => _confirmAndDeleteSelected(records) : null,
+            icon: const Icon(Icons.delete_outline, size: 18),
+            label: Text(l10n.delete),
+            style: TextButton.styleFrom(
+              foregroundColor: kDangerRed,
+              disabledForegroundColor: kDangerRed.withAlpha((0.4 * 255).round()),
             ),
           ),
         ],
@@ -607,45 +749,76 @@ class _HistoryScreenState extends State<HistoryScreen> {
     _scheduleDelete(record);
   }
 
-  // Hides the scan immediately and shows an Undo snackbar; the Firestore
+  // Hides the scan(s) immediately and shows an Undo snackbar; the Firestore
   // delete only actually happens once the undo window elapses uncancelled.
-  void _scheduleDelete(ScanRecord record) {
+  void _scheduleDelete(ScanRecord record) => _scheduleDeleteIds([record.id]);
+
+  Future<void> _confirmAndDeleteSelected(List<ScanRecord> allRecords) async {
     final AppLocalizations l10n = AppLocalizations.of(context)!;
-    setState(() => _pendingDeleteIds.add(record.id));
+    final ids = _selectedIds.toList();
+    final bool? confirmed = await showDialog<bool>(
+      context: context,
+      builder: (dialogContext) => AlertDialog(
+        title: Text(l10n.deleteSelectedScans),
+        content: Text(l10n.deleteSelectedScansConfirm(ids.length)),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(dialogContext, false),
+            child: Text(l10n.cancel),
+          ),
+          TextButton(
+            onPressed: () => Navigator.pop(dialogContext, true),
+            child: Text(l10n.delete, style: const TextStyle(color: kDangerRed)),
+          ),
+        ],
+      ),
+    );
+    if (confirmed != true || !mounted) return;
+    _exitSelectionMode();
+    _scheduleDeleteIds(ids);
+  }
+
+  void _scheduleDeleteIds(List<String> ids) {
+    final AppLocalizations l10n = AppLocalizations.of(context)!;
+    setState(() => _pendingDeleteIds.addAll(ids));
 
     ScaffoldMessenger.of(context).hideCurrentSnackBar();
     ScaffoldMessenger.of(context).showSnackBar(
       SnackBar(
-        content: Text(l10n.scanDeleted),
+        content: Text(ids.length == 1 ? l10n.scanDeleted : l10n.scansDeletedCount(ids.length)),
         backgroundColor: kPrimaryGreen,
         behavior: SnackBarBehavior.floating,
         duration: _undoWindow,
         action: SnackBarAction(
           label: l10n.undo,
           textColor: Colors.white,
-          onPressed: () => _undoDelete(record.id),
+          onPressed: () => _undoDelete(ids),
         ),
       ),
     );
 
-    _pendingDeleteTimers[record.id]?.cancel();
-    _pendingDeleteTimers[record.id] = Timer(_undoWindow, () {
-      _pendingDeleteTimers.remove(record.id);
-      // SnackBar's built-in auto-dismiss timer is disabled by Flutter
-      // whenever accessible navigation (e.g. a screen reader) is active, so
-      // the undo window's own timer is what actually closes it, in step
-      // with the delete becoming irreversible.
-      if (mounted) {
-        ScaffoldMessenger.of(context).hideCurrentSnackBar();
-      }
-      _commitDelete(record.id);
-    });
+    for (final id in ids) {
+      _pendingDeleteTimers[id]?.cancel();
+      _pendingDeleteTimers[id] = Timer(_undoWindow, () {
+        _pendingDeleteTimers.remove(id);
+        // SnackBar's built-in auto-dismiss timer is disabled by Flutter
+        // whenever accessible navigation (e.g. a screen reader) is active, so
+        // the undo window's own timer is what actually closes it, in step
+        // with the delete becoming irreversible.
+        if (mounted && _pendingDeleteTimers.isEmpty) {
+          ScaffoldMessenger.of(context).hideCurrentSnackBar();
+        }
+        _commitDelete(id);
+      });
+    }
   }
 
-  void _undoDelete(String id) {
-    _pendingDeleteTimers.remove(id)?.cancel();
+  void _undoDelete(List<String> ids) {
+    for (final id in ids) {
+      _pendingDeleteTimers.remove(id)?.cancel();
+    }
     if (!mounted) return;
-    setState(() => _pendingDeleteIds.remove(id));
+    setState(() => _pendingDeleteIds.removeAll(ids));
   }
 
   Future<void> _commitDelete(String id) async {
@@ -714,6 +887,51 @@ class _HistoryScreenState extends State<HistoryScreen> {
     }
   }
 
+  // Builds the same bulk PDF as "Export PDF" but hands it to the platform
+  // share sheet instead of saving it to Downloaded Reports.
+  Future<void> _shareSelected(List<ScanRecord> allRecords) async {
+    final selected = allRecords.where((r) => _selectedIds.contains(r.id)).toList();
+    if (selected.isEmpty) return;
+    final AppLocalizations l10n = AppLocalizations.of(context)!;
+
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(
+        content: Text(l10n.generatingPdfReport),
+        backgroundColor: kPrimaryGreen,
+        behavior: SnackBarBehavior.floating,
+      ),
+    );
+
+    try {
+      final entries = selected
+          .map((r) => PdfReportEntry(
+                title: r.title,
+                isSafe: r.status == ScanStatus.healthy,
+                confidence: r.isChemical ? (r.ppbValue / 100).clamp(0, 1) : r.matchPercent / 100,
+                date: r.date,
+                location: r.location,
+              ))
+          .toList();
+
+      final file = await PdfService().generateBulkReport(entries);
+
+      if (!mounted) return;
+      await SharePlus.instance.share(
+        ShareParams(files: [XFile(file.path)], subject: l10n.history),
+      );
+      _exitSelectionMode();
+    } catch (e) {
+      if (!mounted) return;
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text(l10n.couldNotGeneratePdfReport),
+          backgroundColor: kDangerRed,
+          behavior: SnackBarBehavior.floating,
+        ),
+      );
+    }
+  }
+
 }
 
 // ─────────────────────────────────────────
@@ -721,10 +939,20 @@ class _HistoryScreenState extends State<HistoryScreen> {
 // ─────────────────────────────────────────
 class _ScanCard extends StatelessWidget {
   final ScanRecord record;
+  final bool selectionMode;
+  final bool selected;
   final VoidCallback onTap;
+  final VoidCallback onLongPress;
   final VoidCallback onDelete;
 
-  const _ScanCard({required this.record, required this.onTap, required this.onDelete});
+  const _ScanCard({
+    required this.record,
+    this.selectionMode = false,
+    this.selected = false,
+    required this.onTap,
+    required this.onLongPress,
+    required this.onDelete,
+  });
 
   @override
   Widget build(BuildContext context) {
@@ -738,11 +966,15 @@ class _ScanCard extends StatelessWidget {
 
     return GestureDetector(
       onTap: onTap,
+      onLongPress: onLongPress,
       child: Container(
         decoration: BoxDecoration(
           color: kCardBg,
           borderRadius: BorderRadius.circular(14),
-          border: Border.all(color: kDivider, width: 1),
+          border: Border.all(
+            color: selected ? kPrimaryGreen : kDivider,
+            width: selected ? 2 : 1,
+          ),
           boxShadow: [
             BoxShadow(
               color: Colors.black.withAlpha((0.04 * 255).round()),
@@ -753,6 +985,15 @@ class _ScanCard extends StatelessWidget {
         ),
         child: Row(
           children: [
+            if (selectionMode)
+              Padding(
+                padding: const EdgeInsets.only(left: 10),
+                child: Icon(
+                  selected ? Icons.check_circle : Icons.radio_button_unchecked,
+                  color: selected ? kPrimaryGreen : kSubtitle,
+                  size: 22,
+                ),
+              ),
             ClipRRect(
               borderRadius: const BorderRadius.horizontal(
                 left: Radius.circular(14),
@@ -903,21 +1144,23 @@ class _ScanCard extends StatelessWidget {
                           ),
                         ),
                         const Spacer(),
-                        IconButton(
-                          onPressed: onDelete,
-                          icon: const Icon(Icons.delete_outline),
-                          iconSize: 18,
-                          color: kDangerRed.withAlpha((0.7 * 255).round()),
-                          padding: EdgeInsets.zero,
-                          constraints: const BoxConstraints(minWidth: 32, minHeight: 32),
-                          splashRadius: 18,
-                          tooltip: AppLocalizations.of(context)!.delete,
-                        ),
-                        Icon(
-                          Icons.chevron_right,
-                          color: kSubtitle.withAlpha((0.5 * 255).round()),
-                          size: 20,
-                        ),
+                        if (!selectionMode) ...[
+                          IconButton(
+                            onPressed: onDelete,
+                            icon: const Icon(Icons.delete_outline),
+                            iconSize: 18,
+                            color: kDangerRed.withAlpha((0.7 * 255).round()),
+                            padding: EdgeInsets.zero,
+                            constraints: const BoxConstraints(minWidth: 32, minHeight: 32),
+                            splashRadius: 18,
+                            tooltip: AppLocalizations.of(context)!.delete,
+                          ),
+                          Icon(
+                            Icons.chevron_right,
+                            color: kSubtitle.withAlpha((0.5 * 255).round()),
+                            size: 20,
+                          ),
+                        ],
                       ],
                     ),
                   ],

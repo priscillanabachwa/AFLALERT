@@ -122,6 +122,36 @@ class AppLocalizationsLg extends AppLocalizations {
   String get undo => 'Zzaawo';
 
   @override
+  String get selectScans => 'Londa';
+
+  @override
+  String get selectAll => 'Londa Zonna';
+
+  @override
+  String get deselectAll => 'Ggyawo Okulonda';
+
+  @override
+  String scansSelectedCount(int count) {
+    return '$count zirondeddwa';
+  }
+
+  @override
+  String get share => 'Gabana';
+
+  @override
+  String get deleteSelectedScans => 'Sazaamu Scan';
+
+  @override
+  String deleteSelectedScansConfirm(int count) {
+    return 'Oli mukakafu nti oyagala okusazaamu ebiwandiiko $count? Tekisobola kuddizibwa.';
+  }
+
+  @override
+  String scansDeletedCount(int count) {
+    return 'Scan $count zisaziddwamu.';
+  }
+
+  @override
   String get scanDetails => 'Ebikwata ku Scan ya Kasooli';
 
   @override
