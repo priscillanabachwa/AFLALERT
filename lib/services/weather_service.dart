@@ -76,17 +76,6 @@ class RainfallSummary {
   const RainfallSummary({required this.totalMm, required this.windowDays});
 }
 
-<<<<<<< HEAD
-/// Today's forecast summary, used to decide the wording of the morning
-/// weather alert (see morning_alert_service.dart).
-class DailyForecast {
-  final int weatherCode;
-  final double? precipitationProbabilityMax;
-
-  const DailyForecast({
-    required this.weatherCode,
-    this.precipitationProbabilityMax,
-=======
 class HourlyForecastEntry {
   final DateTime time;
   final double temperatureC;
@@ -114,7 +103,20 @@ class DailyForecast {
     required this.minC,
     required this.maxC,
     required this.hours,
->>>>>>> e00c4af13d4bea2ff2f7770d10c6c91e44eb66be
+  });
+}
+
+/// Lightweight summary used only to decide the wording of the morning
+/// weather alert (see morning_alert_service.dart) — kept separate from
+/// [DailyForecast] since the alert only needs the day's overall condition
+/// and rain chance, not the full hourly breakdown.
+class MorningForecastSummary {
+  final int weatherCode;
+  final double? precipitationProbabilityMax;
+
+  const MorningForecastSummary({
+    required this.weatherCode,
+    this.precipitationProbabilityMax,
   });
 }
 
@@ -268,10 +270,12 @@ class WeatherService {
   }
 
   /// Fetches today's forecast summary (expected weather and max chance of
-  /// rain) for the given coordinates, used to decide the wording of the
-  /// morning weather alert. Returns `null` if the request fails for any
-  /// reason.
-  Future<DailyForecast?> getTodayForecast(double latitude, double longitude) async {
+  /// rain), used to decide the wording of the morning weather alert.
+  /// Returns `null` if the request fails for any reason.
+  Future<MorningForecastSummary?> getMorningForecastSummary(
+    double latitude,
+    double longitude,
+  ) async {
     final Uri url = Uri.parse(
       '$_baseUrl?latitude=$latitude&longitude=$longitude'
       '&daily=weather_code,precipitation_probability_max&forecast_days=1&timezone=auto'
@@ -301,12 +305,12 @@ class WeatherService {
           ? precipProbabilities!.first as num?
           : null;
 
-      return DailyForecast(
+      return MorningForecastSummary(
         weatherCode: weatherCode.toInt(),
         precipitationProbabilityMax: precipProbability?.toDouble(),
       );
     } catch (error) {
-      debugPrint('WeatherService Error fetching today\'s forecast: $error');
+      debugPrint('WeatherService Error fetching morning forecast: $error');
       return null;
     }
   }
