@@ -44,7 +44,7 @@ const String kTermsOfServiceText = '''
 TERMS AND CONDITIONS FOR AFLALERT
 Last Updated: July 8, 2026
 
-Please read these Terms and Conditions ("Terms") carefully before downloading, installing, or using the AflAlert mobile application ("App") operated by [Your Name / Company Name] ("us", "we", or "our").
+Please read these Terms and Conditions ("Terms") carefully before downloading, installing, or using the AflAlert mobile application ("App") operated by AflAlert ("us", "we", or "our").
 
 By downloading or using the App, you agree to be bound by these Terms. If you disagree with any part of these terms, you must not use or download the App.
 
@@ -58,7 +58,7 @@ Risk Indicator Only: The App provides an educational risk estimate based on visi
 
 No Alternative to Lab Testing: AflAlert is an initial field-screening tool. It is not a replacement for regulatory, chemical, or laboratory-grade diagnostic testing.
 
-Limitation of Liability: To the maximum extent permitted by applicable law, [Your Name / Company Name] shall not be held liable for any financial losses, crop rejections, livestock illness, human sickness, or legal disputes arising from decisions made based on the App's visual AI outputs. Users accept all financial and health risks associated with the consumption, sale, or distribution of their crops.
+Limitation of Liability: To the maximum extent permitted by applicable law, AflAlert shall not be held liable for any financial losses, crop rejections, livestock illness, human sickness, or legal disputes arising from decisions made based on the App's visual AI outputs. Users accept all financial and health risks associated with the consumption, sale, or distribution of their crops.
 
 3. Offline Usage and Data Synchronization
 Local Processing: The App's machine learning model runs entirely on your device's internal hardware and does not require an active internet connection to deliver visual scan estimates.
@@ -69,7 +69,7 @@ Cloud Syncing: When your device establishes a data or Wi-Fi connection, the App 
 To ensure the machine learning engine performs at its highest possible accuracy, you agree to follow the in-app camera guidelines (ensuring proper lighting, clean flat surfaces, and sharp focus). You agree not to upload fraudulent, non-maize, or intentionally distorted images designed to manipulate the App's scoring algorithms.
 
 5. Intellectual Property
-The App, including its custom machine learning models (.tflite files), software code, user interface designs, logos, and graphics, is the exclusive property of [Your Name / Company Name] and is protected by copyright and intellectual property laws. You may not reverse-engineer, decompile, or copy the underlying AI model architecture.
+The App, including its custom machine learning models (.tflite files), software code, user interface designs, logos, and graphics, is the exclusive property of AflAlert and is protected by copyright and intellectual property laws. You may not reverse-engineer, decompile, or copy the underlying AI model architecture.
 
 6. Termination
 We reserve the right to terminate or suspend your access to the App immediately, without prior notice or liability, for any reason whatsoever, including without limitation if you breach these Terms.
@@ -85,7 +85,7 @@ const String kPrivacyPolicyText = '''
 PRIVACY POLICY FOR AFLALERT
 Last Updated: July 8, 2026
 
-[Your Name / Company Name] ("we", "our", or "us") is committed to protecting your privacy. This Privacy Policy explains how AflAlert ("App") collects, uses, discloses, and safeguards your information when you use our mobile application.
+AflAlert ("we", "our", or "us") is committed to protecting your privacy. This Privacy Policy explains how AflAlert ("App") collects, uses, discloses, and safeguards your information when you use our mobile application.
 
 By installing and using the App, you agree to the collection and use of information in accordance with this Privacy Policy. If you do not agree with the terms of this Privacy Policy, please do not access or use the App.
 
