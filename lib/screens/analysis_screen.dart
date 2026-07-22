@@ -281,20 +281,7 @@ class _AnalysisScreenState extends State<AnalysisScreen> {
         ),
         const SizedBox(height: 8),
         if (isError) ...[
-  Text(
-    "We couldn't analyze your photo.",
-    textAlign: TextAlign.center,
-    style: const TextStyle(
-      color: AppColors.grey,
-      fontSize: 16,
-      height: 1.5,
-    ),
-  ),
-  const SizedBox(height: 20),
-  _buildBulletedMessage(
-    "Our AI only recognizes raw, unprocessed maize kernels. "
-    "Please retake a clear photo of raw maize kernels.",
-  ),
+  _buildBulletedMessage(_errorMessage!),
 ] else
   Text(
     l10n.scanMaizeSampleHint,
