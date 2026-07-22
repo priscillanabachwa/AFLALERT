@@ -320,6 +320,54 @@ abstract class AppLocalizations {
   /// **'Undo'**
   String get undo;
 
+  /// No description provided for @selectScans.
+  ///
+  /// In en, this message translates to:
+  /// **'Select'**
+  String get selectScans;
+
+  /// No description provided for @selectAll.
+  ///
+  /// In en, this message translates to:
+  /// **'Select All'**
+  String get selectAll;
+
+  /// No description provided for @deselectAll.
+  ///
+  /// In en, this message translates to:
+  /// **'Deselect All'**
+  String get deselectAll;
+
+  /// No description provided for @scansSelectedCount.
+  ///
+  /// In en, this message translates to:
+  /// **'{count} selected'**
+  String scansSelectedCount(int count);
+
+  /// No description provided for @share.
+  ///
+  /// In en, this message translates to:
+  /// **'Share'**
+  String get share;
+
+  /// No description provided for @deleteSelectedScans.
+  ///
+  /// In en, this message translates to:
+  /// **'Delete Scans'**
+  String get deleteSelectedScans;
+
+  /// No description provided for @deleteSelectedScansConfirm.
+  ///
+  /// In en, this message translates to:
+  /// **'Are you sure you want to delete {count} scan records? This cannot be undone.'**
+  String deleteSelectedScansConfirm(int count);
+
+  /// No description provided for @scansDeletedCount.
+  ///
+  /// In en, this message translates to:
+  /// **'{count} scans deleted.'**
+  String scansDeletedCount(int count);
+
   /// No description provided for @scanDetails.
   ///
   /// In en, this message translates to:
