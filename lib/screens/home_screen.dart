@@ -64,8 +64,6 @@ class _HomeScreenState extends State<HomeScreen> {
 
   // Edge-triggered so the alert fires once when it becomes hot, not on
   // every 5-minute refresh while it stays hot.
-  bool _heatAlertNotified = false;
-  bool _humidityAlertNotified = false;
   // First-launch walkthrough pointing out the scan buttons and weather card.
   static const String _prefCoachMarksSeen = 'home_coach_marks_seen';
   final GlobalKey _maizeScanKey = GlobalKey();
