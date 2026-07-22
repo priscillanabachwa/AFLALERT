@@ -78,7 +78,7 @@ We reserve the right to terminate or suspend your access to the App immediately,
 We reserve the right, at our sole discretion, to modify or replace these Terms at any time. We will notify users of any major changes by updating the "Last Updated" date at the top of this document or via an in-app alert.
 
 8. Contact Information
-If you have any questions about these Terms, please contact us at: [Your Email Address].
+If you have any questions about these Terms, please contact us at: aflalert.support@gmail.com.
 ''';
 
 const String kPrivacyPolicyText = '''
