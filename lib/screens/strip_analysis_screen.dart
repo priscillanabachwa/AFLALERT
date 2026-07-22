@@ -119,7 +119,7 @@ class _StripAnalysisScreenState extends State<StripAnalysisScreen> {
         await StripAnalysisService().analyzeStripBytes(await photoFile.readAsBytes());
 
     final String? imageUrl = await StorageService().uploadStripImage(photoFile);
-    await FirestoreService().saveStripScanRecord(
+    final String? scanId = await FirestoreService().saveStripScanRecord(
       imageUrl: imageUrl ?? '',
       cropType: args.cropType.name,
       ppbValue: analysis.ppbValue,
@@ -139,6 +139,7 @@ class _StripAnalysisScreenState extends State<StripAnalysisScreen> {
       cropType: args.cropType,
       imagePath: photoFile.path,
       location: args.location,
+      scanId: scanId,
     );
   }
 
