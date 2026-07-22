@@ -71,6 +71,14 @@ class _HomeScreenState extends State<HomeScreen> {
   bool _heatAlertNotified = false;
   bool _humidityAlertNotified = false;
 
+  // Humidity can flicker above/below the threshold repeatedly in one day
+  // (each dip-then-rise re-triggers the edge above), so on top of the
+  // edge-trigger this caps how many humidity alerts actually get sent per
+  // calendar day. Persisted since a day can span multiple app sessions.
+  static const String _prefHumidityAlertDate = 'humidityAlert.date';
+  static const String _prefHumidityAlertCount = 'humidityAlert.count';
+  static const int _maxHumidityAlertsPerDay = 2;
+
   // First-launch walkthrough pointing out the scan buttons and weather card.
   static const String _prefCoachMarksSeen = 'home_coach_marks_seen';
   final GlobalKey _maizeScanKey = GlobalKey();
@@ -200,7 +208,7 @@ class _HomeScreenState extends State<HomeScreen> {
     );
   }
 
-  void _checkHumidityAlert() {
+  Future<void> _checkHumidityAlert() async {
     final bool alertNow = isHumidityAlert(_weather?.humidityPercent);
     if (!alertNow) {
       _humidityAlertNotified = false;
@@ -209,6 +217,15 @@ class _HomeScreenState extends State<HomeScreen> {
     if (_humidityAlertNotified) return;
     _humidityAlertNotified = true;
 
+    final SharedPreferences prefs = await SharedPreferences.getInstance();
+    final String today = DateTime.now().toIso8601String().substring(0, 10);
+    final bool isNewDay = prefs.getString(_prefHumidityAlertDate) != today;
+    final int countSoFar = isNewDay ? 0 : (prefs.getInt(_prefHumidityAlertCount) ?? 0);
+    if (countSoFar >= _maxHumidityAlertsPerDay) return;
+    await prefs.setString(_prefHumidityAlertDate, today);
+    await prefs.setInt(_prefHumidityAlertCount, countSoFar + 1);
+
+    if (!mounted) return;
     final AppLocalizations l10n = AppLocalizations.of(context)!;
     final String tip = tipForConditions(
       _userType,
