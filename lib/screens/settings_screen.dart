@@ -6,6 +6,7 @@ import '../constants/app_colors.dart';
 import '../l10n/app_localizations.dart';
 import '../main.dart';
 import '../services/morning_alert_service.dart';
+import '../services/rain_alert_service.dart';
 import 'legal_screen.dart';
 
 class SettingsScreen extends StatefulWidget {
@@ -208,6 +209,21 @@ class _SettingsScreenState extends State<SettingsScreen> {
                       await MorningAlertService.testNow();
                       messenger.showSnackBar(
                         const SnackBar(content: Text('Morning alert triggered — check your notifications.')),
+                      );
+                    },
+                  ),
+                  _SettingsTile(
+                    icon: Icons.umbrella_outlined,
+                    label: 'Test Rain Alert Now',
+                    onTap: () async {
+                      final ScaffoldMessengerState messenger = ScaffoldMessenger.of(context);
+                      await RainAlertService.checkNow();
+                      messenger.showSnackBar(
+                        const SnackBar(
+                          content: Text(
+                            'Rain check ran — notifies only if rain is imminent nearby right now.',
+                          ),
+                        ),
                       );
                     },
                   ),

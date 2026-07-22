@@ -15,6 +15,7 @@ import '../services/local_notification_service.dart';
 import '../services/location_service.dart';
 import '../services/morning_alert_service.dart';
 import '../services/notification_center.dart';
+import '../services/rain_alert_service.dart';
 import '../services/weather_service.dart';
 import '../utils/user_initials.dart';
 import '../widgets/custom_bottom_nav.dart';
@@ -115,6 +116,7 @@ class _HomeScreenState extends State<HomeScreen> {
       _weatherLoading = false;
     });
     MorningAlertService.cacheLocation(location.latitude, location.longitude);
+    RainAlertService.checkNow(latitude: location.latitude, longitude: location.longitude);
     _checkHeatAlert();
     _checkHumidityAlert();
   }

@@ -6,6 +6,7 @@ import '../constants/morning_alert_tips.dart';
 import '../models/app_notification.dart';
 import 'local_notification_service.dart';
 import 'notification_center.dart';
+import 'rain_alert_service.dart';
 import 'weather_service.dart';
 
 const String _uniqueName = 'morningWeatherAlert';
@@ -87,10 +88,14 @@ void callbackDispatcher() {
   Workmanager().executeTask((task, inputData) async {
     if (task == _taskName) {
       await _runMorningAlert();
+      // Always reschedule, even if this run found nothing to alert on, so
+      // the daily chain keeps going. Only this one-off task needs manual
+      // rescheduling — the rain check below is a periodic task that
+      // Workmanager keeps re-firing on its own.
+      await MorningAlertService._scheduleNext();
+    } else if (task == rainAlertTaskName) {
+      await runImminentRainCheck();
     }
-    // Always reschedule, even if this run found nothing to alert on, so the
-    // daily chain keeps going.
-    await MorningAlertService._scheduleNext();
     return true;
   });
 }
