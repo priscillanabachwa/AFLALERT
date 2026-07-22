@@ -707,67 +707,33 @@ class _HomeScreenState extends State<HomeScreen> {
     return Row(
       mainAxisAlignment: MainAxisAlignment.spaceEvenly,
       children: [
-        Column(
-          children: [
-            _buildScanCircle(
-              key: _maizeScanKey,
-              // No Material icon depicts a maize cob, so the emoji glyph
-              // reads more accurately than a generic agriculture/tractor icon.
-              icon: const Text('🌽', style: TextStyle(fontSize: 34)),
-              label: l10n.maizeScanLabel,
-              gradientColors: const [
-                AppColors.successLight,
-                AppColors.successLight,
-              ],
-              contentColor: AppColors.primaryContainer,
-              ringColor: AppColors.secondary,
-              onTap: () => _onMaizeScanTap(context),
-            ),
-            const SizedBox(height: 10),
-            _buildScanCaption('Scan the maize here'),
+        _buildScanCircle(
+          key: _maizeScanKey,
+          // No Material icon depicts a maize cob, so the emoji glyph
+          // reads more accurately than a generic agriculture/tractor icon.
+          icon: const Text('🌽', style: TextStyle(fontSize: 34)),
+          label: l10n.maizeScanLabel,
+          gradientColors: const [
+            AppColors.successLight,
+            AppColors.successLight,
           ],
+          contentColor: AppColors.primaryContainer,
+          ringColor: AppColors.secondary,
+          onTap: () => _onMaizeScanTap(context),
         ),
-        Column(
-          children: [
-            _buildScanCircle(
-              key: _stripScanKey,
-              icon: const Icon(Icons.biotech_outlined, color: AppColors.primaryContainer, size: 36),
-              label: l10n.stripScanLabel,
-              gradientColors: const [
-                AppColors.successLight,
-                AppColors.successLight,
-              ],
-              contentColor: AppColors.primaryContainer,
-              ringColor: AppColors.primaryContainer,
-              onTap: () => _onStripTestTap(context),
-            ),
-            const SizedBox(height: 10),
-            _buildScanCaption('Scan the chemical strip here'),
+        _buildScanCircle(
+          key: _stripScanKey,
+          icon: const Icon(Icons.biotech_outlined, color: AppColors.primaryContainer, size: 36),
+          label: l10n.stripScanLabel,
+          gradientColors: const [
+            AppColors.successLight,
+            AppColors.successLight,
           ],
+          contentColor: AppColors.primaryContainer,
+          ringColor: AppColors.primaryContainer,
+          onTap: () => _onStripTestTap(context),
         ),
       ],
-    );
-  }
-
-  // Sits directly on the busy background photo, so a shadow alone wasn't
-  // reliably legible — a solid backing pill guarantees contrast regardless
-  // of what's behind it.
-  Widget _buildScanCaption(String text) {
-    return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 5),
-      decoration: BoxDecoration(
-        color: Colors.black.withValues(alpha: 0.45),
-        borderRadius: BorderRadius.circular(8),
-      ),
-      child: Text(
-        text,
-        textAlign: TextAlign.center,
-        style: const TextStyle(
-          fontSize: 12,
-          fontWeight: FontWeight.w600,
-          color: Colors.white,
-        ),
-      ),
     );
   }
 

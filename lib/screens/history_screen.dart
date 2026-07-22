@@ -703,6 +703,7 @@ class _HistoryScreenState extends State<HistoryScreen> {
           cropType: record.cropType,
           imagePath: record.imagePath.isNotEmpty ? record.imagePath : null,
           location: record.location.isNotEmpty ? record.location : null,
+          fromHistory: true,
         ),
       );
       return;

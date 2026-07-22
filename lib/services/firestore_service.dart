@@ -105,7 +105,10 @@ class FirestoreService {
   /// history collection. Shares the same collection as [saveScanRecord] so
   /// Home/History keep reading from one stream; `testType` distinguishes
   /// chemical entries from Tier 1's visual scans (which predate this field).
-  Future<bool> saveStripScanRecord({
+  /// Returns the new document's ID (used to attach user feedback afterward
+  /// on the results screen, same as [saveScanRecord]) or `null` if the save
+  /// failed.
+  Future<String?> saveStripScanRecord({
     required String imageUrl,
     required String cropType,
     required double ppbValue,
@@ -119,7 +122,7 @@ class FirestoreService {
       final User? currentUser = _auth.currentUser;
       if (currentUser == null) {
         debugPrint('FirestoreService: Cannot save record, no authenticated user found.');
-        return false;
+        return null;
       }
 
       final CollectionReference userScans = _db
@@ -127,7 +130,7 @@ class FirestoreService {
           .doc(currentUser.uid)
           .collection('scans');
 
-      await userScans.add({
+      final DocumentReference doc = await userScans.add({
         'testType': 'chemical',
         'imageUrl': imageUrl,
         'cropType': cropType,
@@ -141,10 +144,10 @@ class FirestoreService {
       });
 
       debugPrint('FirestoreService: Strip scan successfully logged.');
-      return true;
+      return doc.id;
     } catch (e) {
       debugPrint('FirestoreService Error saving strip scan log: $e');
-      return false;
+      return null;
     }
   }
 
