@@ -114,7 +114,7 @@ bool isHeatAlert(double? temperatureC) =>
 // keeps grain from drying out and lets mold spread — so relative humidity at
 // or above this level triggers a humidity-specific warning in place of the
 // regular rotating tip.
-const double highHumidityPercentThreshold = 70.0;
+const double highHumidityPercentThreshold = 80.0;
 
 const List<String> farmerHumidityAlertTips = [
   'The air is very humid today. Damp air slows drying, so check drying grain more often and cover it if rain threatens.',

@@ -25,6 +25,7 @@ import 'package:aflalert/screens/notifications_screen.dart';
 import 'package:aflalert/services/local_notification_service.dart';
 import 'package:aflalert/services/morning_alert_service.dart';
 import 'package:aflalert/services/navigation_service.dart';
+import 'package:aflalert/services/rain_alert_service.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'l10n/app_localizations.dart';
 
@@ -46,6 +47,11 @@ Future<void> main() async {
       await MorningAlertService.initializeAndSchedule();
     } catch (error) {
       debugPrint('MorningAlertService init error: $error');
+    }
+    try {
+      await RainAlertService.initializeAndSchedule();
+    } catch (error) {
+      debugPrint('RainAlertService init error: $error');
     }
   }
 

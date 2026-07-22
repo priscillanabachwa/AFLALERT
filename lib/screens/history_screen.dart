@@ -13,6 +13,8 @@ import '../services/report_storage_service.dart';
 import '../widgets/custom_bottom_nav.dart';
 import '../widgets/pdf_export_dialog.dart';
 import 'result_screen.dart';
+import 'strip_camera_screen.dart' show StripCropType;
+import 'strip_result_screen.dart';
 
 // ─────────────────────────────────────────
 //  DESIGN TOKENS — aliased to the shared AppColors palette
@@ -44,6 +46,11 @@ class ScanRecord {
   final String imagePath;
   final bool isChemical;
   final double ppbValue;
+  final double tLineOD;
+  final double cLineOD;
+  final double odRatio;
+  final double safeLimitPpb;
+  final StripCropType cropType;
 
   const ScanRecord({
     required this.id,
@@ -55,6 +62,11 @@ class ScanRecord {
     required this.imagePath,
     this.isChemical = false,
     this.ppbValue = 0,
+    this.tLineOD = 0,
+    this.cLineOD = 0,
+    this.odRatio = 0,
+    this.safeLimitPpb = 0,
+    this.cropType = StripCropType.maize,
   });
 
   // Tier 1 rows show a confidence %; Tier 2 (chemical strip) rows show the
@@ -86,9 +98,13 @@ ScanRecord? _scanRecordFromDoc(QueryDocumentSnapshot doc) {
   if (data['testType'] == 'chemical') {
     final num ppb = (data['ppbValue'] ?? 0) as num;
     final num limit = (data['safeLimitPpb'] ?? 0) as num;
-    final String cropType = (data['cropType'] ?? '').toString();
-    final String cropLabel = cropType.isNotEmpty
-        ? '${cropType[0].toUpperCase()}${cropType.substring(1)}'
+    final String cropTypeRaw = (data['cropType'] ?? '').toString();
+    final StripCropType cropType = StripCropType.values.firstWhere(
+      (c) => c.name == cropTypeRaw,
+      orElse: () => StripCropType.maize,
+    );
+    final String cropLabel = cropTypeRaw.isNotEmpty
+        ? '${cropTypeRaw[0].toUpperCase()}${cropTypeRaw.substring(1)}'
         : 'Crop';
 
     return ScanRecord(
@@ -101,6 +117,11 @@ ScanRecord? _scanRecordFromDoc(QueryDocumentSnapshot doc) {
       imagePath: (data['imageUrl'] ?? '').toString(),
       isChemical: true,
       ppbValue: ppb.toDouble(),
+      tLineOD: ((data['tLineOD'] ?? 0) as num).toDouble(),
+      cLineOD: ((data['cLineOD'] ?? 0) as num).toDouble(),
+      odRatio: ((data['odRatio'] ?? 0) as num).toDouble(),
+      safeLimitPpb: limit.toDouble(),
+      cropType: cropType,
     );
   }
 
@@ -522,13 +543,26 @@ class _HistoryScreenState extends State<HistoryScreen> {
   }
 
   // ── ACTIONS ──────────────────────────────
-  // Chemical (Tier 2) rows show their own bottom sheet — ResultsScreen only
-  // understands Tier 1's isSafe/confidence shape, so a ppb reading has
-  // nowhere to render if routed through it. Tier 1 rows reuse the shared
-  // ResultsScreen in fromHistory mode instead of duplicating that UI here.
+  // Both tiers reuse their shared results screen in "opened from history"
+  // mode instead of duplicating that UI here — Tier 1 via ResultsScreen,
+  // Tier 2 (chemical strip) via StripResultsScreen, using the diagnostic
+  // fields already persisted alongside the ppb reading.
   void _openDetail(ScanRecord record) {
     if (record.isChemical) {
-      _openChemicalDetail(record);
+      Navigator.pushNamed(
+        context,
+        '/stripResults',
+        arguments: StripResultsScreenArgs(
+          ppbValue: record.ppbValue,
+          tLineOD: record.tLineOD,
+          cLineOD: record.cLineOD,
+          odRatio: record.odRatio,
+          safeLimitPpb: record.safeLimitPpb,
+          cropType: record.cropType,
+          imagePath: record.imagePath.isNotEmpty ? record.imagePath : null,
+          location: record.location.isNotEmpty ? record.location : null,
+        ),
+      );
       return;
     }
 
@@ -542,88 +576,6 @@ class _HistoryScreenState extends State<HistoryScreen> {
         imagePath: record.imagePath.isNotEmpty ? record.imagePath : null,
         fromHistory: true,
       ),
-    );
-  }
-
-  void _openChemicalDetail(ScanRecord record) {
-    final AppLocalizations l10n = AppLocalizations.of(context)!;
-    showModalBottomSheet(
-      context: context,
-      shape: const RoundedRectangleBorder(
-        borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
-      ),
-      builder: (_) {
-        return Padding(
-          padding: const EdgeInsets.fromLTRB(20, 20, 20, 32),
-          child: Column(
-            mainAxisSize: MainAxisSize.min,
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              Center(
-                child: Container(
-                  width: 40,
-                  height: 4,
-                  margin: const EdgeInsets.only(bottom: 16),
-                  decoration: BoxDecoration(
-                    color: kDivider,
-                    borderRadius: BorderRadius.circular(2),
-                  ),
-                ),
-              ),
-              Text(
-                record.title,
-                style: const TextStyle(
-                  fontSize: 20,
-                  fontWeight: FontWeight.w800,
-                  color: kPrimaryGreen,
-                ),
-              ),
-              const SizedBox(height: 8),
-              Text(
-                l10n.locationLabel(record.location.isNotEmpty ? record.location : l10n.notRecorded),
-                style: const TextStyle(fontSize: 14, color: Color(0xFF263238)),
-              ),
-              const SizedBox(height: 4),
-              Text(
-                l10n.dateLabel(record.date),
-                style: const TextStyle(fontSize: 14, color: Color(0xFF263238)),
-              ),
-              const SizedBox(height: 12),
-              Text(
-                l10n.statusLabel(record.status == ScanStatus.moldDetected ? l10n.moldDetected : l10n.healthy),
-                style: TextStyle(
-                  fontSize: 14,
-                  fontWeight: FontWeight.w700,
-                  color: record.status == ScanStatus.moldDetected
-                      ? kDangerRed
-                      : kSafeGreen,
-                ),
-              ),
-              const SizedBox(height: 12),
-              Text(
-                l10n.chemicalLevelValueLabel(record.ppbValue.toStringAsFixed(1)),
-                style: const TextStyle(fontSize: 14, color: Color(0xFF263238)),
-              ),
-              const SizedBox(height: 20),
-              SizedBox(
-                width: double.infinity,
-                child: ElevatedButton(
-                  onPressed: () => Navigator.pop(context),
-                  style: ElevatedButton.styleFrom(
-                    backgroundColor: kPrimaryGreen,
-                    foregroundColor: Colors.white,
-                    padding: const EdgeInsets.symmetric(vertical: 14),
-                    shape: RoundedRectangleBorder(
-                      borderRadius: BorderRadius.circular(12),
-                    ),
-                  ),
-                  child: Text(l10n.close),
-                ),
-              ),
-            ],
-          ),
-        );
-      },
     );
   }
 
