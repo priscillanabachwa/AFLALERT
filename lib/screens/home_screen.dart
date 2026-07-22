@@ -487,46 +487,55 @@ class _HomeScreenState extends State<HomeScreen> {
     );
   }
 
-  Widget _buildTipCard(String dailyTip, bool heatAlert) {
-    final AppLocalizations l10n = AppLocalizations.of(context)!;
-    return Container(
-      width: double.infinity,
-      padding: const EdgeInsets.all(16),
-      decoration: BoxDecoration(
-        color: AppColors.primaryContainer,
-        borderRadius: BorderRadius.circular(16),
-      ),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Icon(
-            heatAlert ? Icons.whatshot : Icons.lightbulb_outline,
+Widget _buildTipCard(String dailyTip, WeatherAlertKind alertKind) {
+  final AppLocalizations l10n = AppLocalizations.of(context)!;
+
+  final IconData icon = switch (alertKind) {
+    WeatherAlertKind.heat => Icons.whatshot,
+    WeatherAlertKind.humidity => Icons.water_drop,
+    WeatherAlertKind.none => Icons.lightbulb_outline,
+  };
+
+  final String badgeLabel = switch (alertKind) {
+    WeatherAlertKind.heat => l10n.heatAlertBadge,
+    WeatherAlertKind.humidity => l10n.humidityAlertBadge,
+    WeatherAlertKind.none => l10n.dailyTip,
+  };
+
+  return Container(
+    width: double.infinity,
+    padding: const EdgeInsets.all(16),
+    decoration: BoxDecoration(
+      color: AppColors.primaryContainer,
+      borderRadius: BorderRadius.circular(16),
+    ),
+    child: Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Icon(icon, color: AppColors.secondary, size: 20),
+        const SizedBox(height: 8),
+        Text(
+          badgeLabel,
+          style: const TextStyle(
+            fontSize: 10,
+            fontWeight: FontWeight.w700,
             color: AppColors.secondary,
-            size: 20,
+            letterSpacing: 0.5,
           ),
-          const SizedBox(height: 8),
-          Text(
-            heatAlert ? l10n.heatAlertBadge : l10n.dailyTip,
-            style: const TextStyle(
-              fontSize: 10,
-              fontWeight: FontWeight.w700,
-              color: AppColors.secondary,
-              letterSpacing: 0.5,
-            ),
+        ),
+        const SizedBox(height: 8),
+        Text(
+          dailyTip,
+          style: const TextStyle(
+            fontSize: 12,
+            color: Colors.white,
+            height: 1.4,
           ),
-          const SizedBox(height: 8),
-          Text(
-            dailyTip,
-            style: const TextStyle(
-              fontSize: 12,
-              color: Colors.white,
-              height: 1.4,
-            ),
-          ),
-        ],
-      ),
-    );
-  }
+        ),
+      ],
+    ),
+  );
+}
 
   // Compact "location + degrees" chip that sits opposite the greeting.
   // Tapping it opens the full forecast rather than cluttering the home
