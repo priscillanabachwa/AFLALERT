@@ -3,8 +3,9 @@ import 'package:flutter/material.dart';
 import '../constants/app_colors.dart';
 
 // Generic screen for displaying static legal text (Terms of Service,
-// Privacy Policy, etc.) so both can share one layout. Replace [body] with
-// the actual legal copy when it's ready.
+// Privacy Policy, etc.) so both can share one layout. The [body] string is
+// parsed line-by-line to style numbered sections, sub-sections, and
+// "Label: description" lines without needing markup in the source text.
 class LegalDocumentScreen extends StatelessWidget {
   final String title;
   final String body;
@@ -15,12 +16,140 @@ class LegalDocumentScreen extends StatelessWidget {
     required this.body,
   });
 
+  static final RegExp _sectionHeaderReg = RegExp(r'^(\d+)\.\s+(.*)$');
+  static final RegExp _subHeaderReg = RegExp(r'^([A-Z])\.\s+(.*)$');
+  static final RegExp _labelLineReg = RegExp(r'^([^:]{2,40}):\s+(.+)$');
+  static const Set<String> _labelConnectors = {
+    'of', 'to', 'the', 'in', 'for', 'and', 'or', 'on', 'at',
+  };
+
+  bool _isPrivacyDoc() => title.toLowerCase().contains('privacy');
+
+  MapEntry<String, String>? _extractLabel(String line) {
+    final match = _labelLineReg.firstMatch(line);
+    if (match == null) return null;
+    final label = match.group(1)!;
+    final rest = match.group(2)!;
+    final words = label.split(' ');
+    if (words.length > 7) return null;
+    final looksLikeLabel = words.every((w) {
+      if (w.isEmpty) return true;
+      if (_labelConnectors.contains(w.toLowerCase())) return true;
+      return RegExp(r'^[A-Z][A-Za-z()]*$').hasMatch(w);
+    });
+    return looksLikeLabel ? MapEntry(label, rest) : null;
+  }
+
+  List<Widget> _buildBody(String docTitle, String lastUpdated, List<String> lines) {
+    final widgets = <Widget>[];
+    var firstBlock = true;
+
+    for (final rawLine in lines) {
+      final line = rawLine.trim();
+      if (line.isEmpty) continue;
+
+      final sectionMatch = _sectionHeaderReg.firstMatch(line);
+      final subMatch = _subHeaderReg.firstMatch(line);
+
+      if (sectionMatch != null) {
+        widgets.add(Padding(
+          padding: EdgeInsets.only(top: firstBlock ? 0 : 24, bottom: 10),
+          child: Row(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Container(
+                width: 26,
+                height: 26,
+                alignment: Alignment.center,
+                decoration: const BoxDecoration(
+                  color: AppColors.primary,
+                  shape: BoxShape.circle,
+                ),
+                child: Text(
+                  sectionMatch.group(1)!,
+                  style: const TextStyle(
+                    color: Colors.white,
+                    fontSize: 12,
+                    fontWeight: FontWeight.bold,
+                  ),
+                ),
+              ),
+              const SizedBox(width: 10),
+              Expanded(
+                child: Text(
+                  sectionMatch.group(2)!,
+                  style: const TextStyle(
+                    color: AppColors.primary,
+                    fontSize: 16,
+                    fontWeight: FontWeight.bold,
+                  ),
+                ),
+              ),
+            ],
+          ),
+        ));
+        firstBlock = false;
+        continue;
+      }
+
+      if (subMatch != null) {
+        widgets.add(Padding(
+          padding: const EdgeInsets.only(top: 14, bottom: 6),
+          child: Text(
+            '${subMatch.group(1)}. ${subMatch.group(2)}',
+            style: const TextStyle(
+              color: AppColors.primaryContainer,
+              fontSize: 14.5,
+              fontWeight: FontWeight.w700,
+            ),
+          ),
+        ));
+        firstBlock = false;
+        continue;
+      }
+
+      final label = _extractLabel(line);
+      widgets.add(Padding(
+        padding: const EdgeInsets.only(bottom: 10),
+        child: label != null
+            ? RichText(
+                textAlign: TextAlign.justify,
+                text: TextSpan(
+                  style: const TextStyle(color: AppColors.text, fontSize: 14, height: 1.5),
+                  children: [
+                    TextSpan(
+                      text: '${label.key}: ',
+                      style: const TextStyle(color: AppColors.primary, fontWeight: FontWeight.bold),
+                    ),
+                    TextSpan(text: label.value),
+                  ],
+                ),
+              )
+            : Text(
+                line,
+                textAlign: TextAlign.justify,
+                style: const TextStyle(color: AppColors.text, fontSize: 14, height: 1.5),
+              ),
+      ));
+      firstBlock = false;
+    }
+
+    return widgets;
+  }
+
   @override
   Widget build(BuildContext context) {
+    final lines = body.split('\n');
+    final docTitle = lines.isNotEmpty ? lines[0].trim() : title;
+    final lastUpdated = lines.length > 1 ? lines[1].trim() : '';
+    final contentLines = lines.length > 2 ? lines.sublist(2) : <String>[];
+    final icon = _isPrivacyDoc() ? Icons.privacy_tip_outlined : Icons.description_outlined;
+
     return Scaffold(
       backgroundColor: AppColors.t95,
       appBar: AppBar(
         backgroundColor: AppColors.t95,
+        elevation: 0,
         title: Text(
           title,
           style: const TextStyle(color: AppColors.primary, fontWeight: FontWeight.bold),
@@ -29,10 +158,71 @@ class LegalDocumentScreen extends StatelessWidget {
       ),
       body: SafeArea(
         child: SingleChildScrollView(
-          padding: const EdgeInsets.all(20),
-          child: Text(
-            body,
-            style: const TextStyle(color: AppColors.text, fontSize: 14, height: 1.5),
+          padding: const EdgeInsets.fromLTRB(16, 0, 16, 24),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.stretch,
+            children: [
+              Container(
+                padding: const EdgeInsets.all(20),
+                decoration: BoxDecoration(
+                  color: AppColors.primary,
+                  borderRadius: BorderRadius.circular(16),
+                ),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Icon(icon, color: AppColors.secondary, size: 30),
+                    const SizedBox(height: 12),
+                    Text(
+                      docTitle,
+                      style: const TextStyle(
+                        color: Colors.white,
+                        fontSize: 19,
+                        fontWeight: FontWeight.bold,
+                        height: 1.3,
+                      ),
+                    ),
+                    if (lastUpdated.isNotEmpty) ...[
+                      const SizedBox(height: 10),
+                      Container(
+                        padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
+                        decoration: BoxDecoration(
+                          color: Colors.white.withValues(alpha: 0.15),
+                          borderRadius: BorderRadius.circular(20),
+                        ),
+                        child: Text(
+                          lastUpdated,
+                          style: const TextStyle(
+                            color: Colors.white,
+                            fontSize: 12,
+                            fontWeight: FontWeight.w600,
+                          ),
+                        ),
+                      ),
+                    ],
+                  ],
+                ),
+              ),
+              const SizedBox(height: 16),
+              Container(
+                padding: const EdgeInsets.all(20),
+                decoration: BoxDecoration(
+                  color: AppColors.surface,
+                  borderRadius: BorderRadius.circular(16),
+                  boxShadow: [
+                    BoxShadow(
+                      color: Colors.black.withValues(alpha: 0.05),
+                      blurRadius: 12,
+                      offset: const Offset(0, 4),
+                    ),
+                  ],
+                ),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: _buildBody(docTitle, lastUpdated, contentLines),
+                ),
+              ),
+            ],
           ),
         ),
       ),
@@ -129,5 +319,5 @@ Clear your entire testing history through the App's internal settings menu.
 Revoke the App's access to your camera or location services via your phone's main settings panel at any time.
 
 7. Contact Us
-If you have any questions or suggestions regarding this Privacy Policy, please contact us at: [Your Email Address].
+If you have any questions or suggestions regarding this Privacy Policy, please contact us at: aflalert.support@gmail.com.
 ''';
