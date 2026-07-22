@@ -1,11 +1,9 @@
-import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
 import '../constants/app_colors.dart';
 import '../l10n/app_localizations.dart';
 import '../main.dart';
-import '../services/rain_alert_service.dart';
 import 'legal_screen.dart';
 
 class SettingsScreen extends StatefulWidget {
@@ -193,32 +191,6 @@ class _SettingsScreenState extends State<SettingsScreen> {
                 ),
               ],
             ),
-            const SizedBox(height: 32),
-
-            // ---------------- Debug (debug builds only) ----------------
-            if (kDebugMode) ...[
-              _SectionHeader(title: 'Debug'),
-              _SettingsCard(
-                children: [
-                  _SettingsTile(
-                    icon: Icons.umbrella_outlined,
-                    label: 'Test Rain Alert Now',
-                    onTap: () async {
-                      final ScaffoldMessengerState messenger = ScaffoldMessenger.of(context);
-                      await RainAlertService.checkNow();
-                      messenger.showSnackBar(
-                        const SnackBar(
-                          content: Text(
-                            'Rain check ran — notifies only if rain is imminent nearby right now.',
-                          ),
-                        ),
-                      );
-                    },
-                  ),
-                ],
-              ),
-              const SizedBox(height: 32),
-            ],
           ],
         ),
       ),
