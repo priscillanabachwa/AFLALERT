@@ -122,7 +122,7 @@ class AppLocalizationsLg extends AppLocalizations {
   String get undo => 'Zzaawo';
 
   @override
-  String get scanDetails => 'Ebikwata ku Scan';
+  String get scanDetails => 'Ebikwata ku Scan ya Kasooli';
 
   @override
   String get totalScans => 'Scan Zonna';
@@ -864,10 +864,40 @@ class AppLocalizationsLg extends AppLocalizations {
       'Ebiteesebwa biva mu buwabuzi bwa UNBS ne MAAIF.';
 
   @override
-  String get tier1Short => 'Tier 1';
+  String get maizeScanLabel => 'Maize Scan';
 
   @override
-  String get tier2Short => 'Tier 2';
+  String get stripScanLabel => 'Strip Scan';
+
+  @override
+  String get coachMarkSkip => 'Skip';
+
+  @override
+  String get coachMarkNext => 'Next';
+
+  @override
+  String get coachMarkGotIt => 'Got it';
+
+  @override
+  String get coachMarkMaizeTitle => 'Scan your maize';
+
+  @override
+  String get coachMarkMaizeDesc =>
+      'Tap here to photograph maize kernels and check for visible mold.';
+
+  @override
+  String get coachMarkStripTitle => 'Test a chemical strip';
+
+  @override
+  String get coachMarkStripDesc =>
+      'Tap here after the strip\'s reaction time to check aflatoxin levels.';
+
+  @override
+  String get coachMarkWeatherTitle => 'Today\'s weather';
+
+  @override
+  String get coachMarkWeatherDesc =>
+      'Tap this card anytime to see the full hourly forecast.';
 
   @override
   String get chemicalStripScanTitle => 'Chemical Strip Scan';

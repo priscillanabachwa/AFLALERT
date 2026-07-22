@@ -4,19 +4,19 @@ import 'package:camera/camera.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 
 import '../constants/app_colors.dart';
 import '../constants/daily_tips.dart';
 import '../constants/seasonal_guidelines.dart';
 import '../l10n/app_localizations.dart';
-import '../models/app_notification.dart';
 import '../services/firestore_service.dart';
-import '../services/local_notification_service.dart';
 import '../services/location_service.dart';
 import '../services/morning_alert_service.dart';
-import '../services/notification_center.dart';
+import '../services/rain_alert_service.dart';
 import '../services/weather_service.dart';
 import '../utils/user_initials.dart';
+import '../widgets/coach_mark_overlay.dart';
 import '../widgets/custom_bottom_nav.dart';
 import 'analysis_screen.dart';
 import 'history_screen.dart';
@@ -66,6 +66,12 @@ class _HomeScreenState extends State<HomeScreen> {
   // every 5-minute refresh while it stays hot.
   bool _heatAlertNotified = false;
   bool _humidityAlertNotified = false;
+  // First-launch walkthrough pointing out the scan buttons and weather card.
+  static const String _prefCoachMarksSeen = 'home_coach_marks_seen';
+  final GlobalKey _maizeScanKey = GlobalKey();
+  final GlobalKey _stripScanKey = GlobalKey();
+  final GlobalKey _weatherChipKey = GlobalKey();
+  bool _showCoachMarks = false;
 
   @override
   void initState() {
@@ -81,6 +87,25 @@ class _HomeScreenState extends State<HomeScreen> {
       setState(() => _userType = userType);
       MorningAlertService.cacheUserType(userType);
     });
+    _maybeShowCoachMarks();
+  }
+
+  Future<void> _maybeShowCoachMarks() async {
+    final SharedPreferences prefs = await SharedPreferences.getInstance();
+    if (prefs.getBool(_prefCoachMarksSeen) ?? false) return;
+    if (!mounted) return;
+    // Wait for the first real frame so the target widgets have a laid-out
+    // RenderBox for the overlay to measure and spotlight.
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      if (mounted) setState(() => _showCoachMarks = true);
+    });
+  }
+
+  void _dismissCoachMarks() {
+    setState(() => _showCoachMarks = false);
+    SharedPreferences.getInstance().then(
+      (prefs) => prefs.setBool(_prefCoachMarksSeen, true),
+    );
   }
 
   @override
@@ -114,8 +139,7 @@ class _HomeScreenState extends State<HomeScreen> {
       _weatherLoading = false;
     });
     MorningAlertService.cacheLocation(location.latitude, location.longitude);
-    _checkHeatAlert();
-    _checkHumidityAlert();
+    RainAlertService.checkNow(latitude: location.latitude, longitude: location.longitude);
   }
 
   // Depends only on the calendar and rainfall, not on user type, so it can
@@ -123,91 +147,6 @@ class _HomeScreenState extends State<HomeScreen> {
   // their content in sync.
   SeasonStage get _currentSeasonStage =>
       currentSeasonalGuideline(recentRainfallMm: _rainfall?.totalMm).stage;
-
-  void _checkHeatAlert() {
-    final bool alertNow = isHeatAlert(_weather?.temperatureC);
-    if (!alertNow) {
-      _heatAlertNotified = false;
-      return;
-    }
-    if (_heatAlertNotified) return;
-    _heatAlertNotified = true;
-
-    final AppLocalizations l10n = AppLocalizations.of(context)!;
-    final String tip = tipForConditions(
-      _userType,
-      _weather?.temperatureC,
-      currentStage: _currentSeasonStage,
-    );
-    final int tempRounded = _weather!.temperatureC.round();
-    // humidityPercent intentionally omitted above: this is the heat-specific
-    // notification, so it should stay heat-specific even if humidity also
-    // happens to be in alert range right now.
-
-    // Shared between the in-app and device notification so tapping the
-    // device notification can scroll straight to this entry.
-    final String notificationId = DateTime.now().microsecondsSinceEpoch.toString();
-
-    NotificationCenter.instance.add(
-      AppNotification(
-        id: notificationId,
-        title: l10n.heatAlertTitle,
-        description: tip,
-        icon: Icons.whatshot,
-        iconColor: const Color(0xFFE0562A),
-        iconBackground: const Color(0xFFFBDCCB),
-        category: NotificationCategory.alert,
-        unread: true,
-        highPriority: true,
-      ),
-    );
-
-    LocalNotificationService.instance.show(
-      title: l10n.heatAlertNotifTitle(tempRounded),
-      body: tip,
-      notificationId: notificationId,
-    );
-  }
-
-  void _checkHumidityAlert() {
-    final bool alertNow = isHumidityAlert(_weather?.humidityPercent);
-    if (!alertNow) {
-      _humidityAlertNotified = false;
-      return;
-    }
-    if (_humidityAlertNotified) return;
-    _humidityAlertNotified = true;
-
-    final AppLocalizations l10n = AppLocalizations.of(context)!;
-    final String tip = tipForConditions(
-      _userType,
-      null,
-      humidityPercent: _weather?.humidityPercent,
-      currentStage: _currentSeasonStage,
-    );
-    final int humidityRounded = _weather!.humidityPercent!.round();
-    final String notificationId = DateTime.now().microsecondsSinceEpoch.toString();
-
-    NotificationCenter.instance.add(
-      AppNotification(
-        id: notificationId,
-        title: l10n.humidityAlertNotifTitle(humidityRounded),
-        description: tip,
-        icon: Icons.water_drop,
-        iconColor: const Color(0xFF2A7DE0),
-        iconBackground: const Color(0xFFCBE0FB),
-        category: NotificationCategory.alert,
-        unread: true,
-        highPriority: true,
-      ),
-    );
-
-    LocalNotificationService.instance.show(
-      title: l10n.humidityAlertNotifTitle(humidityRounded),
-      body: tip,
-      notificationId: notificationId,
-    );
-  }
 
   @override
   Widget build(BuildContext context) {
@@ -284,7 +223,7 @@ class _HomeScreenState extends State<HomeScreen> {
                               },
                             ),
                             const SizedBox(height: 24),
-                            _buildTierPicker(context),
+                            _buildScanPicker(context),
                             const SizedBox(height: 24),
                             _buildTipCard(
                               tipForConditions(
@@ -352,6 +291,29 @@ class _HomeScreenState extends State<HomeScreen> {
               ),
             ),
           ),
+          if (_showCoachMarks)
+            CoachMarkOverlay(
+              steps: [
+                CoachMarkStep(
+                  targetKey: _maizeScanKey,
+                  shape: CoachMarkShape.circle,
+                  title: l10n.coachMarkMaizeTitle,
+                  description: l10n.coachMarkMaizeDesc,
+                ),
+                CoachMarkStep(
+                  targetKey: _stripScanKey,
+                  shape: CoachMarkShape.circle,
+                  title: l10n.coachMarkStripTitle,
+                  description: l10n.coachMarkStripDesc,
+                ),
+                CoachMarkStep(
+                  targetKey: _weatherChipKey,
+                  title: l10n.coachMarkWeatherTitle,
+                  description: l10n.coachMarkWeatherDesc,
+                ),
+              ],
+              onFinished: _dismissCoachMarks,
+            ),
         ],
       ),
       bottomNavigationBar: const CustomBottomNav(currentIndex: 0),
@@ -545,10 +507,11 @@ Widget _buildTipCard(String dailyTip, WeatherAlertKind alertKind) {
     return GestureDetector(
       onTap: () => _showWeatherForecast(context),
       child: Container(
+        key: _weatherChipKey,
         constraints: const BoxConstraints(maxWidth: 90),
         padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 6),
         decoration: BoxDecoration(
-          color: AppColors.t95,
+          color: AppColors.successLight,
           borderRadius: BorderRadius.circular(12),
           boxShadow: [
             BoxShadow(
@@ -705,7 +668,7 @@ Widget _buildTipCard(String dailyTip, WeatherAlertKind alertKind) {
     );
   }
 
-  Future<void> _onTier1Tap(BuildContext context) async {
+  Future<void> _onMaizeScanTap(BuildContext context) async {
     // Reuse the location already resolved for the weather card when
     // possible, falling back to a fresh lookup if that hasn't landed yet.
     final String? location =
@@ -722,7 +685,7 @@ Widget _buildTipCard(String dailyTip, WeatherAlertKind alertKind) {
     );
   }
 
-  Future<void> _onTier2Tap(BuildContext context) async {
+  Future<void> _onStripTestTap(BuildContext context) async {
     final String? location =
         _location?.placeName ?? await LocationService().getCurrentPlaceName();
     if (!context.mounted) return;
@@ -742,75 +705,133 @@ Widget _buildTipCard(String dailyTip, WeatherAlertKind alertKind) {
   }
 
   // Two circular start-a-test buttons, mirrored on opposite sides of the
-  // row (Tier 1 left, Tier 2 right) rather than the earlier stacked
+  // row (maize scan left, strip test right) rather than the earlier stacked
   // rectangular cards.
-  Widget _buildTierPicker(BuildContext context) {
+  Widget _buildScanPicker(BuildContext context) {
     final AppLocalizations l10n = AppLocalizations.of(context)!;
     return Row(
       mainAxisAlignment: MainAxisAlignment.spaceEvenly,
       children: [
-        _buildTierCircle(
-          icon: Icons.camera_alt_outlined,
-          label: l10n.tier1Short,
-          fillColor: AppColors.primaryContainer,
-          contentColor: Colors.white,
-          onTap: () => _onTier1Tap(context),
+        Column(
+          children: [
+            _buildScanCircle(
+              key: _maizeScanKey,
+              // No Material icon depicts a maize cob, so the emoji glyph
+              // reads more accurately than a generic agriculture/tractor icon.
+              icon: const Text('🌽', style: TextStyle(fontSize: 34)),
+              label: l10n.maizeScanLabel,
+              gradientColors: const [
+                AppColors.successLight,
+                AppColors.successLight,
+              ],
+              contentColor: AppColors.primaryContainer,
+              ringColor: AppColors.secondary,
+              onTap: () => _onMaizeScanTap(context),
+            ),
+            const SizedBox(height: 10),
+            _buildScanCaption('Scan the maize here'),
+          ],
         ),
-        _buildTierCircle(
-          icon: Icons.science_outlined,
-          label: l10n.tier2Short,
-          fillColor: AppColors.secondary,
-          contentColor: AppColors.primary,
-          onTap: () => _onTier2Tap(context),
+        Column(
+          children: [
+            _buildScanCircle(
+              key: _stripScanKey,
+              icon: const Icon(Icons.biotech_outlined, color: AppColors.primaryContainer, size: 36),
+              label: l10n.stripScanLabel,
+              gradientColors: const [
+                AppColors.successLight,
+                AppColors.successLight,
+              ],
+              contentColor: AppColors.primaryContainer,
+              ringColor: AppColors.primaryContainer,
+              onTap: () => _onStripTestTap(context),
+            ),
+            const SizedBox(height: 10),
+            _buildScanCaption('Scan the chemical strip here'),
+          ],
         ),
       ],
     );
   }
 
-  Widget _buildTierCircle({
-    required IconData icon,
+  // Sits directly on the busy background photo, so a shadow alone wasn't
+  // reliably legible — a solid backing pill guarantees contrast regardless
+  // of what's behind it.
+  Widget _buildScanCaption(String text) {
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 5),
+      decoration: BoxDecoration(
+        color: Colors.black.withValues(alpha: 0.45),
+        borderRadius: BorderRadius.circular(8),
+      ),
+      child: Text(
+        text,
+        textAlign: TextAlign.center,
+        style: const TextStyle(
+          fontSize: 12,
+          fontWeight: FontWeight.w600,
+          color: Colors.white,
+        ),
+      ),
+    );
+  }
+
+  Widget _buildScanCircle({
+    Key? key,
+    required Widget icon,
     required String label,
-    required Color fillColor,
+    required List<Color> gradientColors,
     required Color contentColor,
+    required Color ringColor,
     required VoidCallback onTap,
   }) {
     return Container(
-      width: 132,
-      height: 132,
-      padding: const EdgeInsets.all(5),
+      key: key,
+      width: 140,
+      height: 140,
       decoration: BoxDecoration(
         shape: BoxShape.circle,
-        color: AppColors.t95.withValues(alpha: 0.9),
         boxShadow: [
           BoxShadow(
-            color: Colors.black.withValues(alpha: 0.15),
-            blurRadius: 12,
-            offset: const Offset(0, 6),
+            color: Colors.black.withValues(alpha: 0.2),
+            blurRadius: 16,
+            offset: const Offset(0, 8),
           ),
         ],
       ),
       child: Material(
-        color: fillColor,
-        shape: const CircleBorder(),
-        child: InkWell(
-          customBorder: const CircleBorder(),
-          onTap: onTap,
-          child: Column(
-            mainAxisAlignment: MainAxisAlignment.center,
-            children: [
-              Icon(icon, color: contentColor, size: 32),
-              const SizedBox(height: 8),
-              Text(
-                label,
-                textAlign: TextAlign.center,
-                style: TextStyle(
-                  color: contentColor,
-                  fontSize: 13,
-                  fontWeight: FontWeight.bold,
-                  letterSpacing: 0.5,
+        shape: CircleBorder(
+          side: BorderSide(color: ringColor, width: 4),
+        ),
+        clipBehavior: Clip.antiAlias,
+        child: Ink(
+          decoration: BoxDecoration(
+            shape: BoxShape.circle,
+            gradient: LinearGradient(
+              begin: Alignment.topLeft,
+              end: Alignment.bottomRight,
+              colors: gradientColors,
+            ),
+          ),
+          child: InkWell(
+            onTap: onTap,
+            child: Column(
+              mainAxisAlignment: MainAxisAlignment.center,
+              children: [
+                icon,
+                const SizedBox(height: 8),
+                Text(
+                  label,
+                  textAlign: TextAlign.center,
+                  style: TextStyle(
+                    color: contentColor,
+                    fontSize: 13,
+                    fontWeight: FontWeight.bold,
+                    letterSpacing: 0.5,
+                  ),
                 ),
-              ),
-            ],
+              ],
+            ),
           ),
         ),
       ),
@@ -838,7 +859,7 @@ Widget _buildTipCard(String dailyTip, WeatherAlertKind alertKind) {
           caseSensitive: false,
         ).hasMatch(label) &&
         !RegExp(
-          r'no mold|healthy|clean|safe|negative',
+          r'ld|healthy|clean|safe|negative',
           caseSensitive: false,
         ).hasMatch(label);
   }
@@ -902,7 +923,7 @@ Widget _buildTipCard(String dailyTip, WeatherAlertKind alertKind) {
     return Container(
       padding: const EdgeInsets.symmetric(vertical: 18, horizontal: 12),
       decoration: BoxDecoration(
-        color: AppColors.t95,
+        color: AppColors.successLight,
         borderRadius: BorderRadius.circular(16),
         boxShadow: [
           BoxShadow(
@@ -934,7 +955,7 @@ Widget _buildTipCard(String dailyTip, WeatherAlertKind alertKind) {
       padding: const EdgeInsets.symmetric(vertical: 28),
       alignment: Alignment.center,
       decoration: BoxDecoration(
-        color: AppColors.t95,
+        color: AppColors.successLight,
         borderRadius: BorderRadius.circular(16),
         boxShadow: [
           BoxShadow(
@@ -1079,7 +1100,7 @@ Widget _buildTipCard(String dailyTip, WeatherAlertKind alertKind) {
     return Container(
       padding: const EdgeInsets.all(14),
       decoration: BoxDecoration(
-        color: AppColors.t95,
+        color: AppColors.successLight,
         borderRadius: BorderRadius.circular(16),
         boxShadow: [
           BoxShadow(
@@ -1309,7 +1330,18 @@ class _WeatherForecastSheetState extends State<_WeatherForecastSheet> {
                                   style: const TextStyle(fontSize: 11, color: Colors.grey),
                                 ),
                                 const SizedBox(height: 8),
-                                Icon(hour.icon, color: AppColors.secondary, size: 22),
+                                Icon(
+                                  hour.icon,
+                                  // A single accent color made every hour
+                                  // read as "daytime" regardless of the
+                                  // icon shape, which is what made the
+                                  // moon at 9PM look like an outlier
+                                  // instead of the start of a night run.
+                                  color: hour.isDay
+                                      ? AppColors.secondary
+                                      : const Color(0xFF7C8DB5),
+                                  size: 22,
+                                ),
                                 const SizedBox(height: 8),
                                 Text(
                                   '${hour.temperatureC.round()}°',
