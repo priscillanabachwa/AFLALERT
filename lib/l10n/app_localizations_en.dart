@@ -121,6 +121,36 @@ class AppLocalizationsEn extends AppLocalizations {
   String get undo => 'Undo';
 
   @override
+  String get selectScans => 'Select';
+
+  @override
+  String get selectAll => 'Select All';
+
+  @override
+  String get deselectAll => 'Deselect All';
+
+  @override
+  String scansSelectedCount(int count) {
+    return '$count selected';
+  }
+
+  @override
+  String get share => 'Share';
+
+  @override
+  String get deleteSelectedScans => 'Delete Scans';
+
+  @override
+  String deleteSelectedScansConfirm(int count) {
+    return 'Are you sure you want to delete $count scan records? This cannot be undone.';
+  }
+
+  @override
+  String scansDeletedCount(int count) {
+    return '$count scans deleted.';
+  }
+
+  @override
   String get scanDetails => 'Maize Scan Details';
 
   @override

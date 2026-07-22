@@ -37,6 +37,23 @@
   "scanDeleted": "Scan deleted.",
   "couldNotDeleteScan": "Could not delete scan. Please try again.",
   "undo": "Undo",
+  "selectScans": "Select",
+  "selectAll": "Select All",
+  "deselectAll": "Deselect All",
+  "scansSelectedCount": "{count} selected",
+  "@scansSelectedCount": {
+    "placeholders": { "count": { "type": "int" } }
+  },
+  "share": "Share",
+  "deleteSelectedScans": "Delete Scans",
+  "deleteSelectedScansConfirm": "Are you sure you want to delete {count} scan records? This cannot be undone.",
+  "@deleteSelectedScansConfirm": {
+    "placeholders": { "count": { "type": "int" } }
+  },
+  "scansDeletedCount": "{count} scans deleted.",
+  "@scansDeletedCount": {
+    "placeholders": { "count": { "type": "int" } }
+  },
   "scanDetails": "Maize Scan Details",
   "totalScans": "Total Scans",
   "healthyScans": "Healthy Scans",

@@ -241,6 +241,8 @@ class _AflAlertState extends State<AflAlert> {
             cropType: args.cropType,
             imagePath: args.imagePath,
             location: args.location,
+            fromHistory: args.fromHistory,
+            scanId: args.scanId,
           );
         },
       },

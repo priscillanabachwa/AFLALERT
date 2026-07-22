@@ -5,6 +5,7 @@ import 'package:flutter/material.dart';
 import '../constants/app_colors.dart';
 import '../l10n/app_localizations.dart';
 import '../models/report_model.dart';
+import '../services/firestore_service.dart';
 import '../services/pdf_service.dart';
 import '../services/report_storage_service.dart';
 import '../services/strip_analysis_service.dart';
@@ -20,6 +21,8 @@ class StripResultsScreenArgs {
   final StripCropType cropType;
   final String? imagePath;
   final String? location;
+  final bool fromHistory;
+  final String? scanId;
 
   const StripResultsScreenArgs({
     required this.ppbValue,
@@ -30,6 +33,8 @@ class StripResultsScreenArgs {
     required this.cropType,
     this.imagePath,
     this.location,
+    this.fromHistory = false,
+    this.scanId,
   });
 }
 
@@ -56,6 +61,8 @@ class StripResultsScreen extends StatelessWidget {
   final StripCropType cropType;
   final String? imagePath;
   final String? location;
+  final bool fromHistory;
+  final String? scanId;
 
   const StripResultsScreen({
     super.key,
@@ -67,6 +74,8 @@ class StripResultsScreen extends StatelessWidget {
     required this.cropType,
     this.imagePath,
     this.location,
+    this.fromHistory = false,
+    this.scanId,
   });
 
   static const pageBg = AppColors.logoCream;
@@ -475,6 +484,12 @@ class StripResultsScreen extends StatelessWidget {
                 ),
                 const SizedBox(height: 18),
                 _buildToxicLoadCard(context),
+
+                // Feedback loop: only offered right after a fresh scan (not
+                // when reviewing an old one from History) — mirrors the
+                // Tier 1 maize flow so both scan types build a labeled
+                // dataset for future retraining.
+                if (!fromHistory && scanId != null) _FeedbackPrompt(scanId: scanId!),
                 const SizedBox(height: 14),
                 _buildRegulatoryScale(context),
                 _buildActionRequiredBox(l10n),
@@ -559,6 +574,96 @@ class StripResultsScreen extends StatelessWidget {
           ),
         ),
       ),
+    );
+  }
+}
+
+class _FeedbackPrompt extends StatefulWidget {
+  final String scanId;
+
+  const _FeedbackPrompt({required this.scanId});
+
+  @override
+  State<_FeedbackPrompt> createState() => _FeedbackPromptState();
+}
+
+class _FeedbackPromptState extends State<_FeedbackPrompt> {
+  bool? _submittedAccurate;
+  bool _submitting = false;
+
+  Future<void> _submit(bool isAccurate) async {
+    if (_submitting || _submittedAccurate != null) return;
+    setState(() => _submitting = true);
+
+    final bool success = await FirestoreService().submitScanFeedback(widget.scanId, isAccurate);
+    if (!mounted) return;
+    setState(() {
+      _submitting = false;
+      if (success) _submittedAccurate = isAccurate;
+    });
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final AppLocalizations l10n = AppLocalizations.of(context)!;
+    return Container(
+      margin: const EdgeInsets.only(top: 14),
+      padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
+      decoration: BoxDecoration(
+        color: StripResultsScreen.cardBg,
+        borderRadius: BorderRadius.circular(12),
+        border: Border.all(color: StripResultsScreen.textMuted.withValues(alpha: 0.15)),
+      ),
+      child: _submittedAccurate != null
+          ? Row(
+              children: [
+                const Icon(Icons.check_circle, size: 16, color: AppColors.primaryContainer),
+                const SizedBox(width: 8),
+                Expanded(
+                  child: Text(
+                    l10n.feedbackThanks,
+                    style: const TextStyle(fontSize: 12.5, color: StripResultsScreen.textPrimary),
+                  ),
+                ),
+              ],
+            )
+          : Row(
+              children: [
+                Expanded(
+                  child: Text(
+                    l10n.wasThisDiagnosisAccurate,
+                    style: const TextStyle(
+                      fontSize: 12.5,
+                      fontWeight: FontWeight.w500,
+                      color: StripResultsScreen.textPrimary,
+                    ),
+                  ),
+                ),
+                const SizedBox(width: 8),
+                if (_submitting)
+                  const SizedBox(
+                    width: 18,
+                    height: 18,
+                    child: CircularProgressIndicator(strokeWidth: 2),
+                  )
+                else ...[
+                  IconButton(
+                    onPressed: () => _submit(true),
+                    icon: const Icon(Icons.thumb_up_outlined, size: 18),
+                    color: AppColors.primaryContainer,
+                    tooltip: l10n.feedbackYesTooltip,
+                    visualDensity: VisualDensity.compact,
+                  ),
+                  IconButton(
+                    onPressed: () => _submit(false),
+                    icon: const Icon(Icons.thumb_down_outlined, size: 18),
+                    color: AppColors.error,
+                    tooltip: l10n.feedbackNoTooltip,
+                    visualDensity: VisualDensity.compact,
+                  ),
+                ],
+              ],
+            ),
     );
   }
 }

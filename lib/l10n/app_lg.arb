@@ -40,6 +40,23 @@
   "scanDeleted": "Scan esaziddwamu.",
   "couldNotDeleteScan": "Tetusobodde kusazaamu scan. Ddamu ogezeeko.",
   "undo": "Zzaawo",
+  "selectScans": "Londa",
+  "selectAll": "Londa Zonna",
+  "deselectAll": "Ggyawo Okulonda",
+  "scansSelectedCount": "{count} zirondeddwa",
+  "@scansSelectedCount": {
+    "placeholders": { "count": { "type": "int" } }
+  },
+  "share": "Gabana",
+  "deleteSelectedScans": "Sazaamu Scan",
+  "deleteSelectedScansConfirm": "Oli mukakafu nti oyagala okusazaamu ebiwandiiko {count}? Tekisobola kuddizibwa.",
+  "@deleteSelectedScansConfirm": {
+    "placeholders": { "count": { "type": "int" } }
+  },
+  "scansDeletedCount": "Scan {count} zisaziddwamu.",
+  "@scansDeletedCount": {
+    "placeholders": { "count": { "type": "int" } }
+  },
   "scanDetails": "Ebikwata ku Scan ya Kasooli",
   "totalScans": "Scan Zonna",
   "healthyScans": "Scan Ezirungi",
