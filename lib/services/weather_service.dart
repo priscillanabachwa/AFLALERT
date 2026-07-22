@@ -354,7 +354,7 @@ class WeatherService {
         precipitationProbabilityMax: precipProbability?.toDouble(),
       );
     } catch (error) {
-      debugPrint('WeatherService Error fetching today\'s forecast: $error');
+      debugPrint('WeatherService Error fetching morning forecast: $error');
       return null;
     }
   }
