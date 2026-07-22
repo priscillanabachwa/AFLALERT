@@ -162,21 +162,17 @@ class LegalDocumentScreen extends StatelessWidget {
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.stretch,
             children: [
-              Container(
-                padding: const EdgeInsets.all(20),
-                decoration: BoxDecoration(
-                  color: AppColors.primary,
-                  borderRadius: BorderRadius.circular(16),
-                ),
+              Padding(
+                padding: const EdgeInsets.fromLTRB(4, 16, 4, 4),
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    Icon(icon, color: AppColors.secondary, size: 30),
+                    Icon(icon, color: AppColors.primary, size: 30),
                     const SizedBox(height: 12),
                     Text(
                       docTitle,
                       style: const TextStyle(
-                        color: Colors.white,
+                        color: AppColors.primary,
                         fontSize: 19,
                         fontWeight: FontWeight.bold,
                         height: 1.3,
@@ -187,13 +183,13 @@ class LegalDocumentScreen extends StatelessWidget {
                       Container(
                         padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
                         decoration: BoxDecoration(
-                          color: Colors.white.withValues(alpha: 0.15),
+                          color: AppColors.primary.withValues(alpha: 0.08),
                           borderRadius: BorderRadius.circular(20),
                         ),
                         child: Text(
                           lastUpdated,
                           style: const TextStyle(
-                            color: Colors.white,
+                            color: AppColors.primary,
                             fontSize: 12,
                             fontWeight: FontWeight.w600,
                           ),
@@ -203,7 +199,7 @@ class LegalDocumentScreen extends StatelessWidget {
                   ],
                 ),
               ),
-              const SizedBox(height: 16),
+              const SizedBox(height: 12),
               Container(
                 padding: const EdgeInsets.all(20),
                 decoration: BoxDecoration(
