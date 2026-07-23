@@ -18,7 +18,11 @@
       "PowerShell(Get-Process | Where-Object { $_.ProcessName -match 'java|gradle' } | Select-Object Id, ProcessName, CPU, StartTime, @{N='Mem\\(MB\\)';E={[math]::Round\\($_.WorkingSet/1MB\\)}} | Format-Table -AutoSize)",
       "Bash(find /c/Users/hp/AppData/Local/Temp/claude/c--Users-hp-Desktop-AFLALERT/5d793a96-1e08-4f61-b1fa-e24023457e9a/scratchpad/dataset -maxdepth 2 -iname *.yaml -o -maxdepth 2 -iname *.txt)",
       "Bash(adb -s emulator-5554 shell getprop sys.boot_completed)",
-      "PowerShell(Get-Process | Where-Object { $_.ProcessName -match \"emulator|qemu\" } | Format-Table Id, ProcessName -AutoSize)"
+      "PowerShell(Get-Process | Where-Object { $_.ProcessName -match \"emulator|qemu\" } | Format-Table Id, ProcessName -AutoSize)",
+      "Bash(git -C \"c:\\\\Users\\\\hp\\\\Desktop\\\\AFLALERT\" diff --stat)",
+      "Bash(git -C \"c:\\\\Users\\\\hp\\\\Desktop\\\\AFLALERT\" status --short)",
+      "PowerShell(Get-Process | Where-Object { $_.ProcessName -match \"java|dart|flutter\" } | Format-Table Id, ProcessName, StartTime -AutoSize)",
+      "PowerShell(Get-CimInstance Win32_Process | Where-Object { $_.ProcessId -in 11996,14508,18424,20776,23988,20372 } | Select-Object ProcessId, Name, CommandLine | Format-List)"
     ]
   }
 }
