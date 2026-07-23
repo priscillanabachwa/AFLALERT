@@ -516,7 +516,7 @@ class AppLocalizationsEn extends AppLocalizations {
   }
 
   @override
-  String get scanMaize => 'Scan maize';
+  String get scanMaize => 'Scan Kernels';
 
   @override
   String get flashOn => 'Flash on';
@@ -931,9 +931,6 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get cropTypeMaize => 'Maize';
-
-  @override
-  String get cropTypeGroundnut => 'Groundnut';
 
   @override
   String get positionStripInFrame =>

@@ -202,7 +202,7 @@
   "@couldNotCapturePhoto": {
     "placeholders": { "error": { "type": "String" } }
   },
-  "scanMaize": "Scan maize",
+  "scanMaize": "Scan Kernels",
   "flashOn": "Flash on",
   "flashOff": "Flash off",
   "lightingGood": "Lighting good",
@@ -369,7 +369,6 @@
   "chemicalStripScanTitle": "Chemical Strip Scan",
   "scanTestStrip": "Scan Test Strip",
   "cropTypeMaize": "Maize",
-  "cropTypeGroundnut": "Groundnut",
   "positionStripInFrame": "Position strip in frame after the 10-minute reaction time",
   "scanAnotherStrip": "Scan Another Strip",
   "scanTestStripHint": "Scan a reacted test strip to check aflatoxin levels",
