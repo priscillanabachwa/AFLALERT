@@ -1043,7 +1043,7 @@ abstract class AppLocalizations {
   /// No description provided for @scanMaize.
   ///
   /// In en, this message translates to:
-  /// **'Scan maize'**
+  /// **'Scan Kernels'**
   String get scanMaize;
 
   /// No description provided for @flashOn.
@@ -1795,12 +1795,6 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'Maize'**
   String get cropTypeMaize;
-
-  /// No description provided for @cropTypeGroundnut.
-  ///
-  /// In en, this message translates to:
-  /// **'Groundnut'**
-  String get cropTypeGroundnut;
 
   /// No description provided for @positionStripInFrame.
   ///

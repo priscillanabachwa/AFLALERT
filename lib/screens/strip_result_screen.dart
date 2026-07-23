@@ -95,15 +95,13 @@ class StripResultsScreen extends StatelessWidget {
   static const double _maxDetectionPpb = StripAnalysisService.maxDetectionPpb;
 
   String _batchId() {
-    final String prefix = cropType == StripCropType.maize ? 'MZ' : 'GN';
     final String suffix = (DateTime.now().millisecondsSinceEpoch % 10000)
         .toString()
         .padLeft(4, '0');
-    return '$prefix-$suffix';
+    return 'MZ-$suffix';
   }
 
-  String _cropLabel(AppLocalizations l10n) =>
-      cropType == StripCropType.maize ? l10n.cropTypeMaize : l10n.cropTypeGroundnut;
+  String _cropLabel(AppLocalizations l10n) => l10n.cropTypeMaize;
 
   RecommendationSource _fromAflalert(String text) => RecommendationSource(
         text: text,

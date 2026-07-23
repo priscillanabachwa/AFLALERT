@@ -178,7 +178,7 @@
   "scanASample": "Scan Ekyokulabirako",
 
   "couldNotCapturePhoto": "Tetusobodde kukwata kifananyi: {error}",
-  "scanMaize": "Scan Kasooli",
+  "scanMaize": "Scan Kernels",
   "flashOn": "Ttoowa Ekiri",
   "flashOff": "Ttoowa Kizikidde",
   "lightingGood": "Omusana Mulungi",
@@ -317,7 +317,6 @@
   "chemicalStripScanTitle": "Chemical Strip Scan",
   "scanTestStrip": "Kebera Test Strip",
   "cropTypeMaize": "Kasooli",
-  "cropTypeGroundnut": "Binyeebwa",
   "positionStripInFrame": "Teeka strip mu bbokisi oluvannyuma lw'eddakiika kkumi ez'okulinda",
   "scanAnotherStrip": "Kebera Strip Endala",
   "scanTestStripHint": "Kebera test strip okumanya obungi bw'obutwa mu bulimi",

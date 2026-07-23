@@ -519,7 +519,7 @@ class AppLocalizationsLg extends AppLocalizations {
   }
 
   @override
-  String get scanMaize => 'Scan Kasooli';
+  String get scanMaize => 'Scan Kernels';
 
   @override
   String get flashOn => 'Ttoowa Ekiri';
@@ -937,9 +937,6 @@ class AppLocalizationsLg extends AppLocalizations {
 
   @override
   String get cropTypeMaize => 'Kasooli';
-
-  @override
-  String get cropTypeGroundnut => 'Binyeebwa';
 
   @override
   String get positionStripInFrame =>

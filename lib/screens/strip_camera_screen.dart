@@ -5,8 +5,7 @@
 // Structurally a trimmed copy of camera_screen.dart's capture flow
 // (CameraController + gallery fallback + tap-to-focus + flash + quality
 // pills + retake/use-photo review), adapted for a tall rectangular strip
-// cassette instead of a square crop sample, plus a Maize/Groundnut
-// crop-type toggle carried forward to the results screen.
+// cassette instead of a square crop sample. Maize-only for now.
 
 import 'dart:async';
 import 'dart:io';
@@ -19,7 +18,7 @@ import 'package:image_picker/image_picker.dart';
 import '../constants/app_colors.dart';
 import '../l10n/app_localizations.dart';
 
-enum StripCropType { maize, groundnut }
+enum StripCropType { maize }
 
 class _AflColors {
   static const bg = Color(0xFF0D1410);
@@ -104,7 +103,7 @@ class _StripCameraScreenState extends State<StripCameraScreen> {
   Future<void>? _initFuture;
 
   bool _flashOn = false;
-  StripCropType _cropType = StripCropType.maize;
+  final StripCropType _cropType = StripCropType.maize;
   _LightQuality _light = _LightQuality.good;
   _FocusQuality _focus = _FocusQuality.adjusting;
 
@@ -329,7 +328,6 @@ class _StripCameraScreenState extends State<StripCameraScreen> {
                     ),
                   ),
                   _buildTopBar(),
-                  _buildCropTypeToggle(),
                   _buildQualityPills(),
                   _buildFrameAndGuidance(),
                   _buildBottomControls(),
@@ -407,53 +405,6 @@ class _StripCameraScreenState extends State<StripCameraScreen> {
     );
   }
 
-  Widget _buildCropTypeToggle() {
-    final AppLocalizations l10n = AppLocalizations.of(context)!;
-    return Positioned(
-      top: 56,
-      left: 0,
-      right: 0,
-      child: Center(
-        child: Container(
-          padding: const EdgeInsets.all(3),
-          decoration: BoxDecoration(
-            color: Colors.black.withValues(alpha: 0.45),
-            borderRadius: BorderRadius.circular(999),
-          ),
-          child: Row(
-            mainAxisSize: MainAxisSize.min,
-            children: [
-              _cropTypeSegment(l10n.cropTypeMaize, StripCropType.maize),
-              _cropTypeSegment(l10n.cropTypeGroundnut, StripCropType.groundnut),
-            ],
-          ),
-        ),
-      ),
-    );
-  }
-
-  Widget _cropTypeSegment(String label, StripCropType type) {
-    final bool selected = _cropType == type;
-    return InkWell(
-      borderRadius: BorderRadius.circular(999),
-      onTap: () => setState(() => _cropType = type),
-      child: Container(
-        padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 6),
-        decoration: BoxDecoration(
-          color: selected ? _AflColors.amberCta : Colors.transparent,
-          borderRadius: BorderRadius.circular(999),
-        ),
-        child: Text(
-          label,
-          style: TextStyle(
-            fontSize: 12,
-            fontWeight: FontWeight.w600,
-            color: selected ? _AflColors.amberCtaText : Colors.white70,
-          ),
-        ),
-      ),
-    );
-  }
 
   Widget _buildQualityPills() {
     final AppLocalizations l10n = AppLocalizations.of(context)!;

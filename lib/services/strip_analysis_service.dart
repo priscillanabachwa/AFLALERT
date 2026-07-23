@@ -12,6 +12,7 @@ import 'dart:io';
 import 'dart:math' as math;
 import 'dart:typed_data';
 
+import 'package:flutter/foundation.dart' show compute;
 import 'package:image/image.dart' as img;
 
 enum InvalidStripReason { stripNotDetected, controlLineNotDetected }
@@ -78,7 +79,15 @@ class StripAnalysisService {
     return analyzeStripBytes(await imageFile.readAsBytes());
   }
 
-  Future<StripAnalysisResult> analyzeStripBytes(Uint8List bytes) async {
+  // Decoding the source photo and the row-by-row luminance/line-detection
+  // loops below are heavy enough (especially on unresized gallery picks) to
+  // visibly stall the analysis screen's animation if run inline on the UI
+  // isolate, so the whole pipeline runs on a worker isolate via compute().
+  Future<StripAnalysisResult> analyzeStripBytes(Uint8List bytes) {
+    return compute(_analyzeStripSync, bytes);
+  }
+
+  static StripAnalysisResult _analyzeStripSync(Uint8List bytes) {
     final img.Image? decoded = img.decodeImage(bytes);
     if (decoded == null) {
       throw const InvalidStripException(InvalidStripReason.stripNotDetected);
@@ -141,13 +150,13 @@ class StripAnalysisService {
   // less conjugate binds at the Test line, so the T line fades as
   // contamination rises. odRatio == 1 (T as dark as C) -> ~0ppb; odRatio
   // -> 0 (T line washed out) -> approaches the upper detection ceiling.
-  double _ppbFromRatio(double odRatio) {
+  static double _ppbFromRatio(double odRatio) {
     final double fade = (1 - odRatio).clamp(0.0, 1.0);
     final double ppb = maxDetectionPpb * math.pow(fade, _ppbCurveGamma);
     return ppb.clamp(0.0, maxDetectionPpb);
   }
 
-  double _opticalDensity(double lineLuminance, double background) {
+  static double _opticalDensity(double lineLuminance, double background) {
     if (background <= 0 || lineLuminance <= 0) return 0;
     final double ratio = (lineLuminance / background).clamp(0.001, 1.0);
     return math.max(0, -math.log(ratio) / math.ln10);
@@ -157,7 +166,7 @@ class StripAnalysisService {
   // its membrane are predominantly bright and low-saturation, so a photo
   // that's mostly dark and/or richly colored throughout is very unlikely
   // to actually be a test strip.
-  bool _looksLikeStrip(img.Image image) {
+  static bool _looksLikeStrip(img.Image image) {
     final int stepX = (image.width / 40).ceil().clamp(1, 200);
     final int stepY = (image.height / 80).ceil().clamp(1, 200);
 
@@ -184,7 +193,7 @@ class StripAnalysisService {
     return (paleCount / sampled) >= _minPaleRatio;
   }
 
-  List<double> _rowLuminanceProfile(img.Image image) {
+  static List<double> _rowLuminanceProfile(img.Image image) {
     final int centerX = image.width ~/ 2;
     final int bandHalfWidth = (image.width * 0.15).round().clamp(1, centerX);
     final int xStart = (centerX - bandHalfWidth).clamp(0, image.width - 1);
@@ -212,7 +221,7 @@ class StripAnalysisService {
   // directly over a line. This is what lets detection tolerate a lighting
   // gradient across the strip instead of relying on one global background
   // value.
-  List<double> _localBaseline(List<double> profile) {
+  static List<double> _localBaseline(List<double> profile) {
     final int window = (profile.length * 0.18).round().clamp(
       5,
       profile.length,
@@ -231,7 +240,7 @@ class StripAnalysisService {
     return baseline;
   }
 
-  List<_LineBand> _findLineBands(List<double> profile, List<double> baseline) {
+  static List<_LineBand> _findLineBands(List<double> profile, List<double> baseline) {
     final int n = profile.length;
     final int maxBandWidth = (n * _maxBandWidthFraction).round().clamp(2, n);
     // Rows right at the crop edge are prone to border/vignette artifacts
