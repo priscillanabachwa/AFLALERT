@@ -225,6 +225,7 @@ class _HomeScreenState extends State<HomeScreen> {
                             _buildTipCard(
                               tipForConditions(
                                 userType,
+                                Localizations.localeOf(context).languageCode,
                                 _weather?.temperatureC,
                                 humidityPercent: _weather?.humidityPercent,
                                 currentStage: _currentSeasonStage,
@@ -565,14 +566,16 @@ Widget _buildTipCard(String dailyTip, WeatherAlertKind alertKind) {
   }
 
   Widget _buildSeasonalGuidelineCard(String userType) {
+    final String languageCode = Localizations.localeOf(context).languageCode;
     final double? recentRainfallMm = _rainfall?.totalMm;
     final SeasonalGuideline guideline = currentSeasonalGuideline(
       recentRainfallMm: recentRainfallMm,
     );
-    final String advice = seasonalAdviceFor(guideline, userType);
+    final String advice = seasonalAdviceFor(guideline, userType, languageCode);
     final String? caution = weatherCautionFor(
       guideline.stage,
       recentRainfallMm,
+      languageCode,
     );
 
     return Container(
@@ -606,7 +609,7 @@ Widget _buildTipCard(String dailyTip, WeatherAlertKind alertKind) {
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
                 Text(
-                  guideline.seasonLabel.toUpperCase(),
+                  guideline.seasonLabelFor(languageCode).toUpperCase(),
                   style: const TextStyle(
                     fontSize: 10,
                     fontWeight: FontWeight.w700,
@@ -616,7 +619,7 @@ Widget _buildTipCard(String dailyTip, WeatherAlertKind alertKind) {
                 ),
                 const SizedBox(height: 4),
                 Text(
-                  guideline.title,
+                  guideline.titleFor(languageCode),
                   style: const TextStyle(
                     fontSize: 15,
                     fontWeight: FontWeight.bold,
