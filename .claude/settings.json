@@ -22,7 +22,31 @@
       "Bash(git -C \"c:\\\\Users\\\\hp\\\\Desktop\\\\AFLALERT\" diff --stat)",
       "Bash(git -C \"c:\\\\Users\\\\hp\\\\Desktop\\\\AFLALERT\" status --short)",
       "PowerShell(Get-Process | Where-Object { $_.ProcessName -match \"java|dart|flutter\" } | Format-Table Id, ProcessName, StartTime -AutoSize)",
-      "PowerShell(Get-CimInstance Win32_Process | Where-Object { $_.ProcessId -in 11996,14508,18424,20776,23988,20372 } | Select-Object ProcessId, Name, CommandLine | Format-List)"
+      "PowerShell(Get-CimInstance Win32_Process | Where-Object { $_.ProcessId -in 11996,14508,18424,20776,23988,20372 } | Select-Object ProcessId, Name, CommandLine | Format-List)",
+      "Bash(flutter run *)",
+      "Bash(echo \"Started with PID $!\")",
+      "Bash(adb -s RZCT70RRZ2E logcat -d)",
+      "Bash(\"/c/Users/hp/AppData/Local/Android/Sdk/platform-tools/adb.exe\" -s RZCT70RRZ2E logcat -d)",
+      "Bash(/c/Users/hp/AppData/Local/Android/Sdk/platform-tools/adb.exe -s RZCT70RRZ2E shell pidof com.example.aflalert)",
+      "Bash(/c/Users/hp/AppData/Local/Android/Sdk/platform-tools/adb.exe -s RZCT70RRZ2E shell 'pm list packages | grep -i afla')",
+      "Bash(/c/Users/hp/AppData/Local/Android/Sdk/platform-tools/adb.exe -s RZCT70RRZ2E logcat -d -t 200)",
+      "Bash(/c/Users/hp/AppData/Local/Android/Sdk/platform-tools/adb.exe -s RZCT70RRZ2E logcat -d --pid=26182)",
+      "Bash(/c/Users/hp/AppData/Local/Android/Sdk/platform-tools/adb.exe -s RZCT70RRZ2E logcat -d -v time)",
+      "Bash(/c/Users/hp/AppData/Local/Android/Sdk/platform-tools/adb.exe -s RZCT70RRZ2E shell dumpsys connectivity)",
+      "Bash(/c/Users/hp/AppData/Local/Android/Sdk/platform-tools/adb.exe -s RZCT70RRZ2E shell dumpsys wifi)",
+      "Bash(/c/Users/hp/AppData/Local/Android/Sdk/platform-tools/adb.exe -s RZCT70RRZ2E logcat -d --pid=26182 -t 60)",
+      "Bash(/c/Users/hp/AppData/Local/Android/Sdk/platform-tools/adb.exe -s RZCT70RRZ2E logcat -d)",
+      "Bash(/c/Users/hp/AppData/Local/Android/Sdk/platform-tools/adb.exe -s RZCT70RRZ2E logcat -d --pid=5393)",
+      "Bash(echo \"---exit:$?---\")",
+      "Bash(/c/Users/hp/AppData/Local/Android/Sdk/platform-tools/adb.exe -s RZCT70RRZ2E logcat -d --pid=5393 -v time)",
+      "Bash(taskkill //F //IM dart.exe)",
+      "Bash(taskkill //F //IM java.exe)",
+      "Bash(/c/Users/hp/AppData/Local/Android/Sdk/platform-tools/adb.exe -s RZCT70RRZ2E logcat -v time)",
+      "Skill(claude-api)",
+      "Skill(claude-api:*)",
+      "WebFetch(domain:tech-for-dev.vercel.app)",
+      "WebFetch(domain:ai.google.dev)",
+      "Bash(/c/Users/hp/AppData/Local/Android/Sdk/platform-tools/adb.exe -s RZCT70RRZ2E logcat -d --pid=5115)"
     ]
   }
 }
