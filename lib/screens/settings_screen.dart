@@ -4,8 +4,8 @@ import 'package:shared_preferences/shared_preferences.dart';
 import '../constants/app_colors.dart';
 import '../l10n/app_localizations.dart';
 import '../main.dart';
-import '../utils/contact_support.dart';
 import 'about_screen.dart';
+import 'contact_support_screen.dart';
 import 'legal_screen.dart';
 
 class SettingsScreen extends StatefulWidget {
@@ -175,7 +175,12 @@ class _SettingsScreenState extends State<SettingsScreen> {
                 _SettingsTile(
                   icon: Icons.mail_outline,
                   label: l10n.contactSupport,
-                  onTap: () => launchSupportEmail(context),
+                  onTap: () {
+                    Navigator.push(
+                      context,
+                      MaterialPageRoute(builder: (_) => const ContactSupportScreen()),
+                    );
+                  },
                 ),
                 _SettingsTile(
                   icon: Icons.info_outline,
