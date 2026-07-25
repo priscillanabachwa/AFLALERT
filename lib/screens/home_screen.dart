@@ -335,6 +335,7 @@ class _HomeScreenState extends State<HomeScreen> {
           decoration: BoxDecoration(
             shape: BoxShape.circle,
             color: AppColors.primaryContainer,
+            border: Border.all(color: const Color(0xFFE8F5EE), width: 3),
             boxShadow: [
               BoxShadow(
                 color: Colors.black.withValues(alpha: 0.25),
@@ -344,7 +345,7 @@ class _HomeScreenState extends State<HomeScreen> {
             ],
           ),
           child: Padding(
-            padding: const EdgeInsets.all(1),
+            padding: const EdgeInsets.all(8),
             child: Image.asset('lib/assets/images/AI_icon.png'),
           ),
         ),
