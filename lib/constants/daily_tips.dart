@@ -32,13 +32,13 @@ const List<String> farmerDailyTipsEn = [
 ];
 
 const List<String> farmerDailyTipsLg = [
-  'Kuuma obunnyogovu bw\'ekasooli wansi wa 13.5%. Emmere enyoze ekkiriza obukuku okukula mangu, era obwo bwe bukola Aflatoxin.',
-  'Yanjuluza kasooli ku mbaawo eyimusiddwa waggulu, so si ku ttaka butereevu. Ettaka eritose lisobola okuddiza emmere obunnyogovu, obukuku ne bukula.',
+  'Kuuma obunnyogovu bw\'ekasooli wansi wa 13.5%. kasooli anyogoze akkiriza obukuku okukula mangu, era obwo bwe bukola Aflatoxin.',
+  'Yanika kasooli ku mbaawo eyimusiddwa waggulu, so si ku ttaka butereevu. Ettaka eritose lisobola okuddiza emmere obunnyogovu, obukuku ne bukula.',
   'Kungula amangu ekimera kyo bwe kimala okusaanira. Okulindirira ekiseera ekiwanvu kireka emmere mu budde obw\'ebweru, obukuku ne busobola okukula.',
   'Ggyawo ensigo zonna ezirimu obukuku oba ezikyusizza langi nga tonnaterekawo mmere. Ensigo emu embi esobola okwonoona omuganda gwonna.',
-  'Terekera emmere mu kifo ekinyogoga, ekikalu, ewala n\'enjuba. Ebbugumu n\'empewo etose bye bikkiriza obukuku okukula.',
+  'Terekera emmere mu kifo ekiwewevu, ekikalu, ewala n\'enjuba. Ebbugumu n\'empewo etose bye bikkiriza obukuku okukula.',
   'Kozesa nsawo eziziba obulungi mu kuterekamu. Okuziyiza obunnyogovu n\'ebiwuka y\'emu ku nkola ezisinga obulungi okuziyiza obukuku.',
-  'Kebera kasooli gw\'oterese emirundi mingi okulaba obukuku, ebiwuka, oba ebbugumu. Okuzuula ebizibu mangu kiziyiza okusaasaana.',
+  'Kebera kasooli gw\'oterese emirundi mingi okulaba obukuku, ebiwuka, oba ebbugumu. Okuzuula ebizibu amangu kiziyiza okusaasaana.',
   'Kyusa ky\'osimba buli kiseera ky\'okulima. Kino kiziyiza obukuku mu ttaka okwekuluumulukira ne busaasaanira ebimera ebiggya.',
   'Gezaako okukuuma ekimera kyo okuva mu kyeya n\'ebbugumu. Ekimera ekiweddemu amaanyi kisobola okwongera okukwatibwa obukuku.',
   'Ziyiza ebiwuka mu nnimiro yo. Ebiwuka bwe biluma ensigo, biggula obutundu obukuku mwe busobola okuyingirira.',
@@ -154,8 +154,8 @@ const List<String> farmerHeatAlertTipsEn = [
 
 const List<String> farmerHeatAlertTipsLg = [
   'Leero waliwo ebbugumu nnyingi. Kebera emmere gy\'oyanjuluza emirundi mingi, era ogiggye ku njuba bw\'emala okukala — ebbugumu buyamba obukuku okukula.',
-  'Ebbugumu bulaza emmere entose okukwatibwa obukuku mangu. Sengula kasooli gw\'oterese ogutwale mu kifo ekisinga okunyogoga era ekiriko ekisiikirize.',
-  'Ebbugumu buleetera ekimera kyo ekikula okuweddamu amaanyi, ne kyeyongera okukwatibwa obukuku. Kifukirire bw\'osobola era okikebere emirundi mingi.',
+  'Ebbugumu lireetera emmere entose okukwatibwa obukuku mangu. Sengula kasooli gw\'oterese ogutwale mu kifo ekisinga okunyogoga era ekiriko ekisiikirize.',
+  'Ebbugumu lireetera ekimera kyo ekikula okugwaamu amaanyi, ne kyeyongera okukwatibwa obukuku. Kifukirire bw\'osobola era okikebere emirundi mingi.',
 ];
 
 const List<String> traderHeatAlertTipsEn = [
@@ -166,8 +166,8 @@ const List<String> traderHeatAlertTipsEn = [
 
 const List<String> traderHeatAlertTipsLg = [
   'Leero waliwo ebbugumu nnyingi. Kebera emiganda gyo egy\'omu masitoowa emirundi mingi okulaba ebbugumu n\'obunnyogovu.',
-  'Ebbugumu bulaza obukuku okukula mangu mu masitoowa. Longoosa empewo etambula era oteeke ensawo ewala n\'enjuba.',
-  'Ebbugumu bwongera obulabe bw\'obukuku ku mmere yo. Sooka opime emiganda egikadde oba egisinga obunafu.',
+  'Ebbugumu lileetera obukuku okukula mangu mu masitoowa. Longoosa empewo etambula era oteeke ensawo ewala n\'enjuba.',
+  'Ebbugumu lyongera obulabe bw\'obukuku ku mmere yo. Sooka opime emiganda emikadde oba egisinga obunafu.',
 ];
 
 /// True when [temperatureC] is hot enough to warrant a heat-risk warning
