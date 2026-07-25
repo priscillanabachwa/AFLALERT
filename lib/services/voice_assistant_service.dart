@@ -63,7 +63,7 @@ class VoiceAssistantService extends ChangeNotifier {
       }
     });
 
-    final GenerativeModel model = FirebaseAI.googleAI().generativeModel(
+    final GenerativeModel model = FirebaseAI.vertexAI().generativeModel(
       model: 'gemini-2.5-flash',
       systemInstruction: Content.system(_systemPrompt),
       tools: [Tool.functionDeclarations(_functionDeclarations)],

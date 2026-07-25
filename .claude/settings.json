@@ -43,7 +43,10 @@
       "Bash(taskkill //F //IM java.exe)",
       "Bash(/c/Users/hp/AppData/Local/Android/Sdk/platform-tools/adb.exe -s RZCT70RRZ2E logcat -v time)",
       "Skill(claude-api)",
-      "Skill(claude-api:*)"
+      "Skill(claude-api:*)",
+      "WebFetch(domain:tech-for-dev.vercel.app)",
+      "WebFetch(domain:ai.google.dev)",
+      "Bash(/c/Users/hp/AppData/Local/Android/Sdk/platform-tools/adb.exe -s RZCT70RRZ2E logcat -d --pid=5115)"
     ]
   }
 }
