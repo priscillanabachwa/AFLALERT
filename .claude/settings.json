@@ -46,7 +46,13 @@
       "Skill(claude-api:*)",
       "WebFetch(domain:tech-for-dev.vercel.app)",
       "WebFetch(domain:ai.google.dev)",
-      "Bash(/c/Users/hp/AppData/Local/Android/Sdk/platform-tools/adb.exe -s RZCT70RRZ2E logcat -d --pid=5115)"
+      "Bash(/c/Users/hp/AppData/Local/Android/Sdk/platform-tools/adb.exe -s RZCT70RRZ2E logcat -d --pid=5115)",
+      "Bash(npx firebase *)",
+      "Bash(curl -sL \"https://storage.googleapis.com/firebase-mod-sources-prod/7f56b263df8025721a050db33c9c071dad4cddc67c867df42708ab332cec6f5e\" -o ext.tar.gz)",
+      "Bash(mkdir -p ext_src)",
+      "Bash(tar -xzf ext.tar.gz -C ext_src)",
+      "Bash(unzip -o ext.tar.gz -d ext_src)",
+      "WebFetch(domain:firebase.google.com)"
     ]
   }
 }
