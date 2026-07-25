@@ -52,7 +52,8 @@
       "Bash(mkdir -p ext_src)",
       "Bash(tar -xzf ext.tar.gz -C ext_src)",
       "Bash(unzip -o ext.tar.gz -d ext_src)",
-      "WebFetch(domain:firebase.google.com)"
+      "WebFetch(domain:firebase.google.com)",
+      "Bash(npm install *)"
     ]
   }
 }

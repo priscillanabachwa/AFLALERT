@@ -33,17 +33,19 @@ class _VoiceAssistantView extends StatelessWidget {
     final bool isBusy = assistant.state != VoiceAssistantState.idle;
 
     return Scaffold(
-      backgroundColor: AppColors.t95,
+      extendBodyBehindAppBar: true,
       appBar: AppBar(
-        backgroundColor: AppColors.t95,
+        backgroundColor: Colors.transparent,
+        elevation: 0,
         title: Text(
           l10n.voiceAssistantTitle,
           style: const TextStyle(
-            color: AppColors.primary,
+            color: Colors.white,
             fontWeight: FontWeight.bold,
+            shadows: [Shadow(color: Colors.black54, blurRadius: 6)],
           ),
         ),
-        iconTheme: const IconThemeData(color: AppColors.primary),
+        iconTheme: const IconThemeData(color: Colors.white),
         actions: [
           IconButton(
             tooltip: assistant.voiceGender == VoiceGender.male
@@ -53,7 +55,7 @@ class _VoiceAssistantView extends StatelessWidget {
               assistant.voiceGender == VoiceGender.male
                   ? Icons.man
                   : Icons.woman,
-              color: AppColors.primary,
+              color: Colors.white,
             ),
             onPressed: () => assistant.setVoiceGender(
               assistant.voiceGender == VoiceGender.male
@@ -63,121 +65,133 @@ class _VoiceAssistantView extends StatelessWidget {
           ),
         ],
       ),
-      body: Container(
-        decoration: const BoxDecoration(
-          image: DecorationImage(
-            image: AssetImage('lib/assets/images/ai_screen.jpeg'),
-            fit: BoxFit.cover,
+      body: Stack(
+        children: [
+          Positioned.fill(
+            child: Image.asset(
+              'lib/assets/images/ai_screen.jpeg',
+              fit: BoxFit.cover,
+            ),
           ),
-        ),
-        child: SafeArea(
-          child: Column(
-            children: [
-              Padding(
-                padding: const EdgeInsets.fromLTRB(20, 8, 20, 4),
-                child: Text(
-                  l10n.voiceAssistantEnglishOnlyNotice,
-                  textAlign: TextAlign.center,
-                  style: const TextStyle(fontSize: 12, color: Colors.grey),
+          Positioned.fill(
+            child: Container(color: Colors.black.withValues(alpha: 0.45)),
+          ),
+          SafeArea(
+            child: Column(
+              children: [
+                SizedBox(height: kToolbarHeight),
+                Padding(
+                  padding: const EdgeInsets.fromLTRB(20, 8, 20, 4),
+                  child: Text(
+                    l10n.voiceAssistantEnglishOnlyNotice,
+                    textAlign: TextAlign.center,
+                    style: const TextStyle(fontSize: 12, color: Colors.white),
+                  ),
                 ),
-              ),
-              Expanded(
-                child: assistant.messages.isEmpty
-                    ? Center(
-                        child: Padding(
-                          padding: const EdgeInsets.symmetric(horizontal: 32),
-                          child: Text(
-                            l10n.voiceAssistantHint,
-                            textAlign: TextAlign.center,
-                            style: const TextStyle(color: Colors.grey),
-                          ),
-                        ),
-                      )
-                    : ListView.builder(
-                        padding: const EdgeInsets.symmetric(
-                          horizontal: 16,
-                          vertical: 8,
-                        ),
-                        itemCount: assistant.messages.length,
-                        itemBuilder: (context, index) {
-                          final VoiceAssistantMessage message =
-                              assistant.messages[index];
-                          return Align(
-                            alignment: message.fromUser
-                                ? Alignment.centerRight
-                                : Alignment.centerLeft,
-                            child: Container(
-                              margin: const EdgeInsets.symmetric(vertical: 4),
-                              padding: const EdgeInsets.symmetric(
-                                horizontal: 14,
-                                vertical: 10,
-                              ),
-                              constraints: BoxConstraints(
-                                maxWidth:
-                                    MediaQuery.of(context).size.width * 0.75,
-                              ),
-                              decoration: BoxDecoration(
-                                color: _bubbleColor(message.fromUser),
-                                borderRadius: BorderRadius.circular(16),
-                              ),
-                              child: Text(
-                                message.text,
-                                style: const TextStyle(color: Colors.white),
+                Expanded(
+                  child: assistant.messages.isEmpty
+                      ? Center(
+                          child: Padding(
+                            padding: const EdgeInsets.symmetric(horizontal: 32),
+                            child: Text(
+                              l10n.voiceAssistantHint,
+                              textAlign: TextAlign.center,
+                              style: const TextStyle(
+                                color: Colors.white,
+                                shadows: [
+                                  Shadow(color: Colors.black54, blurRadius: 6),
+                                ],
                               ),
                             ),
-                          );
-                        },
+                          ),
+                        )
+                      : ListView.builder(
+                          padding: const EdgeInsets.symmetric(
+                            horizontal: 16,
+                            vertical: 8,
+                          ),
+                          itemCount: assistant.messages.length,
+                          itemBuilder: (context, index) {
+                            final VoiceAssistantMessage message =
+                                assistant.messages[index];
+                            return Align(
+                              alignment: message.fromUser
+                                  ? Alignment.centerRight
+                                  : Alignment.centerLeft,
+                              child: Container(
+                                margin: const EdgeInsets.symmetric(vertical: 4),
+                                padding: const EdgeInsets.symmetric(
+                                  horizontal: 14,
+                                  vertical: 10,
+                                ),
+                                constraints: BoxConstraints(
+                                  maxWidth:
+                                      MediaQuery.of(context).size.width * 0.75,
+                                ),
+                                decoration: BoxDecoration(
+                                  color: _bubbleColor(message.fromUser),
+                                  borderRadius: BorderRadius.circular(16),
+                                ),
+                                child: Text(
+                                  message.text,
+                                  style: const TextStyle(color: Colors.white),
+                                ),
+                              ),
+                            );
+                          },
+                        ),
+                ),
+                if (isBusy)
+                  SizedBox(
+                    height: 140,
+                    child: FittedBox(
+                      fit: BoxFit.contain,
+                      child: const AIAnimation(),
+                    ),
+                  ),
+                if (assistant.partialTranscript.isNotEmpty)
+                  Padding(
+                    padding: const EdgeInsets.symmetric(
+                      horizontal: 20,
+                      vertical: 4,
+                    ),
+                    child: Text(
+                      assistant.partialTranscript,
+                      textAlign: TextAlign.center,
+                      style: const TextStyle(
+                        fontStyle: FontStyle.italic,
+                        color: Colors.white,
+                        shadows: [Shadow(color: Colors.black54, blurRadius: 6)],
                       ),
-              ),
-              if (isBusy)
-                SizedBox(
-                  height: 140,
-                  child: FittedBox(
-                    fit: BoxFit.contain,
-                    child: const AIAnimation(),
+                    ),
                   ),
-                ),
-              if (assistant.partialTranscript.isNotEmpty)
                 Padding(
-                  padding: const EdgeInsets.symmetric(
-                    horizontal: 20,
-                    vertical: 4,
-                  ),
-                  child: Text(
-                    assistant.partialTranscript,
-                    textAlign: TextAlign.center,
-                    style: const TextStyle(
-                      fontStyle: FontStyle.italic,
-                      color: AppColors.primary,
+                  padding: const EdgeInsets.all(24),
+                  child: GestureDetector(
+                    onTap: () {
+                      if (isListening) {
+                        assistant.stopListening();
+                      } else if (assistant.state == VoiceAssistantState.idle) {
+                        assistant.startListening();
+                      }
+                    },
+                    child: CircleAvatar(
+                      radius: 36,
+                      backgroundColor: isListening
+                          ? AppColors.error
+                          : AppColors.primary,
+                      child: Icon(
+                        isListening ? Icons.mic : Icons.mic_none,
+                        color: Colors.white,
+                        size: 32,
+                      ),
                     ),
                   ),
                 ),
-              Padding(
-                padding: const EdgeInsets.all(24),
-                child: GestureDetector(
-                  onTap: () {
-                    if (isListening) {
-                      assistant.stopListening();
-                    } else if (assistant.state == VoiceAssistantState.idle) {
-                      assistant.startListening();
-                    }
-                  },
-                  child: CircleAvatar(
-                    radius: 36,
-                    backgroundColor: isListening
-                        ? AppColors.error
-                        : AppColors.primary,
-                    child: Icon(
-                      isListening ? Icons.mic : Icons.mic_none,
-                      color: Colors.white,
-                      size: 32,
-                    ),
-                  ),
-                ),
-              ),
-            ],
+              ],
+            ),
           ),
-        ),
+        ],
       ),
     );
   }
