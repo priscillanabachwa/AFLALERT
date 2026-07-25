@@ -329,10 +329,24 @@ class _HomeScreenState extends State<HomeScreen> {
           context,
           MaterialPageRoute(builder: (_) => const VoiceAssistantScreen()),
         ),
-        child: SizedBox(
+        child: Container(
           width: 64,
           height: 64,
-          child: Image.asset('lib/assets/images/AI_icon.png'),
+          decoration: BoxDecoration(
+            shape: BoxShape.circle,
+            color: AppColors.primaryContainer,
+            boxShadow: [
+              BoxShadow(
+                color: Colors.black.withValues(alpha: 0.25),
+                blurRadius: 12,
+                offset: const Offset(0, 4),
+              ),
+            ],
+          ),
+          child: Padding(
+            padding: const EdgeInsets.all(1),
+            child: Image.asset('lib/assets/images/AI_icon.png'),
+          ),
         ),
       ),
     );
