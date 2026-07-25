@@ -279,7 +279,9 @@
 
   "alertsFilter": "Alerts",
   "updatesFilter": "Updates",
-  "allCaughtUp": "You're all caught up",
+  "allCaughtUp": "No notifications yet",
+  "noAlertsMessage": "No alerts right now",
+  "noUpdatesMessage": "No updates yet",
 
   "changePassword": "Change password",
   "takeAPhoto": "Take a photo",
@@ -352,8 +354,24 @@
   "notificationsSubtitle": "Alerts about scan results and batch status",
   "helpSupportSection": "Help & support",
   "contactSupport": "Contact support",
+  "couldNotOpenEmailApp": "Could not open email app. Please email us at aflalert.support@gmail.com",
   "aboutAflAlert": "About AflAlert",
   "recommendationsSourced": "Recommendations sourced from UNBS and MAAIF guidance.",
+
+  "aboutDescription": "AflAlert helps farmers and grain handlers spot aflatoxin risk in maize before it reaches the market. Snap a photo of maize kernels or a test strip and get an instant, AI-powered risk assessment — right on your phone, even without a lab.",
+  "aboutFeaturesTitle": "What AflAlert does",
+  "aboutFeatureScanTitle": "Kernel & strip scanning",
+  "aboutFeatureScanDesc": "AI-powered image analysis flags visible mold and aflatoxin risk in maize kernels or test strips.",
+  "aboutFeatureRecommendationsTitle": "Guided recommendations",
+  "aboutFeatureRecommendationsDesc": "Every result comes with next-step guidance sourced from UNBS and MAAIF standards.",
+  "aboutFeatureRainAlertsTitle": "Rain alerts",
+  "aboutFeatureRainAlertsDesc": "Get warned before rain hits so drying grain can be covered in time, reducing mold and aflatoxin risk.",
+  "aboutFeatureVoiceTitle": "Voice assistant",
+  "aboutFeatureVoiceDesc": "Run scans and ask questions hands-free.",
+  "aboutFeatureReportsTitle": "Scan history & reports",
+  "aboutFeatureReportsDesc": "Review past scans and download PDF reports to share or keep for your records.",
+  "aboutVersion": "Version 1.0.0",
+  "aboutCopyright": "© 2026 AflAlert. All rights reserved.",
 
   "maizeScanLabel": "Maize Scan",
   "stripScanLabel": "Strip Scan",
@@ -417,5 +435,11 @@
   "@todayHighLowLabel": {
     "placeholders": { "high": { "type": "String" }, "low": { "type": "String" } }
   },
-  "nowLabel": "Now"
+  "nowLabel": "Now",
+  "voiceAssistantEntryTooltip": "Voice assistant",
+  "voiceAssistantTitle": "Voice Assistant",
+  "voiceAssistantEnglishOnlyNotice": "Voice commands currently work in English only.",
+  "voiceAssistantHint": "Tap the mic and try something like \"scan this maize\" or \"what's the weather?\"",
+  "voiceAssistantVoiceFemale": "Female voice — tap to switch to male",
+  "voiceAssistantVoiceMale": "Male voice — tap to switch to female"
 }

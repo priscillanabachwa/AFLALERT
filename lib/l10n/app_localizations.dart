@@ -1343,8 +1343,20 @@ abstract class AppLocalizations {
   /// No description provided for @allCaughtUp.
   ///
   /// In en, this message translates to:
-  /// **'You\'re all caught up'**
+  /// **'No notifications yet'**
   String get allCaughtUp;
+
+  /// No description provided for @noAlertsMessage.
+  ///
+  /// In en, this message translates to:
+  /// **'No alerts right now'**
+  String get noAlertsMessage;
+
+  /// No description provided for @noUpdatesMessage.
+  ///
+  /// In en, this message translates to:
+  /// **'No updates yet'**
+  String get noUpdatesMessage;
 
   /// No description provided for @changePassword.
   ///
@@ -1700,6 +1712,12 @@ abstract class AppLocalizations {
   /// **'Contact support'**
   String get contactSupport;
 
+  /// No description provided for @couldNotOpenEmailApp.
+  ///
+  /// In en, this message translates to:
+  /// **'Could not open email app. Please email us at aflalert.support@gmail.com'**
+  String get couldNotOpenEmailApp;
+
   /// No description provided for @aboutAflAlert.
   ///
   /// In en, this message translates to:
@@ -1711,6 +1729,90 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'Recommendations sourced from UNBS and MAAIF guidance.'**
   String get recommendationsSourced;
+
+  /// No description provided for @aboutDescription.
+  ///
+  /// In en, this message translates to:
+  /// **'AflAlert helps farmers and grain handlers spot aflatoxin risk in maize before it reaches the market. Snap a photo of maize kernels or a test strip and get an instant, AI-powered risk assessment — right on your phone, even without a lab.'**
+  String get aboutDescription;
+
+  /// No description provided for @aboutFeaturesTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'What AflAlert does'**
+  String get aboutFeaturesTitle;
+
+  /// No description provided for @aboutFeatureScanTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Kernel & strip scanning'**
+  String get aboutFeatureScanTitle;
+
+  /// No description provided for @aboutFeatureScanDesc.
+  ///
+  /// In en, this message translates to:
+  /// **'AI-powered image analysis flags visible mold and aflatoxin risk in maize kernels or test strips.'**
+  String get aboutFeatureScanDesc;
+
+  /// No description provided for @aboutFeatureRecommendationsTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Guided recommendations'**
+  String get aboutFeatureRecommendationsTitle;
+
+  /// No description provided for @aboutFeatureRecommendationsDesc.
+  ///
+  /// In en, this message translates to:
+  /// **'Every result comes with next-step guidance sourced from UNBS and MAAIF standards.'**
+  String get aboutFeatureRecommendationsDesc;
+
+  /// No description provided for @aboutFeatureRainAlertsTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Rain alerts'**
+  String get aboutFeatureRainAlertsTitle;
+
+  /// No description provided for @aboutFeatureRainAlertsDesc.
+  ///
+  /// In en, this message translates to:
+  /// **'Get warned before rain hits so drying grain can be covered in time, reducing mold and aflatoxin risk.'**
+  String get aboutFeatureRainAlertsDesc;
+
+  /// No description provided for @aboutFeatureVoiceTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Voice assistant'**
+  String get aboutFeatureVoiceTitle;
+
+  /// No description provided for @aboutFeatureVoiceDesc.
+  ///
+  /// In en, this message translates to:
+  /// **'Run scans and ask questions hands-free.'**
+  String get aboutFeatureVoiceDesc;
+
+  /// No description provided for @aboutFeatureReportsTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Scan history & reports'**
+  String get aboutFeatureReportsTitle;
+
+  /// No description provided for @aboutFeatureReportsDesc.
+  ///
+  /// In en, this message translates to:
+  /// **'Review past scans and download PDF reports to share or keep for your records.'**
+  String get aboutFeatureReportsDesc;
+
+  /// No description provided for @aboutVersion.
+  ///
+  /// In en, this message translates to:
+  /// **'Version 1.0.0'**
+  String get aboutVersion;
+
+  /// No description provided for @aboutCopyright.
+  ///
+  /// In en, this message translates to:
+  /// **'© 2026 AflAlert. All rights reserved.'**
+  String get aboutCopyright;
 
   /// No description provided for @maizeScanLabel.
   ///
@@ -1969,6 +2071,42 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'Now'**
   String get nowLabel;
+
+  /// No description provided for @voiceAssistantEntryTooltip.
+  ///
+  /// In en, this message translates to:
+  /// **'Voice assistant'**
+  String get voiceAssistantEntryTooltip;
+
+  /// No description provided for @voiceAssistantTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Voice Assistant'**
+  String get voiceAssistantTitle;
+
+  /// No description provided for @voiceAssistantEnglishOnlyNotice.
+  ///
+  /// In en, this message translates to:
+  /// **'Voice commands currently work in English only.'**
+  String get voiceAssistantEnglishOnlyNotice;
+
+  /// No description provided for @voiceAssistantHint.
+  ///
+  /// In en, this message translates to:
+  /// **'Tap the mic and try something like \"scan this maize\" or \"what\'s the weather?\"'**
+  String get voiceAssistantHint;
+
+  /// No description provided for @voiceAssistantVoiceFemale.
+  ///
+  /// In en, this message translates to:
+  /// **'Female voice — tap to switch to male'**
+  String get voiceAssistantVoiceFemale;
+
+  /// No description provided for @voiceAssistantVoiceMale.
+  ///
+  /// In en, this message translates to:
+  /// **'Male voice — tap to switch to female'**
+  String get voiceAssistantVoiceMale;
 }
 
 class _AppLocalizationsDelegate
