@@ -347,6 +347,9 @@ class _HomeScreenState extends State<HomeScreen> {
         const Expanded(
           child: Text(
             'AflAlert',
+            maxLines: 1,
+            softWrap: false,
+            overflow: TextOverflow.ellipsis,
             style: TextStyle(
               fontSize: 24,
               fontWeight: FontWeight.bold,
@@ -357,7 +360,13 @@ class _HomeScreenState extends State<HomeScreen> {
         ),
         IconButton(
           tooltip: AppLocalizations.of(context)!.voiceAssistantEntryTooltip,
-          icon: const Icon(Icons.mic_none, color: Colors.white, shadows: _onImageShadow),
+          padding: EdgeInsets.zero,
+          constraints: const BoxConstraints(),
+          icon: Image.asset(
+            'lib/assets/images/AI_icon.png',
+            width: 52,
+            height: 52,
+          ),
           onPressed: () => Navigator.push(
             context,
             MaterialPageRoute(builder: (_) => const VoiceAssistantScreen()),
