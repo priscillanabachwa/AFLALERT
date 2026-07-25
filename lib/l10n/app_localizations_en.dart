@@ -684,7 +684,13 @@ class AppLocalizationsEn extends AppLocalizations {
   String get updatesFilter => 'Updates';
 
   @override
-  String get allCaughtUp => 'You\'re all caught up';
+  String get allCaughtUp => 'No notifications yet';
+
+  @override
+  String get noAlertsMessage => 'No alerts right now';
+
+  @override
+  String get noUpdatesMessage => 'No updates yet';
 
   @override
   String get changePassword => 'Change password';
@@ -881,11 +887,62 @@ class AppLocalizationsEn extends AppLocalizations {
   String get contactSupport => 'Contact support';
 
   @override
+  String get couldNotOpenEmailApp =>
+      'Could not open email app. Please email us at aflalert.support@gmail.com';
+
+  @override
   String get aboutAflAlert => 'About AflAlert';
 
   @override
   String get recommendationsSourced =>
       'Recommendations sourced from UNBS and MAAIF guidance.';
+
+  @override
+  String get aboutDescription =>
+      'AflAlert helps farmers and grain handlers spot aflatoxin risk in maize before it reaches the market. Snap a photo of maize kernels or a test strip and get an instant, AI-powered risk assessment — right on your phone, even without a lab.';
+
+  @override
+  String get aboutFeaturesTitle => 'What AflAlert does';
+
+  @override
+  String get aboutFeatureScanTitle => 'Kernel & strip scanning';
+
+  @override
+  String get aboutFeatureScanDesc =>
+      'AI-powered image analysis flags visible mold and aflatoxin risk in maize kernels or test strips.';
+
+  @override
+  String get aboutFeatureRecommendationsTitle => 'Guided recommendations';
+
+  @override
+  String get aboutFeatureRecommendationsDesc =>
+      'Every result comes with next-step guidance sourced from UNBS and MAAIF standards.';
+
+  @override
+  String get aboutFeatureRainAlertsTitle => 'Rain alerts';
+
+  @override
+  String get aboutFeatureRainAlertsDesc =>
+      'Get warned before rain hits so drying grain can be covered in time, reducing mold and aflatoxin risk.';
+
+  @override
+  String get aboutFeatureVoiceTitle => 'Voice assistant';
+
+  @override
+  String get aboutFeatureVoiceDesc => 'Run scans and ask questions hands-free.';
+
+  @override
+  String get aboutFeatureReportsTitle => 'Scan history & reports';
+
+  @override
+  String get aboutFeatureReportsDesc =>
+      'Review past scans and download PDF reports to share or keep for your records.';
+
+  @override
+  String get aboutVersion => 'Version 1.0.0';
+
+  @override
+  String get aboutCopyright => '© 2026 AflAlert. All rights reserved.';
 
   @override
   String get maizeScanLabel => 'Maize Scan';
@@ -1033,4 +1090,25 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get nowLabel => 'Now';
+
+  @override
+  String get voiceAssistantEntryTooltip => 'Voice assistant';
+
+  @override
+  String get voiceAssistantTitle => 'Voice Assistant';
+
+  @override
+  String get voiceAssistantEnglishOnlyNotice =>
+      'Voice commands currently work in English only.';
+
+  @override
+  String get voiceAssistantHint =>
+      'Tap the mic and try something like \"scan this maize\" or \"what\'s the weather?\"';
+
+  @override
+  String get voiceAssistantVoiceFemale =>
+      'Female voice — tap to switch to male';
+
+  @override
+  String get voiceAssistantVoiceMale => 'Male voice — tap to switch to female';
 }

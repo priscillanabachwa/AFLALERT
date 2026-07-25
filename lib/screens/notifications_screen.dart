@@ -148,7 +148,7 @@ class _NotificationsScreenState extends State<NotificationsScreen> {
               const SizedBox(height: 8),
               Expanded(
                 child: filtered.isEmpty
-                    ? const _EmptyState()
+                    ? _EmptyState(filter: _selectedFilter)
                     : ListView.builder(
                         padding: const EdgeInsets.fromLTRB(16, 8, 16, 16),
                         itemCount: filtered.length,
@@ -271,10 +271,18 @@ class _DeleteBackground extends StatelessWidget {
 // ---------------------------------------------------------------------------
 
 class _EmptyState extends StatelessWidget {
-  const _EmptyState();
+  const _EmptyState({required this.filter});
+
+  final String filter;
 
   @override
   Widget build(BuildContext context) {
+    final l10n = AppLocalizations.of(context)!;
+    final String message = switch (filter) {
+      'Alerts' => l10n.noAlertsMessage,
+      'Updates' => l10n.noUpdatesMessage,
+      _ => l10n.allCaughtUp,
+    };
     return Center(
       child: Padding(
         padding: const EdgeInsets.all(32),
@@ -288,7 +296,7 @@ class _EmptyState extends StatelessWidget {
             ),
             const SizedBox(height: 12),
             Text(
-              AppLocalizations.of(context)!.allCaughtUp,
+              message,
               style: TextStyle(
                 color: Colors.grey.shade600,
                 fontWeight: FontWeight.w600,

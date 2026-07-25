@@ -231,7 +231,9 @@
 
   "alertsFilter": "Okulabula",
   "updatesFilter": "Amawulire",
-  "allCaughtUp": "Ggwe mulongoofu, tewali kikyaddiddwako",
+  "allCaughtUp": "Tewali kimu kaakati",
+  "noAlertsMessage": "Tewali kulabula kaakati",
+  "noUpdatesMessage": "Tewali mawulire kaakati",
 
   "changePassword": "Kyusa ekigambo ky'ekyama",
   "takeAPhoto": "Kwata Ekifananyi",
@@ -298,8 +300,24 @@
   "notificationsSubtitle": "Obubaka ku biva mu scan n'embeera y'ebibinja",
   "helpSupportSection": "Obuyambi n'obuwagizi",
   "contactSupport": "Tukwatagane n'Obuyambi",
+  "couldNotOpenEmailApp": "Tetusobodde kuggulawo app ya email. Tukwatagane ku aflalert.support@gmail.com",
   "aboutAflAlert": "Ebikwata ku AflAlert",
   "recommendationsSourced": "Ebiteesebwa biva mu buwabuzi bwa UNBS ne MAAIF.",
+
+  "aboutDescription": "AflAlert eyamba abalimi n'abakwatirira empeke okuzuula obulabe bwa Aflatoxin mu kasooli nga tekinnatuuka ku katale. Kuba ekifaananyi ky'empeke za kasooli oba strip ey'okugezesa, olyoke ofune ekiwandiiko ky'obulabe mu bwangu nga bikoleddwa AI — ku ssimu yo, wadde nga tewali laabu.",
+  "aboutFeaturesTitle": "AflAlert ky'ekola",
+  "aboutFeatureScanTitle": "Okukebera empeke ne strip",
+  "aboutFeatureScanDesc": "Okwekenneenya ebifaananyi nga kozesa AI kizuula obukuku n'obulabe bwa Aflatoxin mu mpeke za kasooli oba strip.",
+  "aboutFeatureRecommendationsTitle": "Obuwabuzi obulambulukufu",
+  "aboutFeatureRecommendationsDesc": "Buli kiva mu kukebera kijjirako obuwabuzi obuva mu bipimo bya UNBS ne MAAIF.",
+  "aboutFeatureRainAlertsTitle": "Obubaka bw'enkuba",
+  "aboutFeatureRainAlertsDesc": "Tukutegeeza nga enkuba tennagwa oyinza okubikka kasooli akayanika mangu, ekikendeeza obulabe bw'obukuku ne Aflatoxin.",
+  "aboutFeatureVoiceTitle": "Omuyambi w'eddoboozi",
+  "aboutFeatureVoiceDesc": "Kola scan era obuuze ebibuuzo nga tokwatako ku ssimu.",
+  "aboutFeatureReportsTitle": "Ebyafaayo n'lipoota",
+  "aboutFeatureReportsDesc": "Laba ebyafaayo by'okukebera era osobole okuggya lipoota za PDF okugabana oba okuzikuuma.",
+  "aboutVersion": "Version 1.0.0",
+  "aboutCopyright": "© 2026 AflAlert. Eddembe lyonna likuumiddwa.",
 
   "searchCrop": "Noonya nga okozesa ekirime, ekifo...",
 
@@ -365,5 +383,11 @@
   "@todayHighLowLabel": {
     "placeholders": { "high": { "type": "String" }, "low": { "type": "String" } }
   },
-  "nowLabel": "Kaakano"
+  "nowLabel": "Kaakano",
+  "voiceAssistantEntryTooltip": "Omuyambi w'eddoboozi",
+  "voiceAssistantTitle": "Omuyambi w'Eddoboozi",
+  "voiceAssistantEnglishOnlyNotice": "Ebiragiro by'eddoboozi kati bikola mu Lungereza lwokka.",
+  "voiceAssistantHint": "Nyiga ku kabonero k'eddoboozi ate ogezeeko okwogera nti \"scan this maize\" oba \"what's the weather?\"",
+  "voiceAssistantVoiceFemale": "Eddoboozi ery'omukazi — nyiga okukyusa okuba ery'omusajja",
+  "voiceAssistantVoiceMale": "Eddoboozi ery'omusajja — nyiga okukyusa okuba ery'omukazi"
 }

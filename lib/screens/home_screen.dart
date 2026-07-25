@@ -23,6 +23,7 @@ import 'history_screen.dart';
 import 'profile_screen.dart';
 import 'strip_camera_screen.dart';
 import 'strip_analysis_screen.dart';
+import 'voice_assistant_screen.dart';
 
 class HomeScreen extends StatefulWidget {
   const HomeScreen({super.key});
@@ -351,6 +352,14 @@ class _HomeScreenState extends State<HomeScreen> {
               color: Colors.white,
               shadows: _onImageShadow,
             ),
+          ),
+        ),
+        IconButton(
+          tooltip: AppLocalizations.of(context)!.voiceAssistantEntryTooltip,
+          icon: const Icon(Icons.mic_none, color: Colors.white, shadows: _onImageShadow),
+          onPressed: () => Navigator.push(
+            context,
+            MaterialPageRoute(builder: (_) => const VoiceAssistantScreen()),
           ),
         ),
         StreamBuilder<DocumentSnapshot<Map<String, dynamic>>>(
