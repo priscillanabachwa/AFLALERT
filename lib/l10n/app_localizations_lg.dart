@@ -935,7 +935,8 @@ class AppLocalizationsLg extends AppLocalizations {
   String get aboutFeatureVoiceTitle => 'Omuyambi w\'eddoboozi';
 
   @override
-  String get aboutFeatureVoiceDesc => 'Kola scan era obuuze ebibuuzo nga tokwatako ku ssimu.';
+  String get aboutFeatureVoiceDesc =>
+      'Kola scan era obuuze ebibuuzo nga tokwatako ku ssimu.';
 
   @override
   String get aboutFeatureReportsTitle => 'Ebyafaayo n\'lipoota';
@@ -991,7 +992,8 @@ class AppLocalizationsLg extends AppLocalizations {
   String get contactSupportMessageLabel => 'Obubaka';
 
   @override
-  String get contactSupportMessageHint => 'Nnyonnyola ekizibu oba ebirowoozo byo...';
+  String get contactSupportMessageHint =>
+      'Nnyonnyola ekizibu oba ebirowoozo byo...';
 
   @override
   String get contactSupportMessageRequired =>
@@ -1012,7 +1014,8 @@ class AppLocalizationsLg extends AppLocalizations {
       'Wabaddewo ekizibu okuweereza obubaka bwo. Tukusaba otutumire email butereevu.';
 
   @override
-  String get contactSupportEmailDirectly => 'Bwoba weetaaga obuyambi obulala, tutuukirire ku';
+  String get contactSupportEmailDirectly =>
+      'Bwoba weetaaga obuyambi obulala, tutuukirire ku';
 
   @override
   String get maizeScanLabel => 'Maize Scan';

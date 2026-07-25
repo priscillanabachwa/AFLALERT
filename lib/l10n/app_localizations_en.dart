@@ -1007,7 +1007,8 @@ class AppLocalizationsEn extends AppLocalizations {
       'Something went wrong sending your message. Please try emailing us directly.';
 
   @override
-  String get contactSupportEmailDirectly => 'For any further inquiries, reach out to us at';
+  String get contactSupportEmailDirectly =>
+      'For any further inquiries, reach out to us at';
 
   @override
   String get maizeScanLabel => 'Maize Scan';

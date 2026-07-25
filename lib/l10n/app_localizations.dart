@@ -1823,13 +1823,13 @@ abstract class AppLocalizations {
   /// No description provided for @contactSupportIntro.
   ///
   /// In en, this message translates to:
-  /// **'Tell us what's going on and we'll get back to you by email.'**
+  /// **'Tell us what\'s going on and we\'ll get back to you by email.'**
   String get contactSupportIntro;
 
   /// No description provided for @contactSupportCategoryLabel.
   ///
   /// In en, this message translates to:
-  /// **'What's this about?'**
+  /// **'What\'s this about?'**
   String get contactSupportCategoryLabel;
 
   /// No description provided for @contactSupportCategoryBug.
@@ -1919,7 +1919,7 @@ abstract class AppLocalizations {
   /// No description provided for @contactSupportSuccess.
   ///
   /// In en, this message translates to:
-  /// **'Thanks! Your message has been sent. We'll get back to you by email.'**
+  /// **'Thanks! Your message has been sent. We\'ll get back to you by email.'**
   String get contactSupportSuccess;
 
   /// No description provided for @contactSupportError.
