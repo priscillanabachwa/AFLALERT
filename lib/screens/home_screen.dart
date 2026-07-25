@@ -364,8 +364,8 @@ class _HomeScreenState extends State<HomeScreen> {
           constraints: const BoxConstraints(),
           icon: Image.asset(
             'lib/assets/images/AI_icon.png',
-            width: 52,
-            height: 52,
+            width: 56,
+            height: 56,
           ),
           onPressed: () => Navigator.push(
             context,
