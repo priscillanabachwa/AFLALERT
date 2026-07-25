@@ -5,6 +5,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_localizations/flutter_localizations.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:firebase_core/firebase_core.dart';
+import 'package:firebase_app_check/firebase_app_check.dart';
 import 'package:aflalert/screens/home_screen.dart';
 
 import 'firebase_options.dart';
@@ -35,6 +36,20 @@ Future<void> main() async {
   await Firebase.initializeApp(
     options: DefaultFirebaseOptions.currentPlatform,
   );
+
+  // Debug providers print a debug token to the console on first run; that
+  // token must be registered in Firebase Console > App Check > Manage debug
+  // tokens before requests will pass. Swap to Play Integrity / App Attest
+  // providers before release.
+  try {
+    await FirebaseAppCheck.instance.activate(
+      providerAndroid: AndroidDebugProvider(),
+      providerApple: AppleDebugProvider(),
+    );
+    debugPrint('AppCheck: activate() succeeded');
+  } catch (error) {
+    debugPrint('AppCheck: activate() failed: $error');
+  }
 
   await LocalNotificationService.instance.init();
 
