@@ -2,6 +2,8 @@ import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/foundation.dart';
 
+import '../constants/contact_info.dart';
+
 class FirestoreService {
   // 1. Establish database instance references
   final FirebaseFirestore _db = FirebaseFirestore.instance;
@@ -236,9 +238,11 @@ class FirestoreService {
     return _db.collection('users').doc(currentUser.uid).snapshots();
   }
 
-  /// Submits an in-app support request (Settings > Contact support). Stored
-  /// under the account when logged in, but still accepted for a guest so the
-  /// form never has to turn a user away.
+  /// Submits an in-app support request (Settings > Contact support): logs it
+  /// under the account when logged in (guests are still accepted so the form
+  /// never has to turn someone away), and enqueues an email to [supportEmail]
+  /// via the same Firestore "mail" collection / Trigger Email extension that
+  /// already delivers password-reset codes (see functions/index.js).
   Future<bool> submitSupportRequest({
     required String category,
     required String message,
@@ -254,6 +258,19 @@ class FirestoreService {
         'status': 'open',
         'createdAt': FieldValue.serverTimestamp(),
       });
+
+      await _db.collection('mail').add({
+        'to': supportEmail,
+        'replyTo': contactEmail,
+        'message': {
+          'subject': 'AflAlert support request: $category',
+          'text': 'From: $contactEmail\nCategory: $category\n\n$message',
+          'html': '<p><strong>From:</strong> $contactEmail</p>'
+              '<p><strong>Category:</strong> $category</p>'
+              '<p>${message.replaceAll('\n', '<br>')}</p>',
+        },
+      });
+
       debugPrint('FirestoreService: Support request submitted.');
       return true;
     } catch (e) {

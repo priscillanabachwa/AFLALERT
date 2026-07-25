@@ -1,9 +1,10 @@
 import 'package:flutter/material.dart';
 import 'package:url_launcher/url_launcher.dart';
 
+import '../constants/contact_info.dart';
 import '../l10n/app_localizations.dart';
 
-const String supportEmail = 'aflalert.support@gmail.com';
+export '../constants/contact_info.dart' show supportEmail;
 
 // Shared by the Settings and About screens so both "Contact support" entry
 // points open the same mailto: flow and fall back to the same message.
