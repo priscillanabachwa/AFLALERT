@@ -1814,6 +1814,126 @@ abstract class AppLocalizations {
   /// **'© 2026 AflAlert. All rights reserved.'**
   String get aboutCopyright;
 
+  /// No description provided for @contactSupportScreenTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Contact support'**
+  String get contactSupportScreenTitle;
+
+  /// No description provided for @contactSupportIntro.
+  ///
+  /// In en, this message translates to:
+  /// **'Tell us what's going on and we'll get back to you by email.'**
+  String get contactSupportIntro;
+
+  /// No description provided for @contactSupportCategoryLabel.
+  ///
+  /// In en, this message translates to:
+  /// **'What's this about?'**
+  String get contactSupportCategoryLabel;
+
+  /// No description provided for @contactSupportCategoryBug.
+  ///
+  /// In en, this message translates to:
+  /// **'Bug report'**
+  String get contactSupportCategoryBug;
+
+  /// No description provided for @contactSupportCategoryScan.
+  ///
+  /// In en, this message translates to:
+  /// **'Scan or result issue'**
+  String get contactSupportCategoryScan;
+
+  /// No description provided for @contactSupportCategoryAccount.
+  ///
+  /// In en, this message translates to:
+  /// **'Account issue'**
+  String get contactSupportCategoryAccount;
+
+  /// No description provided for @contactSupportCategoryFeedback.
+  ///
+  /// In en, this message translates to:
+  /// **'Feedback'**
+  String get contactSupportCategoryFeedback;
+
+  /// No description provided for @contactSupportCategoryOther.
+  ///
+  /// In en, this message translates to:
+  /// **'Other'**
+  String get contactSupportCategoryOther;
+
+  /// No description provided for @contactSupportEmailLabel.
+  ///
+  /// In en, this message translates to:
+  /// **'Your email'**
+  String get contactSupportEmailLabel;
+
+  /// No description provided for @contactSupportEmailHint.
+  ///
+  /// In en, this message translates to:
+  /// **'you@example.com'**
+  String get contactSupportEmailHint;
+
+  /// No description provided for @contactSupportEmailRequired.
+  ///
+  /// In en, this message translates to:
+  /// **'Enter an email so we can reply'**
+  String get contactSupportEmailRequired;
+
+  /// No description provided for @contactSupportEmailInvalid.
+  ///
+  /// In en, this message translates to:
+  /// **'Enter a valid email address'**
+  String get contactSupportEmailInvalid;
+
+  /// No description provided for @contactSupportMessageLabel.
+  ///
+  /// In en, this message translates to:
+  /// **'Message'**
+  String get contactSupportMessageLabel;
+
+  /// No description provided for @contactSupportMessageHint.
+  ///
+  /// In en, this message translates to:
+  /// **'Describe the issue or share your feedback...'**
+  String get contactSupportMessageHint;
+
+  /// No description provided for @contactSupportMessageRequired.
+  ///
+  /// In en, this message translates to:
+  /// **'Please describe your issue before submitting'**
+  String get contactSupportMessageRequired;
+
+  /// No description provided for @contactSupportSubmit.
+  ///
+  /// In en, this message translates to:
+  /// **'Submit'**
+  String get contactSupportSubmit;
+
+  /// No description provided for @contactSupportSubmitting.
+  ///
+  /// In en, this message translates to:
+  /// **'Submitting...'**
+  String get contactSupportSubmitting;
+
+  /// No description provided for @contactSupportSuccess.
+  ///
+  /// In en, this message translates to:
+  /// **'Thanks! Your message has been sent. We'll get back to you by email.'**
+  String get contactSupportSuccess;
+
+  /// No description provided for @contactSupportError.
+  ///
+  /// In en, this message translates to:
+  /// **'Something went wrong sending your message. Please try emailing us directly.'**
+  String get contactSupportError;
+
+  /// No description provided for @contactSupportEmailDirectly.
+  ///
+  /// In en, this message translates to:
+  /// **'For any further inquiries, reach out to us at'**
+  String get contactSupportEmailDirectly;
+
   /// No description provided for @maizeScanLabel.
   ///
   /// In en, this message translates to:

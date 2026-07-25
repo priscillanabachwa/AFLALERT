@@ -236,6 +236,32 @@ class FirestoreService {
     return _db.collection('users').doc(currentUser.uid).snapshots();
   }
 
+  /// Submits an in-app support request (Settings > Contact support). Stored
+  /// under the account when logged in, but still accepted for a guest so the
+  /// form never has to turn a user away.
+  Future<bool> submitSupportRequest({
+    required String category,
+    required String message,
+    required String contactEmail,
+  }) async {
+    try {
+      final User? currentUser = _auth.currentUser;
+      await _db.collection('supportRequests').add({
+        'userId': currentUser?.uid,
+        'contactEmail': contactEmail,
+        'category': category,
+        'message': message,
+        'status': 'open',
+        'createdAt': FieldValue.serverTimestamp(),
+      });
+      debugPrint('FirestoreService: Support request submitted.');
+      return true;
+    } catch (e) {
+      debugPrint('FirestoreService Error submitting support request: $e');
+      return false;
+    }
+  }
+
   /// Streams real-time scan history documents matching the active logged-in user account.
   Stream<QuerySnapshot> getUserScanHistory() {
     final User? currentUser = _auth.currentUser;
