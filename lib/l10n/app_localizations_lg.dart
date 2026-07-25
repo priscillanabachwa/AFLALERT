@@ -935,7 +935,8 @@ class AppLocalizationsLg extends AppLocalizations {
   String get aboutFeatureVoiceTitle => 'Omuyambi w\'eddoboozi';
 
   @override
-  String get aboutFeatureVoiceDesc => 'Kola scan era obuuze ebibuuzo nga tokwatako ku ssimu.';
+  String get aboutFeatureVoiceDesc =>
+      'Kola scan era obuuze ebibuuzo nga tokwatako ku ssimu.';
 
   @override
   String get aboutFeatureReportsTitle => 'Ebyafaayo n\'lipoota';
