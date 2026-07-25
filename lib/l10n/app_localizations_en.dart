@@ -945,6 +945,72 @@ class AppLocalizationsEn extends AppLocalizations {
   String get aboutCopyright => '© 2026 AflAlert. All rights reserved.';
 
   @override
+  String get contactSupportScreenTitle => 'Contact support';
+
+  @override
+  String get contactSupportIntro =>
+      'Tell us what\'s going on and we\'ll get back to you by email.';
+
+  @override
+  String get contactSupportCategoryLabel => 'What\'s this about?';
+
+  @override
+  String get contactSupportCategoryBug => 'Bug report';
+
+  @override
+  String get contactSupportCategoryScan => 'Scan or result issue';
+
+  @override
+  String get contactSupportCategoryAccount => 'Account issue';
+
+  @override
+  String get contactSupportCategoryFeedback => 'Feedback';
+
+  @override
+  String get contactSupportCategoryOther => 'Other';
+
+  @override
+  String get contactSupportEmailLabel => 'Your email';
+
+  @override
+  String get contactSupportEmailHint => 'you@example.com';
+
+  @override
+  String get contactSupportEmailRequired => 'Enter an email so we can reply';
+
+  @override
+  String get contactSupportEmailInvalid => 'Enter a valid email address';
+
+  @override
+  String get contactSupportMessageLabel => 'Message';
+
+  @override
+  String get contactSupportMessageHint =>
+      'Describe the issue or share your feedback...';
+
+  @override
+  String get contactSupportMessageRequired =>
+      'Please describe your issue before submitting';
+
+  @override
+  String get contactSupportSubmit => 'Submit';
+
+  @override
+  String get contactSupportSubmitting => 'Submitting...';
+
+  @override
+  String get contactSupportSuccess =>
+      'Thanks! Your message has been sent. We\'ll get back to you by email.';
+
+  @override
+  String get contactSupportError =>
+      'Something went wrong sending your message. Please try emailing us directly.';
+
+  @override
+  String get contactSupportEmailDirectly =>
+      'For any further inquiries, reach out to us at';
+
+  @override
   String get maizeScanLabel => 'Maize Scan';
 
   @override

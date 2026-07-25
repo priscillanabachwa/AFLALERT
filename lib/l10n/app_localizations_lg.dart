@@ -935,7 +935,8 @@ class AppLocalizationsLg extends AppLocalizations {
   String get aboutFeatureVoiceTitle => 'Omuyambi w\'eddoboozi';
 
   @override
-  String get aboutFeatureVoiceDesc => 'Kola scan era obuuze ebibuuzo nga tokwatako ku ssimu.';
+  String get aboutFeatureVoiceDesc =>
+      'Kola scan era obuuze ebibuuzo nga tokwatako ku ssimu.';
 
   @override
   String get aboutFeatureReportsTitle => 'Ebyafaayo n\'lipoota';
@@ -949,6 +950,72 @@ class AppLocalizationsLg extends AppLocalizations {
 
   @override
   String get aboutCopyright => '© 2026 AflAlert. Eddembe lyonna likuumiddwa.';
+
+  @override
+  String get contactSupportScreenTitle => 'Tukwatagane n\'Obuyambi';
+
+  @override
+  String get contactSupportIntro =>
+      'Tubuulire ekikuteganya naffe tunaakuddamu ku email.';
+
+  @override
+  String get contactSupportCategoryLabel => 'Kino kikwata ku ki?';
+
+  @override
+  String get contactSupportCategoryBug => 'Ekiremya app';
+
+  @override
+  String get contactSupportCategoryScan => 'Ekizibu ku scan oba ebiva mu kyo';
+
+  @override
+  String get contactSupportCategoryAccount => 'Ekizibu ku akaunti';
+
+  @override
+  String get contactSupportCategoryFeedback => 'Ebirowoozo';
+
+  @override
+  String get contactSupportCategoryOther => 'Ekirala';
+
+  @override
+  String get contactSupportEmailLabel => 'Email yo';
+
+  @override
+  String get contactSupportEmailHint => 'you@example.com';
+
+  @override
+  String get contactSupportEmailRequired => 'Wandiika email tulyoke tukuddemu';
+
+  @override
+  String get contactSupportEmailInvalid => 'Wandiika email entuufu';
+
+  @override
+  String get contactSupportMessageLabel => 'Obubaka';
+
+  @override
+  String get contactSupportMessageHint =>
+      'Nnyonnyola ekizibu oba ebirowoozo byo...';
+
+  @override
+  String get contactSupportMessageRequired =>
+      'Nnyonnyola ekikuteganya nga tonnaweereza';
+
+  @override
+  String get contactSupportSubmit => 'Weereza';
+
+  @override
+  String get contactSupportSubmitting => 'Tuweereza...';
+
+  @override
+  String get contactSupportSuccess =>
+      'Weebale! Obubaka bwo buweereddwa. Tujja kukuddamu ku email.';
+
+  @override
+  String get contactSupportError =>
+      'Wabaddewo ekizibu okuweereza obubaka bwo. Tukusaba otutumire email butereevu.';
+
+  @override
+  String get contactSupportEmailDirectly =>
+      'Bwoba weetaaga obuyambi obulala, tutuukirire ku';
 
   @override
   String get maizeScanLabel => 'Maize Scan';

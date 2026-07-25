@@ -2,8 +2,6 @@ import 'package:flutter/material.dart';
 
 import '../constants/app_colors.dart';
 import '../l10n/app_localizations.dart';
-import '../utils/contact_support.dart';
-import 'legal_screen.dart';
 
 class AboutScreen extends StatelessWidget {
   const AboutScreen({super.key});
@@ -98,32 +96,6 @@ class AboutScreen extends StatelessWidget {
                   icon: Icons.history_outlined,
                   title: l10n.aboutFeatureReportsTitle,
                   description: l10n.aboutFeatureReportsDesc,
-                ),
-              ],
-            ),
-            const SizedBox(height: 24),
-            _SectionHeader(title: l10n.helpSupportSection),
-            _AboutCard(
-              children: [
-                ListTile(
-                  contentPadding: EdgeInsets.zero,
-                  leading: const Icon(Icons.mail_outline, color: AppColors.primary),
-                  title: Text(l10n.contactSupport, style: const TextStyle(color: AppColors.primary)),
-                  trailing: const Icon(Icons.chevron_right, color: AppColors.grey),
-                  onTap: () => launchSupportEmail(context),
-                ),
-                const Divider(height: 1, color: Color(0xFFEDEDED)),
-                ListTile(
-                  contentPadding: EdgeInsets.zero,
-                  leading: const Icon(Icons.gavel_outlined, color: AppColors.primary),
-                  title: Text(l10n.legal, style: const TextStyle(color: AppColors.primary)),
-                  trailing: const Icon(Icons.chevron_right, color: AppColors.grey),
-                  onTap: () {
-                    Navigator.push(
-                      context,
-                      MaterialPageRoute(builder: (_) => const LegalScreen()),
-                    );
-                  },
                 ),
               ],
             ),
