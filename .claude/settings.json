@@ -84,7 +84,24 @@
       "Bash(/c/Users/hp/AppData/Local/Android/Sdk/platform-tools/adb.exe -s 3226327000011424 shell run-as com.aflalert.aflalert cat shared_prefs/com.google.firebase.appcheck.debug.store.W0RFRkFVTFRd+MTo1MzA3ODAzMTU1MzE6YW5kcm9pZDoyYmEyMTgwOTY1OTkwMTIyMmE5OThl.xml)",
       "Bash(firebase deploy *)",
       "Bash(tasklist //FI \"IMAGENAME eq firebase*\")",
-      "Bash(tasklist //FI \"IMAGENAME eq node.exe\")"
+      "Bash(tasklist //FI \"IMAGENAME eq node.exe\")",
+      "Bash(node -e \"console.log\\(require\\('firebase-admin/package.json'\\).version\\)\")",
+      "Bash(gcloud auth *)",
+      "Bash(gcloud config *)",
+      "Bash(firebase functions:list --project aflalert)",
+      "Bash(firebase functions:log --only ext-firestore-send-email-processqueue --project aflalert -n 50)",
+      "Bash(firebase functions:secrets:access ext-firestore-send-email-SMTP_CONNECTION_URI --project aflalert)",
+      "Bash(firebase functions:secrets:list --project aflalert)",
+      "Bash(/c/Users/hp/AppData/Local/Android/Sdk/platform-tools/adb.exe -s 3226327000011424 logcat -G 16M)",
+      "Bash(/c/Users/hp/AppData/Local/Android/Sdk/platform-tools/adb.exe -s 3226327000011424 logcat -g)",
+      "Bash(/c/Users/hp/AppData/Local/Android/Sdk/platform-tools/adb.exe -s 3226327000011424 logcat -v brief)",
+      "Bash(firebase functions:log --only ext-firestore-send-email-processqueue --project aflalert -n 20)",
+      "Bash(/c/Users/hp/AppData/Local/Android/Sdk/platform-tools/adb.exe -s RZCT70RRZ2E shell pm list packages)",
+      "Bash(/c/Users/hp/AppData/Local/Android/Sdk/platform-tools/adb.exe -s RZCT70RRZ2E shell run-as com.aflalert.aflalert ls shared_prefs/)",
+      "Bash(/c/Users/hp/AppData/Local/Android/Sdk/platform-tools/adb.exe -s RZCT70RRZ2E shell run-as com.aflalert.aflalert cat shared_prefs/com.google.firebase.appcheck.debug.store.W0RFRkFVTFRd+MTo1MzA3ODAzMTU1MzE6YW5kcm9pZDoyYmEyMTgwOTY1OTkwMTIyMmE5OThl.xml)",
+      "Bash(firebase ext:list --project aflalert)",
+      "Bash(firebase functions:log --only ext-firestore-send-email-hx64-processqueue --project aflalert -n 30)",
+      "Bash(firebase functions:log --only ext-firestore-send-email-processqueue --project aflalert -n 15)"
     ]
   }
 }

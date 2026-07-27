@@ -16,6 +16,7 @@ import '../widgets/pdf_export_dialog.dart';
 import 'result_screen.dart';
 import 'strip_camera_screen.dart' show StripCropType;
 import 'strip_result_screen.dart';
+import 'voice_assistant_screen.dart';
 
 // ─────────────────────────────────────────
 //  DESIGN TOKENS — aliased to the shared AppColors palette
@@ -286,6 +287,7 @@ class _HistoryScreenState extends State<HistoryScreen> {
         },
       ),
       bottomNavigationBar: const CustomBottomNav(currentIndex: 1),
+      floatingActionButton: _buildVoiceAssistantBubble(context),
     );
   }
 

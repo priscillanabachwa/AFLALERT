@@ -6,6 +6,7 @@ import 'package:cloud_functions/cloud_functions.dart';
 
 import '../constants/app_colors.dart';
 import '../l10n/app_localizations.dart';
+import 'login_screen.dart';
 
 class OtpVerificationScreen extends StatefulWidget {
   final String email;
@@ -113,7 +114,10 @@ class _OtpVerificationScreenState extends State<OtpVerificationScreen> {
             backgroundColor: const Color(0xFF1F4A2C),
           ),
         );
-        Navigator.of(context).popUntil((route) => route.isFirst);
+        Navigator.of(context).pushAndRemoveUntil(
+          MaterialPageRoute(builder: (_) => const LoginScreen()),
+          (route) => false,
+        );
       }
     } on FirebaseFunctionsException catch (e) {
       if (mounted) {
