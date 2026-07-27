@@ -250,29 +250,41 @@ class _HistoryScreenState extends State<HistoryScreen> {
 
   @override
   Widget build(BuildContext context) {
-    return Scaffold(
-      backgroundColor: kPageBg,
-      appBar: _buildAppBar(),
-      body: StreamBuilder<QuerySnapshot>(
-        stream: _scanHistoryStream,
-        builder: (context, snapshot) {
-          if (snapshot.hasError) {
-            return _buildErrorState();
-          }
-          if (snapshot.connectionState == ConnectionState.waiting) {
-            return const Center(
+    return StreamBuilder<QuerySnapshot>(
+      stream: _scanHistoryStream,
+      builder: (context, snapshot) {
+        if (snapshot.hasError) {
+          return Scaffold(
+            backgroundColor: kPageBg,
+            appBar: _buildAppBar(const []),
+            body: _buildErrorState(),
+            bottomNavigationBar: const CustomBottomNav(currentIndex: 1),
+            floatingActionButton: _buildVoiceAssistantBubble(context),
+          );
+        }
+        if (snapshot.connectionState == ConnectionState.waiting) {
+          return Scaffold(
+            backgroundColor: kPageBg,
+            appBar: _buildAppBar(const []),
+            body: const Center(
               child: CircularProgressIndicator(color: kPrimaryGreen),
-            );
-          }
+            ),
+            bottomNavigationBar: const CustomBottomNav(currentIndex: 1),
+            floatingActionButton: _buildVoiceAssistantBubble(context),
+          );
+        }
 
-          final allScans = (snapshot.data?.docs ?? [])
-              .map(_scanRecordFromDoc)
-              .whereType<ScanRecord>()
-              .where((s) => !_pendingDeleteIds.contains(s.id))
-              .toList();
-          final results = _filterRecords(allScans);
+        final allScans = (snapshot.data?.docs ?? [])
+            .map(_scanRecordFromDoc)
+            .whereType<ScanRecord>()
+            .where((s) => !_pendingDeleteIds.contains(s.id))
+            .toList();
+        final results = _filterRecords(allScans);
 
-          return Column(
+        return Scaffold(
+          backgroundColor: kPageBg,
+          appBar: _buildAppBar(results),
+          body: Column(
             children: [
               _buildFilterChips(allScans),
               const SizedBox(height: 4),
@@ -283,11 +295,11 @@ class _HistoryScreenState extends State<HistoryScreen> {
               ),
               _buildBottomBar(results),
             ],
-          );
-        },
-      ),
-      bottomNavigationBar: const CustomBottomNav(currentIndex: 1),
-      floatingActionButton: _buildVoiceAssistantBubble(context),
+          ),
+          bottomNavigationBar: const CustomBottomNav(currentIndex: 1),
+          floatingActionButton: _buildVoiceAssistantBubble(context),
+        );
+      },
     );
   }
 
@@ -325,10 +337,11 @@ class _HistoryScreenState extends State<HistoryScreen> {
   }
 
   // ── APP BAR ──────────────────────────────
-  PreferredSizeWidget _buildAppBar() {
+  PreferredSizeWidget _buildAppBar(List<ScanRecord> records) {
     final AppLocalizations l10n = AppLocalizations.of(context)!;
 
     if (_selectionMode) {
+      final bool allSelected = records.isNotEmpty && _selectedIds.length == records.length;
       return AppBar(
         backgroundColor: kPageBg,
         elevation: 0,
@@ -347,6 +360,25 @@ class _HistoryScreenState extends State<HistoryScreen> {
           ),
         ),
         centerTitle: false,
+        actions: [
+          TextButton.icon(
+            onPressed: records.isEmpty ? null : () => _toggleSelectAll(records),
+            icon: Icon(
+              allSelected ? Icons.check_box : Icons.check_box_outline_blank,
+              size: 20,
+              color: kPrimaryGreen,
+            ),
+            label: Text(
+              allSelected ? l10n.deselectAll : l10n.selectAll,
+              style: const TextStyle(
+                fontSize: 13,
+                fontWeight: FontWeight.w600,
+                color: kPrimaryGreen,
+              ),
+            ),
+          ),
+          const SizedBox(width: 4),
+        ],
       );
     }
 
@@ -560,7 +592,6 @@ class _HistoryScreenState extends State<HistoryScreen> {
   // ── SELECTION ACTION BAR ─────────────────
   Widget _buildSelectionBar(List<ScanRecord> records) {
     final AppLocalizations l10n = AppLocalizations.of(context)!;
-    final bool allSelected = records.isNotEmpty && _selectedIds.length == records.length;
     final bool hasSelection = _selectedIds.isNotEmpty;
 
     return Container(
@@ -568,29 +599,6 @@ class _HistoryScreenState extends State<HistoryScreen> {
       padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
       child: Row(
         children: [
-          GestureDetector(
-            onTap: records.isEmpty ? null : () => _toggleSelectAll(records),
-            child: Row(
-              mainAxisSize: MainAxisSize.min,
-              children: [
-                Icon(
-                  allSelected ? Icons.check_box : Icons.check_box_outline_blank,
-                  size: 20,
-                  color: kPrimaryGreen,
-                ),
-                const SizedBox(width: 6),
-                Text(
-                  allSelected ? l10n.deselectAll : l10n.selectAll,
-                  style: const TextStyle(
-                    fontSize: 13,
-                    fontWeight: FontWeight.w600,
-                    color: kPrimaryGreen,
-                  ),
-                ),
-              ],
-            ),
-          ),
-          const Spacer(),
           TextButton.icon(
             onPressed: hasSelection ? () => _shareSelected(records) : null,
             icon: const Icon(Icons.ios_share, size: 18),

@@ -102,7 +102,12 @@
       "Bash(firebase ext:list --project aflalert)",
       "Bash(firebase functions:log --only ext-firestore-send-email-hx64-processqueue --project aflalert -n 30)",
       "Bash(firebase functions:log --only ext-firestore-send-email-processqueue --project aflalert -n 15)",
-      "Bash(tee \"C:\\\\Users\\\\hp\\\\AppData\\\\Local\\\\Temp\\\\claude\\\\c--Users-hp-Desktop-AFLALERT\\\\01c6c95b-dca8-4198-82c9-fc38d8daaee2\\\\scratchpad\\\\flutter_run.log\")"
+      "Bash(tee \"C:\\\\Users\\\\hp\\\\AppData\\\\Local\\\\Temp\\\\claude\\\\c--Users-hp-Desktop-AFLALERT\\\\01c6c95b-dca8-4198-82c9-fc38d8daaee2\\\\scratchpad\\\\flutter_run.log\")",
+      "Bash(/c/Users/hp/AppData/Local/Android/Sdk/platform-tools/adb.exe -s RZCT70RRZ2E shell dumpsys window)",
+      "Bash(/c/Users/hp/AppData/Local/Android/Sdk/platform-tools/adb.exe -s RZCT70RRZ2E exec-out screencap -p)",
+      "Bash(/c/Users/hp/AppData/Local/Android/Sdk/platform-tools/adb.exe -s RZCT70RRZ2E shell input tap 944 1826)",
+      "Bash(where adb *)",
+      "Bash(/c/Users/hp/AppData/Local/Android/Sdk/platform-tools/adb.exe -s RZCT70RRZ2E shell input tap 77 166)"
     ]
   }
 }
