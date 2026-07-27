@@ -11,6 +11,7 @@ import '../services/report_storage_service.dart';
 import '../services/strip_analysis_service.dart';
 import '../widgets/pdf_export_dialog.dart';
 import 'strip_camera_screen.dart';
+import 'voice_assistant_screen.dart';
 
 class StripResultsScreenArgs {
   final double ppbValue;
@@ -460,6 +461,7 @@ class StripResultsScreen extends StatelessWidget {
     final AppLocalizations l10n = AppLocalizations.of(context)!;
     return Scaffold(
       backgroundColor: pageBg,
+      floatingActionButton: _buildVoiceAssistantBubble(context),
       body: SafeArea(
         child: Padding(
           padding: const EdgeInsets.all(16),
@@ -569,6 +571,39 @@ class StripResultsScreen extends StatelessWidget {
                 ),
               ],
             ),
+          ),
+        ),
+      ),
+    );
+  }
+
+  Widget _buildVoiceAssistantBubble(BuildContext context) {
+    return Tooltip(
+      message: AppLocalizations.of(context)!.voiceAssistantEntryTooltip,
+      child: InkWell(
+        borderRadius: BorderRadius.circular(32),
+        onTap: () => Navigator.push(
+          context,
+          MaterialPageRoute(builder: (_) => const VoiceAssistantScreen()),
+        ),
+        child: Container(
+          width: 64,
+          height: 64,
+          decoration: BoxDecoration(
+            shape: BoxShape.circle,
+            color: AppColors.primaryContainer,
+            border: Border.all(color: const Color(0xFFE8F5EE), width: 3),
+            boxShadow: [
+              BoxShadow(
+                color: Colors.black.withValues(alpha: 0.25),
+                blurRadius: 12,
+                offset: const Offset(0, 4),
+              ),
+            ],
+          ),
+          child: Padding(
+            padding: const EdgeInsets.all(8),
+            child: Image.asset('lib/assets/images/AI_icon.png'),
           ),
         ),
       ),

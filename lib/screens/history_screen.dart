@@ -16,6 +16,7 @@ import '../widgets/pdf_export_dialog.dart';
 import 'result_screen.dart';
 import 'strip_camera_screen.dart' show StripCropType;
 import 'strip_result_screen.dart';
+import 'voice_assistant_screen.dart';
 
 // ─────────────────────────────────────────
 //  DESIGN TOKENS — aliased to the shared AppColors palette
@@ -249,29 +250,41 @@ class _HistoryScreenState extends State<HistoryScreen> {
 
   @override
   Widget build(BuildContext context) {
-    return Scaffold(
-      backgroundColor: kPageBg,
-      appBar: _buildAppBar(),
-      body: StreamBuilder<QuerySnapshot>(
-        stream: _scanHistoryStream,
-        builder: (context, snapshot) {
-          if (snapshot.hasError) {
-            return _buildErrorState();
-          }
-          if (snapshot.connectionState == ConnectionState.waiting) {
-            return const Center(
+    return StreamBuilder<QuerySnapshot>(
+      stream: _scanHistoryStream,
+      builder: (context, snapshot) {
+        if (snapshot.hasError) {
+          return Scaffold(
+            backgroundColor: kPageBg,
+            appBar: _buildAppBar(const []),
+            body: _buildErrorState(),
+            bottomNavigationBar: const CustomBottomNav(currentIndex: 1),
+            floatingActionButton: _buildVoiceAssistantBubble(context),
+          );
+        }
+        if (snapshot.connectionState == ConnectionState.waiting) {
+          return Scaffold(
+            backgroundColor: kPageBg,
+            appBar: _buildAppBar(const []),
+            body: const Center(
               child: CircularProgressIndicator(color: kPrimaryGreen),
-            );
-          }
+            ),
+            bottomNavigationBar: const CustomBottomNav(currentIndex: 1),
+            floatingActionButton: _buildVoiceAssistantBubble(context),
+          );
+        }
 
-          final allScans = (snapshot.data?.docs ?? [])
-              .map(_scanRecordFromDoc)
-              .whereType<ScanRecord>()
-              .where((s) => !_pendingDeleteIds.contains(s.id))
-              .toList();
-          final results = _filterRecords(allScans);
+        final allScans = (snapshot.data?.docs ?? [])
+            .map(_scanRecordFromDoc)
+            .whereType<ScanRecord>()
+            .where((s) => !_pendingDeleteIds.contains(s.id))
+            .toList();
+        final results = _filterRecords(allScans);
 
-          return Column(
+        return Scaffold(
+          backgroundColor: kPageBg,
+          appBar: _buildAppBar(results),
+          body: Column(
             children: [
               _buildFilterChips(allScans),
               const SizedBox(height: 4),
@@ -282,18 +295,53 @@ class _HistoryScreenState extends State<HistoryScreen> {
               ),
               _buildBottomBar(results),
             ],
-          );
-        },
+          ),
+          bottomNavigationBar: const CustomBottomNav(currentIndex: 1),
+          floatingActionButton: _buildVoiceAssistantBubble(context),
+        );
+      },
+    );
+  }
+
+  Widget _buildVoiceAssistantBubble(BuildContext context) {
+    return Tooltip(
+      message: AppLocalizations.of(context)!.voiceAssistantEntryTooltip,
+      child: InkWell(
+        borderRadius: BorderRadius.circular(32),
+        onTap: () => Navigator.push(
+          context,
+          MaterialPageRoute(builder: (_) => const VoiceAssistantScreen()),
+        ),
+        child: Container(
+          width: 64,
+          height: 64,
+          decoration: BoxDecoration(
+            shape: BoxShape.circle,
+            color: AppColors.primaryContainer,
+            border: Border.all(color: const Color(0xFFE8F5EE), width: 3),
+            boxShadow: [
+              BoxShadow(
+                color: Colors.black.withValues(alpha: 0.25),
+                blurRadius: 12,
+                offset: const Offset(0, 4),
+              ),
+            ],
+          ),
+          child: Padding(
+            padding: const EdgeInsets.all(8),
+            child: Image.asset('lib/assets/images/AI_icon.png'),
+          ),
+        ),
       ),
-      bottomNavigationBar: const CustomBottomNav(currentIndex: 1),
     );
   }
 
   // ── APP BAR ──────────────────────────────
-  PreferredSizeWidget _buildAppBar() {
+  PreferredSizeWidget _buildAppBar(List<ScanRecord> records) {
     final AppLocalizations l10n = AppLocalizations.of(context)!;
 
     if (_selectionMode) {
+      final bool allSelected = records.isNotEmpty && _selectedIds.length == records.length;
       return AppBar(
         backgroundColor: kPageBg,
         elevation: 0,
@@ -312,6 +360,25 @@ class _HistoryScreenState extends State<HistoryScreen> {
           ),
         ),
         centerTitle: false,
+        actions: [
+          TextButton.icon(
+            onPressed: records.isEmpty ? null : () => _toggleSelectAll(records),
+            icon: Icon(
+              allSelected ? Icons.check_box : Icons.check_box_outline_blank,
+              size: 20,
+              color: kPrimaryGreen,
+            ),
+            label: Text(
+              allSelected ? l10n.deselectAll : l10n.selectAll,
+              style: const TextStyle(
+                fontSize: 13,
+                fontWeight: FontWeight.w600,
+                color: kPrimaryGreen,
+              ),
+            ),
+          ),
+          const SizedBox(width: 4),
+        ],
       );
     }
 
@@ -495,58 +562,29 @@ class _HistoryScreenState extends State<HistoryScreen> {
     if (results.isEmpty) return const SizedBox.shrink();
 
     final AppLocalizations l10n = AppLocalizations.of(context)!;
-    final bool hasActiveFilters = _activeFilter != null || _selectedLocation != null || _query.isNotEmpty;
 
     return Container(
       color: kCardBg,
       padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
-      child: Row(
-        children: [
-          Expanded(
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              mainAxisSize: MainAxisSize.min,
-              children: [
-                Text(
-                  '${l10n.showingResultsCount(results.length)}'
-                  '${hasActiveFilters ? l10n.forCurrentFilters : ''}.',
-                  style: const TextStyle(fontSize: 12, color: kSubtitle),
-                ),
-                if (hasActiveFilters)
-                  GestureDetector(
-                    onTap: _clearFilters,
-                    child: Text(
-                      l10n.clearAllFiltersX,
-                      style: const TextStyle(
-                        fontSize: 12,
-                        color: kDangerRed,
-                        fontWeight: FontWeight.w600,
-                      ),
-                    ),
-                  ),
-              ],
-            ),
+      child: SizedBox(
+        width: double.infinity,
+        child: ElevatedButton.icon(
+          onPressed: () => _exportPDF(results),
+          icon: const Icon(Icons.picture_as_pdf, size: 16),
+          label: Text(
+            l10n.exportPdf,
+            style: const TextStyle(fontSize: 13, fontWeight: FontWeight.w700),
           ),
-          const SizedBox(width: 12),
-          ElevatedButton.icon(
-            onPressed: () => _exportPDF(results),
-            icon: const Icon(Icons.picture_as_pdf, size: 16),
-            label: Text(
-              l10n.exportPdf,
-              style: const TextStyle(fontSize: 13, fontWeight: FontWeight.w700),
+          style: ElevatedButton.styleFrom(
+            backgroundColor: kAccentGold,
+            foregroundColor: kPrimaryGreen,
+            padding: const EdgeInsets.symmetric(vertical: 12),
+            shape: RoundedRectangleBorder(
+              borderRadius: BorderRadius.circular(10),
             ),
-            style: ElevatedButton.styleFrom(
-              backgroundColor: kAccentGold,
-              foregroundColor: kPrimaryGreen,
-              minimumSize: Size.zero,
-              padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
-              shape: RoundedRectangleBorder(
-                borderRadius: BorderRadius.circular(10),
-              ),
-              elevation: 0,
-            ),
+            elevation: 0,
           ),
-        ],
+        ),
       ),
     );
   }
@@ -554,7 +592,6 @@ class _HistoryScreenState extends State<HistoryScreen> {
   // ── SELECTION ACTION BAR ─────────────────
   Widget _buildSelectionBar(List<ScanRecord> records) {
     final AppLocalizations l10n = AppLocalizations.of(context)!;
-    final bool allSelected = records.isNotEmpty && _selectedIds.length == records.length;
     final bool hasSelection = _selectedIds.isNotEmpty;
 
     return Container(
@@ -562,29 +599,6 @@ class _HistoryScreenState extends State<HistoryScreen> {
       padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
       child: Row(
         children: [
-          GestureDetector(
-            onTap: records.isEmpty ? null : () => _toggleSelectAll(records),
-            child: Row(
-              mainAxisSize: MainAxisSize.min,
-              children: [
-                Icon(
-                  allSelected ? Icons.check_box : Icons.check_box_outline_blank,
-                  size: 20,
-                  color: kPrimaryGreen,
-                ),
-                const SizedBox(width: 6),
-                Text(
-                  allSelected ? l10n.deselectAll : l10n.selectAll,
-                  style: const TextStyle(
-                    fontSize: 13,
-                    fontWeight: FontWeight.w600,
-                    color: kPrimaryGreen,
-                  ),
-                ),
-              ],
-            ),
-          ),
-          const Spacer(),
           TextButton.icon(
             onPressed: hasSelection ? () => _shareSelected(records) : null,
             icon: const Icon(Icons.ios_share, size: 18),
