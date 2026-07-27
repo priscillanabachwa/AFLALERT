@@ -2000,6 +2000,18 @@ abstract class AppLocalizations {
   /// **'Tap this card anytime to see the full hourly forecast.'**
   String get coachMarkWeatherDesc;
 
+  /// No description provided for @coachMarkVoiceTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Try the voice assistant'**
+  String get coachMarkVoiceTitle;
+
+  /// No description provided for @coachMarkVoiceDesc.
+  ///
+  /// In en, this message translates to:
+  /// **'Tap here and just talk — ask it to scan your maize, check the weather, or answer a question.'**
+  String get coachMarkVoiceDesc;
+
   /// No description provided for @chemicalStripScanTitle.
   ///
   /// In en, this message translates to:
