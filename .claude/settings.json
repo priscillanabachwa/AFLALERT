@@ -61,7 +61,30 @@
       "PowerShell(& \"C:\\\\Users\\\\hp\\\\AppData\\\\Local\\\\Android\\\\Sdk\\\\platform-tools\\\\adb.exe\" -s RZCT70RRZ2E shell pm clear com.aflalert.aflalert)",
       "Bash(taskkill //IM adb.exe //F)",
       "Bash(\"/c/Users/hp/AppData/Local/Android/Sdk/platform-tools/adb.exe\" -s 0987437343157688 logcat -c)",
-      "Bash(\"/c/Users/hp/AppData/Local/Android/Sdk/platform-tools/adb.exe\" -s 0987437343157688 logcat -v brief \"DebugAppCheckProviderFactory:*\" \"*:S\")"
+      "Bash(/c/Users/hp/AppData/Local/Android/Sdk/platform-tools/adb.exe -s 3226327000011424 shell pidof com.aflalert.aflalert)",
+      "Bash(/c/Users/hp/AppData/Local/Android/Sdk/platform-tools/adb.exe -s 3309049e shell pidof com.aflalert.aflalert)",
+      "Bash(/c/Users/hp/AppData/Local/Android/Sdk/platform-tools/adb.exe -s 3309049e shell 'ps -A 2>/dev/null | grep aflalert')",
+      "Bash(/c/Users/hp/AppData/Local/Android/Sdk/platform-tools/adb.exe -s 3309049e logcat -c)",
+      "Bash(/c/Users/hp/AppData/Local/Android/Sdk/platform-tools/adb.exe -s 3309049e logcat -d)",
+      "Bash(/c/Users/hp/AppData/Local/Android/Sdk/platform-tools/adb.exe -s 3226327000011424 logcat -d --pid=5405)",
+      "Bash(/c/Users/hp/AppData/Local/Android/Sdk/platform-tools/adb.exe -s 3226327000011424 logcat -d)",
+      "Bash(/c/Users/hp/AppData/Local/Android/Sdk/platform-tools/adb.exe -s 3226327000011424 logcat -c)",
+      "Bash(/c/Users/hp/AppData/Local/Android/Sdk/platform-tools/adb.exe -s 3226327000011424 shell am force-stop com.aflalert.aflalert)",
+      "Bash(/c/Users/hp/AppData/Local/Android/Sdk/platform-tools/adb.exe -s 3226327000011424 shell monkey -p com.aflalert.aflalert -c android.intent.category.LAUNCHER 1)",
+      "Bash(/c/Users/hp/AppData/Local/Android/Sdk/platform-tools/adb.exe -s 3226327000011424 logcat -d --pid=12052)",
+      "Bash(/c/Users/hp/AppData/Local/Android/Sdk/platform-tools/adb.exe -s 3226327000011424 uninstall com.aflalert.aflalert)",
+      "Bash(/c/Users/hp/AppData/Local/Android/Sdk/platform-tools/adb.exe -s 3226327000011424 logcat -d --pid=20770)",
+      "Bash(/c/Users/hp/AppData/Local/Android/Sdk/platform-tools/adb.exe -s 3226327000011424 shell pm clear com.aflalert.aflalert)",
+      "Bash(/c/Users/hp/AppData/Local/Android/Sdk/platform-tools/adb.exe -s 3226327000011424 logcat -d --pid=25224)",
+      "Bash(firebase login:list)",
+      "Bash(firebase ext:configure --help)",
+      "Bash(firebase ext:info firebase/firestore-send-email@0.2.10 --params)",
+      "Bash(/c/Users/hp/AppData/Local/Android/Sdk/platform-tools/adb.exe -s 3226327000011424 shell run-as com.aflalert.aflalert ls shared_prefs/)",
+      "Bash(firebase ext:info firebase/firestore-send-email@0.2.10)",
+      "Bash(/c/Users/hp/AppData/Local/Android/Sdk/platform-tools/adb.exe -s 3226327000011424 shell run-as com.aflalert.aflalert cat shared_prefs/com.google.firebase.appcheck.debug.store.W0RFRkFVTFRd+MTo1MzA3ODAzMTU1MzE6YW5kcm9pZDoyYmEyMTgwOTY1OTkwMTIyMmE5OThl.xml)",
+      "Bash(firebase deploy *)",
+      "Bash(tasklist //FI \"IMAGENAME eq firebase*\")",
+      "Bash(tasklist //FI \"IMAGENAME eq node.exe\")"
     ]
   }
 }

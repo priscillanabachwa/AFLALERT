@@ -187,6 +187,10 @@ class VoiceAssistantService extends ChangeNotifier {
             .whereType<Map>()
             .where((v) => (v['locale']?.toString().toLowerCase() ?? '').startsWith('en'))
             .toList();
+        debugPrint(
+          'VoiceAssistantService: ${englishVoices.length} English voices found: '
+          '${englishVoices.map((v) => v['name']).toList()}',
+        );
 
         Map? match;
         for (final Map voice in englishVoices) {
@@ -205,22 +209,25 @@ class VoiceAssistantService extends ChangeNotifier {
         }();
 
         if (match != null) {
+          debugPrint('VoiceAssistantService: matched explicit voice ${match['name']} for $wantedGender');
           await _tts.setVoice({
             'name': match['name'].toString(),
             'locale': match['locale'].toString(),
           });
           matchedExplicitVoice = true;
+        } else {
+          debugPrint('VoiceAssistantService: no explicit $wantedGender voice found, falling back to pitch');
         }
       }
     } catch (error) {
       debugPrint('VoiceAssistantService: could not enumerate TTS voices: $error');
     }
 
-    if (_voiceGender == VoiceGender.male) {
-      await _tts.setPitch(matchedExplicitVoice ? 0.9 : 0.7);
-    } else {
-      await _tts.setPitch(1.0);
-    }
+    final double pitch = _voiceGender == VoiceGender.male
+        ? (matchedExplicitVoice ? 0.9 : 0.7)
+        : 1.0;
+    debugPrint('VoiceAssistantService: setting pitch to $pitch for $wantedGender (matchedExplicitVoice=$matchedExplicitVoice)');
+    await _tts.setPitch(pitch);
   }
 
   void _onSpeechStatus(String status) {
