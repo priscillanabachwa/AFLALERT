@@ -69,6 +69,7 @@ class _HomeScreenState extends State<HomeScreen> {
   final GlobalKey _maizeScanKey = GlobalKey();
   final GlobalKey _stripScanKey = GlobalKey();
   final GlobalKey _weatherChipKey = GlobalKey();
+  final GlobalKey _voiceAssistantKey = GlobalKey();
   bool _showCoachMarks = false;
 
   @override
@@ -310,17 +311,23 @@ class _HomeScreenState extends State<HomeScreen> {
                   title: l10n.coachMarkWeatherTitle,
                   description: l10n.coachMarkWeatherDesc,
                 ),
+                CoachMarkStep(
+                  targetKey: _voiceAssistantKey,
+                  shape: CoachMarkShape.circle,
+                  title: l10n.coachMarkVoiceTitle,
+                  description: l10n.coachMarkVoiceDesc,
+                ),
               ],
               onFinished: _dismissCoachMarks,
             ),
         ],
       ),
       bottomNavigationBar: const CustomBottomNav(currentIndex: 0),
-      floatingActionButton: _buildVoiceAssistantBubble(context),
+      floatingActionButton: _buildVoiceAssistantBubble(context, key: _voiceAssistantKey),
     );
   }
 
-  Widget _buildVoiceAssistantBubble(BuildContext context) {
+  Widget _buildVoiceAssistantBubble(BuildContext context, {Key? key}) {
     return Tooltip(
       message: AppLocalizations.of(context)!.voiceAssistantEntryTooltip,
       child: InkWell(
@@ -330,6 +337,7 @@ class _HomeScreenState extends State<HomeScreen> {
           MaterialPageRoute(builder: (_) => const VoiceAssistantScreen()),
         ),
         child: Container(
+          key: key,
           width: 64,
           height: 64,
           decoration: BoxDecoration(

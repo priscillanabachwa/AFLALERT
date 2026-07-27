@@ -405,6 +405,8 @@
   "coachMarkStripDesc": "Tap here after the strip's reaction time to check aflatoxin levels.",
   "coachMarkWeatherTitle": "Today's weather",
   "coachMarkWeatherDesc": "Tap this card anytime to see the full hourly forecast.",
+  "coachMarkVoiceTitle": "Try the voice assistant",
+  "coachMarkVoiceDesc": "Tap here and just talk — ask it to scan your maize, check the weather, or answer a question.",
   "chemicalStripScanTitle": "Chemical Strip Scan",
   "scanTestStrip": "Scan Test Strip",
   "cropTypeMaize": "Maize",
