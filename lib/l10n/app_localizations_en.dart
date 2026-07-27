@@ -1047,6 +1047,13 @@ class AppLocalizationsEn extends AppLocalizations {
       'Tap this card anytime to see the full hourly forecast.';
 
   @override
+  String get coachMarkVoiceTitle => 'Try the voice assistant';
+
+  @override
+  String get coachMarkVoiceDesc =>
+      'Tap here and just talk — ask it to scan your maize, check the weather, or answer a question.';
+
+  @override
   String get chemicalStripScanTitle => 'Chemical Strip Scan';
 
   @override

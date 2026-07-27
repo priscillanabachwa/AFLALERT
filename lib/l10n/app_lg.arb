@@ -353,6 +353,8 @@
   "coachMarkStripDesc": "Tap here after the strip's reaction time to check aflatoxin levels.",
   "coachMarkWeatherTitle": "Today's weather",
   "coachMarkWeatherDesc": "Tap this card anytime to see the full hourly forecast.",
+  "coachMarkVoiceTitle": "Gezaako Omuyambi w'Eddoboozi",
+  "coachMarkVoiceDesc": "Nyiga wano oyogere — mugambe okuscan kasooli yo, akebere embeera y'obudde, oba okumubuuza ekibuuzo.",
   "chemicalStripScanTitle": "Chemical Strip Scan",
   "scanTestStrip": "Kebera Test Strip",
   "cropTypeMaize": "Kasooli",

@@ -1054,6 +1054,13 @@ class AppLocalizationsLg extends AppLocalizations {
       'Tap this card anytime to see the full hourly forecast.';
 
   @override
+  String get coachMarkVoiceTitle => 'Gezaako Omuyambi w\'Eddoboozi';
+
+  @override
+  String get coachMarkVoiceDesc =>
+      'Nyiga wano oyogere — mugambe okuscan kasooli yo, akebere embeera y\'obudde, oba okumubuuza ekibuuzo.';
+
+  @override
   String get chemicalStripScanTitle => 'Chemical Strip Scan';
 
   @override
