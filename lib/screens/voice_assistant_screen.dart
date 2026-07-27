@@ -22,7 +22,10 @@ class _VoiceAssistantView extends StatelessWidget {
   const _VoiceAssistantView();
 
   Color _bubbleColor(bool fromUser) =>
-      fromUser ? AppColors.primary : AppColors.primaryContainer;
+      fromUser ? AppColors.primary : Colors.amber;
+
+  Color _bubbleTextColor(bool fromUser) =>
+      fromUser ? Colors.white : Colors.black87;
 
   @override
   Widget build(BuildContext context) {
@@ -81,7 +84,7 @@ class _VoiceAssistantView extends StatelessWidget {
               children: [
                 SizedBox(height: kToolbarHeight),
                 Padding(
-                  padding: const EdgeInsets.fromLTRB(20, 8, 20, 4),
+                  padding: const EdgeInsets.fromLTRB(20, 0, 20, 4),
                   child: Text(
                     l10n.voiceAssistantEnglishOnlyNotice,
                     textAlign: TextAlign.center,
@@ -134,7 +137,9 @@ class _VoiceAssistantView extends StatelessWidget {
                                 ),
                                 child: Text(
                                   message.text,
-                                  style: const TextStyle(color: Colors.white),
+                                  style: TextStyle(
+                                    color: _bubbleTextColor(message.fromUser),
+                                  ),
                                 ),
                               ),
                             );

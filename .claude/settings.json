@@ -53,7 +53,15 @@
       "Bash(tar -xzf ext.tar.gz -C ext_src)",
       "Bash(unzip -o ext.tar.gz -d ext_src)",
       "WebFetch(domain:firebase.google.com)",
-      "Bash(npm install *)"
+      "Bash(npm install *)",
+      "Bash(adb -s RZCT70RRZ2E shell pidof com.aflalert.aflalert)",
+      "Bash(adb -s RZCT70RRZ2E shell \"pm list packages | grep -i aflalert\")",
+      "PowerShell(Get-Command adb -ErrorAction SilentlyContinue)",
+      "PowerShell($paths = @\\(\"$env:LOCALAPPDATA\\\\Android\\\\Sdk\\\\platform-tools\\\\adb.exe\", \"$env:ANDROID_HOME\\\\platform-tools\\\\adb.exe\", \"$env:ANDROID_SDK_ROOT\\\\platform-tools\\\\adb.exe\"\\); foreach \\($p in $paths\\) { if \\(Test-Path $p\\) { Write-Output $p } })",
+      "PowerShell(& \"C:\\\\Users\\\\hp\\\\AppData\\\\Local\\\\Android\\\\Sdk\\\\platform-tools\\\\adb.exe\" -s RZCT70RRZ2E shell pm clear com.aflalert.aflalert)",
+      "Bash(taskkill //IM adb.exe //F)",
+      "Bash(\"/c/Users/hp/AppData/Local/Android/Sdk/platform-tools/adb.exe\" -s 0987437343157688 logcat -c)",
+      "Bash(\"/c/Users/hp/AppData/Local/Android/Sdk/platform-tools/adb.exe\" -s 0987437343157688 logcat -v brief \"DebugAppCheckProviderFactory:*\" \"*:S\")"
     ]
   }
 }
