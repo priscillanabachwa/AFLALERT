@@ -101,7 +101,8 @@
       "Bash(/c/Users/hp/AppData/Local/Android/Sdk/platform-tools/adb.exe -s RZCT70RRZ2E shell run-as com.aflalert.aflalert cat shared_prefs/com.google.firebase.appcheck.debug.store.W0RFRkFVTFRd+MTo1MzA3ODAzMTU1MzE6YW5kcm9pZDoyYmEyMTgwOTY1OTkwMTIyMmE5OThl.xml)",
       "Bash(firebase ext:list --project aflalert)",
       "Bash(firebase functions:log --only ext-firestore-send-email-hx64-processqueue --project aflalert -n 30)",
-      "Bash(firebase functions:log --only ext-firestore-send-email-processqueue --project aflalert -n 15)"
+      "Bash(firebase functions:log --only ext-firestore-send-email-processqueue --project aflalert -n 15)",
+      "Bash(tee \"C:\\\\Users\\\\hp\\\\AppData\\\\Local\\\\Temp\\\\claude\\\\c--Users-hp-Desktop-AFLALERT\\\\01c6c95b-dca8-4198-82c9-fc38d8daaee2\\\\scratchpad\\\\flutter_run.log\")"
     ]
   }
 }

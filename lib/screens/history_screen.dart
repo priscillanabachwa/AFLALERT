@@ -530,58 +530,29 @@ class _HistoryScreenState extends State<HistoryScreen> {
     if (results.isEmpty) return const SizedBox.shrink();
 
     final AppLocalizations l10n = AppLocalizations.of(context)!;
-    final bool hasActiveFilters = _activeFilter != null || _selectedLocation != null || _query.isNotEmpty;
 
     return Container(
       color: kCardBg,
       padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
-      child: Row(
-        children: [
-          Expanded(
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              mainAxisSize: MainAxisSize.min,
-              children: [
-                Text(
-                  '${l10n.showingResultsCount(results.length)}'
-                  '${hasActiveFilters ? l10n.forCurrentFilters : ''}.',
-                  style: const TextStyle(fontSize: 12, color: kSubtitle),
-                ),
-                if (hasActiveFilters)
-                  GestureDetector(
-                    onTap: _clearFilters,
-                    child: Text(
-                      l10n.clearAllFiltersX,
-                      style: const TextStyle(
-                        fontSize: 12,
-                        color: kDangerRed,
-                        fontWeight: FontWeight.w600,
-                      ),
-                    ),
-                  ),
-              ],
-            ),
+      child: SizedBox(
+        width: double.infinity,
+        child: ElevatedButton.icon(
+          onPressed: () => _exportPDF(results),
+          icon: const Icon(Icons.picture_as_pdf, size: 16),
+          label: Text(
+            l10n.exportPdf,
+            style: const TextStyle(fontSize: 13, fontWeight: FontWeight.w700),
           ),
-          const SizedBox(width: 12),
-          ElevatedButton.icon(
-            onPressed: () => _exportPDF(results),
-            icon: const Icon(Icons.picture_as_pdf, size: 16),
-            label: Text(
-              l10n.exportPdf,
-              style: const TextStyle(fontSize: 13, fontWeight: FontWeight.w700),
+          style: ElevatedButton.styleFrom(
+            backgroundColor: kAccentGold,
+            foregroundColor: kPrimaryGreen,
+            padding: const EdgeInsets.symmetric(vertical: 12),
+            shape: RoundedRectangleBorder(
+              borderRadius: BorderRadius.circular(10),
             ),
-            style: ElevatedButton.styleFrom(
-              backgroundColor: kAccentGold,
-              foregroundColor: kPrimaryGreen,
-              minimumSize: Size.zero,
-              padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
-              shape: RoundedRectangleBorder(
-                borderRadius: BorderRadius.circular(10),
-              ),
-              elevation: 0,
-            ),
+            elevation: 0,
           ),
-        ],
+        ),
       ),
     );
   }
