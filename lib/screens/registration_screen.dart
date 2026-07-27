@@ -595,7 +595,8 @@ class _RegistrationScreenState extends State<RegistrationScreen> {
 
                       // Register Button
                       ElevatedButton(
-                        onPressed: _isLoading ? null : _registerUser,
+                        onPressed:
+                            (_isLoading || !_agreedToTerms) ? null : _registerUser,
                         style: ElevatedButton.styleFrom(
                           minimumSize: const Size(double.infinity, 56),
                           backgroundColor: AppColors.primaryContainer,
