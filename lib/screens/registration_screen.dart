@@ -295,10 +295,12 @@ class _RegistrationScreenState extends State<RegistrationScreen> {
                           prefixIcon: const Icon(Icons.phone_outlined),
                         ),
                         validator: (value) {
-                          if (value == null || value.isEmpty) {
+                          if (value == null || value.trim().isEmpty) {
                             return l10n.pleaseEnterPhone;
                           }
-                          if (value.length < 9) {
+                          final digitsOnly = value.replaceAll(RegExp(r'\s+'), '');
+                          if (!RegExp(r'^\+256[0-9]{9}$')
+                              .hasMatch(digitsOnly)) {
                             return l10n.pleaseEnterValidPhone;
                           }
                           return null;
