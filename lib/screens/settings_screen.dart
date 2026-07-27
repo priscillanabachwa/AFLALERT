@@ -1,11 +1,11 @@
-import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
 import '../constants/app_colors.dart';
 import '../l10n/app_localizations.dart';
 import '../main.dart';
-import '../services/morning_alert_service.dart';
+import 'about_screen.dart';
+import 'contact_support_screen.dart';
 import 'legal_screen.dart';
 
 class SettingsScreen extends StatefulWidget {
@@ -176,45 +176,24 @@ class _SettingsScreenState extends State<SettingsScreen> {
                   icon: Icons.mail_outline,
                   label: l10n.contactSupport,
                   onTap: () {
-                    // TODO: open mailto: link via url_launcher
+                    Navigator.push(
+                      context,
+                      MaterialPageRoute(builder: (_) => const ContactSupportScreen()),
+                    );
                   },
                 ),
                 _SettingsTile(
                   icon: Icons.info_outline,
                   label: l10n.aboutAflAlert,
                   onTap: () {
-                    showAboutDialog(
-                      context: context,
-                      applicationName: 'AflAlert',
-                      applicationVersion: '1.0.0',
-                      applicationLegalese: l10n.recommendationsSourced,
+                    Navigator.push(
+                      context,
+                      MaterialPageRoute(builder: (_) => const AboutScreen()),
                     );
                   },
                 ),
               ],
             ),
-            const SizedBox(height: 32),
-
-            // ---------------- Debug (debug builds only) ----------------
-            if (kDebugMode) ...[
-              _SectionHeader(title: 'Debug'),
-              _SettingsCard(
-                children: [
-                  _SettingsTile(
-                    icon: Icons.notifications_active_outlined,
-                    label: 'Test Morning Alert Now',
-                    onTap: () async {
-                      final ScaffoldMessengerState messenger = ScaffoldMessenger.of(context);
-                      await MorningAlertService.testNow();
-                      messenger.showSnackBar(
-                        const SnackBar(content: Text('Morning alert triggered — check your notifications.')),
-                      );
-                    },
-                  ),
-                ],
-              ),
-              const SizedBox(height: 32),
-            ],
           ],
         ),
       ),

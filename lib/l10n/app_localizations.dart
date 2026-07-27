@@ -320,10 +320,58 @@ abstract class AppLocalizations {
   /// **'Undo'**
   String get undo;
 
+  /// No description provided for @selectScans.
+  ///
+  /// In en, this message translates to:
+  /// **'Select'**
+  String get selectScans;
+
+  /// No description provided for @selectAll.
+  ///
+  /// In en, this message translates to:
+  /// **'Select All'**
+  String get selectAll;
+
+  /// No description provided for @deselectAll.
+  ///
+  /// In en, this message translates to:
+  /// **'Deselect All'**
+  String get deselectAll;
+
+  /// No description provided for @scansSelectedCount.
+  ///
+  /// In en, this message translates to:
+  /// **'{count} selected'**
+  String scansSelectedCount(int count);
+
+  /// No description provided for @share.
+  ///
+  /// In en, this message translates to:
+  /// **'Share'**
+  String get share;
+
+  /// No description provided for @deleteSelectedScans.
+  ///
+  /// In en, this message translates to:
+  /// **'Delete Scans'**
+  String get deleteSelectedScans;
+
+  /// No description provided for @deleteSelectedScansConfirm.
+  ///
+  /// In en, this message translates to:
+  /// **'Are you sure you want to delete {count} scan records? This cannot be undone.'**
+  String deleteSelectedScansConfirm(int count);
+
+  /// No description provided for @scansDeletedCount.
+  ///
+  /// In en, this message translates to:
+  /// **'{count} scans deleted.'**
+  String scansDeletedCount(int count);
+
   /// No description provided for @scanDetails.
   ///
   /// In en, this message translates to:
-  /// **'Scan Details'**
+  /// **'Maize Scan Details'**
   String get scanDetails;
 
   /// No description provided for @totalScans.
@@ -995,7 +1043,7 @@ abstract class AppLocalizations {
   /// No description provided for @scanMaize.
   ///
   /// In en, this message translates to:
-  /// **'Scan maize'**
+  /// **'Scan Kernels'**
   String get scanMaize;
 
   /// No description provided for @flashOn.
@@ -1295,8 +1343,20 @@ abstract class AppLocalizations {
   /// No description provided for @allCaughtUp.
   ///
   /// In en, this message translates to:
-  /// **'You\'re all caught up'**
+  /// **'No notifications yet'**
   String get allCaughtUp;
+
+  /// No description provided for @noAlertsMessage.
+  ///
+  /// In en, this message translates to:
+  /// **'No alerts right now'**
+  String get noAlertsMessage;
+
+  /// No description provided for @noUpdatesMessage.
+  ///
+  /// In en, this message translates to:
+  /// **'No updates yet'**
+  String get noUpdatesMessage;
 
   /// No description provided for @changePassword.
   ///
@@ -1652,6 +1712,12 @@ abstract class AppLocalizations {
   /// **'Contact support'**
   String get contactSupport;
 
+  /// No description provided for @couldNotOpenEmailApp.
+  ///
+  /// In en, this message translates to:
+  /// **'Could not open email app. Please email us at aflalert.support@gmail.com'**
+  String get couldNotOpenEmailApp;
+
   /// No description provided for @aboutAflAlert.
   ///
   /// In en, this message translates to:
@@ -1663,6 +1729,210 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'Recommendations sourced from UNBS and MAAIF guidance.'**
   String get recommendationsSourced;
+
+  /// No description provided for @aboutDescription.
+  ///
+  /// In en, this message translates to:
+  /// **'AflAlert helps farmers and grain handlers spot aflatoxin risk in maize before it reaches the market. Snap a photo of maize kernels or a test strip and get an instant, AI-powered risk assessment — right on your phone, even without a lab.'**
+  String get aboutDescription;
+
+  /// No description provided for @aboutFeaturesTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'What AflAlert does'**
+  String get aboutFeaturesTitle;
+
+  /// No description provided for @aboutFeatureScanTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Kernel & strip scanning'**
+  String get aboutFeatureScanTitle;
+
+  /// No description provided for @aboutFeatureScanDesc.
+  ///
+  /// In en, this message translates to:
+  /// **'AI-powered image analysis flags visible mold and aflatoxin risk in maize kernels or test strips.'**
+  String get aboutFeatureScanDesc;
+
+  /// No description provided for @aboutFeatureRecommendationsTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Guided recommendations'**
+  String get aboutFeatureRecommendationsTitle;
+
+  /// No description provided for @aboutFeatureRecommendationsDesc.
+  ///
+  /// In en, this message translates to:
+  /// **'Every result comes with next-step guidance sourced from UNBS and MAAIF standards.'**
+  String get aboutFeatureRecommendationsDesc;
+
+  /// No description provided for @aboutFeatureRainAlertsTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Rain alerts'**
+  String get aboutFeatureRainAlertsTitle;
+
+  /// No description provided for @aboutFeatureRainAlertsDesc.
+  ///
+  /// In en, this message translates to:
+  /// **'Get warned before rain hits so drying grain can be covered in time, reducing mold and aflatoxin risk.'**
+  String get aboutFeatureRainAlertsDesc;
+
+  /// No description provided for @aboutFeatureVoiceTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Voice assistant'**
+  String get aboutFeatureVoiceTitle;
+
+  /// No description provided for @aboutFeatureVoiceDesc.
+  ///
+  /// In en, this message translates to:
+  /// **'Run scans and ask questions hands-free.'**
+  String get aboutFeatureVoiceDesc;
+
+  /// No description provided for @aboutFeatureReportsTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Scan history & reports'**
+  String get aboutFeatureReportsTitle;
+
+  /// No description provided for @aboutFeatureReportsDesc.
+  ///
+  /// In en, this message translates to:
+  /// **'Review past scans and download PDF reports to share or keep for your records.'**
+  String get aboutFeatureReportsDesc;
+
+  /// No description provided for @aboutVersion.
+  ///
+  /// In en, this message translates to:
+  /// **'Version 1.0.0'**
+  String get aboutVersion;
+
+  /// No description provided for @aboutCopyright.
+  ///
+  /// In en, this message translates to:
+  /// **'© 2026 AflAlert. All rights reserved.'**
+  String get aboutCopyright;
+
+  /// No description provided for @contactSupportScreenTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Contact support'**
+  String get contactSupportScreenTitle;
+
+  /// No description provided for @contactSupportIntro.
+  ///
+  /// In en, this message translates to:
+  /// **'Tell us what\'s going on and we\'ll get back to you by email.'**
+  String get contactSupportIntro;
+
+  /// No description provided for @contactSupportCategoryLabel.
+  ///
+  /// In en, this message translates to:
+  /// **'What\'s this about?'**
+  String get contactSupportCategoryLabel;
+
+  /// No description provided for @contactSupportCategoryBug.
+  ///
+  /// In en, this message translates to:
+  /// **'Bug report'**
+  String get contactSupportCategoryBug;
+
+  /// No description provided for @contactSupportCategoryScan.
+  ///
+  /// In en, this message translates to:
+  /// **'Scan or result issue'**
+  String get contactSupportCategoryScan;
+
+  /// No description provided for @contactSupportCategoryAccount.
+  ///
+  /// In en, this message translates to:
+  /// **'Account issue'**
+  String get contactSupportCategoryAccount;
+
+  /// No description provided for @contactSupportCategoryFeedback.
+  ///
+  /// In en, this message translates to:
+  /// **'Feedback'**
+  String get contactSupportCategoryFeedback;
+
+  /// No description provided for @contactSupportCategoryOther.
+  ///
+  /// In en, this message translates to:
+  /// **'Other'**
+  String get contactSupportCategoryOther;
+
+  /// No description provided for @contactSupportEmailLabel.
+  ///
+  /// In en, this message translates to:
+  /// **'Your email'**
+  String get contactSupportEmailLabel;
+
+  /// No description provided for @contactSupportEmailHint.
+  ///
+  /// In en, this message translates to:
+  /// **'you@example.com'**
+  String get contactSupportEmailHint;
+
+  /// No description provided for @contactSupportEmailRequired.
+  ///
+  /// In en, this message translates to:
+  /// **'Enter an email so we can reply'**
+  String get contactSupportEmailRequired;
+
+  /// No description provided for @contactSupportEmailInvalid.
+  ///
+  /// In en, this message translates to:
+  /// **'Enter a valid email address'**
+  String get contactSupportEmailInvalid;
+
+  /// No description provided for @contactSupportMessageLabel.
+  ///
+  /// In en, this message translates to:
+  /// **'Message'**
+  String get contactSupportMessageLabel;
+
+  /// No description provided for @contactSupportMessageHint.
+  ///
+  /// In en, this message translates to:
+  /// **'Describe the issue or share your feedback...'**
+  String get contactSupportMessageHint;
+
+  /// No description provided for @contactSupportMessageRequired.
+  ///
+  /// In en, this message translates to:
+  /// **'Please describe your issue before submitting'**
+  String get contactSupportMessageRequired;
+
+  /// No description provided for @contactSupportSubmit.
+  ///
+  /// In en, this message translates to:
+  /// **'Submit'**
+  String get contactSupportSubmit;
+
+  /// No description provided for @contactSupportSubmitting.
+  ///
+  /// In en, this message translates to:
+  /// **'Submitting...'**
+  String get contactSupportSubmitting;
+
+  /// No description provided for @contactSupportSuccess.
+  ///
+  /// In en, this message translates to:
+  /// **'Thanks! Your message has been sent. We\'ll get back to you by email.'**
+  String get contactSupportSuccess;
+
+  /// No description provided for @contactSupportError.
+  ///
+  /// In en, this message translates to:
+  /// **'Something went wrong sending your message. Please try emailing us directly.'**
+  String get contactSupportError;
+
+  /// No description provided for @contactSupportEmailDirectly.
+  ///
+  /// In en, this message translates to:
+  /// **'For any further inquiries, reach out to us at'**
+  String get contactSupportEmailDirectly;
 
   /// No description provided for @maizeScanLabel.
   ///
@@ -1730,6 +2000,18 @@ abstract class AppLocalizations {
   /// **'Tap this card anytime to see the full hourly forecast.'**
   String get coachMarkWeatherDesc;
 
+  /// No description provided for @coachMarkVoiceTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Try the voice assistant'**
+  String get coachMarkVoiceTitle;
+
+  /// No description provided for @coachMarkVoiceDesc.
+  ///
+  /// In en, this message translates to:
+  /// **'Tap here and just talk — ask it to scan your maize, check the weather, or answer a question.'**
+  String get coachMarkVoiceDesc;
+
   /// No description provided for @chemicalStripScanTitle.
   ///
   /// In en, this message translates to:
@@ -1747,12 +2029,6 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'Maize'**
   String get cropTypeMaize;
-
-  /// No description provided for @cropTypeGroundnut.
-  ///
-  /// In en, this message translates to:
-  /// **'Groundnut'**
-  String get cropTypeGroundnut;
 
   /// No description provided for @positionStripInFrame.
   ///
@@ -1927,6 +2203,42 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'Now'**
   String get nowLabel;
+
+  /// No description provided for @voiceAssistantEntryTooltip.
+  ///
+  /// In en, this message translates to:
+  /// **'Voice assistant'**
+  String get voiceAssistantEntryTooltip;
+
+  /// No description provided for @voiceAssistantTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Voice Assistant'**
+  String get voiceAssistantTitle;
+
+  /// No description provided for @voiceAssistantEnglishOnlyNotice.
+  ///
+  /// In en, this message translates to:
+  /// **'Voice commands currently work in English only.'**
+  String get voiceAssistantEnglishOnlyNotice;
+
+  /// No description provided for @voiceAssistantHint.
+  ///
+  /// In en, this message translates to:
+  /// **'Tap the mic and try something like \"scan this maize\" or \"what\'s the weather?\"'**
+  String get voiceAssistantHint;
+
+  /// No description provided for @voiceAssistantVoiceFemale.
+  ///
+  /// In en, this message translates to:
+  /// **'Female voice — tap to switch to male'**
+  String get voiceAssistantVoiceFemale;
+
+  /// No description provided for @voiceAssistantVoiceMale.
+  ///
+  /// In en, this message translates to:
+  /// **'Male voice — tap to switch to female'**
+  String get voiceAssistantVoiceMale;
 }
 
 class _AppLocalizationsDelegate

@@ -122,7 +122,37 @@ class AppLocalizationsLg extends AppLocalizations {
   String get undo => 'Zzaawo';
 
   @override
-  String get scanDetails => 'Ebikwata ku Scan';
+  String get selectScans => 'Londa';
+
+  @override
+  String get selectAll => 'Londa Zonna';
+
+  @override
+  String get deselectAll => 'Ggyawo Okulonda';
+
+  @override
+  String scansSelectedCount(int count) {
+    return '$count zirondeddwa';
+  }
+
+  @override
+  String get share => 'Gabana';
+
+  @override
+  String get deleteSelectedScans => 'Sazaamu Scan';
+
+  @override
+  String deleteSelectedScansConfirm(int count) {
+    return 'Oli mukakafu nti oyagala okusazaamu ebiwandiiko $count? Tekisobola kuddizibwa.';
+  }
+
+  @override
+  String scansDeletedCount(int count) {
+    return 'Scan $count zisaziddwamu.';
+  }
+
+  @override
+  String get scanDetails => 'Ebikwata ku Scan ya Kasooli';
 
   @override
   String get totalScans => 'Scan Zonna';
@@ -489,7 +519,7 @@ class AppLocalizationsLg extends AppLocalizations {
   }
 
   @override
-  String get scanMaize => 'Scan Kasooli';
+  String get scanMaize => 'Scan Kernels';
 
   @override
   String get flashOn => 'Ttoowa Ekiri';
@@ -658,7 +688,13 @@ class AppLocalizationsLg extends AppLocalizations {
   String get updatesFilter => 'Amawulire';
 
   @override
-  String get allCaughtUp => 'Ggwe mulongoofu, tewali kikyaddiddwako';
+  String get allCaughtUp => 'Tewali kimu kaakati';
+
+  @override
+  String get noAlertsMessage => 'Tewali kulabula kaakati';
+
+  @override
+  String get noUpdatesMessage => 'Tewali mawulire kaakati';
 
   @override
   String get changePassword => 'Kyusa ekigambo ky\'ekyama';
@@ -857,11 +893,129 @@ class AppLocalizationsLg extends AppLocalizations {
   String get contactSupport => 'Tukwatagane n\'Obuyambi';
 
   @override
+  String get couldNotOpenEmailApp =>
+      'Tetusobodde kuggulawo app ya email. Tukwatagane ku aflalert.support@gmail.com';
+
+  @override
   String get aboutAflAlert => 'Ebikwata ku AflAlert';
 
   @override
   String get recommendationsSourced =>
       'Ebiteesebwa biva mu buwabuzi bwa UNBS ne MAAIF.';
+
+  @override
+  String get aboutDescription =>
+      'AflAlert eyamba abalimi n\'abakwatirira empeke okuzuula obulabe bwa Aflatoxin mu kasooli nga tekinnatuuka ku katale. Kuba ekifaananyi ky\'empeke za kasooli oba strip ey\'okugezesa, olyoke ofune ekiwandiiko ky\'obulabe mu bwangu nga bikoleddwa AI — ku ssimu yo, wadde nga tewali laabu.';
+
+  @override
+  String get aboutFeaturesTitle => 'AflAlert ky\'ekola';
+
+  @override
+  String get aboutFeatureScanTitle => 'Okukebera empeke ne strip';
+
+  @override
+  String get aboutFeatureScanDesc =>
+      'Okwekenneenya ebifaananyi nga kozesa AI kizuula obukuku n\'obulabe bwa Aflatoxin mu mpeke za kasooli oba strip.';
+
+  @override
+  String get aboutFeatureRecommendationsTitle => 'Obuwabuzi obulambulukufu';
+
+  @override
+  String get aboutFeatureRecommendationsDesc =>
+      'Buli kiva mu kukebera kijjirako obuwabuzi obuva mu bipimo bya UNBS ne MAAIF.';
+
+  @override
+  String get aboutFeatureRainAlertsTitle => 'Obubaka bw\'enkuba';
+
+  @override
+  String get aboutFeatureRainAlertsDesc =>
+      'Tukutegeeza nga enkuba tennagwa oyinza okubikka kasooli akayanika mangu, ekikendeeza obulabe bw\'obukuku ne Aflatoxin.';
+
+  @override
+  String get aboutFeatureVoiceTitle => 'Omuyambi w\'eddoboozi';
+
+  @override
+  String get aboutFeatureVoiceDesc =>
+      'Kola scan era obuuze ebibuuzo nga tokwatako ku ssimu.';
+
+  @override
+  String get aboutFeatureReportsTitle => 'Ebyafaayo n\'lipoota';
+
+  @override
+  String get aboutFeatureReportsDesc =>
+      'Laba ebyafaayo by\'okukebera era osobole okuggya lipoota za PDF okugabana oba okuzikuuma.';
+
+  @override
+  String get aboutVersion => 'Version 1.0.0';
+
+  @override
+  String get aboutCopyright => '© 2026 AflAlert. Eddembe lyonna likuumiddwa.';
+
+  @override
+  String get contactSupportScreenTitle => 'Tukwatagane n\'Obuyambi';
+
+  @override
+  String get contactSupportIntro =>
+      'Tubuulire ekikuteganya naffe tunaakuddamu ku email.';
+
+  @override
+  String get contactSupportCategoryLabel => 'Kino kikwata ku ki?';
+
+  @override
+  String get contactSupportCategoryBug => 'Ekiremya app';
+
+  @override
+  String get contactSupportCategoryScan => 'Ekizibu ku scan oba ebiva mu kyo';
+
+  @override
+  String get contactSupportCategoryAccount => 'Ekizibu ku akaunti';
+
+  @override
+  String get contactSupportCategoryFeedback => 'Ebirowoozo';
+
+  @override
+  String get contactSupportCategoryOther => 'Ekirala';
+
+  @override
+  String get contactSupportEmailLabel => 'Email yo';
+
+  @override
+  String get contactSupportEmailHint => 'you@example.com';
+
+  @override
+  String get contactSupportEmailRequired => 'Wandiika email tulyoke tukuddemu';
+
+  @override
+  String get contactSupportEmailInvalid => 'Wandiika email entuufu';
+
+  @override
+  String get contactSupportMessageLabel => 'Obubaka';
+
+  @override
+  String get contactSupportMessageHint =>
+      'Nnyonnyola ekizibu oba ebirowoozo byo...';
+
+  @override
+  String get contactSupportMessageRequired =>
+      'Nnyonnyola ekikuteganya nga tonnaweereza';
+
+  @override
+  String get contactSupportSubmit => 'Weereza';
+
+  @override
+  String get contactSupportSubmitting => 'Tuweereza...';
+
+  @override
+  String get contactSupportSuccess =>
+      'Weebale! Obubaka bwo buweereddwa. Tujja kukuddamu ku email.';
+
+  @override
+  String get contactSupportError =>
+      'Wabaddewo ekizibu okuweereza obubaka bwo. Tukusaba otutumire email butereevu.';
+
+  @override
+  String get contactSupportEmailDirectly =>
+      'Bwoba weetaaga obuyambi obulala, tutuukirire ku';
 
   @override
   String get maizeScanLabel => 'Maize Scan';
@@ -900,6 +1054,13 @@ class AppLocalizationsLg extends AppLocalizations {
       'Tap this card anytime to see the full hourly forecast.';
 
   @override
+  String get coachMarkVoiceTitle => 'Gezaako Omuyambi w\'Eddoboozi';
+
+  @override
+  String get coachMarkVoiceDesc =>
+      'Nyiga wano oyogere — mugambe okuscan kasooli yo, akebere embeera y\'obudde, oba okumubuuza ekibuuzo.';
+
+  @override
   String get chemicalStripScanTitle => 'Chemical Strip Scan';
 
   @override
@@ -907,9 +1068,6 @@ class AppLocalizationsLg extends AppLocalizations {
 
   @override
   String get cropTypeMaize => 'Kasooli';
-
-  @override
-  String get cropTypeGroundnut => 'Binyeebwa';
 
   @override
   String get positionStripInFrame =>
@@ -1012,4 +1170,26 @@ class AppLocalizationsLg extends AppLocalizations {
 
   @override
   String get nowLabel => 'Kaakano';
+
+  @override
+  String get voiceAssistantEntryTooltip => 'Omuyambi w\'eddoboozi';
+
+  @override
+  String get voiceAssistantTitle => 'Omuyambi w\'Eddoboozi';
+
+  @override
+  String get voiceAssistantEnglishOnlyNotice =>
+      'Ebiragiro by\'eddoboozi kati bikola mu Lungereza lwokka.';
+
+  @override
+  String get voiceAssistantHint =>
+      'Nyiga ku kabonero k\'eddoboozi ate ogezeeko okwogera nti \"scan this maize\" oba \"what\'s the weather?\"';
+
+  @override
+  String get voiceAssistantVoiceFemale =>
+      'Eddoboozi ery\'omukazi — nyiga okukyusa okuba ery\'omusajja';
+
+  @override
+  String get voiceAssistantVoiceMale =>
+      'Eddoboozi ery\'omusajja — nyiga okukyusa okuba ery\'omukazi';
 }

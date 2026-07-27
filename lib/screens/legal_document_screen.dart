@@ -3,8 +3,9 @@ import 'package:flutter/material.dart';
 import '../constants/app_colors.dart';
 
 // Generic screen for displaying static legal text (Terms of Service,
-// Privacy Policy, etc.) so both can share one layout. Replace [body] with
-// the actual legal copy when it's ready.
+// Privacy Policy, etc.) so both can share one layout. The [body] string is
+// parsed line-by-line to style numbered sections, sub-sections, and
+// "Label: description" lines without needing markup in the source text.
 class LegalDocumentScreen extends StatelessWidget {
   final String title;
   final String body;
@@ -15,12 +16,137 @@ class LegalDocumentScreen extends StatelessWidget {
     required this.body,
   });
 
+  static final RegExp _sectionHeaderReg = RegExp(r'^(\d+)\.\s+(.*)$');
+  static final RegExp _subHeaderReg = RegExp(r'^([A-Z])\.\s+(.*)$');
+  static final RegExp _labelLineReg = RegExp(r'^([^:]{2,40}):\s+(.+)$');
+  static const Set<String> _labelConnectors = {
+    'of', 'to', 'the', 'in', 'for', 'and', 'or', 'on', 'at',
+  };
+
+  MapEntry<String, String>? _extractLabel(String line) {
+    final match = _labelLineReg.firstMatch(line);
+    if (match == null) return null;
+    final label = match.group(1)!;
+    final rest = match.group(2)!;
+    final words = label.split(' ');
+    if (words.length > 7) return null;
+    final looksLikeLabel = words.every((w) {
+      if (w.isEmpty) return true;
+      if (_labelConnectors.contains(w.toLowerCase())) return true;
+      return RegExp(r'^[A-Z][A-Za-z()]*$').hasMatch(w);
+    });
+    return looksLikeLabel ? MapEntry(label, rest) : null;
+  }
+
+  List<Widget> _buildBody(String docTitle, String lastUpdated, List<String> lines) {
+    final widgets = <Widget>[];
+    var firstBlock = true;
+
+    for (final rawLine in lines) {
+      final line = rawLine.trim();
+      if (line.isEmpty) continue;
+
+      final sectionMatch = _sectionHeaderReg.firstMatch(line);
+      final subMatch = _subHeaderReg.firstMatch(line);
+
+      if (sectionMatch != null) {
+        widgets.add(Padding(
+          padding: EdgeInsets.only(top: firstBlock ? 0 : 24, bottom: 10),
+          child: Row(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Container(
+                width: 26,
+                height: 26,
+                alignment: Alignment.center,
+                decoration: const BoxDecoration(
+                  color: AppColors.primary,
+                  shape: BoxShape.circle,
+                ),
+                child: Text(
+                  sectionMatch.group(1)!,
+                  style: const TextStyle(
+                    color: Colors.white,
+                    fontSize: 12,
+                    fontWeight: FontWeight.bold,
+                  ),
+                ),
+              ),
+              const SizedBox(width: 10),
+              Expanded(
+                child: Text(
+                  sectionMatch.group(2)!,
+                  style: const TextStyle(
+                    color: AppColors.primary,
+                    fontSize: 16,
+                    fontWeight: FontWeight.bold,
+                  ),
+                ),
+              ),
+            ],
+          ),
+        ));
+        firstBlock = false;
+        continue;
+      }
+
+      if (subMatch != null) {
+        widgets.add(Padding(
+          padding: const EdgeInsets.only(top: 14, bottom: 6),
+          child: Text(
+            '${subMatch.group(1)}. ${subMatch.group(2)}',
+            style: const TextStyle(
+              color: AppColors.primaryContainer,
+              fontSize: 14,
+              fontWeight: FontWeight.w700,
+            ),
+          ),
+        ));
+        firstBlock = false;
+        continue;
+      }
+
+      final label = _extractLabel(line);
+      widgets.add(Padding(
+        padding: const EdgeInsets.only(bottom: 10),
+        child: label != null
+            ? RichText(
+                textAlign: TextAlign.justify,
+                text: TextSpan(
+                  style: const TextStyle(color: AppColors.text, fontSize: 14, height: 1.5),
+                  children: [
+                    TextSpan(
+                      text: '${label.key}: ',
+                      style: const TextStyle(color: AppColors.primary, fontWeight: FontWeight.bold),
+                    ),
+                    TextSpan(text: label.value),
+                  ],
+                ),
+              )
+            : Text(
+                line,
+                textAlign: TextAlign.justify,
+                style: const TextStyle(color: AppColors.text, fontSize: 14, height: 1.5),
+              ),
+      ));
+      firstBlock = false;
+    }
+
+    return widgets;
+  }
+
   @override
   Widget build(BuildContext context) {
+    final lines = body.split('\n');
+    final docTitle = lines.isNotEmpty ? lines[0].trim() : title;
+    final lastUpdated = lines.length > 1 ? lines[1].trim() : '';
+    final contentLines = lines.length > 2 ? lines.sublist(2) : <String>[];
+
     return Scaffold(
       backgroundColor: AppColors.t95,
       appBar: AppBar(
         backgroundColor: AppColors.t95,
+        elevation: 0,
         title: Text(
           title,
           style: const TextStyle(color: AppColors.primary, fontWeight: FontWeight.bold),
@@ -29,10 +155,65 @@ class LegalDocumentScreen extends StatelessWidget {
       ),
       body: SafeArea(
         child: SingleChildScrollView(
-          padding: const EdgeInsets.all(20),
-          child: Text(
-            body,
-            style: const TextStyle(color: AppColors.text, fontSize: 14, height: 1.5),
+          padding: const EdgeInsets.fromLTRB(16, 0, 16, 24),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.stretch,
+            children: [
+              Padding(
+                padding: const EdgeInsets.fromLTRB(4, 16, 4, 4),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(
+                      docTitle,
+                      style: const TextStyle(
+                        color: AppColors.primary,
+                        fontSize: 19,
+                        fontWeight: FontWeight.bold,
+                        height: 1.3,
+                      ),
+                    ),
+                    if (lastUpdated.isNotEmpty) ...[
+                      const SizedBox(height: 10),
+                      Container(
+                        padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
+                        decoration: BoxDecoration(
+                          color: AppColors.primary.withValues(alpha: 0.08),
+                          borderRadius: BorderRadius.circular(20),
+                        ),
+                        child: Text(
+                          lastUpdated,
+                          style: const TextStyle(
+                            color: AppColors.primary,
+                            fontSize: 12,
+                            fontWeight: FontWeight.w600,
+                          ),
+                        ),
+                      ),
+                    ],
+                  ],
+                ),
+              ),
+              const SizedBox(height: 12),
+              Container(
+                padding: const EdgeInsets.all(20),
+                decoration: BoxDecoration(
+                  color: AppColors.surface,
+                  borderRadius: BorderRadius.circular(16),
+                  boxShadow: [
+                    BoxShadow(
+                      color: Colors.black.withValues(alpha: 0.05),
+                      blurRadius: 12,
+                      offset: const Offset(0, 4),
+                    ),
+                  ],
+                ),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: _buildBody(docTitle, lastUpdated, contentLines),
+                ),
+              ),
+            ],
           ),
         ),
       ),
@@ -42,9 +223,9 @@ class LegalDocumentScreen extends StatelessWidget {
 
 const String kTermsOfServiceText = '''
 TERMS AND CONDITIONS FOR AFLALERT
-Last Updated: July 8, 2026
+Last Updated: July 22, 2026
 
-Please read these Terms and Conditions ("Terms") carefully before downloading, installing, or using the AflAlert mobile application ("App") operated by [Your Name / Company Name] ("us", "we", or "our").
+Please read these Terms and Conditions ("Terms") carefully before downloading, installing, or using the AflAlert mobile application ("App") operated by AflAlert ("us", "we", or "our").
 
 By downloading or using the App, you agree to be bound by these Terms. If you disagree with any part of these terms, you must not use or download the App.
 
@@ -58,7 +239,7 @@ Risk Indicator Only: The App provides an educational risk estimate based on visi
 
 No Alternative to Lab Testing: AflAlert is an initial field-screening tool. It is not a replacement for regulatory, chemical, or laboratory-grade diagnostic testing.
 
-Limitation of Liability: To the maximum extent permitted by applicable law, [Your Name / Company Name] shall not be held liable for any financial losses, crop rejections, livestock illness, human sickness, or legal disputes arising from decisions made based on the App's visual AI outputs. Users accept all financial and health risks associated with the consumption, sale, or distribution of their crops.
+Limitation of Liability: To the maximum extent permitted by applicable law, AflAlert shall not be held liable for any financial losses, crop rejections, livestock illness, human sickness, or legal disputes arising from decisions made based on the App's visual AI outputs. Users accept all financial and health risks associated with the consumption, sale, or distribution of their crops.
 
 3. Offline Usage and Data Synchronization
 Local Processing: The App's machine learning model runs entirely on your device's internal hardware and does not require an active internet connection to deliver visual scan estimates.
@@ -69,7 +250,7 @@ Cloud Syncing: When your device establishes a data or Wi-Fi connection, the App 
 To ensure the machine learning engine performs at its highest possible accuracy, you agree to follow the in-app camera guidelines (ensuring proper lighting, clean flat surfaces, and sharp focus). You agree not to upload fraudulent, non-maize, or intentionally distorted images designed to manipulate the App's scoring algorithms.
 
 5. Intellectual Property
-The App, including its custom machine learning models (.tflite files), software code, user interface designs, logos, and graphics, is the exclusive property of [Your Name / Company Name] and is protected by copyright and intellectual property laws. You may not reverse-engineer, decompile, or copy the underlying AI model architecture.
+The App, including its custom machine learning models (.tflite files), software code, user interface designs, logos, and graphics, is the exclusive property of AflAlert and is protected by copyright and intellectual property laws. You may not reverse-engineer, decompile, or copy the underlying AI model architecture.
 
 6. Termination
 We reserve the right to terminate or suspend your access to the App immediately, without prior notice or liability, for any reason whatsoever, including without limitation if you breach these Terms.
@@ -78,14 +259,14 @@ We reserve the right to terminate or suspend your access to the App immediately,
 We reserve the right, at our sole discretion, to modify or replace these Terms at any time. We will notify users of any major changes by updating the "Last Updated" date at the top of this document or via an in-app alert.
 
 8. Contact Information
-If you have any questions about these Terms, please contact us at: [Your Email Address].
+If you have any questions about these Terms, please contact us at: aflalert.support@gmail.com.
 ''';
 
 const String kPrivacyPolicyText = '''
 PRIVACY POLICY FOR AFLALERT
-Last Updated: July 8, 2026
+Last Updated: July 22, 2026
 
-[Your Name / Company Name] ("we", "our", or "us") is committed to protecting your privacy. This Privacy Policy explains how AflAlert ("App") collects, uses, discloses, and safeguards your information when you use our mobile application.
+AflAlert ("we", "our", or "us") is committed to protecting your privacy. This Privacy Policy explains how AflAlert ("App") collects, uses, discloses, and safeguards your information when you use our mobile application.
 
 By installing and using the App, you agree to the collection and use of information in accordance with this Privacy Policy. If you do not agree with the terms of this Privacy Policy, please do not access or use the App.
 
@@ -129,5 +310,5 @@ Clear your entire testing history through the App's internal settings menu.
 Revoke the App's access to your camera or location services via your phone's main settings panel at any time.
 
 7. Contact Us
-If you have any questions or suggestions regarding this Privacy Policy, please contact us at: [Your Email Address].
+If you have any questions or suggestions regarding this Privacy Policy, please contact us at: aflalert.support@gmail.com.
 ''';

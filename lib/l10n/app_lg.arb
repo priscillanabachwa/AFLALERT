@@ -40,7 +40,24 @@
   "scanDeleted": "Scan esaziddwamu.",
   "couldNotDeleteScan": "Tetusobodde kusazaamu scan. Ddamu ogezeeko.",
   "undo": "Zzaawo",
-  "scanDetails": "Ebikwata ku Scan",
+  "selectScans": "Londa",
+  "selectAll": "Londa Zonna",
+  "deselectAll": "Ggyawo Okulonda",
+  "scansSelectedCount": "{count} zirondeddwa",
+  "@scansSelectedCount": {
+    "placeholders": { "count": { "type": "int" } }
+  },
+  "share": "Gabana",
+  "deleteSelectedScans": "Sazaamu Scan",
+  "deleteSelectedScansConfirm": "Oli mukakafu nti oyagala okusazaamu ebiwandiiko {count}? Tekisobola kuddizibwa.",
+  "@deleteSelectedScansConfirm": {
+    "placeholders": { "count": { "type": "int" } }
+  },
+  "scansDeletedCount": "Scan {count} zisaziddwamu.",
+  "@scansDeletedCount": {
+    "placeholders": { "count": { "type": "int" } }
+  },
+  "scanDetails": "Ebikwata ku Scan ya Kasooli",
   "totalScans": "Scan Zonna",
   "healthyScans": "Scan Ezirungi",
   "detectedScans": "Scan Ezalabika",
@@ -161,7 +178,7 @@
   "scanASample": "Scan Ekyokulabirako",
 
   "couldNotCapturePhoto": "Tetusobodde kukwata kifananyi: {error}",
-  "scanMaize": "Scan Kasooli",
+  "scanMaize": "Scan Kernels",
   "flashOn": "Ttoowa Ekiri",
   "flashOff": "Ttoowa Kizikidde",
   "lightingGood": "Omusana Mulungi",
@@ -214,7 +231,9 @@
 
   "alertsFilter": "Okulabula",
   "updatesFilter": "Amawulire",
-  "allCaughtUp": "Ggwe mulongoofu, tewali kikyaddiddwako",
+  "allCaughtUp": "Tewali kimu kaakati",
+  "noAlertsMessage": "Tewali kulabula kaakati",
+  "noUpdatesMessage": "Tewali mawulire kaakati",
 
   "changePassword": "Kyusa ekigambo ky'ekyama",
   "takeAPhoto": "Kwata Ekifananyi",
@@ -281,8 +300,45 @@
   "notificationsSubtitle": "Obubaka ku biva mu scan n'embeera y'ebibinja",
   "helpSupportSection": "Obuyambi n'obuwagizi",
   "contactSupport": "Tukwatagane n'Obuyambi",
+  "couldNotOpenEmailApp": "Tetusobodde kuggulawo app ya email. Tukwatagane ku aflalert.support@gmail.com",
   "aboutAflAlert": "Ebikwata ku AflAlert",
   "recommendationsSourced": "Ebiteesebwa biva mu buwabuzi bwa UNBS ne MAAIF.",
+
+  "aboutDescription": "AflAlert eyamba abalimi n'abakwatirira empeke okuzuula obulabe bwa Aflatoxin mu kasooli nga tekinnatuuka ku katale. Kuba ekifaananyi ky'empeke za kasooli oba strip ey'okugezesa, olyoke ofune ekiwandiiko ky'obulabe mu bwangu nga bikoleddwa AI — ku ssimu yo, wadde nga tewali laabu.",
+  "aboutFeaturesTitle": "AflAlert ky'ekola",
+  "aboutFeatureScanTitle": "Okukebera empeke ne strip",
+  "aboutFeatureScanDesc": "Okwekenneenya ebifaananyi nga kozesa AI kizuula obukuku n'obulabe bwa Aflatoxin mu mpeke za kasooli oba strip.",
+  "aboutFeatureRecommendationsTitle": "Obuwabuzi obulambulukufu",
+  "aboutFeatureRecommendationsDesc": "Buli kiva mu kukebera kijjirako obuwabuzi obuva mu bipimo bya UNBS ne MAAIF.",
+  "aboutFeatureRainAlertsTitle": "Obubaka bw'enkuba",
+  "aboutFeatureRainAlertsDesc": "Tukutegeeza nga enkuba tennagwa oyinza okubikka kasooli akayanika mangu, ekikendeeza obulabe bw'obukuku ne Aflatoxin.",
+  "aboutFeatureVoiceTitle": "Omuyambi w'eddoboozi",
+  "aboutFeatureVoiceDesc": "Kola scan era obuuze ebibuuzo nga tokwatako ku ssimu.",
+  "aboutFeatureReportsTitle": "Ebyafaayo n'lipoota",
+  "aboutFeatureReportsDesc": "Laba ebyafaayo by'okukebera era osobole okuggya lipoota za PDF okugabana oba okuzikuuma.",
+  "aboutVersion": "Version 1.0.0",
+  "aboutCopyright": "© 2026 AflAlert. Eddembe lyonna likuumiddwa.",
+
+  "contactSupportScreenTitle": "Tukwatagane n'Obuyambi",
+  "contactSupportIntro": "Tubuulire ekikuteganya naffe tunaakuddamu ku email.",
+  "contactSupportCategoryLabel": "Kino kikwata ku ki?",
+  "contactSupportCategoryBug": "Ekiremya app",
+  "contactSupportCategoryScan": "Ekizibu ku scan oba ebiva mu kyo",
+  "contactSupportCategoryAccount": "Ekizibu ku akaunti",
+  "contactSupportCategoryFeedback": "Ebirowoozo",
+  "contactSupportCategoryOther": "Ekirala",
+  "contactSupportEmailLabel": "Email yo",
+  "contactSupportEmailHint": "you@example.com",
+  "contactSupportEmailRequired": "Wandiika email tulyoke tukuddemu",
+  "contactSupportEmailInvalid": "Wandiika email entuufu",
+  "contactSupportMessageLabel": "Obubaka",
+  "contactSupportMessageHint": "Nnyonnyola ekizibu oba ebirowoozo byo...",
+  "contactSupportMessageRequired": "Nnyonnyola ekikuteganya nga tonnaweereza",
+  "contactSupportSubmit": "Weereza",
+  "contactSupportSubmitting": "Tuweereza...",
+  "contactSupportSuccess": "Weebale! Obubaka bwo buweereddwa. Tujja kukuddamu ku email.",
+  "contactSupportError": "Wabaddewo ekizibu okuweereza obubaka bwo. Tukusaba otutumire email butereevu.",
+  "contactSupportEmailDirectly": "Bwoba weetaaga obuyambi obulala, tutuukirire ku",
 
   "searchCrop": "Noonya nga okozesa ekirime, ekifo...",
 
@@ -297,10 +353,11 @@
   "coachMarkStripDesc": "Tap here after the strip's reaction time to check aflatoxin levels.",
   "coachMarkWeatherTitle": "Today's weather",
   "coachMarkWeatherDesc": "Tap this card anytime to see the full hourly forecast.",
+  "coachMarkVoiceTitle": "Gezaako Omuyambi w'Eddoboozi",
+  "coachMarkVoiceDesc": "Nyiga wano oyogere — mugambe okuscan kasooli yo, akebere embeera y'obudde, oba okumubuuza ekibuuzo.",
   "chemicalStripScanTitle": "Chemical Strip Scan",
   "scanTestStrip": "Kebera Test Strip",
   "cropTypeMaize": "Kasooli",
-  "cropTypeGroundnut": "Binyeebwa",
   "positionStripInFrame": "Teeka strip mu bbokisi oluvannyuma lw'eddakiika kkumi ez'okulinda",
   "scanAnotherStrip": "Kebera Strip Endala",
   "scanTestStripHint": "Kebera test strip okumanya obungi bw'obutwa mu bulimi",
@@ -349,5 +406,11 @@
   "@todayHighLowLabel": {
     "placeholders": { "high": { "type": "String" }, "low": { "type": "String" } }
   },
-  "nowLabel": "Kaakano"
+  "nowLabel": "Kaakano",
+  "voiceAssistantEntryTooltip": "Omuyambi w'eddoboozi",
+  "voiceAssistantTitle": "Omuyambi w'Eddoboozi",
+  "voiceAssistantEnglishOnlyNotice": "Ebiragiro by'eddoboozi kati bikola mu Lungereza lwokka.",
+  "voiceAssistantHint": "Nyiga ku kabonero k'eddoboozi ate ogezeeko okwogera nti \"scan this maize\" oba \"what's the weather?\"",
+  "voiceAssistantVoiceFemale": "Eddoboozi ery'omukazi — nyiga okukyusa okuba ery'omusajja",
+  "voiceAssistantVoiceMale": "Eddoboozi ery'omusajja — nyiga okukyusa okuba ery'omukazi"
 }

@@ -1,7 +1,9 @@
+import 'dart:async';
 import 'dart:io';
 
 import 'package:camera/camera.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter_tts/flutter_tts.dart';
 
 import '../constants/app_colors.dart';
 import '../l10n/app_localizations.dart';
@@ -17,8 +19,13 @@ import '../services/tflite_service.dart';
 class AnalysisScreenArgs {
   final XFile photo;
   final String? location;
+  final bool fromVoiceAssistant;
 
-  const AnalysisScreenArgs({required this.photo, this.location});
+  const AnalysisScreenArgs({
+    required this.photo,
+    this.location,
+    this.fromVoiceAssistant = false,
+  });
 }
 
 class _MaizeAnalysis {
@@ -71,6 +78,19 @@ class _AnalysisScreenState extends State<AnalysisScreen> {
   String? _errorMessage;
   bool _started = false;
   AnalysisScreenArgs? _args;
+  final FlutterTts _tts = FlutterTts();
+
+  @override
+  void initState() {
+    super.initState();
+    _tts.setLanguage('en-US');
+  }
+
+  @override
+  void dispose() {
+    _tts.stop();
+    super.dispose();
+  }
 
   @override
   void didChangeDependencies() {
@@ -120,6 +140,11 @@ class _AnalysisScreenState extends State<AnalysisScreen> {
         });
         return;
       }
+      if (args.fromVoiceAssistant) {
+        // Fire-and-forget: the user should see the Results screen right
+        // away, not wait for the spoken summary to finish.
+        unawaited(_speakResult(resultsArgs, l10n));
+      }
       Navigator.pushReplacementNamed(context, '/results', arguments: resultsArgs);
     } on NotMaizeException catch (e) {
       if (!mounted) return;
@@ -139,6 +164,20 @@ class _AnalysisScreenState extends State<AnalysisScreen> {
         _errorMessage = AppLocalizations.of(context)!.couldNotAnalyzePhoto;
       });
     }
+  }
+
+  // Builds the spoken summary off the same label/subtitle logic the Results
+  // screen itself uses, so what's read aloud always matches what's shown.
+  Future<void> _speakResult(ResultsScreenArgs resultsArgs, AppLocalizations l10n) {
+    final ResultsScreen preview = ResultsScreen(
+      isSafe: resultsArgs.isSafe,
+      confidence: resultsArgs.confidence,
+      analysisLabel: resultsArgs.analysisLabel,
+    );
+    final String spoken = '${preview.displayAnalysisLabel(l10n)}. '
+        '${l10n.confidencePercentLabel(preview.confidencePercent)}. '
+        '${preview.subtitle(l10n)}';
+    return _tts.speak(spoken);
   }
 
   Future<ResultsScreenArgs?> _analyzePhoto(AnalysisScreenArgs args) async {
@@ -281,20 +320,7 @@ class _AnalysisScreenState extends State<AnalysisScreen> {
         ),
         const SizedBox(height: 8),
         if (isError) ...[
-  Text(
-    "We couldn't analyze your photo.",
-    textAlign: TextAlign.center,
-    style: const TextStyle(
-      color: AppColors.grey,
-      fontSize: 16,
-      height: 1.5,
-    ),
-  ),
-  const SizedBox(height: 20),
-  _buildBulletedMessage(
-    "Our AI only recognizes raw, unprocessed maize kernels. "
-    "Please retake a clear photo of raw maize kernels.",
-  ),
+  _buildBulletedMessage(_errorMessage!),
 ] else
   Text(
     l10n.scanMaizeSampleHint,

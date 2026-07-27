@@ -2,6 +2,8 @@ import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/foundation.dart';
 
+import '../constants/contact_info.dart';
+
 class FirestoreService {
   // 1. Establish database instance references
   final FirebaseFirestore _db = FirebaseFirestore.instance;
@@ -105,7 +107,10 @@ class FirestoreService {
   /// history collection. Shares the same collection as [saveScanRecord] so
   /// Home/History keep reading from one stream; `testType` distinguishes
   /// chemical entries from Tier 1's visual scans (which predate this field).
-  Future<bool> saveStripScanRecord({
+  /// Returns the new document's ID (used to attach user feedback afterward
+  /// on the results screen, same as [saveScanRecord]) or `null` if the save
+  /// failed.
+  Future<String?> saveStripScanRecord({
     required String imageUrl,
     required String cropType,
     required double ppbValue,
@@ -119,7 +124,7 @@ class FirestoreService {
       final User? currentUser = _auth.currentUser;
       if (currentUser == null) {
         debugPrint('FirestoreService: Cannot save record, no authenticated user found.');
-        return false;
+        return null;
       }
 
       final CollectionReference userScans = _db
@@ -127,7 +132,7 @@ class FirestoreService {
           .doc(currentUser.uid)
           .collection('scans');
 
-      await userScans.add({
+      final DocumentReference doc = await userScans.add({
         'testType': 'chemical',
         'imageUrl': imageUrl,
         'cropType': cropType,
@@ -141,10 +146,10 @@ class FirestoreService {
       });
 
       debugPrint('FirestoreService: Strip scan successfully logged.');
-      return true;
+      return doc.id;
     } catch (e) {
       debugPrint('FirestoreService Error saving strip scan log: $e');
-      return false;
+      return null;
     }
   }
 
@@ -231,6 +236,47 @@ class FirestoreService {
     }
 
     return _db.collection('users').doc(currentUser.uid).snapshots();
+  }
+
+  /// Submits an in-app support request (Settings > Contact support): logs it
+  /// under the account when logged in (guests are still accepted so the form
+  /// never has to turn someone away), and enqueues an email to [supportEmail]
+  /// via the same Firestore "mail" collection / Trigger Email extension that
+  /// already delivers password-reset codes (see functions/index.js).
+  Future<bool> submitSupportRequest({
+    required String category,
+    required String message,
+    required String contactEmail,
+  }) async {
+    try {
+      final User? currentUser = _auth.currentUser;
+      await _db.collection('supportRequests').add({
+        'userId': currentUser?.uid,
+        'contactEmail': contactEmail,
+        'category': category,
+        'message': message,
+        'status': 'open',
+        'createdAt': FieldValue.serverTimestamp(),
+      });
+
+      await _db.collection('mail').add({
+        'to': supportEmail,
+        'replyTo': contactEmail,
+        'message': {
+          'subject': 'AflAlert support request: $category',
+          'text': 'From: $contactEmail\nCategory: $category\n\n$message',
+          'html': '<p><strong>From:</strong> $contactEmail</p>'
+              '<p><strong>Category:</strong> $category</p>'
+              '<p>${message.replaceAll('\n', '<br>')}</p>',
+        },
+      });
+
+      debugPrint('FirestoreService: Support request submitted.');
+      return true;
+    } catch (e) {
+      debugPrint('FirestoreService Error submitting support request: $e');
+      return false;
+    }
   }
 
   /// Streams real-time scan history documents matching the active logged-in user account.

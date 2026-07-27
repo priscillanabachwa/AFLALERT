@@ -37,7 +37,24 @@
   "scanDeleted": "Scan deleted.",
   "couldNotDeleteScan": "Could not delete scan. Please try again.",
   "undo": "Undo",
-  "scanDetails": "Scan Details",
+  "selectScans": "Select",
+  "selectAll": "Select All",
+  "deselectAll": "Deselect All",
+  "scansSelectedCount": "{count} selected",
+  "@scansSelectedCount": {
+    "placeholders": { "count": { "type": "int" } }
+  },
+  "share": "Share",
+  "deleteSelectedScans": "Delete Scans",
+  "deleteSelectedScansConfirm": "Are you sure you want to delete {count} scan records? This cannot be undone.",
+  "@deleteSelectedScansConfirm": {
+    "placeholders": { "count": { "type": "int" } }
+  },
+  "scansDeletedCount": "{count} scans deleted.",
+  "@scansDeletedCount": {
+    "placeholders": { "count": { "type": "int" } }
+  },
+  "scanDetails": "Maize Scan Details",
   "totalScans": "Total Scans",
   "healthyScans": "Healthy Scans",
   "detectedScans": "Detected Scans",
@@ -185,7 +202,7 @@
   "@couldNotCapturePhoto": {
     "placeholders": { "error": { "type": "String" } }
   },
-  "scanMaize": "Scan maize",
+  "scanMaize": "Scan Kernels",
   "flashOn": "Flash on",
   "flashOff": "Flash off",
   "lightingGood": "Lighting good",
@@ -262,7 +279,9 @@
 
   "alertsFilter": "Alerts",
   "updatesFilter": "Updates",
-  "allCaughtUp": "You're all caught up",
+  "allCaughtUp": "No notifications yet",
+  "noAlertsMessage": "No alerts right now",
+  "noUpdatesMessage": "No updates yet",
 
   "changePassword": "Change password",
   "takeAPhoto": "Take a photo",
@@ -335,8 +354,45 @@
   "notificationsSubtitle": "Alerts about scan results and batch status",
   "helpSupportSection": "Help & support",
   "contactSupport": "Contact support",
+  "couldNotOpenEmailApp": "Could not open email app. Please email us at aflalert.support@gmail.com",
   "aboutAflAlert": "About AflAlert",
   "recommendationsSourced": "Recommendations sourced from UNBS and MAAIF guidance.",
+
+  "aboutDescription": "AflAlert helps farmers and grain handlers spot aflatoxin risk in maize before it reaches the market. Snap a photo of maize kernels or a test strip and get an instant, AI-powered risk assessment — right on your phone, even without a lab.",
+  "aboutFeaturesTitle": "What AflAlert does",
+  "aboutFeatureScanTitle": "Kernel & strip scanning",
+  "aboutFeatureScanDesc": "AI-powered image analysis flags visible mold and aflatoxin risk in maize kernels or test strips.",
+  "aboutFeatureRecommendationsTitle": "Guided recommendations",
+  "aboutFeatureRecommendationsDesc": "Every result comes with next-step guidance sourced from UNBS and MAAIF standards.",
+  "aboutFeatureRainAlertsTitle": "Rain alerts",
+  "aboutFeatureRainAlertsDesc": "Get warned before rain hits so drying grain can be covered in time, reducing mold and aflatoxin risk.",
+  "aboutFeatureVoiceTitle": "Voice assistant",
+  "aboutFeatureVoiceDesc": "Run scans and ask questions hands-free.",
+  "aboutFeatureReportsTitle": "Scan history & reports",
+  "aboutFeatureReportsDesc": "Review past scans and download PDF reports to share or keep for your records.",
+  "aboutVersion": "Version 1.0.0",
+  "aboutCopyright": "© 2026 AflAlert. All rights reserved.",
+
+  "contactSupportScreenTitle": "Contact support",
+  "contactSupportIntro": "Tell us what's going on and we'll get back to you by email.",
+  "contactSupportCategoryLabel": "What's this about?",
+  "contactSupportCategoryBug": "Bug report",
+  "contactSupportCategoryScan": "Scan or result issue",
+  "contactSupportCategoryAccount": "Account issue",
+  "contactSupportCategoryFeedback": "Feedback",
+  "contactSupportCategoryOther": "Other",
+  "contactSupportEmailLabel": "Your email",
+  "contactSupportEmailHint": "you@example.com",
+  "contactSupportEmailRequired": "Enter an email so we can reply",
+  "contactSupportEmailInvalid": "Enter a valid email address",
+  "contactSupportMessageLabel": "Message",
+  "contactSupportMessageHint": "Describe the issue or share your feedback...",
+  "contactSupportMessageRequired": "Please describe your issue before submitting",
+  "contactSupportSubmit": "Submit",
+  "contactSupportSubmitting": "Submitting...",
+  "contactSupportSuccess": "Thanks! Your message has been sent. We'll get back to you by email.",
+  "contactSupportError": "Something went wrong sending your message. Please try emailing us directly.",
+  "contactSupportEmailDirectly": "For any further inquiries, reach out to us at",
 
   "maizeScanLabel": "Maize Scan",
   "stripScanLabel": "Strip Scan",
@@ -349,10 +405,11 @@
   "coachMarkStripDesc": "Tap here after the strip's reaction time to check aflatoxin levels.",
   "coachMarkWeatherTitle": "Today's weather",
   "coachMarkWeatherDesc": "Tap this card anytime to see the full hourly forecast.",
+  "coachMarkVoiceTitle": "Try the voice assistant",
+  "coachMarkVoiceDesc": "Tap here and just talk — ask it to scan your maize, check the weather, or answer a question.",
   "chemicalStripScanTitle": "Chemical Strip Scan",
   "scanTestStrip": "Scan Test Strip",
   "cropTypeMaize": "Maize",
-  "cropTypeGroundnut": "Groundnut",
   "positionStripInFrame": "Position strip in frame after the 10-minute reaction time",
   "scanAnotherStrip": "Scan Another Strip",
   "scanTestStripHint": "Scan a reacted test strip to check aflatoxin levels",
@@ -401,5 +458,11 @@
   "@todayHighLowLabel": {
     "placeholders": { "high": { "type": "String" }, "low": { "type": "String" } }
   },
-  "nowLabel": "Now"
+  "nowLabel": "Now",
+  "voiceAssistantEntryTooltip": "Voice assistant",
+  "voiceAssistantTitle": "Voice Assistant",
+  "voiceAssistantEnglishOnlyNotice": "Voice commands currently work in English only.",
+  "voiceAssistantHint": "Tap the mic and try something like \"scan this maize\" or \"what's the weather?\"",
+  "voiceAssistantVoiceFemale": "Female voice — tap to switch to male",
+  "voiceAssistantVoiceMale": "Male voice — tap to switch to female"
 }

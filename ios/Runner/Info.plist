@@ -72,6 +72,10 @@
 		<string>AFLALERT needs photo library access to select saved maize images for quality analysis.</string>
 		<key>NSLocationWhenInUseUsageDescription</key>
 		<string>AFLALERT uses your location to record where each maize sample was scanned.</string>
+		<key>NSMicrophoneUsageDescription</key>
+		<string>AFLALERT needs microphone access so you can talk to the voice assistant.</string>
+		<key>NSSpeechRecognitionUsageDescription</key>
+		<string>AFLALERT uses speech recognition to understand your voice commands.</string>
 		<key>UIStatusBarHidden</key>
 		<false/>
 	</dict>

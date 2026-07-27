@@ -124,6 +124,36 @@ class DailyForecast {
   });
 }
 
+/// Lightweight today's-forecast summary used only to decide the wording of
+/// the morning weather alert (see morning_alert_service.dart) — distinct
+/// from [DailyForecast], which backs the full hour-by-hour forecast sheet.
+class MorningWeatherSummary {
+  final int weatherCode;
+  final double? precipitationProbabilityMax;
+
+  const MorningWeatherSummary({
+    required this.weatherCode,
+    this.precipitationProbabilityMax,
+  });
+}
+
+/// Result of scanning the near-term hourly forecast for incoming rain (see
+/// [WeatherService.getImminentRain]) — powers the urgent "rain in X hours"
+/// alert, distinct from [MorningWeatherSummary]'s once-daily summary.
+class ImminentRainForecast {
+  final DateTime rainStartsAt;
+
+  const ImminentRainForecast({required this.rainStartsAt});
+
+  /// Hours from now until [rainStartsAt], rounded up and floored at 1 so the
+  /// alert never reads "Rain in 0 hours".
+  int get hoursUntilRain {
+    final int minutes = rainStartsAt.difference(DateTime.now()).inMinutes;
+    final int hours = (minutes / 60).ceil();
+    return hours < 1 ? 1 : hours;
+  }
+}
+
 class WeatherService {
   static const String _baseUrl = 'https://api.open-meteo.com/v1/forecast';
 
@@ -324,7 +354,67 @@ class WeatherService {
         precipitationProbabilityMax: precipProbability?.toDouble(),
       );
     } catch (error) {
-      debugPrint('WeatherService Error fetching today\'s forecast: $error');
+      debugPrint('WeatherService Error fetching morning forecast: $error');
+      return null;
+    }
+  }
+
+  /// Scans the next [windowHours] of hourly forecast for the earliest hour
+  /// where rain becomes likely (same threshold as the morning summary: 50%+
+  /// precipitation probability, or a rain/showers/thunderstorm weather
+  /// code). Returns `null` if no rain is expected within the window, or if
+  /// the request fails for any reason.
+  Future<ImminentRainForecast?> getImminentRain(
+    double latitude,
+    double longitude, {
+    int windowHours = 2,
+  }) async {
+    final Uri url = Uri.parse(
+      '$_baseUrl?latitude=$latitude&longitude=$longitude'
+      '&hourly=precipitation_probability,weather_code'
+      '&forecast_days=2&timezone=auto'
+      '&models=$_model',
+    );
+
+    try {
+      final http.Response response =
+          await http.get(url).timeout(const Duration(seconds: 10));
+
+      if (response.statusCode != 200) {
+        debugPrint('WeatherService Failure: Server returned status code ${response.statusCode}');
+        return null;
+      }
+
+      final Map<String, dynamic> data = jsonDecode(response.body);
+      final Map<String, dynamic>? hourly = data['hourly'] as Map<String, dynamic>?;
+      final List<dynamic>? times = hourly?['time'] as List<dynamic>?;
+      final List<dynamic>? precipProbabilities =
+          hourly?['precipitation_probability'] as List<dynamic>?;
+      final List<dynamic>? codes = hourly?['weather_code'] as List<dynamic>?;
+      if (times == null || precipProbabilities == null || codes == null) return null;
+
+      final DateTime now = DateTime.now();
+      final DateTime windowEnd = now.add(Duration(hours: windowHours));
+
+      for (int i = 0; i < times.length && i < precipProbabilities.length && i < codes.length; i++) {
+        final DateTime? time = DateTime.tryParse(times[i] as String);
+        if (time == null || time.isBefore(now) || time.isAfter(windowEnd)) continue;
+
+        final num? precipProbability = precipProbabilities[i] as num?;
+        final num? code = codes[i] as num?;
+        if (code == null) continue;
+
+        final bool rainLikely =
+            (precipProbability != null && precipProbability >= 50) ||
+            (code >= 51 && code <= 99);
+        if (rainLikely) {
+          return ImminentRainForecast(rainStartsAt: time);
+        }
+      }
+
+      return null;
+    } catch (error) {
+      debugPrint('WeatherService Error fetching imminent rain forecast: $error');
       return null;
     }
   }

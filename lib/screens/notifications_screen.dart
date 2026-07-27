@@ -5,6 +5,7 @@ import '../l10n/app_localizations.dart';
 import '../models/app_notification.dart';
 import '../services/notification_center.dart';
 import '../widgets/custom_bottom_nav.dart';
+import 'voice_assistant_screen.dart';
 
 /// Standalone demo entry point.
 ///
@@ -148,7 +149,7 @@ class _NotificationsScreenState extends State<NotificationsScreen> {
               const SizedBox(height: 8),
               Expanded(
                 child: filtered.isEmpty
-                    ? const _EmptyState()
+                    ? _EmptyState(filter: _selectedFilter)
                     : ListView.builder(
                         padding: const EdgeInsets.fromLTRB(16, 8, 16, 16),
                         itemCount: filtered.length,
@@ -177,8 +178,42 @@ class _NotificationsScreenState extends State<NotificationsScreen> {
             ],
           ),
           bottomNavigationBar: const CustomBottomNav(currentIndex: 2),
+          floatingActionButton: _buildVoiceAssistantBubble(context),
         );
       },
+    );
+  }
+
+  Widget _buildVoiceAssistantBubble(BuildContext context) {
+    return Tooltip(
+      message: AppLocalizations.of(context)!.voiceAssistantEntryTooltip,
+      child: InkWell(
+        borderRadius: BorderRadius.circular(32),
+        onTap: () => Navigator.push(
+          context,
+          MaterialPageRoute(builder: (_) => const VoiceAssistantScreen()),
+        ),
+        child: Container(
+          width: 64,
+          height: 64,
+          decoration: BoxDecoration(
+            shape: BoxShape.circle,
+            color: AppColors.primaryContainer,
+            border: Border.all(color: const Color(0xFFE8F5EE), width: 3),
+            boxShadow: [
+              BoxShadow(
+                color: Colors.black.withValues(alpha: 0.25),
+                blurRadius: 12,
+                offset: const Offset(0, 4),
+              ),
+            ],
+          ),
+          child: Padding(
+            padding: const EdgeInsets.all(8),
+            child: Image.asset('lib/assets/images/AI_icon.png'),
+          ),
+        ),
+      ),
     );
   }
 }
@@ -271,10 +306,18 @@ class _DeleteBackground extends StatelessWidget {
 // ---------------------------------------------------------------------------
 
 class _EmptyState extends StatelessWidget {
-  const _EmptyState();
+  const _EmptyState({required this.filter});
+
+  final String filter;
 
   @override
   Widget build(BuildContext context) {
+    final l10n = AppLocalizations.of(context)!;
+    final String message = switch (filter) {
+      'Alerts' => l10n.noAlertsMessage,
+      'Updates' => l10n.noUpdatesMessage,
+      _ => l10n.allCaughtUp,
+    };
     return Center(
       child: Padding(
         padding: const EdgeInsets.all(32),
@@ -288,7 +331,7 @@ class _EmptyState extends StatelessWidget {
             ),
             const SizedBox(height: 12),
             Text(
-              AppLocalizations.of(context)!.allCaughtUp,
+              message,
               style: TextStyle(
                 color: Colors.grey.shade600,
                 fontWeight: FontWeight.w600,

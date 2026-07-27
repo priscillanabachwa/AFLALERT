@@ -3,6 +3,7 @@ import 'dart:io';
 
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:flutter/material.dart';
+import 'package:share_plus/share_plus.dart';
 
 import '../constants/app_colors.dart';
 import '../l10n/app_localizations.dart';
@@ -13,6 +14,9 @@ import '../services/report_storage_service.dart';
 import '../widgets/custom_bottom_nav.dart';
 import '../widgets/pdf_export_dialog.dart';
 import 'result_screen.dart';
+import 'strip_camera_screen.dart' show StripCropType;
+import 'strip_result_screen.dart';
+import 'voice_assistant_screen.dart';
 
 // ─────────────────────────────────────────
 //  DESIGN TOKENS — aliased to the shared AppColors palette
@@ -44,6 +48,11 @@ class ScanRecord {
   final String imagePath;
   final bool isChemical;
   final double ppbValue;
+  final double tLineOD;
+  final double cLineOD;
+  final double odRatio;
+  final double safeLimitPpb;
+  final StripCropType cropType;
 
   const ScanRecord({
     required this.id,
@@ -55,6 +64,11 @@ class ScanRecord {
     required this.imagePath,
     this.isChemical = false,
     this.ppbValue = 0,
+    this.tLineOD = 0,
+    this.cLineOD = 0,
+    this.odRatio = 0,
+    this.safeLimitPpb = 0,
+    this.cropType = StripCropType.maize,
   });
 
   // Tier 1 rows show a confidence %; Tier 2 (chemical strip) rows show the
@@ -86,9 +100,13 @@ ScanRecord? _scanRecordFromDoc(QueryDocumentSnapshot doc) {
   if (data['testType'] == 'chemical') {
     final num ppb = (data['ppbValue'] ?? 0) as num;
     final num limit = (data['safeLimitPpb'] ?? 0) as num;
-    final String cropType = (data['cropType'] ?? '').toString();
-    final String cropLabel = cropType.isNotEmpty
-        ? '${cropType[0].toUpperCase()}${cropType.substring(1)}'
+    final String cropTypeRaw = (data['cropType'] ?? '').toString();
+    final StripCropType cropType = StripCropType.values.firstWhere(
+      (c) => c.name == cropTypeRaw,
+      orElse: () => StripCropType.maize,
+    );
+    final String cropLabel = cropTypeRaw.isNotEmpty
+        ? '${cropTypeRaw[0].toUpperCase()}${cropTypeRaw.substring(1)}'
         : 'Crop';
 
     return ScanRecord(
@@ -101,6 +119,11 @@ ScanRecord? _scanRecordFromDoc(QueryDocumentSnapshot doc) {
       imagePath: (data['imageUrl'] ?? '').toString(),
       isChemical: true,
       ppbValue: ppb.toDouble(),
+      tLineOD: ((data['tLineOD'] ?? 0) as num).toDouble(),
+      cLineOD: ((data['cLineOD'] ?? 0) as num).toDouble(),
+      odRatio: ((data['odRatio'] ?? 0) as num).toDouble(),
+      safeLimitPpb: limit.toDouble(),
+      cropType: cropType,
     );
   }
 
@@ -154,6 +177,47 @@ class _HistoryScreenState extends State<HistoryScreen> {
   final Set<String> _pendingDeleteIds = {};
   final Map<String, Timer> _pendingDeleteTimers = {};
 
+  // Multi-select mode for bulk delete/share, entered via long-press on a card.
+  bool _selectionMode = false;
+  final Set<String> _selectedIds = {};
+
+  void _enterSelectionMode(String initialId) {
+    setState(() {
+      _selectionMode = true;
+      _selectedIds.add(initialId);
+    });
+  }
+
+  void _exitSelectionMode() {
+    setState(() {
+      _selectionMode = false;
+      _selectedIds.clear();
+    });
+  }
+
+  void _toggleSelection(String id) {
+    setState(() {
+      if (_selectedIds.contains(id)) {
+        _selectedIds.remove(id);
+        if (_selectedIds.isEmpty) _selectionMode = false;
+      } else {
+        _selectedIds.add(id);
+      }
+    });
+  }
+
+  void _toggleSelectAll(List<ScanRecord> records) {
+    setState(() {
+      if (_selectedIds.length == records.length) {
+        _selectedIds.clear();
+      } else {
+        _selectedIds
+          ..clear()
+          ..addAll(records.map((r) => r.id));
+      }
+    });
+  }
+
   List<ScanRecord> _filterRecords(List<ScanRecord> source) {
     return source.where((s) {
       final matchesQuery =
@@ -186,29 +250,41 @@ class _HistoryScreenState extends State<HistoryScreen> {
 
   @override
   Widget build(BuildContext context) {
-    return Scaffold(
-      backgroundColor: kPageBg,
-      appBar: _buildAppBar(),
-      body: StreamBuilder<QuerySnapshot>(
-        stream: _scanHistoryStream,
-        builder: (context, snapshot) {
-          if (snapshot.hasError) {
-            return _buildErrorState();
-          }
-          if (snapshot.connectionState == ConnectionState.waiting) {
-            return const Center(
+    return StreamBuilder<QuerySnapshot>(
+      stream: _scanHistoryStream,
+      builder: (context, snapshot) {
+        if (snapshot.hasError) {
+          return Scaffold(
+            backgroundColor: kPageBg,
+            appBar: _buildAppBar(const []),
+            body: _buildErrorState(),
+            bottomNavigationBar: const CustomBottomNav(currentIndex: 1),
+            floatingActionButton: _buildVoiceAssistantBubble(context),
+          );
+        }
+        if (snapshot.connectionState == ConnectionState.waiting) {
+          return Scaffold(
+            backgroundColor: kPageBg,
+            appBar: _buildAppBar(const []),
+            body: const Center(
               child: CircularProgressIndicator(color: kPrimaryGreen),
-            );
-          }
+            ),
+            bottomNavigationBar: const CustomBottomNav(currentIndex: 1),
+            floatingActionButton: _buildVoiceAssistantBubble(context),
+          );
+        }
 
-          final allScans = (snapshot.data?.docs ?? [])
-              .map(_scanRecordFromDoc)
-              .whereType<ScanRecord>()
-              .where((s) => !_pendingDeleteIds.contains(s.id))
-              .toList();
-          final results = _filterRecords(allScans);
+        final allScans = (snapshot.data?.docs ?? [])
+            .map(_scanRecordFromDoc)
+            .whereType<ScanRecord>()
+            .where((s) => !_pendingDeleteIds.contains(s.id))
+            .toList();
+        final results = _filterRecords(allScans);
 
-          return Column(
+        return Scaffold(
+          backgroundColor: kPageBg,
+          appBar: _buildAppBar(results),
+          body: Column(
             children: [
               _buildFilterChips(allScans),
               const SizedBox(height: 4),
@@ -219,15 +295,93 @@ class _HistoryScreenState extends State<HistoryScreen> {
               ),
               _buildBottomBar(results),
             ],
-          );
-        },
+          ),
+          bottomNavigationBar: const CustomBottomNav(currentIndex: 1),
+          floatingActionButton: _buildVoiceAssistantBubble(context),
+        );
+      },
+    );
+  }
+
+  Widget _buildVoiceAssistantBubble(BuildContext context) {
+    return Tooltip(
+      message: AppLocalizations.of(context)!.voiceAssistantEntryTooltip,
+      child: InkWell(
+        borderRadius: BorderRadius.circular(32),
+        onTap: () => Navigator.push(
+          context,
+          MaterialPageRoute(builder: (_) => const VoiceAssistantScreen()),
+        ),
+        child: Container(
+          width: 64,
+          height: 64,
+          decoration: BoxDecoration(
+            shape: BoxShape.circle,
+            color: AppColors.primaryContainer,
+            border: Border.all(color: const Color(0xFFE8F5EE), width: 3),
+            boxShadow: [
+              BoxShadow(
+                color: Colors.black.withValues(alpha: 0.25),
+                blurRadius: 12,
+                offset: const Offset(0, 4),
+              ),
+            ],
+          ),
+          child: Padding(
+            padding: const EdgeInsets.all(8),
+            child: Image.asset('lib/assets/images/AI_icon.png'),
+          ),
+        ),
       ),
-      bottomNavigationBar: const CustomBottomNav(currentIndex: 1),
     );
   }
 
   // ── APP BAR ──────────────────────────────
-  PreferredSizeWidget _buildAppBar() {
+  PreferredSizeWidget _buildAppBar(List<ScanRecord> records) {
+    final AppLocalizations l10n = AppLocalizations.of(context)!;
+
+    if (_selectionMode) {
+      final bool allSelected = records.isNotEmpty && _selectedIds.length == records.length;
+      return AppBar(
+        backgroundColor: kPageBg,
+        elevation: 0,
+        scrolledUnderElevation: 0,
+        leading: IconButton(
+          icon: const Icon(Icons.close, color: kPrimaryGreen),
+          tooltip: l10n.cancel,
+          onPressed: _exitSelectionMode,
+        ),
+        title: Text(
+          l10n.scansSelectedCount(_selectedIds.length),
+          style: const TextStyle(
+            color: kPrimaryGreen,
+            fontSize: 18,
+            fontWeight: FontWeight.w700,
+          ),
+        ),
+        centerTitle: false,
+        actions: [
+          TextButton.icon(
+            onPressed: records.isEmpty ? null : () => _toggleSelectAll(records),
+            icon: Icon(
+              allSelected ? Icons.check_box : Icons.check_box_outline_blank,
+              size: 20,
+              color: kPrimaryGreen,
+            ),
+            label: Text(
+              allSelected ? l10n.deselectAll : l10n.selectAll,
+              style: const TextStyle(
+                fontSize: 13,
+                fontWeight: FontWeight.w600,
+                color: kPrimaryGreen,
+              ),
+            ),
+          ),
+          const SizedBox(width: 4),
+        ],
+      );
+    }
+
     return AppBar(
       backgroundColor: kPageBg,
       elevation: 0,
@@ -237,7 +391,7 @@ class _HistoryScreenState extends State<HistoryScreen> {
         onPressed: () => Navigator.maybePop(context),
       ),
       title: Text(
-        AppLocalizations.of(context)!.history,
+        l10n.history,
         style: const TextStyle(
           color: kPrimaryGreen,
           fontSize: 22,
@@ -245,6 +399,13 @@ class _HistoryScreenState extends State<HistoryScreen> {
         ),
       ),
       centerTitle: false,
+      actions: [
+        IconButton(
+          icon: const Icon(Icons.checklist, color: kPrimaryGreen),
+          tooltip: l10n.selectScans,
+          onPressed: () => setState(() => _selectionMode = true),
+        ),
+      ],
     );
   }
 
@@ -363,7 +524,7 @@ class _HistoryScreenState extends State<HistoryScreen> {
         final record = records[i];
         return Dismissible(
           key: ValueKey(record.id),
-          direction: DismissDirection.endToStart,
+          direction: _selectionMode ? DismissDirection.none : DismissDirection.endToStart,
           background: Container(
             alignment: Alignment.centerRight,
             padding: const EdgeInsets.only(right: 20),
@@ -377,8 +538,18 @@ class _HistoryScreenState extends State<HistoryScreen> {
           onDismissed: (_) => _scheduleDelete(record),
           child: _ScanCard(
             record: record,
-            onTap: () => _openDetail(record),
-            onDelete: () => _confirmAndDeleteScan(record),
+            selectionMode: _selectionMode,
+            selected: _selectedIds.contains(record.id),
+            onTap: () {
+              if (_selectionMode) {
+                _toggleSelection(record.id);
+              } else {
+                _openDetail(record);
+              }
+            },
+            onLongPress: () {
+              if (!_selectionMode) _enterSelectionMode(record.id);
+            },
           ),
         );
       },
@@ -387,58 +558,63 @@ class _HistoryScreenState extends State<HistoryScreen> {
 
   // ── BOTTOM INFO BAR ──────────────────────
   Widget _buildBottomBar(List<ScanRecord> results) {
+    if (_selectionMode) return _buildSelectionBar(results);
     if (results.isEmpty) return const SizedBox.shrink();
 
     final AppLocalizations l10n = AppLocalizations.of(context)!;
-    final bool hasActiveFilters = _activeFilter != null || _selectedLocation != null || _query.isNotEmpty;
 
     return Container(
       color: kCardBg,
       padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
+      child: SizedBox(
+        width: double.infinity,
+        child: ElevatedButton.icon(
+          onPressed: () => _exportPDF(results),
+          icon: const Icon(Icons.picture_as_pdf, size: 16),
+          label: Text(
+            l10n.exportPdf,
+            style: const TextStyle(fontSize: 13, fontWeight: FontWeight.w700),
+          ),
+          style: ElevatedButton.styleFrom(
+            backgroundColor: kAccentGold,
+            foregroundColor: kPrimaryGreen,
+            padding: const EdgeInsets.symmetric(vertical: 12),
+            shape: RoundedRectangleBorder(
+              borderRadius: BorderRadius.circular(10),
+            ),
+            elevation: 0,
+          ),
+        ),
+      ),
+    );
+  }
+
+  // ── SELECTION ACTION BAR ─────────────────
+  Widget _buildSelectionBar(List<ScanRecord> records) {
+    final AppLocalizations l10n = AppLocalizations.of(context)!;
+    final bool hasSelection = _selectedIds.isNotEmpty;
+
+    return Container(
+      color: kCardBg,
+      padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
       child: Row(
         children: [
-          Expanded(
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              mainAxisSize: MainAxisSize.min,
-              children: [
-                Text(
-                  '${l10n.showingResultsCount(results.length)}'
-                  '${hasActiveFilters ? l10n.forCurrentFilters : ''}.',
-                  style: const TextStyle(fontSize: 12, color: kSubtitle),
-                ),
-                if (hasActiveFilters)
-                  GestureDetector(
-                    onTap: _clearFilters,
-                    child: Text(
-                      l10n.clearAllFiltersX,
-                      style: const TextStyle(
-                        fontSize: 12,
-                        color: kDangerRed,
-                        fontWeight: FontWeight.w600,
-                      ),
-                    ),
-                  ),
-              ],
+          TextButton.icon(
+            onPressed: hasSelection ? () => _shareSelected(records) : null,
+            icon: const Icon(Icons.ios_share, size: 18),
+            label: Text(l10n.share),
+            style: TextButton.styleFrom(
+              foregroundColor: kPrimaryGreen,
+              disabledForegroundColor: kPrimaryGreen.withAlpha((0.4 * 255).round()),
             ),
           ),
-          const SizedBox(width: 12),
-          ElevatedButton.icon(
-            onPressed: () => _exportPDF(results),
-            icon: const Icon(Icons.picture_as_pdf, size: 16),
-            label: Text(
-              l10n.exportPdf,
-              style: const TextStyle(fontSize: 13, fontWeight: FontWeight.w700),
-            ),
-            style: ElevatedButton.styleFrom(
-              backgroundColor: kAccentGold,
-              foregroundColor: kPrimaryGreen,
-              minimumSize: Size.zero,
-              padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
-              shape: RoundedRectangleBorder(
-                borderRadius: BorderRadius.circular(10),
-              ),
-              elevation: 0,
+          TextButton.icon(
+            onPressed: hasSelection ? () => _confirmAndDeleteSelected(records) : null,
+            icon: const Icon(Icons.delete_outline, size: 18),
+            label: Text(l10n.delete),
+            style: TextButton.styleFrom(
+              foregroundColor: kDangerRed,
+              disabledForegroundColor: kDangerRed.withAlpha((0.4 * 255).round()),
             ),
           ),
         ],
@@ -522,13 +698,27 @@ class _HistoryScreenState extends State<HistoryScreen> {
   }
 
   // ── ACTIONS ──────────────────────────────
-  // Chemical (Tier 2) rows show their own bottom sheet — ResultsScreen only
-  // understands Tier 1's isSafe/confidence shape, so a ppb reading has
-  // nowhere to render if routed through it. Tier 1 rows reuse the shared
-  // ResultsScreen in fromHistory mode instead of duplicating that UI here.
+  // Both tiers reuse their shared results screen in "opened from history"
+  // mode instead of duplicating that UI here — Tier 1 via ResultsScreen,
+  // Tier 2 (chemical strip) via StripResultsScreen, using the diagnostic
+  // fields already persisted alongside the ppb reading.
   void _openDetail(ScanRecord record) {
     if (record.isChemical) {
-      _openChemicalDetail(record);
+      Navigator.pushNamed(
+        context,
+        '/stripResults',
+        arguments: StripResultsScreenArgs(
+          ppbValue: record.ppbValue,
+          tLineOD: record.tLineOD,
+          cLineOD: record.cLineOD,
+          odRatio: record.odRatio,
+          safeLimitPpb: record.safeLimitPpb,
+          cropType: record.cropType,
+          imagePath: record.imagePath.isNotEmpty ? record.imagePath : null,
+          location: record.location.isNotEmpty ? record.location : null,
+          fromHistory: true,
+        ),
+      );
       return;
     }
 
@@ -542,88 +732,6 @@ class _HistoryScreenState extends State<HistoryScreen> {
         imagePath: record.imagePath.isNotEmpty ? record.imagePath : null,
         fromHistory: true,
       ),
-    );
-  }
-
-  void _openChemicalDetail(ScanRecord record) {
-    final AppLocalizations l10n = AppLocalizations.of(context)!;
-    showModalBottomSheet(
-      context: context,
-      shape: const RoundedRectangleBorder(
-        borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
-      ),
-      builder: (_) {
-        return Padding(
-          padding: const EdgeInsets.fromLTRB(20, 20, 20, 32),
-          child: Column(
-            mainAxisSize: MainAxisSize.min,
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              Center(
-                child: Container(
-                  width: 40,
-                  height: 4,
-                  margin: const EdgeInsets.only(bottom: 16),
-                  decoration: BoxDecoration(
-                    color: kDivider,
-                    borderRadius: BorderRadius.circular(2),
-                  ),
-                ),
-              ),
-              Text(
-                record.title,
-                style: const TextStyle(
-                  fontSize: 20,
-                  fontWeight: FontWeight.w800,
-                  color: kPrimaryGreen,
-                ),
-              ),
-              const SizedBox(height: 8),
-              Text(
-                l10n.locationLabel(record.location.isNotEmpty ? record.location : l10n.notRecorded),
-                style: const TextStyle(fontSize: 14, color: Color(0xFF263238)),
-              ),
-              const SizedBox(height: 4),
-              Text(
-                l10n.dateLabel(record.date),
-                style: const TextStyle(fontSize: 14, color: Color(0xFF263238)),
-              ),
-              const SizedBox(height: 12),
-              Text(
-                l10n.statusLabel(record.status == ScanStatus.moldDetected ? l10n.moldDetected : l10n.healthy),
-                style: TextStyle(
-                  fontSize: 14,
-                  fontWeight: FontWeight.w700,
-                  color: record.status == ScanStatus.moldDetected
-                      ? kDangerRed
-                      : kSafeGreen,
-                ),
-              ),
-              const SizedBox(height: 12),
-              Text(
-                l10n.chemicalLevelValueLabel(record.ppbValue.toStringAsFixed(1)),
-                style: const TextStyle(fontSize: 14, color: Color(0xFF263238)),
-              ),
-              const SizedBox(height: 20),
-              SizedBox(
-                width: double.infinity,
-                child: ElevatedButton(
-                  onPressed: () => Navigator.pop(context),
-                  style: ElevatedButton.styleFrom(
-                    backgroundColor: kPrimaryGreen,
-                    foregroundColor: Colors.white,
-                    padding: const EdgeInsets.symmetric(vertical: 14),
-                    shape: RoundedRectangleBorder(
-                      borderRadius: BorderRadius.circular(12),
-                    ),
-                  ),
-                  child: Text(l10n.close),
-                ),
-              ),
-            ],
-          ),
-        );
-      },
     );
   }
 
@@ -649,51 +757,76 @@ class _HistoryScreenState extends State<HistoryScreen> {
     return confirmed ?? false;
   }
 
-  Future<void> _confirmAndDeleteScan(ScanRecord record) async {
-    final bool confirmed = await _confirmDeleteScan(record);
-    if (!confirmed || !mounted) return;
-    _scheduleDelete(record);
+  // Hides the scan(s) immediately and shows an Undo snackbar; the Firestore
+  // delete only actually happens once the undo window elapses uncancelled.
+  void _scheduleDelete(ScanRecord record) => _scheduleDeleteIds([record.id]);
+
+  Future<void> _confirmAndDeleteSelected(List<ScanRecord> allRecords) async {
+    final AppLocalizations l10n = AppLocalizations.of(context)!;
+    final ids = _selectedIds.toList();
+    final bool? confirmed = await showDialog<bool>(
+      context: context,
+      builder: (dialogContext) => AlertDialog(
+        title: Text(l10n.deleteSelectedScans),
+        content: Text(l10n.deleteSelectedScansConfirm(ids.length)),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(dialogContext, false),
+            child: Text(l10n.cancel),
+          ),
+          TextButton(
+            onPressed: () => Navigator.pop(dialogContext, true),
+            child: Text(l10n.delete, style: const TextStyle(color: kDangerRed)),
+          ),
+        ],
+      ),
+    );
+    if (confirmed != true || !mounted) return;
+    _exitSelectionMode();
+    _scheduleDeleteIds(ids);
   }
 
-  // Hides the scan immediately and shows an Undo snackbar; the Firestore
-  // delete only actually happens once the undo window elapses uncancelled.
-  void _scheduleDelete(ScanRecord record) {
+  void _scheduleDeleteIds(List<String> ids) {
     final AppLocalizations l10n = AppLocalizations.of(context)!;
-    setState(() => _pendingDeleteIds.add(record.id));
+    setState(() => _pendingDeleteIds.addAll(ids));
 
     ScaffoldMessenger.of(context).hideCurrentSnackBar();
     ScaffoldMessenger.of(context).showSnackBar(
       SnackBar(
-        content: Text(l10n.scanDeleted),
+        content: Text(ids.length == 1 ? l10n.scanDeleted : l10n.scansDeletedCount(ids.length)),
         backgroundColor: kPrimaryGreen,
         behavior: SnackBarBehavior.floating,
         duration: _undoWindow,
         action: SnackBarAction(
           label: l10n.undo,
           textColor: Colors.white,
-          onPressed: () => _undoDelete(record.id),
+          onPressed: () => _undoDelete(ids),
         ),
       ),
     );
 
-    _pendingDeleteTimers[record.id]?.cancel();
-    _pendingDeleteTimers[record.id] = Timer(_undoWindow, () {
-      _pendingDeleteTimers.remove(record.id);
-      // SnackBar's built-in auto-dismiss timer is disabled by Flutter
-      // whenever accessible navigation (e.g. a screen reader) is active, so
-      // the undo window's own timer is what actually closes it, in step
-      // with the delete becoming irreversible.
-      if (mounted) {
-        ScaffoldMessenger.of(context).hideCurrentSnackBar();
-      }
-      _commitDelete(record.id);
-    });
+    for (final id in ids) {
+      _pendingDeleteTimers[id]?.cancel();
+      _pendingDeleteTimers[id] = Timer(_undoWindow, () {
+        _pendingDeleteTimers.remove(id);
+        // SnackBar's built-in auto-dismiss timer is disabled by Flutter
+        // whenever accessible navigation (e.g. a screen reader) is active, so
+        // the undo window's own timer is what actually closes it, in step
+        // with the delete becoming irreversible.
+        if (mounted && _pendingDeleteTimers.isEmpty) {
+          ScaffoldMessenger.of(context).hideCurrentSnackBar();
+        }
+        _commitDelete(id);
+      });
+    }
   }
 
-  void _undoDelete(String id) {
-    _pendingDeleteTimers.remove(id)?.cancel();
+  void _undoDelete(List<String> ids) {
+    for (final id in ids) {
+      _pendingDeleteTimers.remove(id)?.cancel();
+    }
     if (!mounted) return;
-    setState(() => _pendingDeleteIds.remove(id));
+    setState(() => _pendingDeleteIds.removeAll(ids));
   }
 
   Future<void> _commitDelete(String id) async {
@@ -762,6 +895,51 @@ class _HistoryScreenState extends State<HistoryScreen> {
     }
   }
 
+  // Builds the same bulk PDF as "Export PDF" but hands it to the platform
+  // share sheet instead of saving it to Downloaded Reports.
+  Future<void> _shareSelected(List<ScanRecord> allRecords) async {
+    final selected = allRecords.where((r) => _selectedIds.contains(r.id)).toList();
+    if (selected.isEmpty) return;
+    final AppLocalizations l10n = AppLocalizations.of(context)!;
+
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(
+        content: Text(l10n.generatingPdfReport),
+        backgroundColor: kPrimaryGreen,
+        behavior: SnackBarBehavior.floating,
+      ),
+    );
+
+    try {
+      final entries = selected
+          .map((r) => PdfReportEntry(
+                title: r.title,
+                isSafe: r.status == ScanStatus.healthy,
+                confidence: r.isChemical ? (r.ppbValue / 100).clamp(0, 1) : r.matchPercent / 100,
+                date: r.date,
+                location: r.location,
+              ))
+          .toList();
+
+      final file = await PdfService().generateBulkReport(entries);
+
+      if (!mounted) return;
+      await SharePlus.instance.share(
+        ShareParams(files: [XFile(file.path)], subject: l10n.history),
+      );
+      _exitSelectionMode();
+    } catch (e) {
+      if (!mounted) return;
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text(l10n.couldNotGeneratePdfReport),
+          backgroundColor: kDangerRed,
+          behavior: SnackBarBehavior.floating,
+        ),
+      );
+    }
+  }
+
 }
 
 // ─────────────────────────────────────────
@@ -769,10 +947,18 @@ class _HistoryScreenState extends State<HistoryScreen> {
 // ─────────────────────────────────────────
 class _ScanCard extends StatelessWidget {
   final ScanRecord record;
+  final bool selectionMode;
+  final bool selected;
   final VoidCallback onTap;
-  final VoidCallback onDelete;
+  final VoidCallback onLongPress;
 
-  const _ScanCard({required this.record, required this.onTap, required this.onDelete});
+  const _ScanCard({
+    required this.record,
+    this.selectionMode = false,
+    this.selected = false,
+    required this.onTap,
+    required this.onLongPress,
+  });
 
   @override
   Widget build(BuildContext context) {
@@ -786,11 +972,15 @@ class _ScanCard extends StatelessWidget {
 
     return GestureDetector(
       onTap: onTap,
+      onLongPress: onLongPress,
       child: Container(
         decoration: BoxDecoration(
           color: kCardBg,
           borderRadius: BorderRadius.circular(14),
-          border: Border.all(color: kDivider, width: 1),
+          border: Border.all(
+            color: selected ? kPrimaryGreen : kDivider,
+            width: selected ? 2 : 1,
+          ),
           boxShadow: [
             BoxShadow(
               color: Colors.black.withAlpha((0.04 * 255).round()),
@@ -801,6 +991,15 @@ class _ScanCard extends StatelessWidget {
         ),
         child: Row(
           children: [
+            if (selectionMode)
+              Padding(
+                padding: const EdgeInsets.only(left: 10),
+                child: Icon(
+                  selected ? Icons.check_circle : Icons.radio_button_unchecked,
+                  color: selected ? kPrimaryGreen : kSubtitle,
+                  size: 22,
+                ),
+              ),
             ClipRRect(
               borderRadius: const BorderRadius.horizontal(
                 left: Radius.circular(14),
@@ -951,21 +1150,12 @@ class _ScanCard extends StatelessWidget {
                           ),
                         ),
                         const Spacer(),
-                        IconButton(
-                          onPressed: onDelete,
-                          icon: const Icon(Icons.delete_outline),
-                          iconSize: 18,
-                          color: kDangerRed.withAlpha((0.7 * 255).round()),
-                          padding: EdgeInsets.zero,
-                          constraints: const BoxConstraints(minWidth: 32, minHeight: 32),
-                          splashRadius: 18,
-                          tooltip: AppLocalizations.of(context)!.delete,
-                        ),
-                        Icon(
-                          Icons.chevron_right,
-                          color: kSubtitle.withAlpha((0.5 * 255).round()),
-                          size: 20,
-                        ),
+                        if (!selectionMode)
+                          Icon(
+                            Icons.chevron_right,
+                            color: kSubtitle.withAlpha((0.5 * 255).round()),
+                            size: 20,
+                          ),
                       ],
                     ),
                   ],

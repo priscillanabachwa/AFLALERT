@@ -10,12 +10,10 @@ import '../constants/app_colors.dart';
 import '../constants/daily_tips.dart';
 import '../constants/seasonal_guidelines.dart';
 import '../l10n/app_localizations.dart';
-import '../models/app_notification.dart';
 import '../services/firestore_service.dart';
-import '../services/local_notification_service.dart';
 import '../services/location_service.dart';
 import '../services/morning_alert_service.dart';
-import '../services/notification_center.dart';
+import '../services/rain_alert_service.dart';
 import '../services/weather_service.dart';
 import '../utils/user_initials.dart';
 import '../widgets/coach_mark_overlay.dart';
@@ -25,6 +23,7 @@ import 'history_screen.dart';
 import 'profile_screen.dart';
 import 'strip_camera_screen.dart';
 import 'strip_analysis_screen.dart';
+import 'voice_assistant_screen.dart';
 
 class HomeScreen extends StatefulWidget {
   const HomeScreen({super.key});
@@ -64,17 +63,13 @@ class _HomeScreenState extends State<HomeScreen> {
   final Stream<QuerySnapshot> _scanHistoryStream =
       FirestoreService().getUserScanHistory();
 
-  // Edge-triggered so each alert fires once when conditions become bad, not
-  // on every refresh while they stay bad. Tracked separately since heat and
-  // humidity can trigger independently of each other.
-  bool _heatAlertNotified = false;
-  bool _humidityAlertNotified = false;
-
+  
   // First-launch walkthrough pointing out the scan buttons and weather card.
   static const String _prefCoachMarksSeen = 'home_coach_marks_seen';
   final GlobalKey _maizeScanKey = GlobalKey();
   final GlobalKey _stripScanKey = GlobalKey();
   final GlobalKey _weatherChipKey = GlobalKey();
+  final GlobalKey _voiceAssistantKey = GlobalKey();
   bool _showCoachMarks = false;
 
   @override
@@ -143,8 +138,7 @@ class _HomeScreenState extends State<HomeScreen> {
       _weatherLoading = false;
     });
     MorningAlertService.cacheLocation(location.latitude, location.longitude);
-    _checkHeatAlert();
-    _checkHumidityAlert();
+    RainAlertService.checkNow(latitude: location.latitude, longitude: location.longitude);
   }
 
   // Depends only on the calendar and rainfall, not on user type, so it can
@@ -152,91 +146,6 @@ class _HomeScreenState extends State<HomeScreen> {
   // their content in sync.
   SeasonStage get _currentSeasonStage =>
       currentSeasonalGuideline(recentRainfallMm: _rainfall?.totalMm).stage;
-
-  void _checkHeatAlert() {
-    final bool alertNow = isHeatAlert(_weather?.temperatureC);
-    if (!alertNow) {
-      _heatAlertNotified = false;
-      return;
-    }
-    if (_heatAlertNotified) return;
-    _heatAlertNotified = true;
-
-    final AppLocalizations l10n = AppLocalizations.of(context)!;
-    final String tip = tipForConditions(
-      _userType,
-      _weather?.temperatureC,
-      currentStage: _currentSeasonStage,
-    );
-    final int tempRounded = _weather!.temperatureC.round();
-    // humidityPercent intentionally omitted above: this is the heat-specific
-    // notification, so it should stay heat-specific even if humidity also
-    // happens to be in alert range right now.
-
-    // Shared between the in-app and device notification so tapping the
-    // device notification can scroll straight to this entry.
-    final String notificationId = DateTime.now().microsecondsSinceEpoch.toString();
-
-    NotificationCenter.instance.add(
-      AppNotification(
-        id: notificationId,
-        title: l10n.heatAlertTitle,
-        description: tip,
-        icon: Icons.whatshot,
-        iconColor: const Color(0xFFE0562A),
-        iconBackground: const Color(0xFFFBDCCB),
-        category: NotificationCategory.alert,
-        unread: true,
-        highPriority: true,
-      ),
-    );
-
-    LocalNotificationService.instance.show(
-      title: l10n.heatAlertNotifTitle(tempRounded),
-      body: tip,
-      notificationId: notificationId,
-    );
-  }
-
-  void _checkHumidityAlert() {
-    final bool alertNow = isHumidityAlert(_weather?.humidityPercent);
-    if (!alertNow) {
-      _humidityAlertNotified = false;
-      return;
-    }
-    if (_humidityAlertNotified) return;
-    _humidityAlertNotified = true;
-
-    final AppLocalizations l10n = AppLocalizations.of(context)!;
-    final String tip = tipForConditions(
-      _userType,
-      null,
-      humidityPercent: _weather?.humidityPercent,
-      currentStage: _currentSeasonStage,
-    );
-    final int humidityRounded = _weather!.humidityPercent!.round();
-    final String notificationId = DateTime.now().microsecondsSinceEpoch.toString();
-
-    NotificationCenter.instance.add(
-      AppNotification(
-        id: notificationId,
-        title: l10n.humidityAlertNotifTitle(humidityRounded),
-        description: tip,
-        icon: Icons.water_drop,
-        iconColor: const Color(0xFF2A7DE0),
-        iconBackground: const Color(0xFFCBE0FB),
-        category: NotificationCategory.alert,
-        unread: true,
-        highPriority: true,
-      ),
-    );
-
-    LocalNotificationService.instance.show(
-      title: l10n.humidityAlertNotifTitle(humidityRounded),
-      body: tip,
-      notificationId: notificationId,
-    );
-  }
 
   @override
   Widget build(BuildContext context) {
@@ -318,6 +227,7 @@ class _HomeScreenState extends State<HomeScreen> {
                             _buildTipCard(
                               tipForConditions(
                                 userType,
+                                Localizations.localeOf(context).languageCode,
                                 _weather?.temperatureC,
                                 humidityPercent: _weather?.humidityPercent,
                                 currentStage: _currentSeasonStage,
@@ -401,12 +311,53 @@ class _HomeScreenState extends State<HomeScreen> {
                   title: l10n.coachMarkWeatherTitle,
                   description: l10n.coachMarkWeatherDesc,
                 ),
+                CoachMarkStep(
+                  targetKey: _voiceAssistantKey,
+                  shape: CoachMarkShape.circle,
+                  title: l10n.coachMarkVoiceTitle,
+                  description: l10n.coachMarkVoiceDesc,
+                ),
               ],
               onFinished: _dismissCoachMarks,
             ),
         ],
       ),
       bottomNavigationBar: const CustomBottomNav(currentIndex: 0),
+      floatingActionButton: _buildVoiceAssistantBubble(context, key: _voiceAssistantKey),
+    );
+  }
+
+  Widget _buildVoiceAssistantBubble(BuildContext context, {Key? key}) {
+    return Tooltip(
+      message: AppLocalizations.of(context)!.voiceAssistantEntryTooltip,
+      child: InkWell(
+        borderRadius: BorderRadius.circular(32),
+        onTap: () => Navigator.push(
+          context,
+          MaterialPageRoute(builder: (_) => const VoiceAssistantScreen()),
+        ),
+        child: Container(
+          key: key,
+          width: 64,
+          height: 64,
+          decoration: BoxDecoration(
+            shape: BoxShape.circle,
+            color: AppColors.primaryContainer,
+            border: Border.all(color: const Color(0xFFE8F5EE), width: 3),
+            boxShadow: [
+              BoxShadow(
+                color: Colors.black.withValues(alpha: 0.25),
+                blurRadius: 12,
+                offset: const Offset(0, 4),
+              ),
+            ],
+          ),
+          child: Padding(
+            padding: const EdgeInsets.all(8),
+            child: Image.asset('lib/assets/images/AI_icon.png'),
+          ),
+        ),
+      ),
     );
   }
 
@@ -438,6 +389,9 @@ class _HomeScreenState extends State<HomeScreen> {
         const Expanded(
           child: Text(
             'AflAlert',
+            maxLines: 1,
+            softWrap: false,
+            overflow: TextOverflow.ellipsis,
             style: TextStyle(
               fontSize: 24,
               fontWeight: FontWeight.bold,
@@ -539,54 +493,55 @@ class _HomeScreenState extends State<HomeScreen> {
     );
   }
 
-  Widget _buildTipCard(String dailyTip, WeatherAlertKind alertKind) {
-    final AppLocalizations l10n = AppLocalizations.of(context)!;
-    return Container(
-      width: double.infinity,
-      padding: const EdgeInsets.all(16),
-      decoration: BoxDecoration(
-        color: AppColors.primaryContainer,
-        borderRadius: BorderRadius.circular(16),
-      ),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Icon(
-            switch (alertKind) {
-              WeatherAlertKind.humidity => Icons.water_drop,
-              WeatherAlertKind.heat => Icons.whatshot,
-              WeatherAlertKind.none => Icons.lightbulb_outline,
-            },
+Widget _buildTipCard(String dailyTip, WeatherAlertKind alertKind) {
+  final AppLocalizations l10n = AppLocalizations.of(context)!;
+
+  final IconData icon = switch (alertKind) {
+    WeatherAlertKind.heat => Icons.whatshot,
+    WeatherAlertKind.humidity => Icons.water_drop,
+    WeatherAlertKind.none => Icons.lightbulb_outline,
+  };
+
+  final String badgeLabel = switch (alertKind) {
+    WeatherAlertKind.heat => l10n.heatAlertBadge,
+    WeatherAlertKind.humidity => l10n.humidityAlertBadge,
+    WeatherAlertKind.none => l10n.dailyTip,
+  };
+
+  return Container(
+    width: double.infinity,
+    padding: const EdgeInsets.all(16),
+    decoration: BoxDecoration(
+      color: AppColors.primaryContainer,
+      borderRadius: BorderRadius.circular(16),
+    ),
+    child: Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Icon(icon, color: AppColors.secondary, size: 20),
+        const SizedBox(height: 8),
+        Text(
+          badgeLabel,
+          style: const TextStyle(
+            fontSize: 10,
+            fontWeight: FontWeight.w700,
             color: AppColors.secondary,
-            size: 20,
+            letterSpacing: 0.5,
           ),
-          const SizedBox(height: 8),
-          Text(
-            switch (alertKind) {
-              WeatherAlertKind.humidity => l10n.humidityAlertBadge,
-              WeatherAlertKind.heat => l10n.heatAlertBadge,
-              WeatherAlertKind.none => l10n.dailyTip,
-            },
-            style: const TextStyle(
-              fontSize: 10,
-              fontWeight: FontWeight.w700,
-              color: AppColors.secondary,
-              letterSpacing: 0.5,
-            ),
+        ),
+        const SizedBox(height: 8),
+        Text(
+          dailyTip,
+          style: const TextStyle(
+            fontSize: 12,
+            color: Colors.white,
+            height: 1.4,
           ),
-          const SizedBox(height: 8),
-          Text(
-            dailyTip,
-            style: const TextStyle(
-              fontSize: 12,
-              color: Colors.white,
-              height: 1.4,
-            ),
-          ),
-        ],
-      ),
-    );
-  }
+        ),
+      ],
+    ),
+  );
+}
 
   // Compact "location + degrees" chip that sits opposite the greeting.
   // Tapping it opens the full forecast rather than cluttering the home
@@ -657,14 +612,16 @@ class _HomeScreenState extends State<HomeScreen> {
   }
 
   Widget _buildSeasonalGuidelineCard(String userType) {
+    final String languageCode = Localizations.localeOf(context).languageCode;
     final double? recentRainfallMm = _rainfall?.totalMm;
     final SeasonalGuideline guideline = currentSeasonalGuideline(
       recentRainfallMm: recentRainfallMm,
     );
-    final String advice = seasonalAdviceFor(guideline, userType);
+    final String advice = seasonalAdviceFor(guideline, userType, languageCode);
     final String? caution = weatherCautionFor(
       guideline.stage,
       recentRainfallMm,
+      languageCode,
     );
 
     return Container(
@@ -698,7 +655,7 @@ class _HomeScreenState extends State<HomeScreen> {
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
                 Text(
-                  guideline.seasonLabel.toUpperCase(),
+                  guideline.seasonLabelFor(languageCode).toUpperCase(),
                   style: const TextStyle(
                     fontSize: 10,
                     fontWeight: FontWeight.w700,
@@ -708,7 +665,7 @@ class _HomeScreenState extends State<HomeScreen> {
                 ),
                 const SizedBox(height: 4),
                 Text(
-                  guideline.title,
+                  guideline.titleFor(languageCode),
                   style: const TextStyle(
                     fontSize: 15,
                     fontWeight: FontWeight.bold,
@@ -801,67 +758,33 @@ class _HomeScreenState extends State<HomeScreen> {
     return Row(
       mainAxisAlignment: MainAxisAlignment.spaceEvenly,
       children: [
-        Column(
-          children: [
-            _buildScanCircle(
-              key: _maizeScanKey,
-              // No Material icon depicts a maize cob, so the emoji glyph
-              // reads more accurately than a generic agriculture/tractor icon.
-              icon: const Text('🌽', style: TextStyle(fontSize: 34)),
-              label: l10n.maizeScanLabel,
-              gradientColors: const [
-                AppColors.successLight,
-                AppColors.successLight,
-              ],
-              contentColor: AppColors.primaryContainer,
-              ringColor: AppColors.secondary,
-              onTap: () => _onMaizeScanTap(context),
-            ),
-            const SizedBox(height: 10),
-            _buildScanCaption('Scan the maize here'),
+        _buildScanCircle(
+          key: _maizeScanKey,
+          // No Material icon depicts a maize cob, so the emoji glyph
+          // reads more accurately than a generic agriculture/tractor icon.
+          icon: const Text('🌽', style: TextStyle(fontSize: 34)),
+          label: l10n.maizeScanLabel,
+          gradientColors: const [
+            AppColors.successLight,
+            AppColors.successLight,
           ],
+          contentColor: AppColors.primaryContainer,
+          ringColor: AppColors.secondary,
+          onTap: () => _onMaizeScanTap(context),
         ),
-        Column(
-          children: [
-            _buildScanCircle(
-              key: _stripScanKey,
-              icon: const Icon(Icons.biotech_outlined, color: AppColors.primaryContainer, size: 36),
-              label: l10n.stripScanLabel,
-              gradientColors: const [
-                AppColors.successLight,
-                AppColors.successLight,
-              ],
-              contentColor: AppColors.primaryContainer,
-              ringColor: AppColors.primaryContainer,
-              onTap: () => _onStripTestTap(context),
-            ),
-            const SizedBox(height: 10),
-            _buildScanCaption('Scan the chemical strip here'),
+        _buildScanCircle(
+          key: _stripScanKey,
+          icon: const Icon(Icons.biotech_outlined, color: AppColors.primaryContainer, size: 36),
+          label: l10n.stripScanLabel,
+          gradientColors: const [
+            AppColors.successLight,
+            AppColors.successLight,
           ],
+          contentColor: AppColors.primaryContainer,
+          ringColor: AppColors.primaryContainer,
+          onTap: () => _onStripTestTap(context),
         ),
       ],
-    );
-  }
-
-  // Sits directly on the busy background photo, so a shadow alone wasn't
-  // reliably legible — a solid backing pill guarantees contrast regardless
-  // of what's behind it.
-  Widget _buildScanCaption(String text) {
-    return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 5),
-      decoration: BoxDecoration(
-        color: Colors.black.withValues(alpha: 0.45),
-        borderRadius: BorderRadius.circular(8),
-      ),
-      child: Text(
-        text,
-        textAlign: TextAlign.center,
-        style: const TextStyle(
-          fontSize: 12,
-          fontWeight: FontWeight.w600,
-          color: Colors.white,
-        ),
-      ),
     );
   }
 

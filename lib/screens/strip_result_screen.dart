@@ -5,13 +5,13 @@ import 'package:flutter/material.dart';
 import '../constants/app_colors.dart';
 import '../l10n/app_localizations.dart';
 import '../models/report_model.dart';
-import '../services/location_service.dart';
+import '../services/firestore_service.dart';
 import '../services/pdf_service.dart';
 import '../services/report_storage_service.dart';
 import '../services/strip_analysis_service.dart';
 import '../widgets/pdf_export_dialog.dart';
 import 'strip_camera_screen.dart';
-import 'strip_analysis_screen.dart';
+import 'voice_assistant_screen.dart';
 
 class StripResultsScreenArgs {
   final double ppbValue;
@@ -22,6 +22,8 @@ class StripResultsScreenArgs {
   final StripCropType cropType;
   final String? imagePath;
   final String? location;
+  final bool fromHistory;
+  final String? scanId;
 
   const StripResultsScreenArgs({
     required this.ppbValue,
@@ -32,6 +34,8 @@ class StripResultsScreenArgs {
     required this.cropType,
     this.imagePath,
     this.location,
+    this.fromHistory = false,
+    this.scanId,
   });
 }
 
@@ -58,6 +62,8 @@ class StripResultsScreen extends StatelessWidget {
   final StripCropType cropType;
   final String? imagePath;
   final String? location;
+  final bool fromHistory;
+  final String? scanId;
 
   const StripResultsScreen({
     super.key,
@@ -69,6 +75,8 @@ class StripResultsScreen extends StatelessWidget {
     required this.cropType,
     this.imagePath,
     this.location,
+    this.fromHistory = false,
+    this.scanId,
   });
 
   static const pageBg = AppColors.logoCream;
@@ -88,15 +96,13 @@ class StripResultsScreen extends StatelessWidget {
   static const double _maxDetectionPpb = StripAnalysisService.maxDetectionPpb;
 
   String _batchId() {
-    final String prefix = cropType == StripCropType.maize ? 'MZ' : 'GN';
     final String suffix = (DateTime.now().millisecondsSinceEpoch % 10000)
         .toString()
         .padLeft(4, '0');
-    return '$prefix-$suffix';
+    return 'MZ-$suffix';
   }
 
-  String _cropLabel(AppLocalizations l10n) =>
-      cropType == StripCropType.maize ? l10n.cropTypeMaize : l10n.cropTypeGroundnut;
+  String _cropLabel(AppLocalizations l10n) => l10n.cropTypeMaize;
 
   RecommendationSource _fromAflalert(String text) => RecommendationSource(
         text: text,
@@ -146,24 +152,6 @@ class StripResultsScreen extends StatelessWidget {
         'Re-route this batch for disposal or approved industrial/distillery use — do not feed it to livestock either, as aflatoxins carry over into milk and meat.',
       ),
     ];
-  }
-
-  Future<void> _scanAnotherStrip(BuildContext context) async {
-    final String? loc = await LocationService().getCurrentPlaceName();
-    if (!context.mounted) return;
-
-    final Object? result = await Navigator.pushNamed(context, '/stripCamera');
-    if (result is! StripCaptureResult || !context.mounted) return;
-
-    Navigator.pushReplacementNamed(
-      context,
-      '/stripAnalysis',
-      arguments: StripAnalysisScreenArgs(
-        photo: result.photo,
-        cropType: result.cropType,
-        location: loc,
-      ),
-    );
   }
 
   Future<void> _exportPdf(BuildContext context) async {
@@ -234,8 +222,13 @@ class StripResultsScreen extends StatelessWidget {
 
   Widget _buildToxicLoadCard(BuildContext context) {
     final AppLocalizations l10n = AppLocalizations.of(context)!;
-    final File? photoFile = (imagePath != null && imagePath!.isNotEmpty) ? File(imagePath!) : null;
-    final bool hasPhoto = photoFile != null && photoFile.existsSync();
+    // History-opened scans store a Firebase Storage URL; a freshly-captured
+    // scan still points at the local temp file, so both need handling.
+    final bool isNetworkImage = imagePath != null && imagePath!.startsWith('http');
+    final File? photoFile = (!isNetworkImage && imagePath != null && imagePath!.isNotEmpty)
+        ? File(imagePath!)
+        : null;
+    final bool hasPhoto = isNetworkImage || (photoFile != null && photoFile.existsSync());
 
     return Container(
       decoration: BoxDecoration(
@@ -254,7 +247,15 @@ class StripResultsScreen extends StatelessWidget {
                 if (hasPhoto)
                   ClipRRect(
                     borderRadius: BorderRadius.circular(10),
-                    child: Image.file(photoFile, width: 44, height: 44, fit: BoxFit.cover),
+                    child: isNetworkImage
+                        ? Image.network(
+                            imagePath!,
+                            width: 44,
+                            height: 44,
+                            fit: BoxFit.cover,
+                            errorBuilder: (_, _, _) => const SizedBox(width: 44, height: 44),
+                          )
+                        : Image.file(photoFile!, width: 44, height: 44, fit: BoxFit.cover),
                   ),
                 if (hasPhoto) const SizedBox(width: 12),
                 Expanded(
@@ -460,6 +461,7 @@ class StripResultsScreen extends StatelessWidget {
     final AppLocalizations l10n = AppLocalizations.of(context)!;
     return Scaffold(
       backgroundColor: pageBg,
+      floatingActionButton: _buildVoiceAssistantBubble(context),
       body: SafeArea(
         child: Padding(
           padding: const EdgeInsets.all(16),
@@ -482,6 +484,12 @@ class StripResultsScreen extends StatelessWidget {
                 ),
                 const SizedBox(height: 18),
                 _buildToxicLoadCard(context),
+
+                // Feedback loop: only offered right after a fresh scan (not
+                // when reviewing an old one from History) — mirrors the
+                // Tier 1 maize flow so both scan types build a labeled
+                // dataset for future retraining.
+                if (!fromHistory && scanId != null) _FeedbackPrompt(scanId: scanId!),
                 const SizedBox(height: 14),
                 _buildRegulatoryScale(context),
                 _buildActionRequiredBox(l10n),
@@ -561,24 +569,134 @@ class StripResultsScreen extends StatelessWidget {
                     elevation: 0,
                   ),
                 ),
-                const SizedBox(height: 16),
-                ElevatedButton.icon(
-                  onPressed: () => _scanAnotherStrip(context),
-                  icon: const Icon(Icons.science_outlined),
-                  label: Text(l10n.scanAnotherStrip),
-                  style: ElevatedButton.styleFrom(
-                    backgroundColor: AppColors.primary,
-                    foregroundColor: Colors.white,
-                    elevation: 0,
-                    padding: const EdgeInsets.symmetric(vertical: 14),
-                    shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
-                  ),
-                ),
               ],
             ),
           ),
         ),
       ),
+    );
+  }
+
+  Widget _buildVoiceAssistantBubble(BuildContext context) {
+    return Tooltip(
+      message: AppLocalizations.of(context)!.voiceAssistantEntryTooltip,
+      child: InkWell(
+        borderRadius: BorderRadius.circular(32),
+        onTap: () => Navigator.push(
+          context,
+          MaterialPageRoute(builder: (_) => const VoiceAssistantScreen()),
+        ),
+        child: Container(
+          width: 64,
+          height: 64,
+          decoration: BoxDecoration(
+            shape: BoxShape.circle,
+            color: AppColors.primaryContainer,
+            border: Border.all(color: const Color(0xFFE8F5EE), width: 3),
+            boxShadow: [
+              BoxShadow(
+                color: Colors.black.withValues(alpha: 0.25),
+                blurRadius: 12,
+                offset: const Offset(0, 4),
+              ),
+            ],
+          ),
+          child: Padding(
+            padding: const EdgeInsets.all(8),
+            child: Image.asset('lib/assets/images/AI_icon.png'),
+          ),
+        ),
+      ),
+    );
+  }
+}
+
+class _FeedbackPrompt extends StatefulWidget {
+  final String scanId;
+
+  const _FeedbackPrompt({required this.scanId});
+
+  @override
+  State<_FeedbackPrompt> createState() => _FeedbackPromptState();
+}
+
+class _FeedbackPromptState extends State<_FeedbackPrompt> {
+  bool? _submittedAccurate;
+  bool _submitting = false;
+
+  Future<void> _submit(bool isAccurate) async {
+    if (_submitting || _submittedAccurate != null) return;
+    setState(() => _submitting = true);
+
+    final bool success = await FirestoreService().submitScanFeedback(widget.scanId, isAccurate);
+    if (!mounted) return;
+    setState(() {
+      _submitting = false;
+      if (success) _submittedAccurate = isAccurate;
+    });
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final AppLocalizations l10n = AppLocalizations.of(context)!;
+    return Container(
+      margin: const EdgeInsets.only(top: 14),
+      padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
+      decoration: BoxDecoration(
+        color: StripResultsScreen.cardBg,
+        borderRadius: BorderRadius.circular(12),
+        border: Border.all(color: StripResultsScreen.textMuted.withValues(alpha: 0.15)),
+      ),
+      child: _submittedAccurate != null
+          ? Row(
+              children: [
+                const Icon(Icons.check_circle, size: 16, color: AppColors.primaryContainer),
+                const SizedBox(width: 8),
+                Expanded(
+                  child: Text(
+                    l10n.feedbackThanks,
+                    style: const TextStyle(fontSize: 12.5, color: StripResultsScreen.textPrimary),
+                  ),
+                ),
+              ],
+            )
+          : Row(
+              children: [
+                Expanded(
+                  child: Text(
+                    l10n.wasThisDiagnosisAccurate,
+                    style: const TextStyle(
+                      fontSize: 12.5,
+                      fontWeight: FontWeight.w500,
+                      color: StripResultsScreen.textPrimary,
+                    ),
+                  ),
+                ),
+                const SizedBox(width: 8),
+                if (_submitting)
+                  const SizedBox(
+                    width: 18,
+                    height: 18,
+                    child: CircularProgressIndicator(strokeWidth: 2),
+                  )
+                else ...[
+                  IconButton(
+                    onPressed: () => _submit(true),
+                    icon: const Icon(Icons.thumb_up_outlined, size: 18),
+                    color: AppColors.primaryContainer,
+                    tooltip: l10n.feedbackYesTooltip,
+                    visualDensity: VisualDensity.compact,
+                  ),
+                  IconButton(
+                    onPressed: () => _submit(false),
+                    icon: const Icon(Icons.thumb_down_outlined, size: 18),
+                    color: AppColors.error,
+                    tooltip: l10n.feedbackNoTooltip,
+                    visualDensity: VisualDensity.compact,
+                  ),
+                ],
+              ],
+            ),
     );
   }
 }
