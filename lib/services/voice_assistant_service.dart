@@ -372,7 +372,11 @@ class VoiceAssistantService extends ChangeNotifier {
         if (photo is! XFile) return;
         nav.pushNamed(
           '/analysis',
-          arguments: AnalysisScreenArgs(photo: photo, location: location),
+          arguments: AnalysisScreenArgs(
+            photo: photo,
+            location: location,
+            fromVoiceAssistant: true,
+          ),
         );
       });
     });
