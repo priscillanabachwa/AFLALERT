@@ -107,7 +107,31 @@
       "Bash(/c/Users/hp/AppData/Local/Android/Sdk/platform-tools/adb.exe -s RZCT70RRZ2E exec-out screencap -p)",
       "Bash(/c/Users/hp/AppData/Local/Android/Sdk/platform-tools/adb.exe -s RZCT70RRZ2E shell input tap 944 1826)",
       "Bash(where adb *)",
-      "Bash(/c/Users/hp/AppData/Local/Android/Sdk/platform-tools/adb.exe -s RZCT70RRZ2E shell input tap 77 166)"
+      "Bash(/c/Users/hp/AppData/Local/Android/Sdk/platform-tools/adb.exe -s RZCT70RRZ2E shell input tap 77 166)",
+      "Bash(awk -F'|' '{print $1}')",
+      "Bash(awk -F'|' '$1>=\"2026-07-08\" && $1<=\"2026-07-11\"')",
+      "Bash(awk -F'|' '$1>=\"2026-07-13\" && $1<=\"2026-07-16\"')",
+      "Bash(awk -F'|' '$1>=\"2026-07-18\" && $1<=\"2026-07-27\"')",
+      "Bash(node scripts/validate_palette.js \"#2a78d6,#eb6834,#1baf7a,#eda100,#e87ba4,#008300,#4a3aa7,#e34948\" --mode light)",
+      "Bash(node scripts/validate_palette.js \"#3987e5,#d95926,#199e70,#c98500,#d55181,#008300,#9085e9,#e66767\" --mode dark)",
+      "Bash(cp \"/c/Users/hp/AppData/Local/Temp/claude/c--Users-hp-Desktop-AFLALERT/cbd43a43-4c6f-4502-9c3c-b2e27a681e1d/scratchpad/aflalert-gantt.html\" \"/c/Users/hp/Desktop/AFLALERT-Gantt-Chart.html\" && ls -la \"/c/Users/hp/Desktop/AFLALERT-Gantt-Chart.html\")",
+      "Bash(cp \"/c/Users/hp/AppData/Local/Temp/claude/c--Users-hp-Desktop-AFLALERT/cbd43a43-4c6f-4502-9c3c-b2e27a681e1d/scratchpad/aflalert-gantt.html\" \"/c/Users/hp/Desktop/AFLALERT-Gantt-Chart.html\")",
+      "Read(//c/Program Files \\\\\\(x86\\\\\\)/Microsoft/Edge/Application/**)",
+      "Read(//c/Program Files/Google/Chrome/Application/**)",
+      "Read(//c/Program Files \\\\\\(x86\\\\\\)/Google/Chrome/Application/**)",
+      "Bash(\"/c/Program Files/Google/Chrome/Application/chrome.exe\" --headless --disable-gpu --no-pdf-header-footer --print-to-pdf=\"AFLALERT-Gantt-Chart.pdf\" --print-to-pdf-no-header \"file:///C:/Users/hp/AppData/Local/Temp/claude/c--Users-hp-Desktop-AFLALERT/cbd43a43-4c6f-4502-9c3c-b2e27a681e1d/scratchpad/aflalert-gantt.html\")",
+      "Bash(\"/c/Program Files/Google/Chrome/Application/chrome.exe\" --headless --disable-gpu --print-to-pdf=\"aflalert-gantt.pdf\" --no-pdf-header-footer \"file:///C:/Users/hp/AppData/Local/Temp/claude/c--Users-hp-Desktop-AFLALERT/cbd43a43-4c6f-4502-9c3c-b2e27a681e1d/scratchpad/aflalert-gantt.html\")",
+      "Bash(\"/c/Program Files/Google/Chrome/Application/chrome.exe\" --headless --no-sandbox --disable-gpu --print-to-pdf=\"aflalert-gantt.pdf\" --no-pdf-header-footer \"file:///C:/Users/hp/AppData/Local/Temp/claude/c--Users-hp-Desktop-AFLALERT/cbd43a43-4c6f-4502-9c3c-b2e27a681e1d/scratchpad/aflalert-gantt.html\")",
+      "Bash(echo \"EXIT:$?\")",
+      "Bash(\"/c/Program Files/Google/Chrome/Application/chrome.exe\" --headless --no-sandbox --disable-gpu --user-data-dir=\"C:\\\\Users\\\\hp\\\\AppData\\\\Local\\\\Temp\\\\claude\\\\chrome-tmp-profile\" --print-to-pdf=\"aflalert-gantt.pdf\" --no-pdf-header-footer \"file:///C:/Users/hp/AppData/Local/Temp/claude/c--Users-hp-Desktop-AFLALERT/cbd43a43-4c6f-4502-9c3c-b2e27a681e1d/scratchpad/aflalert-gantt.html\")",
+      "PowerShell(Get-Process chrome -ErrorAction SilentlyContinue)",
+      "Read(//c/temp/**)",
+      "Bash(python -c \"import fitz\")",
+      "Bash(cp \"/c/temp/out.pdf\" \"/c/Users/hp/Desktop/AFLALERT-Gantt-Chart.pdf\")"
+    ],
+    "additionalDirectories": [
+      "C:\\Users\\hp\\AppData\\Local\\Temp\\claude\\c--Users-hp-Desktop-AFLALERT\\cbd43a43-4c6f-4502-9c3c-b2e27a681e1d\\scratchpad",
+      "C:\\Users\\hp\\Desktop"
     ]
   }
 }
