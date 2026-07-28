@@ -107,7 +107,13 @@
       "Bash(/c/Users/hp/AppData/Local/Android/Sdk/platform-tools/adb.exe -s RZCT70RRZ2E exec-out screencap -p)",
       "Bash(/c/Users/hp/AppData/Local/Android/Sdk/platform-tools/adb.exe -s RZCT70RRZ2E shell input tap 944 1826)",
       "Bash(where adb *)",
-      "Bash(/c/Users/hp/AppData/Local/Android/Sdk/platform-tools/adb.exe -s RZCT70RRZ2E shell input tap 77 166)"
+      "Bash(/c/Users/hp/AppData/Local/Android/Sdk/platform-tools/adb.exe -s RZCT70RRZ2E shell input tap 77 166)",
+      "Bash(awk -F'|' '{print $1}')",
+      "Bash(awk -F'|' '$1>=\"2026-07-08\" && $1<=\"2026-07-11\"')",
+      "Bash(awk -F'|' '$1>=\"2026-07-13\" && $1<=\"2026-07-16\"')",
+      "Bash(awk -F'|' '$1>=\"2026-07-18\" && $1<=\"2026-07-27\"')",
+      "Bash(node scripts/validate_palette.js \"#2a78d6,#eb6834,#1baf7a,#eda100,#e87ba4,#008300,#4a3aa7,#e34948\" --mode light)",
+      "Bash(node scripts/validate_palette.js \"#3987e5,#d95926,#199e70,#c98500,#d55181,#008300,#9085e9,#e66767\" --mode dark)"
     ]
   }
 }

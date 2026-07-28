@@ -51,24 +51,32 @@ class StripAnalysisService {
   static const double _ppbCurveGamma = 1.6;
 
   // A strip cassette + nitrocellulose membrane reads as a mostly bright,
-  // low-saturation ("pale") surface. Photos of unrelated subjects (faces,
-  // rooms, produce, ...) rarely clear this bar, so it's used as an early,
-  // cheap rejection before spending time on line detection.
+  // low-saturation ("pale") surface. But plenty of non-strip subjects
+  // (walls, paper, skin, sky, tables) are just as pale, so this brightness
+  // check alone can't tell them apart — it only serves as an early, cheap
+  // rejection of clearly-wrong photos (dark/richly colored scenes) before
+  // spending time on line detection. Actually distinguishing a strip from
+  // another pale surface is left to the line-band thresholds below, which
+  // is why those need to be strict rather than this ratio.
   static const double _paleBrightnessFloor = 0.55;
   static const double _paleSaturationCeiling = 0.28;
-  static const double _minPaleRatio = 0.45;
+  static const double _minPaleRatio = 0.55;
 
   // A line band must be at least this much darker than its local
-  // background to count as a real line rather than sensor/paper noise.
-  static const double _minLineProminence = 0.10;
+  // background to count as a real line rather than sensor/paper noise or
+  // the soft shading/gradient of a blank pale surface (wall, paper, skin)
+  // that isn't a strip at all.
+  static const double _minLineProminence = 0.16;
   // Candidate bands wider than this fraction of the strip are treated as
   // shadows/edges/objects rather than a printed line.
   static const double _maxBandWidthFraction = 0.22;
   // The control line must clear this absolute darkness (as a fraction of
   // local background luminance lost) to count as a valid, developed line —
   // a faint/missing C line means the strip run itself failed (standard
-  // lateral-flow QC), not a low ppb reading.
-  static const double _minControlDarkness = 0.12;
+  // lateral-flow QC), not a low ppb reading. Set well above what ambient
+  // shading/noise on a non-strip pale photo can produce, since that noise
+  // was previously enough to be misread as a control line.
+  static const double _minControlDarkness = 0.22;
 
   static final StripAnalysisService _instance =
       StripAnalysisService._internal();
