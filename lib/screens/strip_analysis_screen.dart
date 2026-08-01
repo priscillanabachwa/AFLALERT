@@ -44,6 +44,12 @@ class _StripAnalysisScreenState extends State<StripAnalysisScreen> {
   bool _started = false;
   StripAnalysisScreenArgs? _args;
   final FlutterTts _tts = FlutterTts();
+  // pushReplacementNamed to /stripResults happens right after we fire off
+  // the spoken summary; the old route (and this State) gets disposed once
+  // the transition animation finishes, which used to call _tts.stop() and
+  // cut the summary off a fraction of a second in. Skip the stop in that
+  // case so the speech plays out on the departing screen's TTS instance.
+  bool _speakingResult = false;
 
   @override
   void initState() {
@@ -53,7 +59,7 @@ class _StripAnalysisScreenState extends State<StripAnalysisScreen> {
 
   @override
   void dispose() {
-    _tts.stop();
+    if (!_speakingResult) _tts.stop();
     super.dispose();
   }
 
@@ -109,6 +115,7 @@ class _StripAnalysisScreenState extends State<StripAnalysisScreen> {
       if (args.fromVoiceAssistant) {
         // Fire-and-forget: the user should see the Results screen right
         // away, not wait for the spoken summary to finish.
+        _speakingResult = true;
         unawaited(_speakResult(resultsArgs, l10n));
       }
       Navigator.pushReplacementNamed(context, '/stripResults', arguments: resultsArgs);

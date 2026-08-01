@@ -198,6 +198,29 @@ def add_placeholder_para(label):
     return p
 
 
+def add_screenshot_grid(items, cols=3, img_width_in=1.9):
+    """items: list of (image_path, caption). Lays them out as a contact-sheet
+    table, `cols` per row, each cell holding a picture with a caption below."""
+    for start in range(0, len(items), cols):
+        row_items = items[start : start + cols]
+        table = doc.add_table(rows=2, cols=len(row_items))
+        table.alignment = WD_TABLE_ALIGNMENT.CENTER
+        table.autofit = True
+        for ci, (img_path, caption) in enumerate(row_items):
+            pic_cell = table.rows[0].cells[ci]
+            pic_p = pic_cell.paragraphs[0]
+            pic_p.alignment = WD_ALIGN_PARAGRAPH.CENTER
+            pic_p.add_run().add_picture(img_path, width=Inches(img_width_in))
+
+            cap_cell = table.rows[1].cells[ci]
+            cap_p = cap_cell.paragraphs[0]
+            cap_p.alignment = WD_ALIGN_PARAGRAPH.CENTER
+            cap_run = cap_p.add_run(caption)
+            cap_run.italic = True
+            cap_run.font.size = Pt(9)
+        doc.add_paragraph()
+
+
 def add_bullets(items, bold_lead=None):
     for item in items:
         p = doc.add_paragraph(style="List Bullet")
@@ -440,7 +463,11 @@ add_para(
     "Users capture or select a photo of maize kernels; the app classifies the sample "
     "on-device and returns a risk result with guided recommendations."
 )
-add_placeholder_para("[Insert kernel scan screenshots here.]")
+add_screenshot_grid([
+    ("docs/assets/screenshots/kernel_home_tooltip.jpeg", "Home screen — start a kernel scan"),
+    ("docs/assets/screenshots/kernel_result_healthy.jpeg", "Result — Healthy (100% confidence)"),
+    ("docs/assets/screenshots/kernel_result_unsafe.jpeg", "Result — contamination detected (61% confidence)"),
+])
 
 add_para("b) Test Strip Scan Functionality", bold=True)
 add_para(
@@ -449,7 +476,11 @@ add_para(
     "optical-density ratio, and returns an estimated ppb reading with a safe/unsafe "
     "classification and guidance."
 )
-add_placeholder_para("[Insert strip scan screenshots here.]")
+add_screenshot_grid([
+    ("docs/assets/screenshots/strip_home_tooltip.jpeg", "Home screen — start a strip scan"),
+    ("docs/assets/screenshots/strip_result_safe.jpeg", "Result — 10 ppb, within the 20 ppb limit"),
+    ("docs/assets/screenshots/strip_result_unsafe.jpeg", "Result — 78 ppb, action required"),
+])
 
 add_para("c) Alerts, History and Assistant Functionality", bold=True)
 add_para(
@@ -458,7 +489,29 @@ add_para(
     "and Q&A. The assistant is reachable from the home, history, notifications, and results "
     "screens, and speaks a result summary aloud when a scan it triggered finishes."
 )
-add_placeholder_para("[Insert alerts/history/voice-assistant screenshots here.]")
+add_screenshot_grid([
+    ("docs/assets/screenshots/home_heat_alert.jpeg", "Heat alert on the home screen"),
+    ("docs/assets/screenshots/voice_assistant_screen.jpeg", "Voice assistant"),
+    ("docs/assets/screenshots/history_all.jpeg", "Scan history"),
+    ("docs/assets/screenshots/notifications_all.jpeg", "Notifications — alerts and updates"),
+    ("docs/assets/screenshots/home_guidelines.jpeg", "Home — guidelines and recent scans"),
+])
+
+add_para("d) Onboarding, Authentication and Account Functionality", bold=True)
+add_para(
+    "New users are guided through an onboarding carousel introducing the app's purpose, "
+    "then register or log in (email/password or Google) with role and district captured "
+    "at sign-up; the settings and profile screens expose language preference, "
+    "notification toggles, and account management."
+)
+add_screenshot_grid([
+    ("docs/assets/screenshots/onboarding_1.jpeg", "Onboarding carousel"),
+    ("docs/assets/screenshots/onboarding_welcome.jpeg", "Welcome — sign up or log in"),
+    ("docs/assets/screenshots/login.jpeg", "Login"),
+    ("docs/assets/screenshots/register.jpeg", "Registration"),
+    ("docs/assets/screenshots/settings.jpeg", "Settings"),
+    ("docs/assets/screenshots/profile.jpeg", "Profile"),
+])
 
 add_heading("2.3  Project Website and Repository", level=2)
 for label, value, is_placeholder in [

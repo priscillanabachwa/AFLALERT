@@ -367,35 +367,38 @@ class VoiceAssistantService extends ChangeNotifier {
   // so the spoken "opening the camera" reply isn't delayed by the wait for
   // the user to actually take the photo.
   void _runMaizeScanFlow(NavigatorState nav) {
-    LocationService().getCurrentPlaceName().then((String? location) {
-      nav.pushNamed('/camera').then((Object? photo) {
-        if (photo is! XFile) return;
-        nav.pushNamed(
-          '/analysis',
-          arguments: AnalysisScreenArgs(
-            photo: photo,
-            location: location,
-            fromVoiceAssistant: true,
-          ),
-        );
-      });
+    // Resolve location in parallel instead of blocking the camera push on
+    // it — getCurrentPlaceName() can take up to 10s to time out (no GPS
+    // fix indoors), which used to delay opening the camera by that long.
+    final Future<String?> locationFuture = LocationService().getCurrentPlaceName();
+    nav.pushNamed('/camera').then((Object? photo) async {
+      if (photo is! XFile) return;
+      final String? location = await locationFuture;
+      nav.pushNamed(
+        '/analysis',
+        arguments: AnalysisScreenArgs(
+          photo: photo,
+          location: location,
+          fromVoiceAssistant: true,
+        ),
+      );
     });
   }
 
   void _runStripTestFlow(NavigatorState nav) {
-    LocationService().getCurrentPlaceName().then((String? location) {
-      nav.pushNamed('/stripCamera').then((Object? result) {
-        if (result is! StripCaptureResult) return;
-        nav.pushNamed(
-          '/stripAnalysis',
-          arguments: StripAnalysisScreenArgs(
-            photo: result.photo,
-            cropType: result.cropType,
-            location: location,
-            fromVoiceAssistant: true,
-          ),
-        );
-      });
+    final Future<String?> locationFuture = LocationService().getCurrentPlaceName();
+    nav.pushNamed('/stripCamera').then((Object? result) async {
+      if (result is! StripCaptureResult) return;
+      final String? location = await locationFuture;
+      nav.pushNamed(
+        '/stripAnalysis',
+        arguments: StripAnalysisScreenArgs(
+          photo: result.photo,
+          cropType: result.cropType,
+          location: location,
+          fromVoiceAssistant: true,
+        ),
+      );
     });
   }
 
