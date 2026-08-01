@@ -392,6 +392,7 @@ class VoiceAssistantService extends ChangeNotifier {
             photo: result.photo,
             cropType: result.cropType,
             location: location,
+            fromVoiceAssistant: true,
           ),
         );
       });

@@ -127,11 +127,39 @@
       "PowerShell(Get-Process chrome -ErrorAction SilentlyContinue)",
       "Read(//c/temp/**)",
       "Bash(python -c \"import fitz\")",
-      "Bash(cp \"/c/temp/out.pdf\" \"/c/Users/hp/Desktop/AFLALERT-Gantt-Chart.pdf\")"
+      "Bash(cp \"/c/temp/out.pdf\" \"/c/Users/hp/Desktop/AFLALERT-Gantt-Chart.pdf\")",
+      "Bash(pandoc --version)",
+      "Bash(python -c \"import docx; print\\('python-docx available'\\)\")",
+      "Bash(pip install *)",
+      "Bash(cp \"/c/temp/out.pdf\" \"/c/Users/hp/Desktop/AFLALERT-Gantt-Chart.pdf\" && ls -la \"/c/Users/hp/Desktop/AFLALERT-Gantt-Chart.\"*)",
+      "Bash(python -c \"import docx; print\\('OK', docx.__file__\\)\")",
+      "Bash(python scripts/generate_report.py)",
+      "Bash(python -c \"import fitz; print\\('pymupdf ok', fitz.__doc__\\)\")",
+      "Bash(python -c \"import fitz; print\\('ok'\\)\")",
+      "Bash(python -c ' *)",
+      "Bash(mkdir -p docs/assets)",
+      "Bash(mv scripts/gantt_chart_0.png docs/assets/gantt_chart_overview.png)",
+      "Bash(mv scripts/gantt_chart_1.png docs/assets/gantt_chart_phase_details.png)",
+      "Bash(cat)",
+      "Bash(cat \"/c/Users/hp/AppData/Local/Temp/claude/c--Users-hp-Desktop-AFLALERT/cbd43a43-4c6f-4502-9c3c-b2e27a681e1d/scratchpad/aflalert-architecture.html\")",
+      "Bash(echo \"</body></html>\")",
+      "Bash(rm -f /c/temp/arch.pdf /c/temp/arch_page_*.png)",
+      "Read(//c/HP/Desktop/AFLALERT/scripts/**)",
+      "Bash(cp \"/c/temp/arch.pdf\" \"/c/Users/hp/Desktop/AFLALERT-Architecture-Diagram.pdf\")",
+      "Bash(cp \"/c/Users/hp/AppData/Local/Temp/claude/c--Users-hp-Desktop-AFLALERT/cbd43a43-4c6f-4502-9c3c-b2e27a681e1d/scratchpad/aflalert-architecture.html\" \"/c/Users/hp/Desktop/AFLALERT-Architecture-Diagram.html\")",
+      "Bash(python -c \"import docx; print\\('docx ok'\\)\")",
+      "Bash(python -c \"import fitz; print\\('pymupdf ok'\\)\")",
+      "Bash(where pdftoppm *)",
+      "Bash(where magick *)",
+      "Bash(\"/c/Program Files/Google/Chrome/Application/chrome.exe\" --headless --disable-gpu --no-sandbox --print-to-pdf=\"aflalert-gantt.pdf\" --no-pdf-header-footer --print-to-pdf-no-header \"file:///C:/Users/hp/AppData/Local/Temp/claude/c--Users-hp-Desktop-AFLALERT/42405d37-805b-42be-b06c-890c55118947/scratchpad/aflalert-gantt.html\")",
+      "Bash(mkdir -p /c/temp)",
+      "Bash(\"/c/Program Files/Google/Chrome/Application/chrome.exe\" --headless --disable-gpu --no-sandbox --print-to-pdf=\"/c/temp/aflalert-gantt.pdf\" --no-pdf-header-footer --print-to-pdf-no-header \"file:///C:/Users/hp/AppData/Local/Temp/claude/c--Users-hp-Desktop-AFLALERT/42405d37-805b-42be-b06c-890c55118947/scratchpad/aflalert-gantt.html\")",
+      "Bash(python3)"
     ],
     "additionalDirectories": [
       "C:\\Users\\hp\\AppData\\Local\\Temp\\claude\\c--Users-hp-Desktop-AFLALERT\\cbd43a43-4c6f-4502-9c3c-b2e27a681e1d\\scratchpad",
-      "C:\\Users\\hp\\Desktop"
+      "C:\\Users\\hp\\Desktop",
+      "C:\\temp"
     ]
   }
 }

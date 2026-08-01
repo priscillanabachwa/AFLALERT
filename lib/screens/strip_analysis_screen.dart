@@ -1,7 +1,9 @@
+import 'dart:async';
 import 'dart:io';
 
 import 'package:camera/camera.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter_tts/flutter_tts.dart';
 
 import '../constants/app_colors.dart';
 import '../l10n/app_localizations.dart';
@@ -19,11 +21,13 @@ class StripAnalysisScreenArgs {
   final XFile photo;
   final StripCropType cropType;
   final String? location;
+  final bool fromVoiceAssistant;
 
   const StripAnalysisScreenArgs({
     required this.photo,
     required this.cropType,
     this.location,
+    this.fromVoiceAssistant = false,
   });
 }
 
@@ -39,6 +43,19 @@ class _StripAnalysisScreenState extends State<StripAnalysisScreen> {
   String? _errorMessage;
   bool _started = false;
   StripAnalysisScreenArgs? _args;
+  final FlutterTts _tts = FlutterTts();
+
+  @override
+  void initState() {
+    super.initState();
+    _tts.setLanguage('en-US');
+  }
+
+  @override
+  void dispose() {
+    _tts.stop();
+    super.dispose();
+  }
 
   @override
   void didChangeDependencies() {
@@ -89,6 +106,11 @@ class _StripAnalysisScreenState extends State<StripAnalysisScreen> {
         });
         return;
       }
+      if (args.fromVoiceAssistant) {
+        // Fire-and-forget: the user should see the Results screen right
+        // away, not wait for the spoken summary to finish.
+        unawaited(_speakResult(resultsArgs, l10n));
+      }
       Navigator.pushReplacementNamed(context, '/stripResults', arguments: resultsArgs);
     } on InvalidStripException catch (e) {
       if (!mounted) return;
@@ -108,6 +130,17 @@ class _StripAnalysisScreenState extends State<StripAnalysisScreen> {
         _errorMessage = AppLocalizations.of(context)!.couldNotAnalyzePhoto;
       });
     }
+  }
+
+  // Builds the spoken summary off the same isSafe/ppb logic the Results
+  // screen itself uses, so what's read aloud always matches what's shown.
+  Future<void> _speakResult(StripResultsScreenArgs resultsArgs, AppLocalizations l10n) {
+    final bool isSafe = resultsArgs.ppbValue <= resultsArgs.safeLimitPpb;
+    final String spoken = '${l10n.chemicalStripScanTitle}. '
+        '${isSafe ? l10n.withinSafeLimit : l10n.exceedsSafeLimit}. '
+        'Estimated ${resultsArgs.ppbValue.toStringAsFixed(1)} parts per billion, '
+        'against a safe limit of ${resultsArgs.safeLimitPpb.toStringAsFixed(0)} ppb.';
+    return _tts.speak(spoken);
   }
 
   Future<StripResultsScreenArgs?> _analyzeStrip(
