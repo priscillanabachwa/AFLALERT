@@ -105,6 +105,9 @@ section = doc.sections[0]
 section.left_margin = Cm(2.2)
 section.right_margin = Cm(2.2)
 
+# Usable content width = page width minus margins (used for full-width images).
+content_width = section.page_width - section.left_margin - section.right_margin
+
 
 def shade_cell(cell, fill_hex):
     tcPr = cell._tc.get_or_add_tcPr()
@@ -454,7 +457,16 @@ add_para(
     "alerts, PDF generation, voice), and localization resources, making each detection tier "
     "and supporting feature independently maintainable and testable."
 )
-add_placeholder_para("[Insert system architecture diagram here.]")
+arch_p = doc.add_paragraph()
+arch_p.alignment = WD_ALIGN_PARAGRAPH.CENTER
+arch_p.add_run().add_picture("docs/assets/architecture_diagram.png", width=content_width)
+add_para(
+    "Figure 1: AflAlert system architecture — Flutter UI screens call into a services "
+    "layer (classification, strip analysis, alerts, voice, PDF/report storage, Firebase "
+    "access), which in turn talks to the platform and external services below it.",
+    italic=True,
+    size=10,
+)
 
 add_heading("2.2  Product Functionality and Screenshots", level=2)
 
@@ -584,9 +596,6 @@ doc.add_page_break()
 
 # ---- Appendix A ------------------------------------------------------------
 add_banner("Appendix A – Project Work Plan")
-
-# Usable content width = page width minus margins.
-content_width = section.page_width - section.left_margin - section.right_margin
 
 pic_p = doc.add_paragraph()
 pic_p.alignment = WD_ALIGN_PARAGRAPH.CENTER
