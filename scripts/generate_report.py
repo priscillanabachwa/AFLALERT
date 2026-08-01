@@ -457,6 +457,34 @@ add_para(
     "alerts, PDF generation, voice), and localization resources, making each detection tier "
     "and supporting feature independently maintainable and testable."
 )
+add_heading("2.1.1  Kernel Classification Model Training", level=3)
+add_para(
+    "The kernel classification model was trained on a maize image dataset curated "
+    "and labelled on Roboflow (project “corn-aflatoxin-classification”, workspace "
+    "priscilla-nabachwa), comprising 4,892 labelled images across three classes: "
+    "Healthy (799 images), Moldy (1,348 images), and Non Maize (2,969 images) — the "
+    "last of which teaches the model to reject photos that are not maize kernels "
+    "at all, supporting the app's non-maize rejection check (see 1.3.1c)."
+)
+add_para(
+    "Training was carried out in Google Colab using the Ultralytics YOLOv8 "
+    "classification architecture (YOLOv8n-cls), starting from its pretrained "
+    "weights and fine-tuned on the Roboflow dataset export — split by Roboflow "
+    "into 9,960 training, 1,417 validation, and 717 test images across the three "
+    "classes — for 25 epochs at a 224×224 input resolution. The resulting model "
+    "was exported directly to the LiteRT (formerly TensorFlow Lite) format as a "
+    ".tflite file, which is bundled into the app and run fully on-device via the "
+    "tflite_flutter plugin (see 2.1) — keeping inference offline and avoiding any "
+    "need to upload user photos to a server."
+)
+add_para(
+    "Training ran for 25 epochs (0.712 hours total on a Tesla T4 GPU) and "
+    "converged to a final training loss of 0.0238. On the held-out validation "
+    "split, the fused model (1,438,723 parameters, 3.3 GFLOPs) reached a top-1 "
+    "accuracy of 98.8% and a top-5 accuracy of 100%, with an inference speed of "
+    "roughly 0.5 ms per image on GPU."
+)
+
 arch_p = doc.add_paragraph()
 arch_p.alignment = WD_ALIGN_PARAGRAPH.CENTER
 arch_p.add_run().add_picture("docs/assets/architecture_diagram.png", width=content_width)
@@ -529,7 +557,7 @@ add_heading("2.3  Project Website and Repository", level=2)
 for label, value, is_placeholder in [
     ("GitHub Repository Link", "https://github.com/priscillanabachwa/AFLALERT", False),
     ("Project Website Link", "[Project website URL]", True),
-    ("Running System Link", "[Deployed app / demo URL]", True),
+    ("Running System Link", "https://aflalert.web.app", False),
 ]:
     p = doc.add_paragraph()
     r1 = p.add_run(f"{label}: ")
@@ -538,6 +566,17 @@ for label, value, is_placeholder in [
     if is_placeholder:
         r2.italic = True
         r2.font.color.rgb = PLACEHOLDER
+add_para(
+    "Caution: the hosted web build above is provided to demonstrate onboarding, "
+    "authentication, history, alerts, and the general UI live in a browser. "
+    "Kernel and test-strip AI scanning depend on a bundled TensorFlow Lite model "
+    "(tflite_flutter), which relies on dart:ffi and has no browser-compatible "
+    "implementation, so camera-based scanning and classification are not "
+    "available on the web build. These features are fully functional on the "
+    "native Android and iOS builds.",
+    italic=True,
+    size=10,
+)
 
 doc.add_page_break()
 
