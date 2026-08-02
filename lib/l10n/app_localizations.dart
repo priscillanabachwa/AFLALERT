@@ -2036,6 +2036,18 @@ abstract class AppLocalizations {
   /// **'Position strip in frame after the 10-minute reaction time'**
   String get positionStripInFrame;
 
+  /// No description provided for @cropStripPhotoTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Fit the strip in the frame'**
+  String get cropStripPhotoTitle;
+
+  /// No description provided for @cropStripPhotoHint.
+  ///
+  /// In en, this message translates to:
+  /// **'Pinch to zoom and drag until the strip fills the frame edge to edge'**
+  String get cropStripPhotoHint;
+
   /// No description provided for @scanAnotherStrip.
   ///
   /// In en, this message translates to:
@@ -2143,6 +2155,18 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'Exceeds Safe Limit'**
   String get exceedsSafeLimit;
+
+  /// No description provided for @calibrationDisclaimerTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Prototype estimate — not lab-calibrated'**
+  String get calibrationDisclaimerTitle;
+
+  /// No description provided for @calibrationDisclaimerMessage.
+  ///
+  /// In en, this message translates to:
+  /// **'This ppb figure comes from an uncalibrated formula, not a validated lab measurement.'**
+  String get calibrationDisclaimerMessage;
 
   /// No description provided for @wasThisDiagnosisAccurate.
   ///

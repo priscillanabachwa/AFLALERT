@@ -17,7 +17,6 @@ import 'voice_assistant_screen.dart';
 class ResultsScreenArgs {
   final bool isSafe;
   final double confidence;
-  final String? analysisLabel;
   final String? imagePath;
   final bool fromHistory;
   final String? scanId;
@@ -25,7 +24,6 @@ class ResultsScreenArgs {
   const ResultsScreenArgs({
     required this.isSafe,
     required this.confidence,
-    this.analysisLabel,
     this.imagePath,
     this.fromHistory = false,
     this.scanId,
@@ -49,7 +47,6 @@ class RecommendationSource {
 class ResultsScreen extends StatelessWidget {
   final bool isSafe; // true = Healthy Maize, false = Contaminated
   final double confidence; // 0.0 - 1.0
-  final String? analysisLabel;
   final String? imagePath;
   final bool fromHistory;
   final String? scanId;
@@ -58,7 +55,6 @@ class ResultsScreen extends StatelessWidget {
     super.key,
     required this.isSafe,
     required this.confidence,
-    this.analysisLabel,
     this.imagePath,
     this.fromHistory = false,
     this.scanId,
@@ -88,13 +84,11 @@ class ResultsScreen extends StatelessWidget {
   Color get boxTextColor => textPrimary;
   Color get headingColor => isSafe ? safeHeading : unsafeHeading;
 
-  String displayAnalysisLabel(AppLocalizations l10n) {
-    final label = analysisLabel?.trim();
-    if (label != null && label.isNotEmpty) {
-      return label;
-    }
-    return isSafe ? l10n.healthyMaize : l10n.unsafeForConsumption;
-  }
+  // The classifier only ever distinguishes healthy vs. moldy — there's no
+  // richer label to preserve — so this is always the localized text for
+  // the current locale rather than a raw (always-English) model string.
+  String displayAnalysisLabel(AppLocalizations l10n) =>
+      isSafe ? l10n.healthyMaize : l10n.unsafeForConsumption;
 
   String title(AppLocalizations l10n) => displayAnalysisLabel(l10n);
   String subtitle(AppLocalizations l10n) => isSafe
@@ -128,7 +122,7 @@ class ResultsScreen extends StatelessWidget {
         text: text,
         sourceName: 'MAAIF',
         badgeBg: isSafe ? AppColors.successLight : AppColors.errorLight,
-        badgeText: Colors.white,
+        badgeText: isSafe ? AppColors.primaryContainer : AppColors.error,
       );
 
   List<RecommendationSource> get attributedRecommendations {

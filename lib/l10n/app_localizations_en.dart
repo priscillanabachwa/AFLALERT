@@ -1067,6 +1067,13 @@ class AppLocalizationsEn extends AppLocalizations {
       'Position strip in frame after the 10-minute reaction time';
 
   @override
+  String get cropStripPhotoTitle => 'Fit the strip in the frame';
+
+  @override
+  String get cropStripPhotoHint =>
+      'Pinch to zoom and drag until the strip fills the frame edge to edge';
+
+  @override
   String get scanAnotherStrip => 'Scan Another Strip';
 
   @override
@@ -1122,6 +1129,14 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get exceedsSafeLimit => 'Exceeds Safe Limit';
+
+  @override
+  String get calibrationDisclaimerTitle =>
+      'Prototype estimate — not lab-calibrated';
+
+  @override
+  String get calibrationDisclaimerMessage =>
+      'This ppb figure comes from an uncalibrated formula, not a validated lab measurement.';
 
   @override
   String get wasThisDiagnosisAccurate => 'Was this diagnosis accurate?';

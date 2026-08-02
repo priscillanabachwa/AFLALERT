@@ -179,7 +179,6 @@ class _AnalysisScreenState extends State<AnalysisScreen> {
     final ResultsScreen preview = ResultsScreen(
       isSafe: resultsArgs.isSafe,
       confidence: resultsArgs.confidence,
-      analysisLabel: resultsArgs.analysisLabel,
     );
     final String spoken = '${preview.displayAnalysisLabel(l10n)}. '
         '${l10n.confidencePercentLabel(preview.confidencePercent)}. '
@@ -210,7 +209,6 @@ class _AnalysisScreenState extends State<AnalysisScreen> {
     return ResultsScreenArgs(
       isSafe: !analysis.isMoldy,
       confidence: analysis.confidencePercent / 100,
-      analysisLabel: analysis.label,
       imagePath: photoFile.path,
       scanId: scanId,
     );

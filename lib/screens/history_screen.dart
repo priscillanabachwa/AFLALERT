@@ -728,7 +728,6 @@ class _HistoryScreenState extends State<HistoryScreen> {
       arguments: ResultsScreenArgs(
         isSafe: record.status == ScanStatus.healthy,
         confidence: record.matchPercent / 100,
-        analysisLabel: record.title,
         imagePath: record.imagePath.isNotEmpty ? record.imagePath : null,
         fromHistory: true,
       ),
@@ -969,6 +968,13 @@ class _ScanCard extends StatelessWidget {
     final statusIcon = isMoldy
         ? Icons.warning_amber_rounded
         : Icons.check_circle;
+    // record.title is the raw classification string persisted at scan
+    // time — always English, straight from the on-device model — so it's
+    // only used for search/PDF export. What's actually shown here is
+    // derived from record.status, which stays correct in any locale.
+    final String displayTitle = record.isChemical
+        ? '${l10n.chemicalStripScanTitle} · ${l10n.cropTypeMaize}'
+        : (isMoldy ? l10n.unsafeForConsumption : l10n.healthyMaize);
 
     return GestureDetector(
       onTap: onTap,
@@ -1048,7 +1054,7 @@ class _ScanCard extends StatelessWidget {
                       children: [
                         Expanded(
                           child: Text(
-                            record.title,
+                            displayTitle,
                             style: const TextStyle(
                               fontSize: 14,
                               fontWeight: FontWeight.w700,

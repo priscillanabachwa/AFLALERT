@@ -411,6 +411,8 @@
   "scanTestStrip": "Scan Test Strip",
   "cropTypeMaize": "Maize",
   "positionStripInFrame": "Position strip in frame after the 10-minute reaction time",
+  "cropStripPhotoTitle": "Fit the strip in the frame",
+  "cropStripPhotoHint": "Pinch to zoom and drag until the strip fills the frame edge to edge",
   "scanAnotherStrip": "Scan Another Strip",
   "scanTestStripHint": "Scan a reacted test strip to check aflatoxin levels",
 
@@ -431,6 +433,9 @@
   "scanLocationLabel": "Scan location",
   "withinSafeLimit": "Within Safe Limit",
   "exceedsSafeLimit": "Exceeds Safe Limit",
+
+  "calibrationDisclaimerTitle": "Prototype estimate — not lab-calibrated",
+  "calibrationDisclaimerMessage": "This ppb figure comes from an uncalibrated formula, not a validated lab measurement.",
 
   "wasThisDiagnosisAccurate": "Was this diagnosis accurate?",
   "feedbackThanks": "Thanks — your feedback helps improve future scans.",

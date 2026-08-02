@@ -229,7 +229,6 @@ class _AflAlertState extends State<AflAlert> {
           return ResultsScreen(
             isSafe: args.isSafe,
             confidence: args.confidence,
-            analysisLabel: args.analysisLabel,
             imagePath: args.imagePath,
             fromHistory: args.fromHistory,
             scanId: args.scanId,
