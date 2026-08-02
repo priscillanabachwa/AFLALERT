@@ -443,6 +443,23 @@ class _CardBody extends StatelessWidget {
 
   final AppNotification notification;
 
+  static String _formatTime(DateTime dt) {
+    final int hour = dt.hour % 12 == 0 ? 12 : dt.hour % 12;
+    final String minute = dt.minute.toString().padLeft(2, '0');
+    final String period = dt.hour >= 12 ? 'PM' : 'AM';
+    return '$hour:$minute $period';
+  }
+
+  String _relativeTime(AppLocalizations l10n, DateTime dt) {
+    final Duration diff = DateTime.now().difference(dt);
+    if (diff.inMinutes < 1) return l10n.justNow;
+    if (diff.inMinutes < 60) return l10n.minAgo(diff.inMinutes);
+    if (diff.inHours < 24) return l10n.hoursAgo(diff.inHours);
+    if (diff.inDays == 1) return l10n.yesterdayAt(_formatTime(dt));
+    if (diff.inDays < 7) return l10n.daysAgo(diff.inDays);
+    return '${dt.day}/${dt.month}/${dt.year}';
+  }
+
   @override
   Widget build(BuildContext context) {
     return Column(
@@ -501,7 +518,7 @@ class _CardBody extends StatelessWidget {
         ],
         const SizedBox(height: 10),
         Text(
-          notification.relativeTime,
+          _relativeTime(AppLocalizations.of(context)!, notification.createdAt),
           style: TextStyle(color: Colors.grey.shade400, fontSize: 12),
         ),
       ],

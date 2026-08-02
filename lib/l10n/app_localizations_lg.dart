@@ -1192,4 +1192,73 @@ class AppLocalizationsLg extends AppLocalizations {
   @override
   String get voiceAssistantVoiceMale =>
       'Eddoboozi ery\'omusajja — nyiga okukyusa okuba ery\'omukazi';
+
+  @override
+  String maizeFindingSafeHighConfidence(int percent) {
+    return 'Tewali bubonero bwa bukuku oba Aflatoxin bwazuuliddwa mu kyokulabirako kino ($percent% obwesigwa).';
+  }
+
+  @override
+  String maizeFindingSafeLowConfidence(int percent) {
+    return 'Tewali bubonero bwa bukuku bwazuuliddwa, naye obwesigwa bwa $percent% bwokka. Ddamu oscan mu musana omulungi era ogumatiziganya okukakasa nga tonnesigama ku kivuddemu kino.';
+  }
+
+  @override
+  String maizeFindingUnsafeHighConfidence(int percent) {
+    return 'Obukuku obulabika obukwatagana ne Aflatoxin bwazuuliddwa ($percent% obwesigwa).';
+  }
+
+  @override
+  String maizeFindingUnsafeLowConfidence(int percent) {
+    return 'Obukuku obuyinza okubaawo bwazuuliddwa, naye obwesigwa bwa $percent% bwokka. Ekibinja kino kikwate nga kiri mu kabi akasukirivu era oddemu oscan mu musana omulungi okukakasa.';
+  }
+
+  @override
+  String get maizeStorageTip =>
+      'Kuuma obunnyogovu bw\'empeke wansi wa 13% era otereke mu kifo ekinyogovu, ekikalu era ekirimu empewo, nga kisitiddwa waggulu okuva ku ttaka okuziyiza obukuku okulabika oluvannyuma lwa scan eno.';
+
+  @override
+  String get maizeRecheckTip =>
+      'Ddamu okebere ebibinja ebiterekeddwa buli kiseera — akabi ka Aflatoxin kayinza okweyongera oluvannyuma lw\'okutereka wadde ng\'empeke zaali nnungi ku lubereberye.';
+
+  @override
+  String get maizeIsolateTip =>
+      'Tosuubuza wadde okulya ekibinja kino. Kyawule mangu era onoonye okwekenneenya kwa laabu ekakasiddwa nga tonnakozesa mu ngeri endala.';
+
+  @override
+  String get maizeLivestockTip =>
+      'Towaayo ekibinja kino n\'eri ebisolo — Aflatoxin asobola okuyingira mu mata n\'ennyama, ekiyinza okuleeta akabi eri ebisolo n\'abo abagalya.';
+
+  @override
+  String stripFindingSafe(String ppb, String limit) {
+    return 'Enkigero y\'omuggo gwa Test elaga obungi obwesigika obwa $ppb ppb, nga kiri mu kigero ekikkirizibwa ekya $limit ppb ku mmere y\'abantu.';
+  }
+
+  @override
+  String stripFindingUnsafe(String ppb, String limit) {
+    return 'Enkigero y\'omuggo gwa Test elaga obungi obwesigika obwa $ppb ppb, nga kisukiddeko ekigero ekikkirizibwa ekya $limit ppb ku mmere y\'abantu.';
+  }
+
+  @override
+  String get stripStorageTip =>
+      'Kuuma obunnyogovu bw\'empeke wansi wa 13% era otereke mu kifo ekinyogovu, ekikalu era ekirimu empewo, nga kisitiddwa waggulu okuva ku ttaka.';
+
+  @override
+  String get stripRecheckTip =>
+      'Ddamu okebere ebibinja ebiterekeddwa buli kiseera — obungi bwa Aflatoxin busobola okweyongera nga bikyaterekeddwa wadde ng\'ekibinja kyali kirungi ku lubereberye.';
+
+  @override
+  String get stripIsolateTip =>
+      'Totabulanya kibinja kino n\'empeke ennungi. Kyawule mangu era onoonye okwekenneenya kwa laabu ekakasiddwa nga tonnakozesa mu ngeri endala.';
+
+  @override
+  String get stripDisposalTip =>
+      'Ekibinja kino kifulumye oba kikozesebwe mu bikolwa by\'obwannannyini ebikkirizibwa — tokiwaayo n\'eri bisolo, kubanga Aflatoxin ayingira mu mata n\'ennyama.';
+
+  @override
+  String get profileUpdatedNotifTitle => 'Profayiro Ekyusiddwa';
+
+  @override
+  String get profileUpdatedNotifBody =>
+      'Ebikwata ku akaunti yo bikyusiddwa bulungi.';
 }
