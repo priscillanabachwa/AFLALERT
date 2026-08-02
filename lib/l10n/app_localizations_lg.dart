@@ -519,7 +519,7 @@ class AppLocalizationsLg extends AppLocalizations {
   }
 
   @override
-  String get scanMaize => 'Scan Kernels';
+  String get scanMaize => 'Kebera Empeke';
 
   @override
   String get flashOn => 'Ttoowa Ekiri';
@@ -877,7 +877,7 @@ class AppLocalizationsLg extends AppLocalizations {
   String get scanningAspergillus => 'Tunoonya ensengeka za Aspergillus flavus.';
 
   @override
-  String get settingsTitle => 'Settings';
+  String get settingsTitle => 'Entegeka';
 
   @override
   String get appPreferences => 'Ebisaanyizibwa mu App';
@@ -1018,40 +1018,40 @@ class AppLocalizationsLg extends AppLocalizations {
       'Bwoba weetaaga obuyambi obulala, tutuukirire ku';
 
   @override
-  String get maizeScanLabel => 'Maize Scan';
+  String get maizeScanLabel => 'Kebera Kasooli';
 
   @override
-  String get stripScanLabel => 'Strip Scan';
+  String get stripScanLabel => 'Kebera Strip';
 
   @override
-  String get coachMarkSkip => 'Skip';
+  String get coachMarkSkip => 'Buuka';
 
   @override
-  String get coachMarkNext => 'Next';
+  String get coachMarkNext => 'Ekiddako';
 
   @override
-  String get coachMarkGotIt => 'Got it';
+  String get coachMarkGotIt => 'Ntegedde';
 
   @override
-  String get coachMarkMaizeTitle => 'Scan your maize';
+  String get coachMarkMaizeTitle => 'Kebera kasooli yo';
 
   @override
   String get coachMarkMaizeDesc =>
-      'Tap here to photograph maize kernels and check for visible mold.';
+      'Nyiga wano okukuba ekifananyi ky\'empeke za kasooli n\'okukebera obukuku obulabika.';
 
   @override
-  String get coachMarkStripTitle => 'Test a chemical strip';
+  String get coachMarkStripTitle => 'Kebera strip y\'obutwa';
 
   @override
   String get coachMarkStripDesc =>
-      'Tap here after the strip\'s reaction time to check aflatoxin levels.';
+      'Nyiga wano oluvannyuma lw\'ekiseera kya strip okukebera obungi bw\'obutwa.';
 
   @override
-  String get coachMarkWeatherTitle => 'Today\'s weather';
+  String get coachMarkWeatherTitle => 'Embeera y\'obudde leero';
 
   @override
   String get coachMarkWeatherDesc =>
-      'Tap this card anytime to see the full hourly forecast.';
+      'Nyiga kaadi eno bulijjo okulaba embeera y\'obudde ey\'essaawa zonna.';
 
   @override
   String get coachMarkVoiceTitle => 'Gezaako Omuyambi w\'Eddoboozi';
@@ -1061,7 +1061,7 @@ class AppLocalizationsLg extends AppLocalizations {
       'Nyiga wano oyogere — mugambe okuscan kasooli yo, akebere embeera y\'obudde, oba okumubuuza ekibuuzo.';
 
   @override
-  String get chemicalStripScanTitle => 'Chemical Strip Scan';
+  String get chemicalStripScanTitle => 'Okukebera Strip y\'Obutwa';
 
   @override
   String get scanTestStrip => 'Kebera Test Strip';

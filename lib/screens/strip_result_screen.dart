@@ -122,7 +122,7 @@ class StripResultsScreen extends StatelessWidget {
         text: text,
         sourceName: 'MAAIF',
         badgeBg: isSafe ? AppColors.successLight : AppColors.errorLight,
-        badgeText: Colors.white,
+        badgeText: isSafe ? AppColors.primaryContainer : AppColors.error,
       );
 
   List<RecommendationSource> _recommendations(AppLocalizations l10n) {
