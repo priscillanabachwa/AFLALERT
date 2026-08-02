@@ -771,7 +771,14 @@ class _StripGalleryCropScreenState extends State<_StripGalleryCropScreen> {
                       child: SizedBox(
                         width: _frameWidth,
                         height: _frameHeight,
-                        child: Image.file(widget.imageFile, fit: BoxFit.contain),
+                        // .cover guarantees the frame is fully filled by
+                        // real image content even before the user zooms —
+                        // .contain would leave transparent letterbox bars
+                        // wherever the photo's aspect ratio doesn't match
+                        // the tall, narrow strip frame, and those blank
+                        // bars would land right over where the C/T lines
+                        // are expected, breaking detection every time.
+                        child: Image.file(widget.imageFile, fit: BoxFit.cover),
                       ),
                     ),
                   ),
