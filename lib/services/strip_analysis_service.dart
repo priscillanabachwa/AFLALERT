@@ -142,12 +142,31 @@ class StripAnalysisService {
       throw const InvalidStripException(InvalidStripReason.stripNotDetected);
     }
 
-    // Flow-direction convention: the capture guide places the Control (C)
-    // line label near the top of the frame and Test (T) near the bottom,
-    // so scanning top-to-bottom the first line encountered is Control.
-    bands.sort((a, b) => a.rowIndex.compareTo(b.rowIndex));
+    // Control line = the strongest (darkest) candidate, not just the
+    // topmost one. A lateral-flow control line is designed to always
+    // develop fully regardless of the test outcome, so on a validly-run
+    // strip it's reliably the most prominent real line. Real strip photos
+    // can register a faint extra "band" above the true C line (a
+    // sample-pad/membrane seam, a shadow, a crease) that isn't ink at
+    // all — taking the topmost candidate let that artifact stand in for
+    // Control and bumped the real (strong) control line into the Test
+    // slot, discarding the actual reading.
+    bands.sort(
+      (a, b) => (a.luminance / a.baseline).compareTo(b.luminance / b.baseline),
+    );
     final _LineBand cBand = bands.first;
-    final _LineBand tBand = bands[1];
+
+    // Test stays position-based: the capture guide places Control near the
+    // top of the frame and Test near the bottom, so once Control is
+    // pinned down, Test is whichever remaining candidate comes right after
+    // it top-to-bottom (falling back to the closest remaining one if none
+    // happen to sit below it).
+    final List<_LineBand> others = bands.skip(1).toList()
+      ..sort((a, b) => a.rowIndex.compareTo(b.rowIndex));
+    final _LineBand tBand = others.firstWhere(
+      (b) => b.rowIndex > cBand.rowIndex,
+      orElse: () => others.first,
+    );
 
     final double cLineOD = _opticalDensity(cBand.luminance, cBand.baseline);
     final double tLineOD = _opticalDensity(tBand.luminance, tBand.baseline);
@@ -233,8 +252,15 @@ class StripAnalysisService {
       int count = 0;
       for (int x = xStart; x <= xEnd; x++) {
         final pixel = image.getPixel(x, y);
-        // Standard luma weighting.
-        sum += 0.299 * pixel.r + 0.587 * pixel.g + 0.114 * pixel.b;
+        // T/C lines on this strip type develop in red/magenta dye, which
+        // barely touches the red channel — it mainly knocks down green and
+        // blue. Standard luma (0.299R+0.587G+0.114B) still weights red
+        // highly, so a line that looks bold to the eye can register as
+        // only a shallow dip in luma and slip under the detection
+        // threshold entirely. Green+blue average reacts far more strongly
+        // to red/magenta ink while a pale membrane background (high on
+        // all three channels) stays close to unchanged.
+        sum += 0.5 * pixel.g + 0.5 * pixel.b;
         count++;
       }
       profile[y] = count == 0 ? 0 : sum / count;
