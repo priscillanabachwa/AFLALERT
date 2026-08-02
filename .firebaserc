@@ -1,5 +1,7 @@
 {
-  "projects": {},
+  "projects": {
+    "default": "aflalert"
+  },
   "targets": {},
   "etags": {
     "aflalert": {
