@@ -381,6 +381,46 @@ class StripResultsScreen extends StatelessWidget {
     );
   }
 
+  // Always shown, regardless of the reading: the ppb figure comes from an
+  // uncalibrated placeholder formula (see StripAnalysisService), not a
+  // validated lab curve, so it must never be presented as a confirmed
+  // measurement — this is a food-safety tool and a false "safe" reading
+  // has real consequences.
+  Widget _buildCalibrationDisclaimer(AppLocalizations l10n) {
+    return Container(
+      margin: const EdgeInsets.only(top: 14),
+      padding: const EdgeInsets.all(14),
+      decoration: BoxDecoration(
+        color: AppColors.secondary.withValues(alpha: 0.15),
+        borderRadius: BorderRadius.circular(12),
+        border: Border.all(color: AppColors.secondary.withValues(alpha: 0.5)),
+      ),
+      child: Row(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          const Icon(Icons.info_outline, color: AppColors.primary, size: 18),
+          const SizedBox(width: 8),
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(
+                  l10n.calibrationDisclaimerTitle,
+                  style: const TextStyle(fontSize: 12, fontWeight: FontWeight.bold, color: textPrimary),
+                ),
+                const SizedBox(height: 4),
+                Text(
+                  l10n.calibrationDisclaimerMessage,
+                  style: const TextStyle(fontSize: 12, color: textPrimary, height: 1.4),
+                ),
+              ],
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
   Widget _buildActionRequiredBox(AppLocalizations l10n) {
     if (isSafe) return const SizedBox.shrink();
     return Container(
@@ -484,6 +524,7 @@ class StripResultsScreen extends StatelessWidget {
                 ),
                 const SizedBox(height: 18),
                 _buildToxicLoadCard(context),
+                _buildCalibrationDisclaimer(l10n),
 
                 // Feedback loop: only offered right after a fresh scan (not
                 // when reviewing an old one from History) — mirrors the

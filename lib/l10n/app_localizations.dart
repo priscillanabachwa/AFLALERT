@@ -2156,6 +2156,18 @@ abstract class AppLocalizations {
   /// **'Exceeds Safe Limit'**
   String get exceedsSafeLimit;
 
+  /// No description provided for @calibrationDisclaimerTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Prototype estimate — not lab-calibrated'**
+  String get calibrationDisclaimerTitle;
+
+  /// No description provided for @calibrationDisclaimerMessage.
+  ///
+  /// In en, this message translates to:
+  /// **'This ppb figure comes from an uncalibrated formula, not a validated lab measurement.'**
+  String get calibrationDisclaimerMessage;
+
   /// No description provided for @wasThisDiagnosisAccurate.
   ///
   /// In en, this message translates to:

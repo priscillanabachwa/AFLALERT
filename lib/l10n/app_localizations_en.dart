@@ -1131,6 +1131,14 @@ class AppLocalizationsEn extends AppLocalizations {
   String get exceedsSafeLimit => 'Exceeds Safe Limit';
 
   @override
+  String get calibrationDisclaimerTitle =>
+      'Prototype estimate — not lab-calibrated';
+
+  @override
+  String get calibrationDisclaimerMessage =>
+      'This ppb figure comes from an uncalibrated formula, not a validated lab measurement.';
+
+  @override
   String get wasThisDiagnosisAccurate => 'Was this diagnosis accurate?';
 
   @override

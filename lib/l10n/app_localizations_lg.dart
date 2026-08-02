@@ -1138,6 +1138,14 @@ class AppLocalizationsLg extends AppLocalizations {
   String get exceedsSafeLimit => 'Kisukiddeko Ekigero Ekikkirizibwa';
 
   @override
+  String get calibrationDisclaimerTitle =>
+      'Namba ya kalibulewo — tennakolebwa mu labo';
+
+  @override
+  String get calibrationDisclaimerMessage =>
+      'Ennamba eno eya ppb evudde mu nkola etakolebwa mu labo, si kupima kwa labo okukakasibwa.';
+
+  @override
   String get wasThisDiagnosisAccurate => 'Ekizuuliddwa kino kituufu?';
 
   @override

@@ -241,15 +241,19 @@ class StripAnalysisService {
   }
 
   static List<double> _rowLuminanceProfile(img.Image image) {
-    final int centerX = image.width ~/ 2;
-    final int bandHalfWidth = (image.width * 0.15).round().clamp(1, centerX);
-    final int xStart = (centerX - bandHalfWidth).clamp(0, image.width - 1);
-    final int xEnd = (centerX + bandHalfWidth).clamp(0, image.width - 1);
+    // Sample almost the full width rather than assuming the strip sits
+    // dead-center: a gallery crop is user-positioned (unlike the in-app
+    // camera capture, which is centered by construction), and even a
+    // modest horizontal offset would put a narrow fixed center column over
+    // blank background next to the strip instead of the strip itself.
+    final int margin = (image.width * 0.05).round();
+    final int xStart = margin.clamp(0, image.width - 1);
+    final int xEnd = (image.width - margin).clamp(xStart + 1, image.width - 1);
 
+    final List<double> rowValues = [];
     final List<double> profile = List<double>.filled(image.height, 0);
     for (int y = 0; y < image.height; y++) {
-      double sum = 0;
-      int count = 0;
+      rowValues.clear();
       for (int x = xStart; x <= xEnd; x++) {
         final pixel = image.getPixel(x, y);
         // T/C lines on this strip type develop in red/magenta dye, which
@@ -260,10 +264,20 @@ class StripAnalysisService {
         // threshold entirely. Green+blue average reacts far more strongly
         // to red/magenta ink while a pale membrane background (high on
         // all three channels) stays close to unchanged.
-        sum += 0.5 * pixel.g + 0.5 * pixel.b;
-        count++;
+        rowValues.add(0.5 * pixel.g + 0.5 * pixel.b);
       }
-      profile[y] = count == 0 ? 0 : sum / count;
+      // Average the darkest ~20% of the row instead of the row mean: a
+      // line — wherever it sits horizontally — is the darkest content in
+      // its row, so this finds it regardless of the strip's horizontal
+      // position, while still averaging over enough pixels to ignore
+      // single-pixel sensor/compression noise.
+      rowValues.sort();
+      final int sampleCount = math.max(1, (rowValues.length * 0.2).round());
+      double sum = 0;
+      for (int i = 0; i < sampleCount; i++) {
+        sum += rowValues[i];
+      }
+      profile[y] = sum / sampleCount;
     }
     return profile;
   }
@@ -309,24 +323,21 @@ class StripAnalysisService {
       final double threshold = localBg * (1 - _minLineProminence);
       if (localBg > 0 && profile[i] <= threshold) {
         final int start = i;
-        double minLuminance = profile[i];
-        int minIndex = i;
-        double minBaseline = localBg;
         while (i < end && profile[i] <= baseline[i] * (1 - _minLineProminence)) {
-          if (profile[i] < minLuminance) {
-            minLuminance = profile[i];
-            minIndex = i;
-            minBaseline = baseline[i];
-          }
           i++;
         }
         final int width = i - start;
         // Ignore hairline noise spikes and overly broad dark regions
         // (shadows, cassette edges, foreign objects).
         if (width >= 2 && width <= maxBandWidth) {
-          candidates.add(
-            _LineBand(rowIndex: minIndex, luminance: minLuminance, baseline: minBaseline),
-          );
+          // A real strip's C and T lines can sit close enough together
+          // that the profile never rises back above threshold between
+          // them (no fully-recovered background in the gap) — without
+          // this, the whole span above would collapse into a single band
+          // at just its darkest point, silently discarding the other
+          // line entirely. Splitting on local minima recovers each line
+          // separately instead.
+          candidates.addAll(_splitIntoBands(profile, baseline, start, i));
         }
       } else {
         i++;
@@ -334,20 +345,74 @@ class StripAnalysisService {
     }
 
     // Strongest (darkest relative to local background) first, then drop
-    // any candidate that sits within one band-width of an already-kept,
-    // stronger candidate — guards against the same physical line being
-    // split into two nearby detections by a momentary noise blip.
+    // any candidate within a few rows of an already-kept, stronger
+    // candidate — guards against the same physical line being split into
+    // two adjacent detections by a momentary noise blip. This must stay
+    // small: it's a duplicate-detection guard for one line, not a minimum
+    // spacing between distinct C/T lines (which can legitimately sit far
+    // closer together than maxBandWidth).
     candidates.sort(
       (a, b) => (a.luminance / a.baseline).compareTo(b.luminance / b.baseline),
     );
+    final int dedupDistance = math.max(3, (n * 0.01).round());
     final List<_LineBand> kept = [];
     for (final candidate in candidates) {
       final bool tooClose = kept.any(
-        (b) => (b.rowIndex - candidate.rowIndex).abs() < maxBandWidth,
+        (b) => (b.rowIndex - candidate.rowIndex).abs() < dedupDistance,
       );
       if (!tooClose) kept.add(candidate);
     }
     return kept.take(4).toList();
+  }
+
+  // Splits a contiguous below-threshold run [start, end) into one band per
+  // local minimum, rather than reporting only the single darkest point in
+  // the whole run. Minima within a couple of rows of each other are
+  // collapsed to the deepest one (noise on what's really one line's dip);
+  // anything further apart is treated as a genuinely separate line.
+  static List<_LineBand> _splitIntoBands(
+    List<double> profile,
+    List<double> baseline,
+    int start,
+    int end,
+  ) {
+    final List<int> minima = [];
+    for (int j = start; j < end; j++) {
+      final double v = profile[j];
+      final double prev = j > start ? profile[j - 1] : v;
+      final double next = j < end - 1 ? profile[j + 1] : v;
+      if (v <= prev && v <= next) {
+        minima.add(j);
+      }
+    }
+
+    if (minima.isEmpty) {
+      final int mid = (start + end) ~/ 2;
+      return [
+        _LineBand(rowIndex: mid, luminance: profile[mid], baseline: baseline[mid]),
+      ];
+    }
+
+    final List<int> merged = [];
+    for (final idx in minima) {
+      if (merged.isNotEmpty && idx - merged.last <= 3) {
+        if (profile[idx] < profile[merged.last]) {
+          merged[merged.length - 1] = idx;
+        }
+      } else {
+        merged.add(idx);
+      }
+    }
+
+    return merged
+        .map(
+          (idx) => _LineBand(
+            rowIndex: idx,
+            luminance: profile[idx],
+            baseline: baseline[idx],
+          ),
+        )
+        .toList();
   }
 }
 

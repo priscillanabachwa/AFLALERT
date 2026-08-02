@@ -434,6 +434,9 @@
   "withinSafeLimit": "Within Safe Limit",
   "exceedsSafeLimit": "Exceeds Safe Limit",
 
+  "calibrationDisclaimerTitle": "Prototype estimate — not lab-calibrated",
+  "calibrationDisclaimerMessage": "This ppb figure comes from an uncalibrated formula, not a validated lab measurement.",
+
   "wasThisDiagnosisAccurate": "Was this diagnosis accurate?",
   "feedbackThanks": "Thanks — your feedback helps improve future scans.",
   "feedbackYesTooltip": "Yes, accurate",

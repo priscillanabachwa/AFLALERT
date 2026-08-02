@@ -382,6 +382,9 @@
   "withinSafeLimit": "Kiri mu Ekigero Ekikkirizibwa",
   "exceedsSafeLimit": "Kisukiddeko Ekigero Ekikkirizibwa",
 
+  "calibrationDisclaimerTitle": "Namba ya kalibulewo — tennakolebwa mu labo",
+  "calibrationDisclaimerMessage": "Ennamba eno eya ppb evudde mu nkola etakolebwa mu labo, si kupima kwa labo okukakasibwa.",
+
   "wasThisDiagnosisAccurate": "Ekizuuliddwa kino kituufu?",
   "feedbackThanks": "Weebale — endowooza yo eyamba okulongoosa scan ez'omu maaso.",
   "feedbackYesTooltip": "Yee, kituufu",
