@@ -754,33 +754,89 @@ class _StripGalleryCropScreenState extends State<_StripGalleryCropScreen> {
             ),
             Expanded(
               child: Center(
-                child: Container(
+                child: SizedBox(
                   width: _frameWidth,
                   height: _frameHeight,
-                  decoration: BoxDecoration(
-                    border: Border.all(color: Colors.white, width: 2),
-                    borderRadius: BorderRadius.circular(10),
-                  ),
-                  clipBehavior: Clip.antiAlias,
-                  child: RepaintBoundary(
-                    key: _boundaryKey,
-                    child: InteractiveViewer(
-                      minScale: 1,
-                      maxScale: 6,
-                      boundaryMargin: EdgeInsets.zero,
-                      child: SizedBox(
-                        width: _frameWidth,
-                        height: _frameHeight,
-                        // .cover guarantees the frame is fully filled by
-                        // real image content even before the user zooms —
-                        // .contain would leave transparent letterbox bars
-                        // wherever the photo's aspect ratio doesn't match
-                        // the tall, narrow strip frame, and those blank
-                        // bars would land right over where the C/T lines
-                        // are expected, breaking detection every time.
-                        child: Image.file(widget.imageFile, fit: BoxFit.cover),
+                  child: Stack(
+                    children: [
+                      ClipRRect(
+                        borderRadius: BorderRadius.circular(10),
+                        child: RepaintBoundary(
+                          key: _boundaryKey,
+                          child: InteractiveViewer(
+                            minScale: 1,
+                            // A gallery photo usually shows the strip as a
+                            // small part of a bigger scene (table, hand,
+                            // surroundings) rather than filling the frame
+                            // like an in-app camera capture does. 6x wasn't
+                            // enough headroom to zoom past that background
+                            // and isolate just the strip, so leftover
+                            // background pixels were feeding into analysis
+                            // and corrupting every gallery-pick attempt.
+                            maxScale: 20,
+                            boundaryMargin: EdgeInsets.zero,
+                            child: SizedBox(
+                              width: _frameWidth,
+                              height: _frameHeight,
+                              // .cover guarantees the frame is fully filled
+                              // by real image content even before the user
+                              // zooms — .contain would leave transparent
+                              // letterbox bars wherever the photo's aspect
+                              // ratio doesn't match the tall, narrow strip
+                              // frame, and those blank bars would land right
+                              // over where the C/T lines are expected,
+                              // breaking detection every time.
+                              child:
+                                  Image.file(widget.imageFile, fit: BoxFit.cover),
+                            ),
+                          ),
+                        ),
                       ),
-                    ),
+                      // Same C/T frame guide as the live camera view, laid
+                      // on top so it's visible while panning/zooming but
+                      // never captured into the analyzed crop (it sits
+                      // outside the RepaintBoundary above).
+                      IgnorePointer(
+                        child: CustomPaint(
+                          size: const Size(_frameWidth, _frameHeight),
+                          painter: _StripFramePainter(color: Colors.white),
+                          child: const Stack(
+                            children: [
+                              Positioned(
+                                top: 8,
+                                left: 0,
+                                right: 0,
+                                child: Center(
+                                  child: Text(
+                                    'C',
+                                    style: TextStyle(
+                                      color: Colors.white70,
+                                      fontSize: 11,
+                                      fontWeight: FontWeight.bold,
+                                    ),
+                                  ),
+                                ),
+                              ),
+                              Positioned(
+                                bottom: 8,
+                                left: 0,
+                                right: 0,
+                                child: Center(
+                                  child: Text(
+                                    'T',
+                                    style: TextStyle(
+                                      color: Colors.white70,
+                                      fontSize: 11,
+                                      fontWeight: FontWeight.bold,
+                                    ),
+                                  ),
+                                ),
+                              ),
+                            ],
+                          ),
+                        ),
+                      ),
+                    ],
                   ),
                 ),
               ),

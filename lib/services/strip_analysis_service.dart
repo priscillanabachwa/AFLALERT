@@ -12,7 +12,7 @@ import 'dart:io';
 import 'dart:math' as math;
 import 'dart:typed_data';
 
-import 'package:flutter/foundation.dart' show compute;
+import 'package:flutter/foundation.dart' show compute, debugPrint;
 import 'package:image/image.dart' as img;
 
 enum InvalidStripReason { stripNotDetected, controlLineNotDetected }
@@ -102,10 +102,17 @@ class StripAnalysisService {
   static StripAnalysisResult _analyzeStripSync(Uint8List bytes) {
     final img.Image? decoded = img.decodeImage(bytes);
     if (decoded == null) {
+      debugPrint('[StripAnalysis] decodeImage failed (${bytes.length} bytes)');
       throw const InvalidStripException(InvalidStripReason.stripNotDetected);
     }
+    debugPrint('[StripAnalysis] decoded ${decoded.width}x${decoded.height}');
 
-    if (!_looksLikeStrip(decoded)) {
+    final double paleRatio = _paleRatio(decoded);
+    debugPrint(
+      '[StripAnalysis] paleRatio=${paleRatio.toStringAsFixed(3)} '
+      '(need >= $_minPaleRatio)',
+    );
+    if (paleRatio < _minPaleRatio) {
       throw const InvalidStripException(InvalidStripReason.stripNotDetected);
     }
 
@@ -115,6 +122,7 @@ class StripAnalysisService {
     // only the central column band to avoid strip-edge glare/shadow.
     final List<double> profile = _rowLuminanceProfile(decoded);
     if (profile.length < 20) {
+      debugPrint('[StripAnalysis] profile too short: ${profile.length}');
       throw const InvalidStripException(InvalidStripReason.stripNotDetected);
     }
 
@@ -125,6 +133,10 @@ class StripAnalysisService {
     // one side, a shadow across part of the frame, etc.).
     final List<double> baseline = _localBaseline(profile);
     final List<_LineBand> bands = _findLineBands(profile, baseline);
+    debugPrint(
+      '[StripAnalysis] found ${bands.length} candidate band(s): '
+      '${bands.map((b) => 'row=${b.rowIndex} lum=${b.luminance.toStringAsFixed(1)} bg=${b.baseline.toStringAsFixed(1)}').join(', ')}',
+    );
 
     if (bands.length < 2) {
       throw const InvalidStripException(InvalidStripReason.stripNotDetected);
@@ -139,6 +151,10 @@ class StripAnalysisService {
 
     final double cLineOD = _opticalDensity(cBand.luminance, cBand.baseline);
     final double tLineOD = _opticalDensity(tBand.luminance, tBand.baseline);
+    debugPrint(
+      '[StripAnalysis] cLineOD=${cLineOD.toStringAsFixed(3)} '
+      '(need >= $_minControlDarkness), tLineOD=${tLineOD.toStringAsFixed(3)}',
+    );
 
     if (cLineOD < _minControlDarkness) {
       throw const InvalidStripException(
@@ -178,7 +194,7 @@ class StripAnalysisService {
   // its membrane are predominantly bright and low-saturation, so a photo
   // that's mostly dark and/or richly colored throughout is very unlikely
   // to actually be a test strip.
-  static bool _looksLikeStrip(img.Image image) {
+  static double _paleRatio(img.Image image) {
     final int stepX = (image.width / 40).ceil().clamp(1, 200);
     final int stepY = (image.height / 80).ceil().clamp(1, 200);
 
@@ -201,8 +217,8 @@ class StripAnalysisService {
       }
     }
 
-    if (sampled == 0) return false;
-    return (paleCount / sampled) >= _minPaleRatio;
+    if (sampled == 0) return 0;
+    return paleCount / sampled;
   }
 
   static List<double> _rowLuminanceProfile(img.Image image) {
