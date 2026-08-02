@@ -9,9 +9,12 @@
 
 import 'dart:async';
 import 'dart:io';
+import 'dart:typed_data';
+import 'dart:ui' as ui;
 
 import 'package:camera/camera.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter/rendering.dart';
 import 'package:image/image.dart' as img;
 import 'package:image_picker/image_picker.dart';
 
@@ -79,6 +82,7 @@ Future<File> cropImageToViewfinderRect(
   await outputFile.writeAsBytes(img.encodeJpg(resized, quality: 92));
   return outputFile;
 }
+
 
 class StripCameraScreen extends StatefulWidget {
   const StripCameraScreen({super.key});
@@ -221,11 +225,25 @@ class _StripCameraScreenState extends State<StripCameraScreen> {
         await ImagePicker().pickImage(source: ImageSource.gallery);
     if (picked == null || !mounted) return;
 
+    // Analysis assumes the strip fills the whole photo top-to-bottom (true
+    // by construction for a camera capture, which is always cropped to the
+    // viewfinder frame — see cropImageToViewfinderRect). A raw gallery pick
+    // usually has the strip sitting in a larger scene, so it needs the same
+    // crop before analysis can find the T/C lines at all.
+    final File? cropped = await Navigator.push<File>(
+      context,
+      MaterialPageRoute(
+        builder: (_) => _StripGalleryCropScreen(imageFile: File(picked.path)),
+      ),
+    );
+    if (cropped == null || !mounted) return;
+    final XFile croppedXFile = XFile(cropped.path);
+
     final result = await Navigator.push<_ReviewResult>(
       context,
       MaterialPageRoute(
         builder: (_) => _StripReviewScreen(
-          imageFile: picked,
+          imageFile: croppedXFile,
           lightGood: true,
           focusGood: true,
         ),
@@ -235,7 +253,7 @@ class _StripCameraScreenState extends State<StripCameraScreen> {
     if (result == _ReviewResult.usePhoto && mounted) {
       Navigator.pop(
         context,
-        StripCaptureResult(photo: picked, cropType: _cropType),
+        StripCaptureResult(photo: croppedXFile, cropType: _cropType),
       );
     }
   }
@@ -638,6 +656,246 @@ class _StripFramePainter extends CustomPainter {
   @override
   bool shouldRepaint(covariant _StripFramePainter oldDelegate) =>
       oldDelegate.color != color;
+}
+
+// Lets the user pinch/pan a gallery-picked photo so the strip fills the
+// frame edge to edge, same as the in-app camera capture guarantees via
+// cropImageToViewfinderRect. Renders whatever is inside the frame overlay
+// straight off the widget tree (via RenderRepaintBoundary) rather than
+// computing a crop rect from the pan/zoom transform — simpler and avoids a
+// whole class of matrix-math bugs.
+class _StripGalleryCropScreen extends StatefulWidget {
+  final File imageFile;
+
+  const _StripGalleryCropScreen({required this.imageFile});
+
+  @override
+  State<_StripGalleryCropScreen> createState() =>
+      _StripGalleryCropScreenState();
+}
+
+class _StripGalleryCropScreenState extends State<_StripGalleryCropScreen> {
+  static const double _frameWidth = 220;
+  static const double _frameHeight = _frameWidth * 320 / 140;
+  // Matches the ~720px-wide output the camera-capture path already
+  // produces, so both paths hand the analyzer comparably detailed photos.
+  static const double _outputWidth = 720;
+
+  final GlobalKey _boundaryKey = GlobalKey();
+  bool _isCropping = false;
+
+  Future<void> _confirmCrop() async {
+    if (_isCropping) return;
+    setState(() => _isCropping = true);
+
+    try {
+      final RenderRepaintBoundary boundary = _boundaryKey.currentContext!
+          .findRenderObject() as RenderRepaintBoundary;
+      final ui.Image rendered = await boundary.toImage(
+        pixelRatio: _outputWidth / _frameWidth,
+      );
+      final ByteData? pngBytes =
+          await rendered.toByteData(format: ui.ImageByteFormat.png);
+      rendered.dispose();
+      if (pngBytes == null) {
+        if (mounted) setState(() => _isCropping = false);
+        return;
+      }
+
+      final img.Image? decoded =
+          img.decodePng(pngBytes.buffer.asUint8List());
+      if (decoded == null) {
+        if (mounted) setState(() => _isCropping = false);
+        return;
+      }
+
+      final tempDir =
+          await Directory.systemTemp.createTemp('aflalert_strip_gallery_crop');
+      final outputFile = File(
+        '${tempDir.path}/strip_${DateTime.now().microsecondsSinceEpoch}.jpg',
+      );
+      await outputFile.writeAsBytes(img.encodeJpg(decoded, quality: 92));
+
+      if (!mounted) return;
+      Navigator.pop(context, outputFile);
+    } catch (_) {
+      if (mounted) setState(() => _isCropping = false);
+    }
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final AppLocalizations l10n = AppLocalizations.of(context)!;
+    return Scaffold(
+      backgroundColor: _AflColors.bg,
+      body: SafeArea(
+        child: Column(
+          children: [
+            const SizedBox(height: 8),
+            Text(
+              l10n.cropStripPhotoTitle,
+              style: const TextStyle(
+                color: Colors.white,
+                fontSize: 14,
+                fontWeight: FontWeight.w500,
+              ),
+            ),
+            const SizedBox(height: 6),
+            Padding(
+              padding: const EdgeInsets.symmetric(horizontal: 30),
+              child: Text(
+                l10n.cropStripPhotoHint,
+                textAlign: TextAlign.center,
+                style: TextStyle(
+                  color: Colors.white.withValues(alpha: 0.65),
+                  fontSize: 12,
+                ),
+              ),
+            ),
+            Expanded(
+              child: Center(
+                child: SizedBox(
+                  width: _frameWidth,
+                  height: _frameHeight,
+                  child: Stack(
+                    children: [
+                      ClipRRect(
+                        borderRadius: BorderRadius.circular(10),
+                        child: RepaintBoundary(
+                          key: _boundaryKey,
+                          child: InteractiveViewer(
+                            minScale: 1,
+                            // A gallery photo usually shows the strip as a
+                            // small part of a bigger scene (table, hand,
+                            // surroundings) rather than filling the frame
+                            // like an in-app camera capture does. 6x wasn't
+                            // enough headroom to zoom past that background
+                            // and isolate just the strip, so leftover
+                            // background pixels were feeding into analysis
+                            // and corrupting every gallery-pick attempt.
+                            maxScale: 20,
+                            boundaryMargin: EdgeInsets.zero,
+                            child: SizedBox(
+                              width: _frameWidth,
+                              height: _frameHeight,
+                              // .cover guarantees the frame is fully filled
+                              // by real image content even before the user
+                              // zooms — .contain would leave transparent
+                              // letterbox bars wherever the photo's aspect
+                              // ratio doesn't match the tall, narrow strip
+                              // frame, and those blank bars would land right
+                              // over where the C/T lines are expected,
+                              // breaking detection every time.
+                              child:
+                                  Image.file(widget.imageFile, fit: BoxFit.cover),
+                            ),
+                          ),
+                        ),
+                      ),
+                      // Same C/T frame guide as the live camera view, laid
+                      // on top so it's visible while panning/zooming but
+                      // never captured into the analyzed crop (it sits
+                      // outside the RepaintBoundary above).
+                      IgnorePointer(
+                        child: CustomPaint(
+                          size: const Size(_frameWidth, _frameHeight),
+                          painter: _StripFramePainter(color: Colors.white),
+                          child: const Stack(
+                            children: [
+                              Positioned(
+                                top: 8,
+                                left: 0,
+                                right: 0,
+                                child: Center(
+                                  child: Text(
+                                    'C',
+                                    style: TextStyle(
+                                      color: Colors.white70,
+                                      fontSize: 11,
+                                      fontWeight: FontWeight.bold,
+                                    ),
+                                  ),
+                                ),
+                              ),
+                              Positioned(
+                                bottom: 8,
+                                left: 0,
+                                right: 0,
+                                child: Center(
+                                  child: Text(
+                                    'T',
+                                    style: TextStyle(
+                                      color: Colors.white70,
+                                      fontSize: 11,
+                                      fontWeight: FontWeight.bold,
+                                    ),
+                                  ),
+                                ),
+                              ),
+                            ],
+                          ),
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+              ),
+            ),
+            Padding(
+              padding: const EdgeInsets.fromLTRB(20, 12, 20, 24),
+              child: Row(
+                children: [
+                  Expanded(
+                    child: OutlinedButton.icon(
+                      onPressed:
+                          _isCropping ? null : () => Navigator.pop(context),
+                      icon: const Icon(Icons.close, color: Colors.white, size: 16),
+                      label:
+                          Text(l10n.close, style: const TextStyle(color: Colors.white)),
+                      style: OutlinedButton.styleFrom(
+                        padding: const EdgeInsets.symmetric(vertical: 14),
+                        side: BorderSide(color: Colors.white.withValues(alpha: 0.25)),
+                        shape: RoundedRectangleBorder(
+                            borderRadius: BorderRadius.circular(12)),
+                        backgroundColor: Colors.white.withValues(alpha: 0.1),
+                      ),
+                    ),
+                  ),
+                  const SizedBox(width: 12),
+                  Expanded(
+                    child: ElevatedButton(
+                      onPressed: _isCropping ? null : _confirmCrop,
+                      style: ElevatedButton.styleFrom(
+                        padding: const EdgeInsets.symmetric(vertical: 14),
+                        backgroundColor: _AflColors.amberCta,
+                        foregroundColor: _AflColors.amberCtaText,
+                        shape: RoundedRectangleBorder(
+                            borderRadius: BorderRadius.circular(12)),
+                        elevation: 0,
+                      ),
+                      child: _isCropping
+                          ? const SizedBox(
+                              width: 18,
+                              height: 18,
+                              child: CircularProgressIndicator(
+                                strokeWidth: 2,
+                                color: _AflColors.amberCtaText,
+                              ),
+                            )
+                          : Text(
+                              l10n.usePhoto,
+                              style: const TextStyle(fontWeight: FontWeight.w500),
+                            ),
+                    ),
+                  ),
+                ],
+              ),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
 }
 
 enum _ReviewResult { retake, usePhoto }

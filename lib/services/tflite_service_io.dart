@@ -1,7 +1,7 @@
 import 'dart:io';
 import 'dart:typed_data';
 
-import 'package:flutter/foundation.dart' show compute;
+import 'package:flutter/foundation.dart' show compute, debugPrint;
 import 'package:image/image.dart' as img;
 import 'package:tflite_flutter/tflite_flutter.dart';
 
@@ -67,9 +67,11 @@ class TfliteService {
       final double confidence = probs[predictedIndex];
 
       if (predictedIndex == _nonMaizeIndex) {
+        debugPrint('TfliteService: rejected as non-maize (probs=$probs)');
         throw const NotMaizeException(NotMaizeReason.modelRejected);
       }
       if (confidence < _minConfidence) {
+        debugPrint('TfliteService: rejected for low confidence (probs=$probs)');
         throw const NotMaizeException(NotMaizeReason.lowConfidence);
       }
 
@@ -97,9 +99,11 @@ class TfliteService {
 Float32List _prepareMaizeTensor(Uint8List bytes) {
   final decoded = img.decodeImage(bytes);
   if (decoded == null) {
+    debugPrint('TfliteService: could not decode photo bytes');
     throw const NotMaizeException(NotMaizeReason.colorMismatch);
   }
   if (!_looksLikeMaize(decoded)) {
+    debugPrint('TfliteService: rejected by color heuristic before the model ran');
     throw const NotMaizeException(NotMaizeReason.colorMismatch);
   }
 
@@ -156,16 +160,25 @@ bool _looksLikeMaize(img.Image image) {
 
       sampled++;
 
-      final bool colorfulMaizeHue =
-          saturation >= 0.12 &&
-          hue >= 15 &&
-          hue <= 100 &&
-          value >= 0.15 &&
-          value <= 0.95;
-      final bool creamKernel =
-          saturation < 0.12 && value >= 0.55 && value <= 0.98;
+      // Healthy raw maize: golden/yellow/orange kernels.
+      final bool healthyHue =
+          saturation >= 0.10 &&
+          hue >= 0 &&
+          hue <= 150 &&
+          value >= 0.10 &&
+          value <= 0.98;
+      // Pale/whitish kernels, and pale gray mold — both healthy cream
+      // kernels and gray/white fungal growth land in low-saturation,
+      // low-to-mid value territory, so contaminated grain needs to pass
+      // this too, not just the bright end a purely "healthy" check would
+      // allow. Aflatoxin-contaminated kernels are duller, grayer, or
+      // darker than a bright healthy kernel; without this wider band a
+      // moldy sample gets rejected as "not maize" before the classifier
+      // model ever sees it.
+      final bool paleOrGrayKernel =
+          saturation < 0.15 && value >= 0.10 && value <= 0.98;
 
-      if (colorfulMaizeHue || creamKernel) {
+      if (healthyHue || paleOrGrayKernel) {
         maizeLike++;
       }
     }

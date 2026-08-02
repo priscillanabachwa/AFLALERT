@@ -79,6 +79,12 @@ class _AnalysisScreenState extends State<AnalysisScreen> {
   bool _started = false;
   AnalysisScreenArgs? _args;
   final FlutterTts _tts = FlutterTts();
+  // pushReplacementNamed to /results happens right after we fire off the
+  // spoken summary; the old route (and this State) gets disposed once the
+  // transition animation finishes, which used to call _tts.stop() and cut
+  // the summary off a fraction of a second in. Skip the stop in that case
+  // so the speech plays out on the departing screen's TTS instance.
+  bool _speakingResult = false;
 
   @override
   void initState() {
@@ -88,7 +94,7 @@ class _AnalysisScreenState extends State<AnalysisScreen> {
 
   @override
   void dispose() {
-    _tts.stop();
+    if (!_speakingResult) _tts.stop();
     super.dispose();
   }
 
@@ -143,6 +149,7 @@ class _AnalysisScreenState extends State<AnalysisScreen> {
       if (args.fromVoiceAssistant) {
         // Fire-and-forget: the user should see the Results screen right
         // away, not wait for the spoken summary to finish.
+        _speakingResult = true;
         unawaited(_speakResult(resultsArgs, l10n));
       }
       Navigator.pushReplacementNamed(context, '/results', arguments: resultsArgs);
@@ -172,7 +179,6 @@ class _AnalysisScreenState extends State<AnalysisScreen> {
     final ResultsScreen preview = ResultsScreen(
       isSafe: resultsArgs.isSafe,
       confidence: resultsArgs.confidence,
-      analysisLabel: resultsArgs.analysisLabel,
     );
     final String spoken = '${preview.displayAnalysisLabel(l10n)}. '
         '${l10n.confidencePercentLabel(preview.confidencePercent)}. '
@@ -203,7 +209,6 @@ class _AnalysisScreenState extends State<AnalysisScreen> {
     return ResultsScreenArgs(
       isSafe: !analysis.isMoldy,
       confidence: analysis.confidencePercent / 100,
-      analysisLabel: analysis.label,
       imagePath: photoFile.path,
       scanId: scanId,
     );

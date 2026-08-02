@@ -51,21 +51,6 @@ class AppNotification {
   final DateTime createdAt;
   bool unread; // mutable so tapping a card can mark it as read
 
-  /// Human-readable age of this notification, computed from [createdAt]
-  /// rather than stored as a frozen string, so it stays accurate across
-  /// app restarts instead of saying "Just now" forever.
-  String get relativeTime {
-    final Duration diff = DateTime.now().difference(createdAt);
-    if (diff.inMinutes < 1) return 'Just now';
-    if (diff.inMinutes < 60) return '${diff.inMinutes} min ago';
-    if (diff.inHours < 24) {
-      return '${diff.inHours} hour${diff.inHours == 1 ? '' : 's'} ago';
-    }
-    if (diff.inDays == 1) return 'Yesterday';
-    if (diff.inDays < 7) return '${diff.inDays} days ago';
-    return '${createdAt.day}/${createdAt.month}/${createdAt.year}';
-  }
-
   Map<String, dynamic> toJson() => {
     'id': id,
     'title': title,

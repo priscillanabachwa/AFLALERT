@@ -531,8 +531,8 @@ class _EditProfileSheetState extends State<_EditProfileSheet> {
     if (success) {
       NotificationCenter.instance.add(
         AppNotification(
-          title: 'Profile Updated',
-          description: 'Your account details were updated successfully.',
+          title: l10n.profileUpdatedNotifTitle,
+          description: l10n.profileUpdatedNotifBody,
           icon: Icons.person_add_alt_1,
           iconColor: kGreen,
           iconBackground: kGreenLight,
@@ -541,8 +541,8 @@ class _EditProfileSheetState extends State<_EditProfileSheet> {
         ),
       );
       LocalNotificationService.instance.show(
-        title: 'Profile Updated',
-        body: 'Your account details were updated successfully.',
+        title: l10n.profileUpdatedNotifTitle,
+        body: l10n.profileUpdatedNotifBody,
       );
 
       Navigator.pop(context);
@@ -575,7 +575,8 @@ class _EditProfileSheetState extends State<_EditProfileSheet> {
         24,
         MediaQuery.of(context).viewInsets.bottom + 36,
       ),
-      child: Column(
+      child: SingleChildScrollView(
+        child: Column(
         mainAxisSize: MainAxisSize.min,
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
@@ -671,6 +672,7 @@ class _EditProfileSheetState extends State<_EditProfileSheet> {
                   ),
           ),
         ],
+        ),
       ),
     );
   }
@@ -817,7 +819,8 @@ class _ChangePasswordSheetState extends State<_ChangePasswordSheet> {
         24,
         MediaQuery.of(context).viewInsets.bottom + 36,
       ),
-      child: Form(
+      child: SingleChildScrollView(
+        child: Form(
         key: _formKey,
         child: Column(
           mainAxisSize: MainAxisSize.min,
@@ -895,6 +898,7 @@ class _ChangePasswordSheetState extends State<_ChangePasswordSheet> {
                     ),
             ),
           ],
+        ),
         ),
       ),
     );

@@ -411,6 +411,8 @@
   "scanTestStrip": "Scan Test Strip",
   "cropTypeMaize": "Maize",
   "positionStripInFrame": "Position strip in frame after the 10-minute reaction time",
+  "cropStripPhotoTitle": "Fit the strip in the frame",
+  "cropStripPhotoHint": "Pinch to zoom and drag until the strip fills the frame edge to edge",
   "scanAnotherStrip": "Scan Another Strip",
   "scanTestStripHint": "Scan a reacted test strip to check aflatoxin levels",
 
@@ -431,6 +433,9 @@
   "scanLocationLabel": "Scan location",
   "withinSafeLimit": "Within Safe Limit",
   "exceedsSafeLimit": "Exceeds Safe Limit",
+
+  "calibrationDisclaimerTitle": "Prototype estimate — not lab-calibrated",
+  "calibrationDisclaimerMessage": "This ppb figure comes from an uncalibrated formula, not a validated lab measurement.",
 
   "wasThisDiagnosisAccurate": "Was this diagnosis accurate?",
   "feedbackThanks": "Thanks — your feedback helps improve future scans.",
@@ -464,5 +469,42 @@
   "voiceAssistantEnglishOnlyNotice": "Voice commands currently work in English only.",
   "voiceAssistantHint": "Tap the mic and try something like \"scan this maize\" or \"what's the weather?\"",
   "voiceAssistantVoiceFemale": "Female voice — tap to switch to male",
-  "voiceAssistantVoiceMale": "Male voice — tap to switch to female"
+  "voiceAssistantVoiceMale": "Male voice — tap to switch to female",
+
+  "maizeFindingSafeHighConfidence": "No visible mold or aflatoxin indicators were found in this sample ({percent}% confidence).",
+  "@maizeFindingSafeHighConfidence": {
+    "placeholders": { "percent": { "type": "int" } }
+  },
+  "maizeFindingSafeLowConfidence": "No mold indicators were found, but confidence is only {percent}%. Rescan in bright, even light to confirm before relying on this result.",
+  "@maizeFindingSafeLowConfidence": {
+    "placeholders": { "percent": { "type": "int" } }
+  },
+  "maizeFindingUnsafeHighConfidence": "Visible mold consistent with aflatoxin contamination was detected ({percent}% confidence).",
+  "@maizeFindingUnsafeHighConfidence": {
+    "placeholders": { "percent": { "type": "int" } }
+  },
+  "maizeFindingUnsafeLowConfidence": "Possible mold contamination was detected, but confidence is only {percent}%. Treat this batch as high-risk and rescan in better light to confirm.",
+  "@maizeFindingUnsafeLowConfidence": {
+    "placeholders": { "percent": { "type": "int" } }
+  },
+  "maizeStorageTip": "Keep grain moisture below 13% and store in a cool, dry, well-ventilated space raised off the ground to prevent mold developing after this scan.",
+  "maizeRecheckTip": "Re-check stored batches periodically — aflatoxin risk can develop after storage even when the grain started out clean.",
+  "maizeIsolateTip": "Do not sell or consume this batch. Isolate it immediately and arrange certified laboratory testing before any further use.",
+  "maizeLivestockTip": "Do not feed this batch to livestock either — aflatoxins carry over into milk and meat, so contaminated feed puts the animals and consumers at risk too.",
+
+  "stripFindingSafe": "Test line ratio indicates an estimated {ppb} ppb, within the {limit} ppb safe limit for human food.",
+  "@stripFindingSafe": {
+    "placeholders": { "ppb": { "type": "String" }, "limit": { "type": "String" } }
+  },
+  "stripFindingUnsafe": "Test line ratio indicates an estimated {ppb} ppb, exceeding the {limit} ppb safe limit for human food.",
+  "@stripFindingUnsafe": {
+    "placeholders": { "ppb": { "type": "String" }, "limit": { "type": "String" } }
+  },
+  "stripStorageTip": "Keep grain moisture below 13% and store in a cool, dry, well-ventilated space raised off the ground.",
+  "stripRecheckTip": "Re-test stored batches periodically — aflatoxin levels can rise during storage even when the batch started out clean.",
+  "stripIsolateTip": "Do not mix this batch with clean grain. Isolate it immediately and arrange certified laboratory testing before any further use.",
+  "stripDisposalTip": "Re-route this batch for disposal or approved industrial/distillery use — do not feed it to livestock either, as aflatoxins carry over into milk and meat.",
+
+  "profileUpdatedNotifTitle": "Profile Updated",
+  "profileUpdatedNotifBody": "Your account details were updated successfully."
 }

@@ -122,35 +122,24 @@ class StripResultsScreen extends StatelessWidget {
         text: text,
         sourceName: 'MAAIF',
         badgeBg: isSafe ? AppColors.successLight : AppColors.errorLight,
-        badgeText: Colors.white,
+        badgeText: isSafe ? AppColors.primaryContainer : AppColors.error,
       );
 
   List<RecommendationSource> _recommendations(AppLocalizations l10n) {
     final String ppbText = ppbValue.toStringAsFixed(1);
+    final String limitText = safeLimitPpb.toStringAsFixed(0);
     if (isSafe) {
       return [
-        _fromAflalert(
-          'Test line ratio indicates an estimated $ppbText ppb, within the $safeLimitPpb ppb safe limit for human food.',
-        ),
-        _fromMaaif(
-          'Keep grain moisture below 13% and store in a cool, dry, well-ventilated space raised off the ground.',
-        ),
-        _fromMaaif(
-          'Re-test stored batches periodically — aflatoxin levels can rise during storage even when the batch started out clean.',
-        ),
+        _fromAflalert(l10n.stripFindingSafe(ppbText, limitText)),
+        _fromMaaif(l10n.stripStorageTip),
+        _fromMaaif(l10n.stripRecheckTip),
       ];
     }
 
     return [
-      _fromAflalert(
-        'Test line ratio indicates an estimated $ppbText ppb, exceeding the $safeLimitPpb ppb safe limit for human food.',
-      ),
-      _fromUnbs(
-        'Do not mix this batch with clean grain. Isolate it immediately and arrange certified laboratory testing before any further use.',
-      ),
-      _fromMaaif(
-        'Re-route this batch for disposal or approved industrial/distillery use — do not feed it to livestock either, as aflatoxins carry over into milk and meat.',
-      ),
+      _fromAflalert(l10n.stripFindingUnsafe(ppbText, limitText)),
+      _fromUnbs(l10n.stripIsolateTip),
+      _fromMaaif(l10n.stripDisposalTip),
     ];
   }
 
@@ -381,6 +370,46 @@ class StripResultsScreen extends StatelessWidget {
     );
   }
 
+  // Always shown, regardless of the reading: the ppb figure comes from an
+  // uncalibrated placeholder formula (see StripAnalysisService), not a
+  // validated lab curve, so it must never be presented as a confirmed
+  // measurement — this is a food-safety tool and a false "safe" reading
+  // has real consequences.
+  Widget _buildCalibrationDisclaimer(AppLocalizations l10n) {
+    return Container(
+      margin: const EdgeInsets.only(top: 14),
+      padding: const EdgeInsets.all(14),
+      decoration: BoxDecoration(
+        color: AppColors.secondary.withValues(alpha: 0.15),
+        borderRadius: BorderRadius.circular(12),
+        border: Border.all(color: AppColors.secondary.withValues(alpha: 0.5)),
+      ),
+      child: Row(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          const Icon(Icons.info_outline, color: AppColors.primary, size: 18),
+          const SizedBox(width: 8),
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(
+                  l10n.calibrationDisclaimerTitle,
+                  style: const TextStyle(fontSize: 12, fontWeight: FontWeight.bold, color: textPrimary),
+                ),
+                const SizedBox(height: 4),
+                Text(
+                  l10n.calibrationDisclaimerMessage,
+                  style: const TextStyle(fontSize: 12, color: textPrimary, height: 1.4),
+                ),
+              ],
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
   Widget _buildActionRequiredBox(AppLocalizations l10n) {
     if (isSafe) return const SizedBox.shrink();
     return Container(
@@ -484,6 +513,7 @@ class StripResultsScreen extends StatelessWidget {
                 ),
                 const SizedBox(height: 18),
                 _buildToxicLoadCard(context),
+                _buildCalibrationDisclaimer(l10n),
 
                 // Feedback loop: only offered right after a fresh scan (not
                 // when reviewing an old one from History) — mirrors the

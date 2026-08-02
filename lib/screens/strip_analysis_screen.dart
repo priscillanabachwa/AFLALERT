@@ -1,7 +1,9 @@
+import 'dart:async';
 import 'dart:io';
 
 import 'package:camera/camera.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter_tts/flutter_tts.dart';
 
 import '../constants/app_colors.dart';
 import '../l10n/app_localizations.dart';
@@ -19,11 +21,13 @@ class StripAnalysisScreenArgs {
   final XFile photo;
   final StripCropType cropType;
   final String? location;
+  final bool fromVoiceAssistant;
 
   const StripAnalysisScreenArgs({
     required this.photo,
     required this.cropType,
     this.location,
+    this.fromVoiceAssistant = false,
   });
 }
 
@@ -39,6 +43,25 @@ class _StripAnalysisScreenState extends State<StripAnalysisScreen> {
   String? _errorMessage;
   bool _started = false;
   StripAnalysisScreenArgs? _args;
+  final FlutterTts _tts = FlutterTts();
+  // pushReplacementNamed to /stripResults happens right after we fire off
+  // the spoken summary; the old route (and this State) gets disposed once
+  // the transition animation finishes, which used to call _tts.stop() and
+  // cut the summary off a fraction of a second in. Skip the stop in that
+  // case so the speech plays out on the departing screen's TTS instance.
+  bool _speakingResult = false;
+
+  @override
+  void initState() {
+    super.initState();
+    _tts.setLanguage('en-US');
+  }
+
+  @override
+  void dispose() {
+    if (!_speakingResult) _tts.stop();
+    super.dispose();
+  }
 
   @override
   void didChangeDependencies() {
@@ -89,6 +112,12 @@ class _StripAnalysisScreenState extends State<StripAnalysisScreen> {
         });
         return;
       }
+      if (args.fromVoiceAssistant) {
+        // Fire-and-forget: the user should see the Results screen right
+        // away, not wait for the spoken summary to finish.
+        _speakingResult = true;
+        unawaited(_speakResult(resultsArgs, l10n));
+      }
       Navigator.pushReplacementNamed(context, '/stripResults', arguments: resultsArgs);
     } on InvalidStripException catch (e) {
       if (!mounted) return;
@@ -110,25 +139,46 @@ class _StripAnalysisScreenState extends State<StripAnalysisScreen> {
     }
   }
 
+  // Builds the spoken summary off the same isSafe/ppb logic the Results
+  // screen itself uses, so what's read aloud always matches what's shown.
+  Future<void> _speakResult(StripResultsScreenArgs resultsArgs, AppLocalizations l10n) {
+    final bool isSafe = resultsArgs.ppbValue <= resultsArgs.safeLimitPpb;
+    final String spoken = '${l10n.chemicalStripScanTitle}. '
+        '${isSafe ? l10n.withinSafeLimit : l10n.exceedsSafeLimit}. '
+        'Estimated ${resultsArgs.ppbValue.toStringAsFixed(1)} parts per billion, '
+        'against a safe limit of ${resultsArgs.safeLimitPpb.toStringAsFixed(0)} ppb.';
+    return _tts.speak(spoken);
+  }
+
   Future<StripResultsScreenArgs?> _analyzeStrip(
     StripAnalysisScreenArgs args,
   ) async {
     final File photoFile = File(args.photo.path);
 
-    final StripAnalysisResult analysis =
-        await StripAnalysisService().analyzeStripBytes(await photoFile.readAsBytes());
+    // Bounded so a slow decode (unexpectedly large photo) or a stalled
+    // network call (poor connectivity) always resolves the loading screen
+    // instead of spinning indefinitely. Upload/save failures degrade to a
+    // scan with no image/record (already handled below via imageUrl/scanId
+    // being null) rather than blocking the result the user actually wants.
+    final StripAnalysisResult analysis = await StripAnalysisService()
+        .analyzeStripBytes(await photoFile.readAsBytes())
+        .timeout(const Duration(seconds: 20));
 
-    final String? imageUrl = await StorageService().uploadStripImage(photoFile);
-    final String? scanId = await FirestoreService().saveStripScanRecord(
-      imageUrl: imageUrl ?? '',
-      cropType: args.cropType.name,
-      ppbValue: analysis.ppbValue,
-      tLineOD: analysis.tLineOD,
-      cLineOD: analysis.cLineOD,
-      odRatio: analysis.odRatio,
-      safeLimitPpb: analysis.safeLimitPpb,
-      location: args.location,
-    );
+    final String? imageUrl = await StorageService()
+        .uploadStripImage(photoFile)
+        .timeout(const Duration(seconds: 20), onTimeout: () => null);
+    final String? scanId = await FirestoreService()
+        .saveStripScanRecord(
+          imageUrl: imageUrl ?? '',
+          cropType: args.cropType.name,
+          ppbValue: analysis.ppbValue,
+          tLineOD: analysis.tLineOD,
+          cLineOD: analysis.cLineOD,
+          odRatio: analysis.odRatio,
+          safeLimitPpb: analysis.safeLimitPpb,
+          location: args.location,
+        )
+        .timeout(const Duration(seconds: 15), onTimeout: () => null);
 
     return StripResultsScreenArgs(
       ppbValue: analysis.ppbValue,

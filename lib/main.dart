@@ -1,6 +1,7 @@
 import 'dart:io' show Platform;
 
 import 'package:flutter/cupertino.dart';
+import 'package:flutter/foundation.dart' show kIsWeb;
 import 'package:flutter/material.dart';
 import 'package:flutter_localizations/flutter_localizations.dart';
 import 'package:google_fonts/google_fonts.dart';
@@ -57,7 +58,7 @@ Future<void> main() async {
   // iOS (Apple's BGTaskScheduler is opportunistic), so the daily morning
   // weather alert isn't wired up there. Failure here shouldn't block app
   // startup, so it's non-fatal if scheduling doesn't succeed.
-  if (Platform.isAndroid) {
+  if (!kIsWeb && Platform.isAndroid) {
     try {
       await MorningAlertService.initializeAndSchedule();
     } catch (error) {
@@ -228,7 +229,6 @@ class _AflAlertState extends State<AflAlert> {
           return ResultsScreen(
             isSafe: args.isSafe,
             confidence: args.confidence,
-            analysisLabel: args.analysisLabel,
             imagePath: args.imagePath,
             fromHistory: args.fromHistory,
             scanId: args.scanId,
