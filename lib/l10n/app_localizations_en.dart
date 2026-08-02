@@ -1199,4 +1199,73 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get voiceAssistantVoiceMale => 'Male voice — tap to switch to female';
+
+  @override
+  String maizeFindingSafeHighConfidence(int percent) {
+    return 'No visible mold or aflatoxin indicators were found in this sample ($percent% confidence).';
+  }
+
+  @override
+  String maizeFindingSafeLowConfidence(int percent) {
+    return 'No mold indicators were found, but confidence is only $percent%. Rescan in bright, even light to confirm before relying on this result.';
+  }
+
+  @override
+  String maizeFindingUnsafeHighConfidence(int percent) {
+    return 'Visible mold consistent with aflatoxin contamination was detected ($percent% confidence).';
+  }
+
+  @override
+  String maizeFindingUnsafeLowConfidence(int percent) {
+    return 'Possible mold contamination was detected, but confidence is only $percent%. Treat this batch as high-risk and rescan in better light to confirm.';
+  }
+
+  @override
+  String get maizeStorageTip =>
+      'Keep grain moisture below 13% and store in a cool, dry, well-ventilated space raised off the ground to prevent mold developing after this scan.';
+
+  @override
+  String get maizeRecheckTip =>
+      'Re-check stored batches periodically — aflatoxin risk can develop after storage even when the grain started out clean.';
+
+  @override
+  String get maizeIsolateTip =>
+      'Do not sell or consume this batch. Isolate it immediately and arrange certified laboratory testing before any further use.';
+
+  @override
+  String get maizeLivestockTip =>
+      'Do not feed this batch to livestock either — aflatoxins carry over into milk and meat, so contaminated feed puts the animals and consumers at risk too.';
+
+  @override
+  String stripFindingSafe(String ppb, String limit) {
+    return 'Test line ratio indicates an estimated $ppb ppb, within the $limit ppb safe limit for human food.';
+  }
+
+  @override
+  String stripFindingUnsafe(String ppb, String limit) {
+    return 'Test line ratio indicates an estimated $ppb ppb, exceeding the $limit ppb safe limit for human food.';
+  }
+
+  @override
+  String get stripStorageTip =>
+      'Keep grain moisture below 13% and store in a cool, dry, well-ventilated space raised off the ground.';
+
+  @override
+  String get stripRecheckTip =>
+      'Re-test stored batches periodically — aflatoxin levels can rise during storage even when the batch started out clean.';
+
+  @override
+  String get stripIsolateTip =>
+      'Do not mix this batch with clean grain. Isolate it immediately and arrange certified laboratory testing before any further use.';
+
+  @override
+  String get stripDisposalTip =>
+      'Re-route this batch for disposal or approved industrial/distillery use — do not feed it to livestock either, as aflatoxins carry over into milk and meat.';
+
+  @override
+  String get profileUpdatedNotifTitle => 'Profile Updated';
+
+  @override
+  String get profileUpdatedNotifBody =>
+      'Your account details were updated successfully.';
 }

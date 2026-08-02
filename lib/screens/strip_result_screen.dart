@@ -127,30 +127,19 @@ class StripResultsScreen extends StatelessWidget {
 
   List<RecommendationSource> _recommendations(AppLocalizations l10n) {
     final String ppbText = ppbValue.toStringAsFixed(1);
+    final String limitText = safeLimitPpb.toStringAsFixed(0);
     if (isSafe) {
       return [
-        _fromAflalert(
-          'Test line ratio indicates an estimated $ppbText ppb, within the $safeLimitPpb ppb safe limit for human food.',
-        ),
-        _fromMaaif(
-          'Keep grain moisture below 13% and store in a cool, dry, well-ventilated space raised off the ground.',
-        ),
-        _fromMaaif(
-          'Re-test stored batches periodically — aflatoxin levels can rise during storage even when the batch started out clean.',
-        ),
+        _fromAflalert(l10n.stripFindingSafe(ppbText, limitText)),
+        _fromMaaif(l10n.stripStorageTip),
+        _fromMaaif(l10n.stripRecheckTip),
       ];
     }
 
     return [
-      _fromAflalert(
-        'Test line ratio indicates an estimated $ppbText ppb, exceeding the $safeLimitPpb ppb safe limit for human food.',
-      ),
-      _fromUnbs(
-        'Do not mix this batch with clean grain. Isolate it immediately and arrange certified laboratory testing before any further use.',
-      ),
-      _fromMaaif(
-        'Re-route this batch for disposal or approved industrial/distillery use — do not feed it to livestock either, as aflatoxins carry over into milk and meat.',
-      ),
+      _fromAflalert(l10n.stripFindingUnsafe(ppbText, limitText)),
+      _fromUnbs(l10n.stripIsolateTip),
+      _fromMaaif(l10n.stripDisposalTip),
     ];
   }
 

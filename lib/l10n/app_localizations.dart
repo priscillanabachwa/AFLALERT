@@ -2263,6 +2263,102 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'Male voice — tap to switch to female'**
   String get voiceAssistantVoiceMale;
+
+  /// No description provided for @maizeFindingSafeHighConfidence.
+  ///
+  /// In en, this message translates to:
+  /// **'No visible mold or aflatoxin indicators were found in this sample ({percent}% confidence).'**
+  String maizeFindingSafeHighConfidence(int percent);
+
+  /// No description provided for @maizeFindingSafeLowConfidence.
+  ///
+  /// In en, this message translates to:
+  /// **'No mold indicators were found, but confidence is only {percent}%. Rescan in bright, even light to confirm before relying on this result.'**
+  String maizeFindingSafeLowConfidence(int percent);
+
+  /// No description provided for @maizeFindingUnsafeHighConfidence.
+  ///
+  /// In en, this message translates to:
+  /// **'Visible mold consistent with aflatoxin contamination was detected ({percent}% confidence).'**
+  String maizeFindingUnsafeHighConfidence(int percent);
+
+  /// No description provided for @maizeFindingUnsafeLowConfidence.
+  ///
+  /// In en, this message translates to:
+  /// **'Possible mold contamination was detected, but confidence is only {percent}%. Treat this batch as high-risk and rescan in better light to confirm.'**
+  String maizeFindingUnsafeLowConfidence(int percent);
+
+  /// No description provided for @maizeStorageTip.
+  ///
+  /// In en, this message translates to:
+  /// **'Keep grain moisture below 13% and store in a cool, dry, well-ventilated space raised off the ground to prevent mold developing after this scan.'**
+  String get maizeStorageTip;
+
+  /// No description provided for @maizeRecheckTip.
+  ///
+  /// In en, this message translates to:
+  /// **'Re-check stored batches periodically — aflatoxin risk can develop after storage even when the grain started out clean.'**
+  String get maizeRecheckTip;
+
+  /// No description provided for @maizeIsolateTip.
+  ///
+  /// In en, this message translates to:
+  /// **'Do not sell or consume this batch. Isolate it immediately and arrange certified laboratory testing before any further use.'**
+  String get maizeIsolateTip;
+
+  /// No description provided for @maizeLivestockTip.
+  ///
+  /// In en, this message translates to:
+  /// **'Do not feed this batch to livestock either — aflatoxins carry over into milk and meat, so contaminated feed puts the animals and consumers at risk too.'**
+  String get maizeLivestockTip;
+
+  /// No description provided for @stripFindingSafe.
+  ///
+  /// In en, this message translates to:
+  /// **'Test line ratio indicates an estimated {ppb} ppb, within the {limit} ppb safe limit for human food.'**
+  String stripFindingSafe(String ppb, String limit);
+
+  /// No description provided for @stripFindingUnsafe.
+  ///
+  /// In en, this message translates to:
+  /// **'Test line ratio indicates an estimated {ppb} ppb, exceeding the {limit} ppb safe limit for human food.'**
+  String stripFindingUnsafe(String ppb, String limit);
+
+  /// No description provided for @stripStorageTip.
+  ///
+  /// In en, this message translates to:
+  /// **'Keep grain moisture below 13% and store in a cool, dry, well-ventilated space raised off the ground.'**
+  String get stripStorageTip;
+
+  /// No description provided for @stripRecheckTip.
+  ///
+  /// In en, this message translates to:
+  /// **'Re-test stored batches periodically — aflatoxin levels can rise during storage even when the batch started out clean.'**
+  String get stripRecheckTip;
+
+  /// No description provided for @stripIsolateTip.
+  ///
+  /// In en, this message translates to:
+  /// **'Do not mix this batch with clean grain. Isolate it immediately and arrange certified laboratory testing before any further use.'**
+  String get stripIsolateTip;
+
+  /// No description provided for @stripDisposalTip.
+  ///
+  /// In en, this message translates to:
+  /// **'Re-route this batch for disposal or approved industrial/distillery use — do not feed it to livestock either, as aflatoxins carry over into milk and meat.'**
+  String get stripDisposalTip;
+
+  /// No description provided for @profileUpdatedNotifTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Profile Updated'**
+  String get profileUpdatedNotifTitle;
+
+  /// No description provided for @profileUpdatedNotifBody.
+  ///
+  /// In en, this message translates to:
+  /// **'Your account details were updated successfully.'**
+  String get profileUpdatedNotifBody;
 }
 
 class _AppLocalizationsDelegate

@@ -417,5 +417,24 @@
   "voiceAssistantEnglishOnlyNotice": "Ebiragiro by'eddoboozi kati bikola mu Lungereza lwokka.",
   "voiceAssistantHint": "Nyiga ku kabonero k'eddoboozi ate ogezeeko okwogera nti \"scan this maize\" oba \"what's the weather?\"",
   "voiceAssistantVoiceFemale": "Eddoboozi ery'omukazi — nyiga okukyusa okuba ery'omusajja",
-  "voiceAssistantVoiceMale": "Eddoboozi ery'omusajja — nyiga okukyusa okuba ery'omukazi"
+  "voiceAssistantVoiceMale": "Eddoboozi ery'omusajja — nyiga okukyusa okuba ery'omukazi",
+
+  "maizeFindingSafeHighConfidence": "Tewali bubonero bwa bukuku oba Aflatoxin bwazuuliddwa mu kyokulabirako kino ({percent}% obwesigwa).",
+  "maizeFindingSafeLowConfidence": "Tewali bubonero bwa bukuku bwazuuliddwa, naye obwesigwa bwa {percent}% bwokka. Ddamu oscan mu musana omulungi era ogumatiziganya okukakasa nga tonnesigama ku kivuddemu kino.",
+  "maizeFindingUnsafeHighConfidence": "Obukuku obulabika obukwatagana ne Aflatoxin bwazuuliddwa ({percent}% obwesigwa).",
+  "maizeFindingUnsafeLowConfidence": "Obukuku obuyinza okubaawo bwazuuliddwa, naye obwesigwa bwa {percent}% bwokka. Ekibinja kino kikwate nga kiri mu kabi akasukirivu era oddemu oscan mu musana omulungi okukakasa.",
+  "maizeStorageTip": "Kuuma obunnyogovu bw'empeke wansi wa 13% era otereke mu kifo ekinyogovu, ekikalu era ekirimu empewo, nga kisitiddwa waggulu okuva ku ttaka okuziyiza obukuku okulabika oluvannyuma lwa scan eno.",
+  "maizeRecheckTip": "Ddamu okebere ebibinja ebiterekeddwa buli kiseera — akabi ka Aflatoxin kayinza okweyongera oluvannyuma lw'okutereka wadde ng'empeke zaali nnungi ku lubereberye.",
+  "maizeIsolateTip": "Tosuubuza wadde okulya ekibinja kino. Kyawule mangu era onoonye okwekenneenya kwa laabu ekakasiddwa nga tonnakozesa mu ngeri endala.",
+  "maizeLivestockTip": "Towaayo ekibinja kino n'eri ebisolo — Aflatoxin asobola okuyingira mu mata n'ennyama, ekiyinza okuleeta akabi eri ebisolo n'abo abagalya.",
+
+  "stripFindingSafe": "Enkigero y'omuggo gwa Test elaga obungi obwesigika obwa {ppb} ppb, nga kiri mu kigero ekikkirizibwa ekya {limit} ppb ku mmere y'abantu.",
+  "stripFindingUnsafe": "Enkigero y'omuggo gwa Test elaga obungi obwesigika obwa {ppb} ppb, nga kisukiddeko ekigero ekikkirizibwa ekya {limit} ppb ku mmere y'abantu.",
+  "stripStorageTip": "Kuuma obunnyogovu bw'empeke wansi wa 13% era otereke mu kifo ekinyogovu, ekikalu era ekirimu empewo, nga kisitiddwa waggulu okuva ku ttaka.",
+  "stripRecheckTip": "Ddamu okebere ebibinja ebiterekeddwa buli kiseera — obungi bwa Aflatoxin busobola okweyongera nga bikyaterekeddwa wadde ng'ekibinja kyali kirungi ku lubereberye.",
+  "stripIsolateTip": "Totabulanya kibinja kino n'empeke ennungi. Kyawule mangu era onoonye okwekenneenya kwa laabu ekakasiddwa nga tonnakozesa mu ngeri endala.",
+  "stripDisposalTip": "Ekibinja kino kifulumye oba kikozesebwe mu bikolwa by'obwannannyini ebikkirizibwa — tokiwaayo n'eri bisolo, kubanga Aflatoxin ayingira mu mata n'ennyama.",
+
+  "profileUpdatedNotifTitle": "Profayiro Ekyusiddwa",
+  "profileUpdatedNotifBody": "Ebikwata ku akaunti yo bikyusiddwa bulungi."
 }

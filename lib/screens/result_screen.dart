@@ -125,40 +125,27 @@ class ResultsScreen extends StatelessWidget {
         badgeText: isSafe ? AppColors.primaryContainer : AppColors.error,
       );
 
-  List<RecommendationSource> get attributedRecommendations {
+  List<RecommendationSource> attributedRecommendations(AppLocalizations l10n) {
     if (isSafe) {
       final findingText = _isHighConfidence
-          ? 'No visible mold or aflatoxin indicators were found in this sample ($confidencePercent% confidence).'
-          : 'No mold indicators were found, but confidence is only $confidencePercent%. Rescan in bright, even light to confirm before relying on this result.';
+          ? l10n.maizeFindingSafeHighConfidence(confidencePercent)
+          : l10n.maizeFindingSafeLowConfidence(confidencePercent);
 
       return [
         _fromAflalert(findingText),
-        _fromMaaif(
-          'Keep grain moisture below 13% and store in a cool, dry, well-ventilated space raised off '
-          'the ground to prevent mold developing after this scan.',
-        ),
-        _fromMaaif(
-          'Re-check stored batches periodically — aflatoxin risk can develop after storage even '
-          'when the grain started out clean.',
-        ),
+        _fromMaaif(l10n.maizeStorageTip),
+        _fromMaaif(l10n.maizeRecheckTip),
       ];
     }
 
     final findingText = _isHighConfidence
-        ? 'Visible mold consistent with aflatoxin contamination was detected ($confidencePercent% confidence).'
-        : 'Possible mold contamination was detected, but confidence is only $confidencePercent%. Treat this '
-            'batch as high-risk and rescan in better light to confirm.';
+        ? l10n.maizeFindingUnsafeHighConfidence(confidencePercent)
+        : l10n.maizeFindingUnsafeLowConfidence(confidencePercent);
 
     return [
       _fromAflalert(findingText),
-      _fromUnbs(
-        'Do not sell or consume this batch. Isolate it immediately and arrange certified laboratory '
-        'testing before any further use.',
-      ),
-      _fromMaaif(
-        'Do not feed this batch to livestock either — aflatoxins carry over into milk and meat, so '
-        'contaminated feed puts the animals and consumers at risk too.',
-      ),
+      _fromUnbs(l10n.maizeIsolateTip),
+      _fromMaaif(l10n.maizeLivestockTip),
     ];
   }
 
@@ -436,7 +423,7 @@ class ResultsScreen extends StatelessWidget {
                         ],
                       ),
                       const SizedBox(height: 12),
-                      ...attributedRecommendations.map(
+                      ...attributedRecommendations(l10n).map(
                         (item) => Padding(
                           padding: const EdgeInsets.only(bottom: 10),
                           child: Row(
