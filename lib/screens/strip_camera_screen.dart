@@ -80,6 +80,31 @@ Future<File> cropImageToViewfinderRect(
   return outputFile;
 }
 
+// Gallery picks come in at whatever resolution the device camera app used
+// (often well above what the in-app capture path produces, which is always
+// cropped+resized via [cropImageToViewfinderRect]). Without a matching cap
+// here, analyzeStripBytes's row-by-row pixel scan can take a very long time
+// on a full-resolution photo, making the analysis screen appear to hang.
+Future<File> resizeImageToMaxWidth(File imageFile, {int maxWidth = 720}) async {
+  final bytes = await imageFile.readAsBytes();
+  final rawDecoded = img.decodeImage(bytes);
+  if (rawDecoded == null) {
+    return imageFile;
+  }
+  final decoded = img.bakeOrientation(rawDecoded);
+  if (decoded.width <= maxWidth) {
+    return imageFile;
+  }
+
+  final resized = img.copyResize(decoded, width: maxWidth);
+  final tempDir = await Directory.systemTemp.createTemp('aflalert_strip_resize');
+  final outputPath =
+      '${tempDir.path}/strip_${DateTime.now().microsecondsSinceEpoch}.jpg';
+  final outputFile = File(outputPath);
+  await outputFile.writeAsBytes(img.encodeJpg(resized, quality: 92));
+  return outputFile;
+}
+
 class StripCameraScreen extends StatefulWidget {
   const StripCameraScreen({super.key});
 
@@ -221,11 +246,15 @@ class _StripCameraScreenState extends State<StripCameraScreen> {
         await ImagePicker().pickImage(source: ImageSource.gallery);
     if (picked == null || !mounted) return;
 
+    final File resizedFile = await resizeImageToMaxWidth(File(picked.path));
+    final XFile resized = XFile(resizedFile.path);
+    if (!mounted) return;
+
     final result = await Navigator.push<_ReviewResult>(
       context,
       MaterialPageRoute(
         builder: (_) => _StripReviewScreen(
-          imageFile: picked,
+          imageFile: resized,
           lightGood: true,
           focusGood: true,
         ),
@@ -235,7 +264,7 @@ class _StripCameraScreenState extends State<StripCameraScreen> {
     if (result == _ReviewResult.usePhoto && mounted) {
       Navigator.pop(
         context,
-        StripCaptureResult(photo: picked, cropType: _cropType),
+        StripCaptureResult(photo: resized, cropType: _cropType),
       );
     }
   }

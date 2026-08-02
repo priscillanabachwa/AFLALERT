@@ -60,23 +60,27 @@ class StripAnalysisService {
   // is why those need to be strict rather than this ratio.
   static const double _paleBrightnessFloor = 0.55;
   static const double _paleSaturationCeiling = 0.28;
-  static const double _minPaleRatio = 0.55;
+  static const double _minPaleRatio = 0.50;
 
   // A line band must be at least this much darker than its local
   // background to count as a real line rather than sensor/paper noise or
   // the soft shading/gradient of a blank pale surface (wall, paper, skin)
-  // that isn't a strip at all.
-  static const double _minLineProminence = 0.16;
+  // that isn't a strip at all. Pulled back down from 0.16 after that value
+  // was found to reject real, correctly-run strip photos under everyday
+  // (non-lab) lighting.
+  static const double _minLineProminence = 0.12;
   // Candidate bands wider than this fraction of the strip are treated as
   // shadows/edges/objects rather than a printed line.
   static const double _maxBandWidthFraction = 0.22;
   // The control line must clear this absolute darkness (as a fraction of
   // local background luminance lost) to count as a valid, developed line —
   // a faint/missing C line means the strip run itself failed (standard
-  // lateral-flow QC), not a low ppb reading. Set well above what ambient
-  // shading/noise on a non-strip pale photo can produce, since that noise
-  // was previously enough to be misread as a control line.
-  static const double _minControlDarkness = 0.22;
+  // lateral-flow QC), not a low ppb reading. 0.22 (see git history) was too
+  // strict in practice and flagged genuine control lines as missing on
+  // real-world photos; 0.16 is still well above the noise floor of a
+  // non-strip pale surface but leaves headroom for normal lighting/camera
+  // variance on an actual developed line.
+  static const double _minControlDarkness = 0.16;
 
   static final StripAnalysisService _instance =
       StripAnalysisService._internal();

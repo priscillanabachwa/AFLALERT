@@ -115,20 +115,30 @@ class _StripAnalysisScreenState extends State<StripAnalysisScreen> {
   ) async {
     final File photoFile = File(args.photo.path);
 
-    final StripAnalysisResult analysis =
-        await StripAnalysisService().analyzeStripBytes(await photoFile.readAsBytes());
+    // Bounded so a slow decode (unexpectedly large photo) or a stalled
+    // network call (poor connectivity) always resolves the loading screen
+    // instead of spinning indefinitely. Upload/save failures degrade to a
+    // scan with no image/record (already handled below via imageUrl/scanId
+    // being null) rather than blocking the result the user actually wants.
+    final StripAnalysisResult analysis = await StripAnalysisService()
+        .analyzeStripBytes(await photoFile.readAsBytes())
+        .timeout(const Duration(seconds: 20));
 
-    final String? imageUrl = await StorageService().uploadStripImage(photoFile);
-    final String? scanId = await FirestoreService().saveStripScanRecord(
-      imageUrl: imageUrl ?? '',
-      cropType: args.cropType.name,
-      ppbValue: analysis.ppbValue,
-      tLineOD: analysis.tLineOD,
-      cLineOD: analysis.cLineOD,
-      odRatio: analysis.odRatio,
-      safeLimitPpb: analysis.safeLimitPpb,
-      location: args.location,
-    );
+    final String? imageUrl = await StorageService()
+        .uploadStripImage(photoFile)
+        .timeout(const Duration(seconds: 20), onTimeout: () => null);
+    final String? scanId = await FirestoreService()
+        .saveStripScanRecord(
+          imageUrl: imageUrl ?? '',
+          cropType: args.cropType.name,
+          ppbValue: analysis.ppbValue,
+          tLineOD: analysis.tLineOD,
+          cLineOD: analysis.cLineOD,
+          odRatio: analysis.odRatio,
+          safeLimitPpb: analysis.safeLimitPpb,
+          location: args.location,
+        )
+        .timeout(const Duration(seconds: 15), onTimeout: () => null);
 
     return StripResultsScreenArgs(
       ppbValue: analysis.ppbValue,
