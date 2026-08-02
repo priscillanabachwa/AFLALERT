@@ -1,6 +1,6 @@
 {
-    "name": "aflalert",
-    "short_name": "aflalert",
+    "name": "AflAlert",
+    "short_name": "AflAlert",
     "start_url": ".",
     "display": "standalone",
     "background_color": "#0175C2",

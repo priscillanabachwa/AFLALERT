@@ -575,7 +575,8 @@ class _EditProfileSheetState extends State<_EditProfileSheet> {
         24,
         MediaQuery.of(context).viewInsets.bottom + 36,
       ),
-      child: Column(
+      child: SingleChildScrollView(
+        child: Column(
         mainAxisSize: MainAxisSize.min,
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
@@ -671,6 +672,7 @@ class _EditProfileSheetState extends State<_EditProfileSheet> {
                   ),
           ),
         ],
+        ),
       ),
     );
   }
@@ -817,7 +819,8 @@ class _ChangePasswordSheetState extends State<_ChangePasswordSheet> {
         24,
         MediaQuery.of(context).viewInsets.bottom + 36,
       ),
-      child: Form(
+      child: SingleChildScrollView(
+        child: Form(
         key: _formKey,
         child: Column(
           mainAxisSize: MainAxisSize.min,
@@ -895,6 +898,7 @@ class _ChangePasswordSheetState extends State<_ChangePasswordSheet> {
                     ),
             ),
           ],
+        ),
         ),
       ),
     );
