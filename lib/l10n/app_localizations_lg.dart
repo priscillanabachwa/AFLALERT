@@ -1074,6 +1074,13 @@ class AppLocalizationsLg extends AppLocalizations {
       'Teeka strip mu bbokisi oluvannyuma lw\'eddakiika kkumi ez\'okulinda';
 
   @override
+  String get cropStripPhotoTitle => 'Teeka strip mu bbokisi';
+
+  @override
+  String get cropStripPhotoHint =>
+      'Kozesa engalo okugazza oba okufunza ekifaananyi, osseeko strip mu bbokisi yonna';
+
+  @override
   String get scanAnotherStrip => 'Kebera Strip Endala';
 
   @override

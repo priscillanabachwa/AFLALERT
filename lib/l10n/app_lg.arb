@@ -359,6 +359,8 @@
   "scanTestStrip": "Kebera Test Strip",
   "cropTypeMaize": "Kasooli",
   "positionStripInFrame": "Teeka strip mu bbokisi oluvannyuma lw'eddakiika kkumi ez'okulinda",
+  "cropStripPhotoTitle": "Teeka strip mu bbokisi",
+  "cropStripPhotoHint": "Kozesa engalo okugazza oba okufunza ekifaananyi, osseeko strip mu bbokisi yonna",
   "scanAnotherStrip": "Kebera Strip Endala",
   "scanTestStripHint": "Kebera test strip okumanya obungi bw'obutwa mu bulimi",
 
