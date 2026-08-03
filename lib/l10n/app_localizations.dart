@@ -2204,6 +2204,12 @@ abstract class AppLocalizations {
   /// **'Now'**
   String get nowLabel;
 
+  /// No description provided for @aiAssistantNudgeMessage.
+  ///
+  /// In en, this message translates to:
+  /// **'Need help? Tap here to ask the voice assistant'**
+  String get aiAssistantNudgeMessage;
+
   /// No description provided for @voiceAssistantEntryTooltip.
   ///
   /// In en, this message translates to:

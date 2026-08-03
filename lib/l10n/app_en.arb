@@ -459,6 +459,7 @@
     "placeholders": { "high": { "type": "String" }, "low": { "type": "String" } }
   },
   "nowLabel": "Now",
+  "aiAssistantNudgeMessage": "Need help? Tap here to ask the voice assistant",
   "voiceAssistantEntryTooltip": "Voice assistant",
   "voiceAssistantTitle": "Voice Assistant",
   "voiceAssistantEnglishOnlyNotice": "Voice commands currently work in English only.",

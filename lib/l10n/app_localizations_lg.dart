@@ -1172,6 +1172,10 @@ class AppLocalizationsLg extends AppLocalizations {
   String get nowLabel => 'Kaakano';
 
   @override
+  String get aiAssistantNudgeMessage =>
+      'Oyagala obuyambi? Nyiga wano okubuuza Omuyambi w\'Eddoboozi';
+
+  @override
   String get voiceAssistantEntryTooltip => 'Omuyambi w\'eddoboozi';
 
   @override

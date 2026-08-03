@@ -1165,6 +1165,10 @@ class AppLocalizationsEn extends AppLocalizations {
   String get nowLabel => 'Now';
 
   @override
+  String get aiAssistantNudgeMessage =>
+      'Need help? Tap here to ask the voice assistant';
+
+  @override
   String get voiceAssistantEntryTooltip => 'Voice assistant';
 
   @override

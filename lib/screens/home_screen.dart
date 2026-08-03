@@ -16,6 +16,7 @@ import '../services/morning_alert_service.dart';
 import '../services/rain_alert_service.dart';
 import '../services/weather_service.dart';
 import '../utils/user_initials.dart';
+import '../widgets/ai_assistant_nudge.dart';
 import '../widgets/coach_mark_overlay.dart';
 import '../widgets/custom_bottom_nav.dart';
 import 'analysis_screen.dart';
@@ -72,6 +73,11 @@ class _HomeScreenState extends State<HomeScreen> {
   final GlobalKey _voiceAssistantKey = GlobalKey();
   bool _showCoachMarks = false;
 
+  // Once the one-time coach marks have been seen, remind the user the
+  // voice assistant exists with a brief, self-dismissing bubble on every
+  // subsequent app open instead.
+  bool _showAiNudge = false;
+
   @override
   void initState() {
     super.initState();
@@ -91,12 +97,19 @@ class _HomeScreenState extends State<HomeScreen> {
 
   Future<void> _maybeShowCoachMarks() async {
     final SharedPreferences prefs = await SharedPreferences.getInstance();
-    if (prefs.getBool(_prefCoachMarksSeen) ?? false) return;
     if (!mounted) return;
     // Wait for the first real frame so the target widgets have a laid-out
     // RenderBox for the overlay to measure and spotlight.
+    if (!(prefs.getBool(_prefCoachMarksSeen) ?? false)) {
+      WidgetsBinding.instance.addPostFrameCallback((_) {
+        if (mounted) setState(() => _showCoachMarks = true);
+      });
+      return;
+    }
+    // Coach marks already ran once — nudge instead, every time the app
+    // reopens, so the assistant stays discoverable without reblocking the UI.
     WidgetsBinding.instance.addPostFrameCallback((_) {
-      if (mounted) setState(() => _showCoachMarks = true);
+      if (mounted) setState(() => _showAiNudge = true);
     });
   }
 
@@ -319,6 +332,14 @@ class _HomeScreenState extends State<HomeScreen> {
                 ),
               ],
               onFinished: _dismissCoachMarks,
+            ),
+          if (_showAiNudge)
+            AiAssistantNudge(
+              targetKey: _voiceAssistantKey,
+              message: l10n.aiAssistantNudgeMessage,
+              onFinished: () {
+                if (mounted) setState(() => _showAiNudge = false);
+              },
             ),
         ],
       ),

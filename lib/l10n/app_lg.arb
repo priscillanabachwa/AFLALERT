@@ -407,6 +407,7 @@
     "placeholders": { "high": { "type": "String" }, "low": { "type": "String" } }
   },
   "nowLabel": "Kaakano",
+  "aiAssistantNudgeMessage": "Oyagala obuyambi? Nyiga wano okubuuza Omuyambi w'Eddoboozi",
   "voiceAssistantEntryTooltip": "Omuyambi w'eddoboozi",
   "voiceAssistantTitle": "Omuyambi w'Eddoboozi",
   "voiceAssistantEnglishOnlyNotice": "Ebiragiro by'eddoboozi kati bikola mu Lungereza lwokka.",
