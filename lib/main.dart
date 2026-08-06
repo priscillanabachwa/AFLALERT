@@ -48,8 +48,13 @@ Future<void> main() async {
       providerApple: AppleDebugProvider(),
     );
     debugPrint('AppCheck: activate() succeeded');
+    // Pulls the cached App Check token (fetching a fresh one only if the
+    // cached one is missing/expired) so failures in the voice assistant's
+    // Gemini calls can be told apart from App Check rejections.
+    final String token = await FirebaseAppCheck.instance.getToken() ?? '';
+    debugPrint('AppCheck: token = $token');
   } catch (error) {
-    debugPrint('AppCheck: activate() failed: $error');
+    debugPrint('AppCheck: activate()/getToken() failed: $error');
   }
 
   await LocalNotificationService.instance.init();
